@@ -4,6 +4,7 @@ window.LC = window.LC || {};
   'use strict';
 
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  var BAG_KEY = 'littleCreature.coopBag';
   function rint(n) { return Math.floor(Math.random() * n); }
 
   function newState() {
@@ -46,7 +47,46 @@ window.LC = window.LC || {};
       try { return !!localStorage.getItem(LC.SAVE_KEY); } catch (e) { return false; }
     },
     save: function () {
-      try { localStorage.setItem(LC.SAVE_KEY, JSON.stringify(this.s)); return true; } catch (e) { return false; }
+      try {
+        if (this.s && this.s.guest) {   // co-op guest: only the personal bag is ours to keep
+          var s = this.s;
+          localStorage.setItem(BAG_KEY, JSON.stringify({ inv: s.inv, kepeng: s.kepeng, water: s.water, sel: s.sel }));
+          return true;
+        }
+        localStorage.setItem(LC.SAVE_KEY, JSON.stringify(this.s));
+        return true;
+      } catch (e) { return false; }
+    },
+
+    // -------------------------------------------------------------- co-op
+    snapshot: function () {
+      var s = this.s;
+      return JSON.parse(JSON.stringify({ day: s.day, minutes: s.minutes, tiles: s.tiles, trees: s.trees, ghost: s.ghost, offerings: s.offerings }));
+    },
+    applySnapshot: function (w) {
+      var s = this.s;
+      s.day = w.day; s.minutes = w.minutes; s.tiles = w.tiles || {}; s.trees = w.trees || {};
+      s.offerings = w.offerings || [];
+      if (s.ghost) Object.keys(w.ghost).forEach(function (k) { s.ghost[k] = w.ghost[k]; }); else s.ghost = w.ghost;
+    },
+    // A guest plays on the host's shared world with their own travelling bag.
+    makeGuest: function (world) {
+      var s = newState(), bag = null;
+      try { bag = JSON.parse(localStorage.getItem(BAG_KEY) || 'null'); } catch (e) { bag = null; }
+      var inv = new Array(LC.INV_SIZE).fill(null);
+      if (bag && bag.inv) { bag.inv.forEach(function (sl, i) { if (i < inv.length && sl && LC.ITEMS[sl.id]) inv[i] = sl; }); }
+      else { inv[0] = { id: 'hoe', n: 1 }; inv[1] = { id: 'can', n: 1 }; inv[2] = { id: 'nasi', n: 1 }; inv[3] = { id: 'seed_ubi', n: 4 }; inv[4] = { id: 'seed_pandan', n: 2 }; }
+      if (!inv.some(function (sl) { return sl && sl.id === 'hoe'; })) { var i = inv.indexOf(null); if (i >= 0) inv[i] = { id: 'hoe', n: 1 }; }
+      if (!inv.some(function (sl) { return sl && sl.id === 'can'; })) { var j = inv.indexOf(null); if (j >= 0) inv[j] = { id: 'can', n: 1 }; }
+      s.inv = inv;
+      s.kepeng = bag ? bag.kepeng : 60;
+      s.water = bag ? bag.water || 0 : 0;
+      s.sel = bag && bag.sel < 9 ? bag.sel : 0;
+      s.guest = true;
+      s.flags = { introDone: true, fedOnce: true, incense: true, tilled: true, planted: true, watered: true, slept: true, harvested: true, cooked: true, metAni: true };
+      this.s = s;
+      this.applySnapshot(world);
+      return s;
     },
     load: function () {
       try {

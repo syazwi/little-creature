@@ -51,7 +51,13 @@ window.LC = window.LC || {};
 
       this.scene.launch('UI');
       this.ui = this.scene.get('UI');
-      this.wasFollowing = this.S.ghost.stage >= 1;
+      this.wasFollowing = this.S.ghost.stage >= 1 && this.S.ghost.joy >= 12;
+
+      // co-op
+      this.remote = {};
+      this.followPid = 'me';
+      this.bindNet();
+      this.events.once('shutdown', function () { LC.Net.on = {}; });
     }
 
     // ================================================================ build
@@ -179,10 +185,15 @@ window.LC = window.LC || {};
 
     // ================================================================ player
     createPlayer() {
-      this.player = this.add.sprite(4 * T + 8, 8 * T + 13, 'pl_down_0').setOrigin(0.5, 1);
+      this.pc = LC.Net.role ? LC.Net.myColor : 0;   // outfit colour (co-op players each get their own)
+      this.plKey = LC.Art.plKey(this.pc); this.walkKey = LC.Art.walkKey(this.pc);
+      var sp = this.homeSpot(LC.Net.isGuest() ? this.pc : 0);
+      this.player = this.add.sprite(sp.x, sp.y, this.plKey + '_down_0').setOrigin(0.5, 1);
       this.pShadow = this.add.image(this.player.x, this.player.y, 'shadow').setDepth(1);
       this.dir = 'down';
+      this.moving = false;
     }
+    homeSpot(c) { return c ? { x: (4 + c) * T + 8, y: 10 * T + 13 } : { x: 4 * T + 8, y: 8 * T + 13 }; }
 
     solidPx(px, py) {
       var tx = Math.floor(px / T), ty = Math.floor(py / T);
@@ -215,11 +226,13 @@ window.LC = window.LC || {};
         else if (ay > ax * 1.25) this.dir = vy < 0 ? 'up' : 'down';
         else if (!((this.dir === 'left' && vx < 0) || (this.dir === 'right' && vx > 0) || (this.dir === 'up' && vy < 0) || (this.dir === 'down' && vy > 0)))
           this.dir = vx < 0 ? 'left' : 'right';
-        p.play('walk_' + (this.dir === 'left' || this.dir === 'right' ? 'side' : this.dir), true);
+        p.play(this.walkKey + '_' + (this.dir === 'left' || this.dir === 'right' ? 'side' : this.dir), true);
         if (p.x > (this.W - 2) * T && !this.edgeWarned) { this.edgeWarned = true; this.ui.toast(LC.TEXT.barrier); }
+        this.moving = true;
       } else {
         p.stop();
-        p.setTexture('pl_' + (this.dir === 'left' || this.dir === 'right' ? 'side' : this.dir) + '_0');
+        p.setTexture(this.plKey + '_' + (this.dir === 'left' || this.dir === 'right' ? 'side' : this.dir) + '_0');
+        this.moving = false;
       }
       p.setFlipX(this.dir === 'left');
       p.setDepth(p.y);
@@ -253,13 +266,17 @@ window.LC = window.LC || {};
       if (this.wasFollowing && !follow && g.stage >= 1) this.ui.toast('Pelita feels neglected and sulks back to its spirit house...', 'ic_joy');
       if (!this.wasFollowing && follow && g.stage >= 1 && this.followInit) this.ui.toast('Pelita floats over to join you again!', 'ic_joy');
       this.wasFollowing = follow; this.followInit = true;
-      var tx, ty;
-      if (follow) {
-        var d = DIRV[this.dir];
-        tx = this.player.x - d[0] * 14 + (d[1] !== 0 ? 11 : 0);
-        ty = this.player.y - 18 - d[1] * 8;
+      var tx, ty, guest = LC.Net.isGuest(), net = this.netGhost;
+      if (guest && net) { tx = net.x; ty = net.y; }            // the host decides where Pelita is
+      else if (follow) {
+        // Pelita follows whoever cared for it last (you, or a co-op friend)
+        var tp = this.player, tdir = this.dir, r = this.followPid !== 'me' && this.remote[this.followPid], ro = r && LC.Net.others[this.followPid];
+        if (r && ro) { tp = r.spr; tdir = ro.dir || 'down'; } else this.followPid = 'me';
+        var d = DIRV[tdir] || DIRV.down;
+        tx = tp.x - d[0] * 14 + (d[1] !== 0 ? 11 : 0);
+        ty = tp.y - 18 - d[1] * 8;
       } else { tx = home.x; ty = home.y; }
-      var k = Math.min(1, dt * 2.4);
+      var k = Math.min(1, dt * (guest ? 8 : 2.4));
       this.gpos.x += (tx - this.gpos.x) * k; this.gpos.y += (ty - this.gpos.y) * k;
       var bob = Math.sin(time / 380) * 2;
       var gx = Math.round(this.gpos.x), gy = Math.round(this.gpos.y + bob);
@@ -268,6 +285,7 @@ window.LC = window.LC || {};
 
       var expr = 'normal';
       if (time < this.emoteUntil) expr = this.emote;
+      else if (guest && net && net.e) expr = net.e;
       else if (g.full < 25 || g.joy < 20) expr = 'sad';
       else if (S.minutes >= 22 * 60) expr = 'sleepy';
       else if (g.joy >= 70) expr = 'happy';
@@ -284,7 +302,115 @@ window.LC = window.LC || {};
       if (showBubble) { this.bubble.setPosition(gx + 11, gy - 19); this.bubbleIcon.setTexture('i_' + g.craving); }
 
       var dx = gx - this.player.x, dy = gy - (this.player.y - 8);
-      this.ghostNear = follow && Math.hypot(dx, dy) < 26;
+      this.ghostNear = (guest ? g.stage >= 1 : follow) && Math.hypot(dx, dy) < 26;
+    }
+
+    // ================================================================ co-op: other players
+    updateRemote(dt) {
+      var others = LC.Net.others, self = this;
+      Object.keys(others).forEach(function (id) {
+        var o = others[id], r = self.remote[id];
+        if (!r) {
+          r = self.remote[id] = {
+            spr: self.add.sprite(o.x, o.y, LC.Art.plKey(o.color) + '_down_0').setOrigin(0.5, 1),
+            sh: self.add.image(o.x, o.y, 'shadow').setDepth(1)
+          };
+          self.fx.sparkle.explode(8, o.x, o.y - 8);
+        }
+        var s = r.spr, k = Math.min(1, dt * 12);
+        if (Math.hypot(o.x - s.x, o.y - s.y) > 80) { s.x = o.x; s.y = o.y; }
+        else { s.x += (o.x - s.x) * k; s.y += (o.y - s.y) * k; }
+        var side = o.dir === 'left' || o.dir === 'right', key = side ? 'side' : (o.dir || 'down');
+        if (o.mv) s.play(LC.Art.walkKey(o.color) + '_' + key, true);
+        else { s.stop(); s.setTexture(LC.Art.plKey(o.color) + '_' + key + '_0'); }
+        s.setFlipX(o.dir === 'left').setDepth(s.y);
+        r.sh.setPosition(Math.round(s.x), Math.round(s.y - 1));
+        r.name = o.name; r.color = o.color;
+      });
+      Object.keys(this.remote).forEach(function (id) {
+        if (!others[id]) { self.remote[id].spr.destroy(); self.remote[id].sh.destroy(); delete self.remote[id]; }
+      });
+    }
+
+    bindNet() {
+      var self = this, N = LC.Net, S = this.S;
+      N.on = {};
+      N.on.toast = function (msg, icon) { self.ui.toast(msg, icon); };
+      if (N.isHost()) {
+        N.on.op = function (op, a, pid) { return self.applyOp(op, a, pid); };
+        N.on.spawn = function (c) { return self.homeSpot(c); };
+      }
+      if (N.isGuest()) {
+        N.on.tick = function (m) {
+          self.netGhost = m.g;
+          Object.keys(m.gs).forEach(function (k) { S.ghost[k] = m.gs[k]; });
+          if (Math.abs(S.minutes - m.m) > 2) S.minutes = m.m;
+          S.day = m.d;
+        };
+        N.on.sync = function (m) {
+          var parts = m.parts || {};
+          if (parts.tiles) Object.keys(parts.tiles).forEach(function (key) {
+            if (parts.tiles[key]) S.tiles[key] = parts.tiles[key]; else delete S.tiles[key];
+            var xy = key.split(','); self.refreshTile(+xy[0], +xy[1]);
+          });
+          if (parts.trees) Object.keys(parts.trees).forEach(function (id) {
+            S.trees[id] = parts.trees[id];
+            var t = self.trees[id]; if (t) t.spr.setTexture(t.o.kind + (S.trees[id] === 0 ? '_f' : ''));
+          });
+          if (parts.ghost) Object.keys(parts.ghost).forEach(function (k) { S.ghost[k] = parts.ghost[k]; });
+          if (parts.offerings) { S.offerings = parts.offerings; self.refreshOfferings(); }
+          if (m.by !== N.myId) self.remoteFx(m.op, m.a || {});
+        };
+        N.on.event = function (m) { if (m.ev === 'stage') self.stageUp(m.st); };
+        N.on.sleepStart = function (m) { self.guestSleep(m); };
+        N.on.dayStart = function (m) { self.guestDayStart(m); };
+        N.on.closed = function (why) {
+          LC.State.save();
+          self.ui.say([{ text: why + ' You keep everything in your bag.' }], { onDone: function () { self.ui.quitToTitle(); } });
+        };
+      }
+    }
+
+    // Shared-farm actions: run here (single-player / host) or ask the host (guest). cb gets the LC.Sim result.
+    doShared(op, a, cb) {
+      var self = this;
+      if (LC.Net.isGuest()) { LC.Net.request(op, a, function (res) { if (self.sys && self.sys.isActive()) cb(res); }); return; }
+      cb(this.applyOp(op, a, 'me'));
+    }
+    applyOp(op, a, pid) {
+      var S = this.S, res = LC.Sim[op] ? LC.Sim[op](a) : null, ok = LC.Sim.succeeded(res);
+      if (op === 'till' || op === 'water' || op === 'plant' || op === 'harvest') this.refreshTile(a.x, a.y);
+      else if (op === 'shake') { var t = this.trees[a.id]; if (t) t.spr.setTexture(t.o.kind + (S.trees[a.id] === 0 ? '_f' : '')); }
+      else if (op === 'offer') this.refreshOfferings();
+      if (ok && (op === 'feed' || op === 'pet')) this.followPid = pid;
+      if (ok && pid !== 'me') {
+        this.remoteFx(op, a);
+        if (op === 'feed' || op === 'pet' || op === 'offer') this.setEmote(res.joy < 0 ? 'sad' : 'happy', 2200);
+      }
+      if (ok && LC.Net.isHost()) {
+        var by = pid === 'me' ? 'host' : pid;
+        LC.Net.broadcast({ t: 'sync', op: op, a: a, by: by, parts: LC.Sim.part(op, a) });
+        var who = pid === 'me' ? LC.Net.myName : (LC.Net.guests[pid] || {}).name || 'A friend', msg = null, icon = null;
+        if (op === 'feed') { msg = who + ' fed Pelita ' + LC.ITEMS[a.item].name + (res.craving ? ' (its craving!)' : '') + '.'; icon = LC.ITEMS[a.item].icon; }
+        if (op === 'offer') { msg = who + ' placed ' + LC.ITEMS[a.item].name + ' at the spirit house.'; icon = LC.ITEMS[a.item].icon; }
+        if (msg) {
+          LC.Net.broadcast({ t: 'toast', msg: msg, icon: icon }, pid === 'me' ? null : pid);
+          if (pid !== 'me') this.ui.toast(msg, icon);
+        }
+      }
+      return res;
+    }
+    remoteFx(op, a) {
+      var gp = this.ghostPos();
+      switch (op) {
+        case 'till': this.fx.dirt.explode(7, a.x * T + 8, a.y * T + 10); break;
+        case 'water': this.fx.drop.explode(9, a.x * T + 8, a.y * T + 6); break;
+        case 'plant': this.fx.leaf.explode(3, a.x * T + 8, a.y * T + 10); break;
+        case 'harvest': this.fx.leaf.explode(8, a.x * T + 8, a.y * T + 8); break;
+        case 'shake': var t = this.trees[a.id]; if (t) { this.fx.leaf.explode(10, t.spr.x, t.spr.y - t.spr.height * 0.6); this.tweens.add({ targets: t.spr, x: t.spr.x + 1, duration: 50, yoyo: true, repeat: 3 }); } break;
+        case 'feed': case 'pet': this.fx.heart.explode(4, gp.x, gp.y - 8); break;
+        case 'offer': this.fx.sparkle.explode(10, this.spiritPos.x, this.spiritPos.y - 26); break;
+      }
     }
 
     // ================================================================ critters
@@ -443,22 +569,35 @@ window.LC = window.LC || {};
 
       this.updatePlayer(dt, blocked);
 
-      if (!blocked) {
+      var N = LC.Net, guest = N.isGuest(), coop = N.active();
+      // In co-op the clock never pauses for menus (friends are still playing). Guests just follow the host's clock.
+      if (!this.sleeping && (!blocked || coop)) {
         var dm = dt * LC.TIME_SCALE;
         S.minutes += dm;
         var hgn = LC.State.isHGN() ? 2 : 1;
-        g.full = clamp(g.full - dm * (4 / 60) * hgn);
-        g.joy = clamp(g.joy - dm * ((g.full < 30 ? 4 : 2) / 60));
-        g.glow = clamp(g.glow - dm * (1 / 60));
-        if (S.minutes >= LC.DAY_END) this.sleep(true);
-        if (S.pendingStage.length) this.stageUp(S.pendingStage.shift());
+        if (!guest) {
+          g.full = clamp(g.full - dm * (4 / 60) * hgn);
+          g.joy = clamp(g.joy - dm * ((g.full < 30 ? 4 : 2) / 60));
+          g.glow = clamp(g.glow - dm * (1 / 60));
+          if (S.minutes >= LC.DAY_END) this.sleep(true);
+        } else if (S.minutes > LC.DAY_END - 1) S.minutes = LC.DAY_END - 1;
         if (hgn === 2 && S.minutes >= 18 * 60 && S.flags.hgnWarnDay !== S.day) {
           S.flags.hgnWarnDay = S.day;
           this.ui.toast('Hungry Ghost Night has begun. The torches burn red... Pelita is ravenous!', 'ic_glow');
         }
       }
+      if (!guest && !blocked && S.pendingStage.length) this.stageUp(S.pendingStage.shift());
 
       this.updateGhost(time, dt, blocked);
+      this.updateRemote(dt);
+      if (N.isHost()) {
+        N.hostTick({
+          m: S.minutes, d: S.day,
+          g: { x: Math.round(this.gpos.x), y: Math.round(this.gpos.y), e: this.curExpr },
+          gs: { full: g.full, joy: g.joy, glow: g.glow, bond: g.bond, stage: g.stage, craving: g.craving, cravingDone: g.cravingDone, petAt: g.petAt },
+          me: { x: Math.round(this.player.x), y: Math.round(this.player.y), dir: this.dir, mv: this.moving }
+        });
+      } else if (guest) N.sendPos(this.player.x, this.player.y, this.dir, this.moving);
       this.updateCritters(dt);
       this.updateLighting(time);
 
@@ -551,34 +690,42 @@ window.LC = window.LC || {};
     }
     bump() { var p = this.player; this.tweens.add({ targets: p, scaleY: 0.88, duration: 70, yoyo: true }); }
 
+    // Personal costs (energy, water, seeds) are paid here; the shared field changes via doShared/LC.Sim.
     till(tx, ty) {
+      var S = this.S;
       if (!this.useEnergy(2)) return;
-      var t = LC.State.ensureTile(tx, ty); t.tilled = true;
-      this.refreshTile(tx, ty); this.fx.dirt.explode(7, tx * T + 8, ty * T + 10);
-      LC.Audio.sfx('till'); this.bump(); this.S.flags.tilled = true;
+      this.fx.dirt.explode(7, tx * T + 8, ty * T + 10);
+      LC.Audio.sfx('till'); this.bump(); S.flags.tilled = true;
+      this.doShared('till', { x: tx, y: ty }, function (ok) { if (!ok) S.energy += 2; });
     }
     water(tx, ty) {
+      var S = this.S;
       if (!this.useEnergy(1)) return;
-      var t = LC.State.ensureTile(tx, ty); t.wet = true; this.S.water--;
-      this.refreshTile(tx, ty); this.fx.drop.explode(9, tx * T + 8, ty * T + 6);
-      LC.Audio.sfx('water'); this.bump(); this.S.flags.watered = true;
+      S.water--;
+      this.fx.drop.explode(9, tx * T + 8, ty * T + 6);
+      LC.Audio.sfx('water'); this.bump(); S.flags.watered = true;
+      this.doShared('water', { x: tx, y: ty }, function (ok) { if (!ok) { S.water++; S.energy += 1; } });
     }
     plant(tx, ty, seedId) {
-      var t = LC.State.ensureTile(tx, ty);
-      t.crop = { id: LC.ITEMS[seedId].crop, g: 0 };
+      var self = this;
       LC.State.remove(seedId, 1);
-      this.refreshTile(tx, ty); this.fx.leaf.explode(3, tx * T + 8, ty * T + 10);
+      this.fx.leaf.explode(3, tx * T + 8, ty * T + 10);
       LC.Audio.sfx('plant'); this.S.flags.planted = true;
+      this.doShared('plant', { x: tx, y: ty, crop: LC.ITEMS[seedId].crop }, function (ok) {
+        if (!ok) { LC.State.add(seedId, 1); self.toast('Someone beat you to that spot!'); }
+      });
     }
     harvest(tx, ty) {
-      var t = LC.State.tile(tx, ty), def = LC.CROPS[t.crop.id];
+      var self = this, t = LC.State.tile(tx, ty), def = LC.CROPS[t.crop.id];
       if (!LC.State.canAdd(def.item)) { this.toast('Your bag is full!'); LC.Audio.sfx('error'); return; }
-      LC.State.add(def.item, def.count);
-      t.crop = null;
-      this.refreshTile(tx, ty); this.fx.leaf.explode(8, tx * T + 8, ty * T + 8);
+      this.fx.leaf.explode(8, tx * T + 8, ty * T + 8);
       LC.Audio.sfx('harvest'); this.bump();
-      this.toast('+' + def.count + ' ' + LC.ITEMS[def.item].name, 'i_' + def.item);
-      this.S.flags.harvested = true;
+      this.doShared('harvest', { x: tx, y: ty }, function (res) {
+        if (!res || !res.item) { self.toast('Too slow! A friend already harvested that one.'); return; }
+        LC.State.add(res.item, res.count);
+        self.toast('+' + res.count + ' ' + LC.ITEMS[res.item].name, 'i_' + res.item);
+        self.S.flags.harvested = true;
+      });
     }
     refillCan() {
       if (!LC.State.count('can')) { this.toast('You need the gembor to carry water.'); return; }
@@ -591,13 +738,17 @@ window.LC = window.LC || {};
       var S = this.S, tr = LC.TREES[o.kind], spr = this.trees[o.id].spr;
       this.tweens.add({ targets: spr, x: spr.x + 1, duration: 50, yoyo: true, repeat: 3 });
       LC.Audio.sfx('shake');
-      if (S.trees[o.id] > 0) { this.toast(tr.name + ': no ripe fruit yet. Check back in ' + S.trees[o.id] + ' day' + (S.trees[o.id] > 1 ? 's' : '') + '.'); return; }
+      var self = this;
+      function noFruit(days) { self.toast(tr.name + ': no ripe fruit yet. Check back in ' + days + ' day' + (days > 1 ? 's' : '') + '.'); }
+      if (S.trees[o.id] > 0) { noFruit(S.trees[o.id]); return; }
       if (!LC.State.canAdd(tr.fruit)) { this.toast('Your bag is full!'); return; }
-      LC.State.add(tr.fruit, tr.count);
-      S.trees[o.id] = tr.regrow;
-      spr.setTexture(o.kind);
-      this.fx.leaf.explode(10, spr.x, spr.y - spr.height * 0.6);
-      this.toast('+' + tr.count + ' ' + LC.ITEMS[tr.fruit].name, 'i_' + tr.fruit);
+      this.doShared('shake', { id: o.id }, function (res) {
+        if (!res) return;
+        if (res.days) { noFruit(res.days); return; }
+        LC.State.add(res.item, res.count);
+        self.fx.leaf.explode(10, spr.x, spr.y - spr.height * 0.6);
+        self.toast('+' + res.count + ' ' + LC.ITEMS[res.item].name, 'i_' + res.item);
+      });
     }
     petCritter(c) {
       if (c.kind === 'kerbau') { LC.Audio.sfx('moo'); this.toast(LC.TEXT.kerbau); }
@@ -620,30 +771,25 @@ window.LC = window.LC || {};
     // ---------------------------------------------------------------- Pelita care
     feedGhost(id) {
       var S = this.S, g = S.ghost, it = LC.ITEMS[id], self = this;
-      if (g.full >= 97) { this.toast('Pelita is too full to eat another bite.'); this.setEmote('sleepy', 1500); LC.Audio.sfx('error'); return; }
+      function tooFull() { self.toast('Pelita is too full to eat another bite.'); self.setEmote('sleepy', 1500); LC.Audio.sfx('error'); }
+      if (g.full >= 97) { tooFull(); return; }
       LC.State.remove(id, 1);
-      g.full = clamp(g.full + it.food.full);
-      var joy = it.food.joy, bond = it.kind === 'dish' ? 6 : it.kind === 'drink' ? 4 : 2, msg = 'Pelita munches happily.';
-      if (LC.LOVES.indexOf(id) >= 0) { joy += 10; bond += 4; msg = 'Pelita LOVES ' + it.name + '!'; }
-      if (LC.DISLIKES.indexOf(id) >= 0) msg = 'Pelita sneezes out a tiny flame. Too spicy!';
-      var craving = id === g.craving && !g.cravingDone;
-      g.joy = clamp(g.joy + joy);
-      var b = LC.State.addBond(bond), gp = this.ghostPos();
-      if (joy < 0) { this.setEmote('sad', 2200); LC.Audio.sfx('sad'); }
-      else { this.setEmote('happy', 2200); LC.Audio.sfx('eat'); this.fx.heart.explode(4, gp.x, gp.y - 8); }
-      this.toast(msg + ' (+' + b + ' bond)', it.icon);
-      if (craving) {
-        g.cravingDone = true;
-        var b2 = LC.State.addBond(20);
-        g.joy = clamp(g.joy + 15);
-        this.time.delayedCall(650, function () {
-          LC.Audio.sfx('chime');
-          var p = self.ghostPos(); self.fx.sparkle.explode(14, p.x, p.y);
-          self.toast('Craving satisfied! (+' + b2 + ' bond)', 'ic_bond');
-          self.craveGift();
-        });
-      }
-      S.flags.fedOnce = true;
+      this.doShared('feed', { item: id }, function (res) {
+        if (!res || !res.ok) { LC.State.add(id, 1); if (res && res.full) tooFull(); return; }
+        var gp = self.ghostPos();
+        if (res.joy < 0) { self.setEmote('sad', 2200); LC.Audio.sfx('sad'); }
+        else { self.setEmote('happy', 2200); LC.Audio.sfx('eat'); self.fx.heart.explode(4, gp.x, gp.y - 8); }
+        self.toast(res.msg + ' (+' + res.b + ' bond)', it.icon);
+        if (res.craving) {
+          self.time.delayedCall(650, function () {
+            LC.Audio.sfx('chime');
+            var p = self.ghostPos(); self.fx.sparkle.explode(14, p.x, p.y);
+            self.toast('Craving satisfied! (+' + res.b2 + ' bond)', 'ic_bond');
+            self.craveGift();
+          });
+        }
+        S.flags.fedOnce = true;
+      });
     }
     craveGift() {
       var S = this.S, r = Math.random();
@@ -655,27 +801,28 @@ window.LC = window.LC || {};
       LC.Audio.sfx('coin');
     }
     petGhost() {
-      var S = this.S, g = S.ghost, gp = this.ghostPos();
-      if (S.minutes - g.petAt < 60) { this.toast('Pelita giggles. It has had plenty of cuddles for now.'); this.setEmote('happy', 900); LC.Audio.sfx('pet'); return; }
-      g.petAt = S.minutes; g.joy = clamp(g.joy + 8);
-      var b = LC.State.addBond(3);
-      this.fx.heart.explode(3, gp.x, gp.y - 6); LC.Audio.sfx('pet'); this.setEmote('happy', 1800);
-      this.toast('You pat Pelita. It wiggles with joy! (+' + b + ' bond)', 'ic_joy');
+      var self = this;
+      this.doShared('pet', {}, function (res) {
+        if (!res) return;
+        var gp = self.ghostPos();
+        if (!res.ok) { self.toast('Pelita giggles. It has had plenty of cuddles for now.'); self.setEmote('happy', 900); LC.Audio.sfx('pet'); return; }
+        self.fx.heart.explode(3, gp.x, gp.y - 6); LC.Audio.sfx('pet'); self.setEmote('happy', 1800);
+        self.toast('You pat Pelita. It wiggles with joy! (+' + res.b + ' bond)', 'ic_joy');
+      });
     }
     offer(id) {
-      var S = this.S, g = S.ghost, it = LC.ITEMS[id];
-      if (g.glow >= 100) { this.toast('Pelita\'s glow is already full.'); LC.Audio.sfx('error'); return false; }
+      var self = this, S = this.S, it = LC.ITEMS[id];
+      function full() { self.toast('Pelita\'s glow is already full.'); LC.Audio.sfx('error'); }
+      if (S.ghost.glow >= 100) { full(); return false; }
       LC.State.remove(id, 1);
-      g.glow = clamp(g.glow + it.glow);
-      if (it.joy) g.joy = clamp(g.joy + it.joy);
-      var b = LC.State.addBond(it.bond);
-      S.offerings.push(id);
-      if (id === 'colok') S.flags.incense = true;
-      this.refreshOfferings();
-      LC.Audio.sfx('offer');
-      this.fx.sparkle.explode(10, this.spiritPos.x, this.spiritPos.y - 26);
-      this.setEmote('happy', 2000);
-      this.toast('You place the ' + it.name + '. Pelita glows brighter! (+' + b + ' bond)', it.icon);
+      this.doShared('offer', { item: id }, function (res) {
+        if (!res || !res.ok) { LC.State.add(id, 1); if (res && res.full) full(); return; }
+        if (id === 'colok') S.flags.incense = true;
+        LC.Audio.sfx('offer');
+        self.fx.sparkle.explode(10, self.spiritPos.x, self.spiritPos.y - 26);
+        self.setEmote('happy', 2000);
+        self.toast('You place the ' + it.name + '. Pelita glows brighter! (+' + res.b + ' bond)', it.icon);
+      });
       return true;
     }
     cookFx() {
@@ -690,9 +837,11 @@ window.LC = window.LC || {};
       this.sleeping = true;
       this.ui.closeModal();
       LC.Audio.sfx('sleep');
+      if (LC.Net.isHost()) LC.Net.broadcast({ t: 'sleepStart', fainted: fainted });
       this.cameras.main.fadeOut(900, 8, 6, 18);
       this.cameras.main.once('camerafadeoutcomplete', function () {
         var sum = LC.State.endDay(fainted);
+        if (LC.Net.isHost()) LC.Net.broadcast({ t: 'dayStart', sum: sum, world: LC.State.snapshot() });
         self.refreshAllTiles();
         self.refreshOfferings();
         self.player.setPosition(4 * T + 8, 8 * T + 13);
@@ -705,6 +854,33 @@ window.LC = window.LC || {};
         });
       });
     }
+    // co-op guest: the host went to bed (everyone sleeps together)
+    guestSleep() {
+      if (this.sleeping) return;
+      this.sleeping = true;
+      this.ui.closeModal();
+      LC.Audio.sfx('sleep');
+      this.cameras.main.fadeOut(900, 8, 6, 18);
+    }
+    guestDayStart(m) {
+      var self = this, S = this.S;
+      this.sleeping = true;
+      this.ui.closeModal();
+      LC.State.applySnapshot(m.world);
+      S.energy = S.maxEnergy;
+      var sum = Object.assign({}, m.sum, { earned: S.stats.earned });
+      S.stats.earned = 0;
+      LC.State.save();
+      this.refreshAllTiles();
+      this.refreshOfferings();
+      var sp = this.homeSpot(this.pc); this.player.setPosition(sp.x, sp.y); this.dir = 'down';
+      this.ui.showSummary(sum, function () {
+        self.cameras.main.fadeIn(800);
+        self.sleeping = false;
+        self.morning();
+      });
+    }
+
     morning() {
       var S = this.S, g = S.ghost;
       this.ui.toast('Good morning! Day ' + S.day + ', ' + LC.State.weekday() + '.', 'ic_sun');
@@ -714,6 +890,7 @@ window.LC = window.LC || {};
 
     stageUp(st) {
       var self = this, gp = this.ghostPos();
+      if (LC.Net.isHost()) LC.Net.broadcast({ t: 'event', ev: 'stage', st: st });
       LC.Audio.sfx('stage');
       this.cameras.main.flash(600, 255, 240, 210);
       this.fx.sparkle.explode(30, gp.x, gp.y);

@@ -50,9 +50,10 @@ LC.TitleScene = class extends Phaser.Scene {
     this.hasSave = LC.State.hasSave();
     this.options = [{ label: 'New Game', fn: function () { self.begin(false); } }];
     if (this.hasSave) this.options.unshift({ label: 'Continue', fn: function () { self.begin(true); } });
+    this.options.push({ label: 'Play with Friends', fn: function () { self.openLobby(); } });
     this.sel = 0;
     this.optTexts = this.options.map(function (o, k) {
-      var t = self.add.text(W / 2, 470 + k * 46, o.label, { fontFamily: LC.FONT, fontSize: '30px', color: '#fbecc8', stroke: '#2a1d18', strokeThickness: 6 }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      var t = self.add.text(W / 2, 458 + k * 44, o.label, { fontFamily: LC.FONT, fontSize: '30px', color: '#fbecc8', stroke: '#2a1d18', strokeThickness: 6 }).setOrigin(0.5).setInteractive({ useHandCursor: true });
       t.on('pointerover', function () { self.sel = k; self.renderOpts(); });
       t.on('pointerdown', function () { self.sel = k; self.choose(); });
       return t;
@@ -63,6 +64,7 @@ LC.TitleScene = class extends Phaser.Scene {
     this.add.text(W - 10, H - 8, 'Made with Phaser 3 · art & music generated in code', { fontFamily: LC.FONT, fontSize: '12px', color: '#8a7a9a' }).setOrigin(1, 1);
 
     this.input.keyboard.on('keydown', function (ev) {
+      if (LC.Lobby.isOpen) return;
       LC.Audio.init();
       if (ev.code === 'ArrowUp' || ev.code === 'KeyW') { self.sel = (self.sel + self.options.length - 1) % self.options.length; self.renderOpts(); LC.Audio.sfx('click'); }
       else if (ev.code === 'ArrowDown' || ev.code === 'KeyS') { self.sel = (self.sel + 1) % self.options.length; self.renderOpts(); LC.Audio.sfx('click'); }
@@ -85,12 +87,26 @@ LC.TitleScene = class extends Phaser.Scene {
   choose() { if (!this.starting) this.options[this.sel].fn(); }
 
   begin(cont) {
+    if (LC.Net.role) LC.Net.leave();
+    if (!(cont && LC.State.load())) LC.State.newGame();
+    this.go();
+  }
+  go() {
+    var self = this;
     this.starting = true;
     LC.Audio.init(); LC.Audio.sfx('chime');
-    if (!(cont && LC.State.load())) LC.State.newGame();
-    var self = this;
     this.cameras.main.fadeOut(600, 0, 0, 0);
     this.cameras.main.once('camerafadeoutcomplete', function () { self.scene.start('World'); });
+  }
+
+  // co-op: the host plays their own saved farm; a guest plays on the host's farm with their own bag
+  openLobby() {
+    var self = this;
+    LC.Audio.init();
+    LC.Lobby.open({
+      onHosted: function () { if (!LC.State.load()) LC.State.newGame(); self.go(); },
+      onJoined: function (w) { LC.State.makeGuest(w.world); self.go(); }
+    });
   }
 
   update(time) {

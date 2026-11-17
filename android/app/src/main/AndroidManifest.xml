@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- No INTERNET permission: the whole game is packaged inside the APK and plays offline. -->
+    <!-- The game itself is packaged inside the APK and plays offline. INTERNET is only used for co-op
+         ("Play with Friends"): PeerJS matchmaking + WebRTC connections between players. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"

@@ -1,10 +1,10 @@
 /* Little Creature — service worker for the hosted web version (e.g. GitHub Pages).
  * Network-first so updates show up straight away; falls back to the cache when offline. */
-var CACHE = 'little-creature-v2';
+var CACHE = 'little-creature-v3';
 var FILES = [
   './', 'index.html', 'manifest.webmanifest',
-  'lib/phaser.min.js', 'lib/fonts/PixelifySans-latin.woff2', 'lib/fonts/PixelifySans-latin-ext.woff2',
-  'src/data.js', 'src/state.js', 'src/art.js', 'src/audio.js', 'src/main.js',
+  'lib/phaser.min.js', 'lib/peerjs.min.js', 'lib/fonts/PixelifySans-latin.woff2', 'lib/fonts/PixelifySans-latin-ext.woff2',
+  'src/data.js', 'src/state.js', 'src/sim.js', 'src/net.js', 'src/art.js', 'src/audio.js', 'src/lobby.js', 'src/main.js',
   'src/scenes/Boot.js', 'src/scenes/Title.js', 'src/scenes/World.js', 'src/scenes/UI.js',
   'icons/icon-192.png', 'icons/icon-512.png'
 ];

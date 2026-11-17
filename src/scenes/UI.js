@@ -37,9 +37,39 @@ window.LC = window.LC || {};
             self.toast('Select the Nasi (slot 3), face the spirit house and press ' + (self.touchOn ? 'USE.' : 'E.'), 'i_nasi');
           } });
         });
-      } else {
+      } else if (!this.S.guest) {
         this.time.delayedCall(600, function () { self.toast('Welcome back! Day ' + self.S.day + ', ' + LC.State.weekday() + '.', 'ic_sun'); });
       }
+      if (LC.Net.isHost()) this.time.delayedCall(1300, function () { self.toast('Your farm is open! Friends join with code ' + LC.Net.code + ' (also shown in the pause menu).', 'ic_joy'); });
+      if (LC.Net.isGuest()) this.time.delayedCall(700, function () { self.toast('You joined ' + LC.Net.hostName + '\'s farm! The fields and Pelita are shared; your bag is your own.', 'ic_joy'); });
+    }
+
+    // ================================================================ co-op HUD: status badge + name tags over friends
+    updateCoopUI() {
+      var N = LC.Net, W = this.world, self = this, s = '';
+      if (N.isHost()) s = 'Co-op  ·  code ' + N.code + '  ·  ' + N.count() + '/' + N.MAX + ' players';
+      else if (N.isGuest()) s = 'On ' + N.hostName + '\'s farm  ·  ' + N.count() + '/' + N.MAX + ' players';
+      if (s !== this.lastCoop) { this.tCoop.setText(s); this.lastCoop = s; }
+      var cam = W.cameras.main, seen = {};
+      Object.keys(W.remote || {}).forEach(function (id) {
+        var r = W.remote[id], t = self.nameTags[id];
+        seen[id] = 1;
+        if (!t) t = self.nameTags[id] = self.txt(0, 0, '', 13, '#fffdf2', { ox: 0.5, oy: 1, stroke: 4 }).setDepth(-1);   // under the HUD
+        var col = LC.Art.OUTFIT_COLORS[r.color || 0];
+        if (t.text !== (r.name || '')) t.setText(r.name || '');
+        if (t.lastCol !== col) { t.setColor(col); t.lastCol = col; }
+        var sx = (r.spr.x - cam.worldView.x) * cam.zoom, sy = (r.spr.y - 17 - cam.worldView.y) * cam.zoom;
+        var onScreen = cam.worldView.contains(r.spr.x, r.spr.y - 8);
+        t.setPosition(Math.round(sx), Math.round(sy)).setVisible(onScreen && !W.sleeping);
+      });
+      Object.keys(this.nameTags).forEach(function (id) { if (!seen[id]) { self.nameTags[id].destroy(); delete self.nameTags[id]; } });
+    }
+    inviteFriends() {
+      var self = this;
+      LC.Lobby.open({ hostOnly: true, onHosted: function (code) {
+        self.world.bindNet();
+        self.toast('Your farm is open! Friends join with code ' + code + '.', 'ic_joy');
+      } });
     }
 
     isBlocking() { return !!this.modal; }
@@ -93,6 +123,8 @@ window.LC = window.LC || {};
       this.tCrave = this.txt(px + 20, py + 180, '', 15, '#fbecc8');
       this.icCrave = this.add.image(px + 238, py + 186, 'i_nasi').setScale(2);
       this.gfx = this.add.graphics();
+      this.tCoop = this.txt(480, 50, '', 14, '#b8f0c8', { ox: 0.5, stroke: 4 });
+      this.nameTags = {};
     }
 
     buildHotbar() {
@@ -215,6 +247,10 @@ window.LC = window.LC || {};
     goalText() {
       var S = this.S, f = S.flags, g = S.ghost, pre = LC.State.isHGN() ? 'Hungry Ghost Night! All bond x2.\n' : '';
       var t;
+      if (S.guest) {
+        var gb = LC.State.nextStageBond();
+        return pre + 'Co-op on ' + LC.Net.hostName + '\'s farm. ' + (gb === null ? 'Pelita is the Guardian of the Kampung!' : 'Help Pelita grow: ' + Math.floor(g.bond) + ' / ' + gb + ' bond.');
+      }
       var E = this.touchOn ? 'USE' : 'E';
       if (!f.fedOnce) t = 'Offer Nenek\'s Nasi to Pelita: select it, face the spirit house and press ' + E + '.';
       else if (!f.incense) t = 'Light the Colok: face the spirit house and press ' + E + ' to open its menu.';
@@ -261,6 +297,7 @@ window.LC = window.LC || {};
 
       this.drawHotbar();
       this.drawTouch();
+      this.updateCoopUI();
 
       // toasts (lifted above the thumb-stick in touch mode)
       var y = this.touchOn ? 410 : 540, now = this.time.now;
@@ -424,9 +461,16 @@ window.LC = window.LC || {};
     }
 
     confirmSleep() {
-      var self = this, early = this.S.minutes < 18 * 60;
-      this.say([{ text: early ? 'It\'s still early. Go to sleep and end the day anyway?' : 'Climb the tangga and go to sleep?' }],
-        { choices: [{ label: 'Sleep', fn: function () { self.world.sleep(false); } }, { label: 'Not yet' }] });
+      var self = this, N = LC.Net, early = this.S.minutes < 18 * 60;
+      if (N.isGuest()) {
+        this.say([{ text: 'Only ' + N.hostName + ' (the host) can end the day. On a shared farm everyone sleeps together.' }],
+          { choices: [{ label: 'Tell them I\'m sleepy', fn: function () { N.send({ t: 'sleepy' }); self.toast('You let ' + N.hostName + ' know you\'re sleepy.', 'ic_moon'); } }, { label: 'Keep playing' }] });
+        return;
+      }
+      var friends = N.isHost() ? N.count() - 1 : 0;
+      var q = friends ? 'End the day for everyone? (' + friends + ' friend' + (friends > 1 ? 's are' : ' is') + ' on your farm.)'
+        : early ? 'It\'s still early. Go to sleep and end the day anyway?' : 'Climb the tangga and go to sleep?';
+      this.say([{ text: q }], { choices: [{ label: 'Sleep', fn: function () { self.world.sleep(false); } }, { label: 'Not yet' }] });
     }
 
     // ================================================================ list menus
@@ -629,19 +673,37 @@ window.LC = window.LC || {};
       this.openMenu({
         title: 'Paused', footer: 'Your game saves automatically every night, and whenever you leave the game.',
         tabs: [{ label: 'Menu', rows: function () {
+          var N = LC.Net, coop;
+          if (N.isHost()) coop = [
+            { icon: 'ic_joy', label: 'Invite code:  ' + N.code, sub: N.count() + '/' + N.MAX + ' players. Friends choose Play with Friends, then Join, and type this code.', action: function () { self.toast('Room code: ' + N.code, 'ic_joy'); } },
+            { icon: 'ic_moon', label: 'Close farm to friends', sub: 'Friends go home with their bags. You keep playing alone.', action: function () { N.leave(); self.toast('Your farm is private again.', 'ic_moon'); return 'close'; } }
+          ];
+          else if (N.isGuest()) coop = [
+            { icon: 'ic_moon', label: 'Leave ' + N.hostName + '\'s farm', sub: 'Go back to the title. Your bag and kepeng stay saved on this device.', action: function () { self.quitToTitle(); } }
+          ];
+          else coop = [
+            { icon: 'ic_joy', label: 'Invite friends (co-op)', sub: 'Open this farm so friends can join from a PC or Android phone. Needs internet.', action: function () { self.inviteFriends(); return 'close'; } }
+          ];
           return [
-            { icon: 'ic_sun', label: 'Resume', sub: 'Back to the kampung.', action: function () { return 'close'; } },
+            { icon: 'ic_sun', label: 'Resume', sub: 'Back to the kampung.', action: function () { return 'close'; } }
+          ].concat(coop, [
             { icon: 'ic_bond', label: 'Save game', sub: 'Save your farm, bag and Pelita right now.', action: function () { self.toast(LC.State.save() ? 'Game saved.' : 'Could not save: browser storage is blocked.', 'ic_bond'); return 'close'; } },
             { icon: 'ic_glow', label: 'Music: ' + (LC.Audio.musicOn ? 'On' : 'Off'), sub: 'Chill gamelan-style music, generated live. Press M anytime.', action: function () { LC.Audio.toggleMusic(); } },
             { icon: 'ic_moon', label: 'Nature sounds: ' + (LC.Audio.ambienceOn ? 'On' : 'Off'), sub: 'River, birdsong by day, crickets and frogs at night.', action: function () { LC.Audio.toggleAmbience(); } },
             { icon: 'ic_joy', label: 'Touch controls: ' + (self.touchOn ? 'On' : 'Off'), sub: 'On-screen joystick and USE / EAT / BAG buttons for phones and tablets.', action: function () { self.setTouch(!self.touchOn); } },
             { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact · tap the hotbar to select · II pauses' : 'WASD/Arrows move · E use · 1-9 or wheel select · Q next tool · X eat · Tab bag · M music' },
-            { icon: 'ic_moon', label: 'Quit to title', sub: 'Anything since your last sleep (or save) is lost.', action: function () { self.quitToTitle(); } }
-          ];
+            { icon: 'ic_moon', label: 'Quit to title', sub: LC.Net.role ? 'Also ends the co-op session.' : 'Anything since your last sleep (or save) is lost.', action: function () { self.quitToTitle(); } }
+          ]);
         } }]
       });
     }
-    quitToTitle() { this.closeModal(); this.scene.stop('World'); this.scene.start('Title'); }
+    quitToTitle() {
+      this.closeModal();
+      if (LC.Net.isGuest()) LC.State.save();   // keep the guest's bag
+      if (LC.Net.role) LC.Net.leave();
+      this.scene.stop('World');
+      this.scene.start('Title');
+    }
 
     // ================================================================ bag
     openInventory() {

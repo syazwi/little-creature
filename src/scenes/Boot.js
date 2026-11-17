@@ -22,9 +22,12 @@ LC.BootScene = class extends Phaser.Scene {
 
   createAnims() {
     var a = this.anims;
-    ['down', 'up', 'side'].forEach(function (d) {
-      if (!a.exists('walk_' + d)) a.create({ key: 'walk_' + d, frames: [{ key: 'pl_' + d + '_1' }, { key: 'pl_' + d + '_0' }, { key: 'pl_' + d + '_2' }, { key: 'pl_' + d + '_0' }], frameRate: 8, repeat: -1 });
-    });
+    for (var c = 0; c < 4; c++) {
+      var pk = LC.Art.plKey(c), wk = LC.Art.walkKey(c);
+      ['down', 'up', 'side'].forEach(function (d) {
+        if (!a.exists(wk + '_' + d)) a.create({ key: wk + '_' + d, frames: [{ key: pk + '_' + d + '_1' }, { key: pk + '_' + d + '_0' }, { key: pk + '_' + d + '_2' }, { key: pk + '_' + d + '_0' }], frameRate: 8, repeat: -1 });
+      });
+    }
     if (!a.exists('kerbau_walk')) a.create({ key: 'kerbau_walk', frames: [{ key: 'kerbau_0' }, { key: 'kerbau_1' }], frameRate: 3, repeat: -1 });
     if (!a.exists('chicken_walk')) a.create({ key: 'chicken_walk', frames: [{ key: 'chicken_0' }, { key: 'chicken_2' }], frameRate: 6, repeat: -1 });
     if (!a.exists('chicken_peck')) a.create({ key: 'chicken_peck', frames: [{ key: 'chicken_0' }, { key: 'chicken_1' }, { key: 'chicken_0' }, { key: 'chicken_0' }], frameRate: 4, repeat: -1 });

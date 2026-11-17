@@ -95,6 +95,9 @@ window.LC = window.LC || {};
     return c;
   }
   Art.make = make;
+  // texture / animation key prefixes for player outfit c (0 keeps the original single-player keys)
+  Art.plKey = function (c) { return c ? 'pl' + c : 'pl'; };
+  Art.walkKey = function (c) { return c ? 'walk' + c : 'walk'; };
 
   // ================================================================== TILES
   var GR = { base: '#5f9f3f', dark: '#518d35', light: '#6fb24b', tuft: '#7cc257', sh: '#467c2e' };
@@ -202,10 +205,19 @@ window.LC = window.LC || {};
   }
 
   // ================================================================== CHARACTERS
-  function drawPlayer(p, dir, f) {
+  // outfit colours per player (co-op): [shirt, shirt shade, sarong, sarong shade, skin, skin shade]
+  var OUTFITS = [
+    ['#cf4f3c', '#a33a2c', '#3e5fa8', '#2c4583', '#d49b6b', '#b37b4d'],
+    ['#2a9d8f', '#1f7a70', '#8a2f4a', '#6a2238', '#c48a5c', '#a06c42'],
+    ['#e9b949', '#c4922f', '#3f7f3a', '#2c5e2a', '#e0aa7c', '#c08a5c'],
+    ['#8e5cc4', '#6c4398', '#8a5a2b', '#6b4423', '#b8794a', '#955d34']
+  ];
+  Art.OUTFIT_COLORS = OUTFITS.map(function (o) { return o[0]; });
+  function drawPlayer(p, dir, f, c) {
+    var O = OUTFITS[c || 0];
     var HAT = '#ecd28a', HAT2 = '#cdb062', HAT3 = '#a88a44', HATL = '#f7e6b0';
-    var SK = '#d49b6b', SK2 = '#b37b4d', EYE = '#2a1a10', HAIR = '#2b1d16';
-    var SH = '#cf4f3c', SH2 = '#a33a2c', SA = '#3e5fa8', SA2 = '#2c4583', SAL = '#c99a3a', FT = '#5a3820';
+    var SK = O[4], SK2 = O[5], EYE = '#2a1a10', HAIR = '#2b1d16';
+    var SH = O[0], SH2 = O[1], SA = O[2], SA2 = O[3], SAL = '#c99a3a', FT = '#5a3820';
     // legs
     if (dir === 'side') {
       if (f === 0) { p.rect(7, 14, 2, 1, SK); p.rect(7, 15, 3, 1, FT); }
@@ -660,7 +672,11 @@ window.LC = window.LC || {};
   // ================================================================== GENERATE
   Art.generate = function (scene) {
     buildTiles(scene);
-    ['down', 'up', 'side'].forEach(function (d) { for (var f = 0; f < 3; f++) make(scene, 'pl_' + d + '_' + f, 16, 16, function (p) { drawPlayer(p, d, f); }); });
+    for (var pc = 0; pc < OUTFITS.length; pc++) {
+      ['down', 'up', 'side'].forEach(function (d) {
+        for (var f = 0; f < 3; f++) make(scene, Art.plKey(pc) + '_' + d + '_' + f, 16, 16, function (p) { drawPlayer(p, d, f, pc); });
+      });
+    }
     for (var st = 0; st < 5; st++) GHOST_EXPR.forEach(function (ex) { make(scene, 'ghost_' + st + '_' + ex, 20, 22, function (p) { drawGhost(p, st, ex); }); });
     make(scene, 'npc_ani_0', 16, 20, function (p) { drawAni(p, false); });
     make(scene, 'npc_ani_1', 16, 20, function (p) { drawAni(p, true); });

@@ -192,6 +192,14 @@ src/
 - **Autosave:** the game saves on `visibilitychange`/`pagehide`, as well as at bedtime.
 - **Hosted web (optional):** GitHub Pages with `manifest.webmanifest` and `sw.js` (network-first) for an installable, offline-capable web app.
 
+### Co-op multiplayer (added in v1.1)
+- **Transport:** PeerJS (WebRTC data channels). Matchmaking uses the free public PeerJS server; the room code is the host's peer id `littlecreature-XXXXX`. Game traffic is peer-to-peer, with PeerJS's public TURN relay as a fallback. The topology is a star: guests talk only to the host.
+- **Authority:** the host owns the shared farm (fields, trees, clock, Pelita, offerings). Every shared change goes through `LC.Sim` (`src/sim.js`): single-player and the host call it directly, and guests send `op` requests that the host runs and broadcasts as `sync` slices. Personal state (bag, kepeng, energy, water) stays on each device. Costs are paid locally and refunded if the host rejects the op (for example, a friend got there first).
+- **Streaming:** the host sends a 10 Hz `tick` (time, Pelita's position, expression and needs, every player's position). Guests send a `pos` update at about 10 Hz.
+- **Day cycle:** the host sleeps for everyone (`sleepStart` → `dayStart` with the summary and a new snapshot). In co-op the clock does not pause for menus.
+- **Saving:** the host saves the farm as usual. A guest's bag is saved separately (`littleCreature.coopBag`) and never touches their own single-player save.
+- **UI:** a DOM lobby (`src/lobby.js`) with real inputs for names and codes; a co-op badge; name tags in each player's outfit colour; up to 4 outfits; pause-menu invite, close and leave options.
+
 ### Audio (chill mix)
 Slow pads, sparse bells, a soft bass pulse and a distant gong through a generated convolution reverb, at 56 bpm by day and 46 bpm by night. A separate nature bus carries the river, koels and bulbuls by day, and crickets and frogs (*kodok*) at night. Music and nature sounds can be toggled independently.
 
@@ -212,3 +220,4 @@ Slow pads, sparse bells, a soft bass pulse and a distant gong through a generate
 - Seasons (wet and dry monsoon), fishing in the river, a krathong-making minigame.
 - More spirits from regional folklore, each with their own tastes.
 - Gamepad support, and a Play Store release (that would need an AAB build).
+- Co-op extras: shared chests, gifting items between players, a "everyone ready to sleep" vote, chat emotes, and a self-hosted PeerJS server for reliability.

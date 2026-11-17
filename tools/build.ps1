@@ -29,7 +29,7 @@ if (-not (Test-Path 'android/local.properties')) {
 if (-not (Test-Path 'android/keystore.properties')) { Write-Warning 'android/keystore.properties missing: the APK will be signed with the debug key.' }
 
 Push-Location android
-try { & .\gradlew.bat assembleRelease --console=plain; if ($LASTEXITCODE) { throw 'Gradle build failed' } }
+try { & .\gradlew.bat assembleRelease --no-daemon --console=plain; if ($LASTEXITCODE) { throw 'Gradle build failed' } }
 finally { Pop-Location }
 
 New-Item -ItemType Directory -Force dist | Out-Null
