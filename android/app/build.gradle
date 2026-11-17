@@ -1,0 +1,96 @@
+import javax.inject.Inject
+
+plugins {
+    id 'com.android.application'
+}
+
+// Release signing comes from android/keystore.properties (kept out of git). Without it, the debug key is used.
+def ksFile = rootProject.file('keystore.properties')
+def ks = new Properties()
+if (ksFile.exists()) ksFile.withInputStream { ks.load(it) }
+
+android {
+    namespace 'com.syazwi.littlecreature'
+    compileSdk 35
+    buildToolsVersion '35.0.0'
+
+    defaultConfig {
+        applicationId 'com.syazwi.littlecreature'
+        minSdk 24
+        targetSdk 35
+        versionCode 1
+        versionName '1.0.0'
+    }
+
+    signingConfigs {
+        release {
+            if (ksFile.exists()) {
+                storeFile rootProject.file(ks['storeFile'])
+                storePassword ks['storePassword']
+                keyAlias ks['keyAlias']
+                keyPassword ks['keyPassword']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig ksFile.exists() ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.12.1'
+}
+
+// ------------------------------------------------------------------------------------------
+// The game itself lives in the repository root (index.html, src/, lib/ ...). Copy it into the
+// APK's assets/www at build time, so the web version and the Android version never drift apart.
+abstract class SyncWebAssets extends DefaultTask {
+    @InputFiles @PathSensitive(PathSensitivity.RELATIVE)
+    abstract ConfigurableFileCollection getWebFiles()
+
+    @Internal
+    abstract DirectoryProperty getWebRoot()
+
+    @OutputDirectory
+    abstract DirectoryProperty getOutputDir()
+
+    @Inject
+    abstract FileSystemOperations getFs()
+
+    @TaskAction
+    void sync() {
+        fs.sync { spec ->
+            spec.from(webRoot) { it.include('index.html', 'src/**', 'lib/**', 'icons/**') }
+            spec.into(outputDir.dir('www'))
+        }
+    }
+}
+
+def webRootDir = rootProject.layout.projectDirectory.dir('..')
+def syncWeb = tasks.register('syncWebAssets', SyncWebAssets) {
+    webRoot.set(webRootDir)
+    webFiles.from(fileTree(webRootDir) { include 'index.html', 'src/**', 'lib/**', 'icons/**' })
+    outputDir.set(layout.buildDirectory.dir('generated/webAssets'))
+}
+
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        variant.sources.assets.addGeneratedSourceDirectory(syncWeb, { it.outputDir })
+    }
+}

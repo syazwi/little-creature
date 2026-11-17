@@ -1,0 +1,749 @@
+/* UI: HUD, hotbar, toasts, dialogue, menus (shop / cook / spirit house / bag / pause) and the day summary.
+ * Owns all discrete keyboard input; the World only polls movement keys. */
+window.LC = window.LC || {};
+(function () {
+  'use strict';
+  var ACCEPT = { KeyE: 1, Space: 1, Enter: 1 };
+
+  LC.UIScene = class extends Phaser.Scene {
+    constructor() { super('UI'); }
+
+    create() {
+      var self = this;
+      this.ready = false;
+      this.world = this.scene.get('World');
+      this.S = LC.State.s;
+      this.modal = null; this.toasts = []; this.lastPrompt = null; this.lastBright = null;
+      this.buildHUD();
+      this.buildHotbar();
+      this.buildTouch();
+      this.input.keyboard.on('keydown', this.onKey, this);
+      this.input.keyboard.addCapture('TAB,SPACE,UP,DOWN,LEFT,RIGHT');
+      this.input.on('wheel', function (p, objs, dx, dy) {
+        if (self.modal) { if (self.modal.wheel) self.modal.wheel(dy); return; }
+        self.selectSlot((self.S.sel + (dy > 0 ? 1 : 8)) % 9);
+      });
+      this.input.on('pointerdown', function (p, over) {
+        LC.Audio.init();
+        if (over && over.some(function (o) { return o.isTouchBtn; })) return;   // on-screen buttons handle themselves
+        if (self.modal && self.modal.click) self.modal.click();
+      });
+      this.ready = true;
+
+      if (!this.S.flags.introDone) {
+        this.time.delayedCall(800, function () {
+          self.say(LC.TEXT.intro, { onDone: function () {
+            self.S.flags.introDone = true;
+            self.toast('Select the Nasi (slot 3), face the spirit house and press ' + (self.touchOn ? 'USE.' : 'E.'), 'i_nasi');
+          } });
+        });
+      } else {
+        this.time.delayedCall(600, function () { self.toast('Welcome back! Day ' + self.S.day + ', ' + LC.State.weekday() + '.', 'ic_sun'); });
+      }
+    }
+
+    isBlocking() { return !!this.modal; }
+
+    // ================================================================ helpers
+    txt(x, y, s, size, color, o) {
+      o = o || {};
+      var style = { fontFamily: LC.FONT, fontSize: size + 'px', color: color || '#fbecc8', stroke: '#1a120c', strokeThickness: o.stroke || 0, lineSpacing: o.ls || 2, align: o.align || 'left' };
+      if (o.wrap) style.wordWrap = { width: o.wrap, useAdvancedWrap: true };
+      return this.add.text(x, y, s, style).setOrigin(o.ox || 0, o.oy || 0);
+    }
+    panel(g, x, y, w, h) {
+      g.fillStyle(0x1e1510, 0.93); g.fillRoundedRect(x, y, w, h, 8);
+      g.lineStyle(3, 0xd9a94e, 1); g.strokeRoundedRect(x + 1.5, y + 1.5, w - 3, h - 3, 8);
+      g.lineStyle(1, 0x7a5a2e, 1); g.strokeRoundedRect(x + 6, y + 6, w - 12, h - 12, 5);
+      [[x + 7, y + 7], [x + w - 7, y + 7], [x + 7, y + h - 7], [x + w - 7, y + h - 7]].forEach(function (p) {
+        g.fillStyle(0xf2c94c, 1);
+        g.fillTriangle(p[0], p[1] - 4, p[0] + 4, p[1], p[0], p[1] + 4);
+        g.fillTriangle(p[0], p[1] - 4, p[0] - 4, p[1], p[0], p[1] + 4);
+      });
+    }
+    bar(g, x, y, w, h, frac, color) {
+      frac = Math.max(0, Math.min(1, frac));
+      g.fillStyle(0x000000, 0.55); g.fillRect(x, y, w, h);
+      g.fillStyle(color, 1); g.fillRect(x + 1, y + 1, (w - 2) * frac, h - 2);
+      g.fillStyle(0xffffff, 0.22); g.fillRect(x + 1, y + 1, (w - 2) * frac, Math.max(1, Math.floor(h / 3)));
+    }
+
+    // ================================================================ HUD
+    buildHUD() {
+      var g = this.hudG = this.add.graphics();
+      this.panel(g, 12, 12, 262, 112);
+      this.tDay = this.txt(28, 22, '', 20);
+      this.icTime = this.add.image(42, 66, 'ic_sun').setScale(2);
+      this.tTime = this.txt(62, 52, '', 24, '#ffd166');
+      this.add.image(180, 66, 'ic_coin').setScale(2);
+      this.tCoin = this.txt(198, 52, '', 24, '#f7dd8a');
+      this.add.image(42, 101, 'ic_energy').setScale(2);
+      this.tGoal = this.txt(16, 132, '', 15, '#fbecc8', { wrap: 330, stroke: 4 });
+
+      var px = this.PX = 960 - 286, py = this.PY = 12;
+      this.panel(g, px, py, 274, 212);
+      g.fillStyle(0x3b2f5c, 1); g.fillCircle(px + 50, py + 68, 38);
+      g.lineStyle(2, 0xb8a8ff, 0.8); g.strokeCircle(px + 50, py + 68, 38);
+      this.portrait = this.add.image(px + 50, py + 66, 'ghost_0_normal').setScale(3);
+      this.txt(px + 100, py + 14, 'Pelita', 22, '#e8dcff');
+      this.tStage = this.txt(px + 100, py + 42, '', 14, '#b8a8ff');
+      var self = this;
+      ['ic_full', 'ic_joy', 'ic_glow'].forEach(function (k, i) { self.add.image(px + 114, py + 74 + i * 25, k).setScale(2); });
+      this.tBond = this.txt(px + 20, py + 146, '', 13, '#f7dd8a');
+      this.tCrave = this.txt(px + 20, py + 180, '', 15, '#fbecc8');
+      this.icCrave = this.add.image(px + 238, py + 186, 'i_nasi').setScale(2);
+      this.gfx = this.add.graphics();
+    }
+
+    buildHotbar() {
+      var self = this;
+      this.hotG = this.add.graphics();
+      this.slotUI = [];
+      var x0 = 240, y = 580;
+      for (var i = 0; i < 9; i++) {
+        (function (i) {
+          var x = x0 + i * 54;
+          var icon = self.add.image(x + 24, y + 24, 'i_hoe').setScale(2);
+          var cnt = self.txt(x + 46, y + 47, '', 14, '#ffffff', { stroke: 3, ox: 1, oy: 1 });
+          self.txt(x + 4, y + 2, String(i + 1), 11, '#a08a6a');
+          var z = self.add.zone(x, y, 48, 48).setOrigin(0).setInteractive({ useHandCursor: true });
+          z.on('pointerdown', function () { if (!self.modal) self.selectSlot(i); });
+          self.slotUI.push({ x: x, y: y, icon: icon, cnt: cnt });
+        })(i);
+      }
+      this.tPrompt = this.txt(480, 566, '', 18, '#fffdf2', { stroke: 5, ox: 0.5, oy: 1 });
+    }
+
+    // ================================================================ touch controls (Android / touchscreens)
+    buildTouch() {
+      var self = this, pref = null;
+      try { pref = localStorage.getItem('littleCreature.touch'); } catch (e) { /* ignore */ }
+      this.touchOn = pref ? pref === 'on' : !!(this.sys.game.device.input.touch || LC.PLATFORM === 'android');
+      this.input.addPointer(2);
+      this.stick = { id: -1, bx: 0, by: 0, x: 0, y: 0 };
+      this.stickG = this.add.graphics().setDepth(70);
+      this.tBtns = [];
+      function btn(x, y, r, label, code, always) {
+        var b = { x: x, y: y, r: r, code: code, always: always, down: false, label: label };
+        b.g = self.add.graphics().setDepth(always ? 110 : 70);
+        b.t = self.txt(x, y, label, r > 30 ? 18 : 13, '#fffdf2', { ox: 0.5, oy: 0.5, stroke: 3 }).setDepth(always ? 111 : 71);
+        b.hit = self.add.circle(x, y, r + 6, 0xffffff, 0.001).setDepth(always ? 112 : 72).setInteractive({ useHandCursor: true });
+        b.hit.isTouchBtn = true;
+        b.hit.on('pointerdown', function () { b.down = true; self.pressKey(code); });
+        b.hit.on('pointerup', function () { b.down = false; });
+        b.hit.on('pointerout', function () { b.down = false; });
+        self.tBtns.push(b);
+        return b;
+      }
+      this.btnUse = btn(872, 486, 46, 'USE', 'KeyE');
+      this.btnEat = btn(786, 566, 28, 'EAT', 'KeyX');
+      this.btnBag = btn(888, 594, 28, 'BAG', 'Tab');
+      this.btnMenu = btn(480, 26, 18, 'II', 'Escape', true);
+
+      this.input.on('pointerdown', function (p, over) {
+        if (!self.touchOn || self.modal || self.world.sleeping || self.stick.id !== -1) return;
+        if (over && over.length) return;                 // tapped a button, hotbar slot, etc.
+        if (p.x < 430 && p.y > 210) { var s = self.stick; s.id = p.id; s.bx = s.x = p.x; s.by = s.y = p.y; }
+      });
+      this.input.on('pointermove', function (p) {
+        var s = self.stick;
+        if (p.id !== s.id) return;
+        s.x = p.x; s.y = p.y;
+        var dx = s.x - s.bx, dy = s.y - s.by, d = Math.hypot(dx, dy), R = 56;
+        if (d > R) { s.bx = s.x - dx / d * R; s.by = s.y - dy / d * R; }   // floating stick follows the thumb
+      });
+      this.input.on('pointerup', function (p) { if (p.id === self.stick.id) self.stick.id = -1; });
+    }
+    pressKey(code) { this.onKey({ code: code, preventDefault: function () {} }); }
+    touchVec() {
+      var s = this.stick;
+      if (!this.touchOn || s.id === -1 || this.modal) return null;
+      var dx = s.x - s.bx, dy = s.y - s.by, d = Math.hypot(dx, dy);
+      if (d < 8) return { x: 0, y: 0 };
+      var m = Math.min(1, d / 56);
+      return { x: dx / d * m, y: dy / d * m };
+    }
+    setTouch(on) {
+      this.touchOn = on; this.stick.id = -1;
+      try { localStorage.setItem('littleCreature.touch', on ? 'on' : 'off'); } catch (e) { /* ignore */ }
+    }
+    drawTouch() {
+      var g = this.stickG, s = this.stick, show = this.touchOn && !this.modal && !this.world.sleeping;
+      if (this.modal || !this.touchOn) s.id = -1;
+      g.clear();
+      if (show) {
+        var bx = s.id === -1 ? 110 : s.bx, by = s.id === -1 ? 520 : s.by;
+        g.fillStyle(0x1e1510, s.id === -1 ? 0.25 : 0.45); g.fillCircle(bx, by, 58);
+        g.lineStyle(2, 0xd9a94e, s.id === -1 ? 0.35 : 0.8); g.strokeCircle(bx, by, 58);
+        var kx = s.id === -1 ? bx : s.x, ky = s.id === -1 ? by : s.y;
+        var dx = kx - bx, dy = ky - by, d = Math.hypot(dx, dy);
+        if (d > 56) { kx = bx + dx / d * 56; ky = by + dy / d * 56; }
+        g.fillStyle(0xf2d06b, s.id === -1 ? 0.3 : 0.85); g.fillCircle(kx, ky, 24);
+      }
+      var bright = this.lastBright, modal = !!this.modal;
+      this.tBtns.forEach(function (b) {
+        var vis = b.always || show;
+        b.g.clear(); b.t.setVisible(vis); b.hit.setVisible(vis);
+        if (!vis) return;
+        var hot = b.code === 'KeyE' && bright;
+        b.g.fillStyle(hot ? 0x5a4024 : 0x1e1510, b.down ? 0.95 : 0.7); b.g.fillCircle(b.x, b.y, b.r);
+        b.g.lineStyle(hot ? 3 : 2, hot ? 0xffd166 : 0xd9a94e, 0.95); b.g.strokeCircle(b.x, b.y, b.r);
+        if (b.always) b.t.setText(modal ? 'X' : 'II');
+      });
+    }
+
+    drawHotbar() {
+      var g = this.hotG, S = this.S;
+      g.clear();
+      g.fillStyle(0x1e1510, 0.85); g.fillRoundedRect(232, 572, 496, 64, 10);
+      g.lineStyle(2, 0x8a6a3a, 1); g.strokeRoundedRect(232, 572, 496, 64, 10);
+      this.slotUI.forEach(function (s, i) {
+        var sl = S.inv[i], on = i === S.sel;
+        g.fillStyle(on ? 0x5a4024 : 0x2e2219, 1); g.fillRoundedRect(s.x, s.y, 48, 48, 6);
+        g.lineStyle(on ? 3 : 1, on ? 0xffd166 : 0x6a5034, 1); g.strokeRoundedRect(s.x, s.y, 48, 48, 6);
+        if (sl) {
+          s.icon.setVisible(true).setTexture(LC.ITEMS[sl.id].icon);
+          s.cnt.setText(sl.n > 1 ? String(sl.n) : '');
+          if (sl.id === 'can') {
+            g.fillStyle(0x000000, 0.7); g.fillRect(s.x + 6, s.y + 40, 36, 5);
+            g.fillStyle(0x6fb2dc, 1); g.fillRect(s.x + 7, s.y + 41, 34 * S.water / S.maxWater, 3);
+          }
+        } else { s.icon.setVisible(false); s.cnt.setText(''); }
+      });
+    }
+
+    goalText() {
+      var S = this.S, f = S.flags, g = S.ghost, pre = LC.State.isHGN() ? 'Hungry Ghost Night! All bond x2.\n' : '';
+      var t;
+      var E = this.touchOn ? 'USE' : 'E';
+      if (!f.fedOnce) t = 'Offer Nenek\'s Nasi to Pelita: select it, face the spirit house and press ' + E + '.';
+      else if (!f.incense) t = 'Light the Colok: face the spirit house and press ' + E + ' to open its menu.';
+      else if (!f.tilled) t = 'Till the soil in the fenced field with the Cangkul (slot 1).';
+      else if (!f.planted) t = 'Plant seeds in your tilled soil.';
+      else if (!f.watered) t = 'Fill the Gembor at the well, then water your seeds.';
+      else if (!f.slept) t = 'When you are done for the day, sleep in the house.';
+      else if (!f.harvested) t = 'Water your crops each day until they are ready to harvest.';
+      else if (!f.cooked) t = 'Cook a dish at the dapur. Cooked food fills Pelita far more.';
+      else if (!f.metAni) t = 'Visit Mak Ani\'s warung on the east road to sell and buy.';
+      else {
+        var nb = LC.State.nextStageBond();
+        t = nb === null ? 'Pelita is the Guardian of the Kampung. Keep the farm thriving!' : 'Help Pelita grow: ' + Math.floor(g.bond) + ' / ' + nb + ' bond to become a ' + LC.STAGES[g.stage + 1].name + '.';
+      }
+      return pre + 'Goal: ' + t;
+    }
+
+    update(time) {
+      if (!this.ready) return;
+      var S = this.S, g = S.ghost, gf = this.gfx, self = this;
+      var m = Math.floor(S.minutes / 10) * 10, h = Math.floor(m / 60) % 24, mm = m % 60, ap = h < 12 ? 'AM' : 'PM', h12 = h % 12 || 12;
+      this.tTime.setText(h12 + ':' + (mm < 10 ? '0' : '') + mm + ' ' + ap);
+      this.icTime.setTexture(S.minutes >= 18 * 60 ? 'ic_moon' : 'ic_sun');
+      var hgn = LC.State.isHGN();
+      var dayStr = 'Day ' + S.day + ' · ' + LC.State.weekday();
+      if (dayStr !== this.lastDayStr) { this.tDay.setText(dayStr).setColor(hgn ? '#ff8a7a' : '#fbecc8'); this.lastDayStr = dayStr; }
+      this.tCoin.setText(String(S.kepeng));
+      this.tGoal.setText(this.goalText());
+
+      gf.clear();
+      this.bar(gf, 60, 95, 196, 12, S.energy / S.maxEnergy, S.energy < 20 ? 0xe76f51 : 0x9be15d);
+      var px = this.PX, py = this.PY;
+      this.bar(gf, px + 132, py + 68, 124, 12, g.full / 100, g.full < 25 ? 0xe76f51 : 0xf2d06b);
+      this.bar(gf, px + 132, py + 93, 124, 12, g.joy / 100, g.joy < 20 ? 0xe76f51 : 0xff7aa8);
+      this.bar(gf, px + 132, py + 118, 124, 12, g.glow / 100, g.glow < 20 ? 0xe76f51 : 0xb8a8ff);
+      var nb = LC.State.nextStageBond(), pb = LC.STAGES[g.stage].bond;
+      this.bar(gf, px + 20, py + 164, 234, 7, nb === null ? 1 : (g.bond - pb) / (nb - pb), 0xffd166);
+      this.portrait.setTexture('ghost_' + g.stage + '_' + (this.world.curExpr || 'normal'));
+      this.tStage.setText(LC.STAGES[g.stage].name);
+      this.tBond.setText(nb === null ? 'Bond ' + Math.floor(g.bond) + '  (max)' : 'Bond ' + Math.floor(g.bond) + ' / ' + nb);
+      if (g.stage === 0) { this.tCrave.setText('Craving: ???'); this.icCrave.setVisible(false); }
+      else if (g.cravingDone) { this.tCrave.setText('Craving: satisfied!'); this.icCrave.setVisible(false); }
+      else { this.tCrave.setText('Craving: ' + LC.ITEMS[g.craving].name); this.icCrave.setVisible(true).setTexture('i_' + g.craving); }
+
+      this.drawHotbar();
+      this.drawTouch();
+
+      // toasts (lifted above the thumb-stick in touch mode)
+      var y = this.touchOn ? 410 : 540, now = this.time.now;
+      this.toasts = this.toasts.filter(function (c) {
+        if (!c.dying && now - c.born > 4200) {
+          c.dying = true;
+          self.tweens.add({ targets: c, alpha: 0, duration: 300, onComplete: function () { c.destroy(); } });
+        }
+        return !c.dying || c.alpha > 0.02;
+      });
+      this.toasts.forEach(function (c) {
+        if (c.dying) return;
+        y -= c.h + 4;
+        c.y += (y - c.y) * 0.35;
+      });
+    }
+
+    setPrompt(label) {
+      if (!this.ready) return;
+      var s = '', bright = false;
+      if (this.modal) s = '';
+      else if (label) { s = (this.touchOn ? '' : '[E] ') + label; bright = true; }
+      else {
+        var sl = LC.State.selItem();
+        if (sl) {
+          var it = LC.ITEMS[sl.id];
+          s = it.name + (sl.id === 'can' ? '  (' + this.S.water + '/' + this.S.maxWater + ' water)' : it.food ? '    [X] eat' : '');
+        }
+      }
+      if (s !== this.lastPrompt) { this.tPrompt.setText(s); this.lastPrompt = s; }
+      if (bright !== this.lastBright) { this.tPrompt.setColor(bright ? '#fffdf2' : '#b8a890'); this.lastBright = bright; }
+    }
+
+    toast(msg, icon) {
+      if (!this.ready) return;
+      var now = this.time.now;
+      for (var i = 0; i < this.toasts.length; i++) {
+        var o = this.toasts[i];
+        if (!o.dying && o.msg === msg) { o.born = now; o.setScale(1.04); this.tweens.add({ targets: o, scale: 1, duration: 140 }); return; }
+      }
+      var hasIcon = icon && this.textures.exists(icon);
+      var c = this.add.container(16, this.touchOn ? 410 : 540).setDepth(80);
+      var t = this.txt(hasIcon ? 48 : 12, 0, msg, 16, '#fffdf2', { wrap: 470 });
+      var h = Math.max(hasIcon ? 38 : 28, t.height + 12), w = (hasIcon ? 60 : 24) + t.width;
+      var bg = this.add.graphics();
+      bg.fillStyle(0x1e1510, 0.9); bg.fillRoundedRect(0, 0, w, h, 6);
+      bg.lineStyle(1, 0x8a6a3a, 1); bg.strokeRoundedRect(0, 0, w, h, 6);
+      t.setY(Math.round((h - t.height) / 2));
+      c.add([bg, t]);
+      if (hasIcon) c.add(this.add.image(25, h / 2, icon).setScale(2));
+      c.h = h; c.born = now; c.msg = msg;
+      c.setAlpha(0);
+      this.tweens.add({ targets: c, alpha: 1, duration: 150 });
+      this.toasts.unshift(c);
+      while (this.toasts.length > 5) this.toasts.pop().destroy();
+    }
+
+    // ================================================================ input
+    selectSlot(i) { this.S.sel = i; LC.Audio.sfx('click'); }
+    nextTool() {
+      var S = this.S;
+      for (var k = 1; k <= 9; k++) {
+        var j = (S.sel + k) % 9, sl = S.inv[j];
+        if (sl && LC.ITEMS[sl.id].kind === 'tool') { this.selectSlot(j); return; }
+      }
+    }
+    onKey(ev) {
+      var code = ev.code;
+      LC.Audio.init();
+      if (this.modal) { this.modal.key(code, ev); return; }
+      if (this.world.sleeping) return;
+      if (ACCEPT[code]) { this.world.doAction(); return; }
+      if (/^Digit[1-9]$/.test(code)) { this.selectSlot(parseInt(code.slice(5), 10) - 1); return; }
+      switch (code) {
+        case 'KeyQ': this.nextTool(); break;
+        case 'Tab': case 'KeyI': this.openInventory(); break;
+        case 'KeyM': this.toast('Music ' + (LC.Audio.toggleMusic() ? 'on' : 'off'), 'ic_glow'); break;
+        case 'KeyX': this.world.eat(); break;
+        case 'Escape': this.openPause(); break;
+      }
+    }
+
+    closeModal() { if (this.modal) { var m = this.modal; this.modal = null; m.close(); } }
+
+    // ================================================================ dialogue
+    say(lines, opts) {
+      opts = opts || {};
+      var self = this, S = this.S;
+      lines = lines.map(function (l) { return typeof l === 'string' ? { text: l } : l; });
+      this.closeModal();
+      var c = this.add.container(0, 0).setDepth(100);
+      var bg = this.add.graphics(); this.panel(bg, 60, 430, 840, 160); c.add(bg);
+      var pg = this.add.graphics(); c.add(pg);
+      var por = this.add.image(140, 510, 'ghost_0_normal').setScale(4); c.add(por);
+      var name = this.txt(90, 448, '', 20, '#ffd166');
+      var body = this.txt(90, 476, '', 19, '#fbecc8', { ls: 5, wrap: 770 });
+      var hint = this.txt(884, 582, '>>', 16, '#ffd166', { ox: 1, oy: 1 });
+      c.add([name, body, hint]);
+      this.tweens.add({ targets: hint, alpha: 0.25, duration: 420, yoyo: true, repeat: -1 });
+      var idx = -1, full = '', shown = 0, typing = false, cIdx = 0, choiceT = [], tx = 90;
+      var m;
+      function next() {
+        idx++;
+        if (idx >= lines.length) { finish(); return; }
+        var L = lines[idx], hasP = !!L.portrait;
+        pg.clear(); por.setVisible(hasP);
+        tx = 90; var ww = 770;
+        if (hasP) {
+          pg.fillStyle(0x3b2f5c, 1); pg.fillRoundedRect(84, 452, 112, 116, 8);
+          por.setTexture(L.portrait === 'ghost' ? 'ghost_' + S.ghost.stage + '_' + (L.expr || 'normal') : L.portrait);
+          tx = 218; ww = 650;
+        }
+        name.setPosition(tx, 448).setText(L.name || '');
+        body.setPosition(tx, L.name ? 480 : 462); body.setWordWrapWidth(ww, true);
+        full = L.text || ''; shown = 0; typing = true; body.setText('');
+        hint.setVisible(false);
+      }
+      var timer = this.time.addEvent({ delay: 16, loop: true, callback: function () {
+        if (!typing) return;
+        shown = Math.min(full.length, shown + 2);
+        body.setText(full.substr(0, shown));
+        if (shown >= full.length) { typing = false; lineDone(); }
+      } });
+      function lineDone() {
+        hint.setVisible(true);
+        if (idx === lines.length - 1 && opts.choices) showChoices();
+      }
+      function showChoices() {
+        hint.setVisible(false);
+        choiceT = opts.choices.map(function (ch, k) {
+          var t = self.txt(tx + k * 200, 548, '', 20, '#cdb8a0').setInteractive({ useHandCursor: true });
+          t.on('pointerover', function () { cIdx = k; renderChoices(); });
+          t.on('pointerdown', function () { pick(k); });
+          c.add(t); return t;
+        });
+        renderChoices();
+      }
+      function renderChoices() {
+        choiceT.forEach(function (t, k) { t.setText((k === cIdx ? '> ' : '  ') + opts.choices[k].label); t.setColor(k === cIdx ? '#ffd166' : '#cdb8a0'); });
+      }
+      function advance() {
+        if (typing) { shown = full.length; body.setText(full); typing = false; lineDone(); return; }
+        if (choiceT.length) { pick(cIdx); return; }
+        LC.Audio.sfx('click'); next();
+      }
+      function pick(k) { var ch = opts.choices[k]; close(); LC.Audio.sfx('click'); if (ch.fn) ch.fn(); }
+      function finish() { close(); if (opts.onDone) opts.onDone(); }
+      function close() { timer.remove(); c.destroy(); if (self.modal === m) self.modal = null; }
+      m = {
+        type: 'dialog', opened: this.time.now, close: close,
+        key: function (code) {
+          if (ACCEPT[code]) advance();
+          else if (choiceT.length && /Arrow(Left|Up)|Key[AW]/.test(code)) { cIdx = (cIdx + choiceT.length - 1) % choiceT.length; renderChoices(); }
+          else if (choiceT.length && /Arrow(Right|Down)|Key[DS]/.test(code)) { cIdx = (cIdx + 1) % choiceT.length; renderChoices(); }
+          else if (code === 'Escape') { if (choiceT.length) pick(choiceT.length - 1); else finish(); }
+        },
+        click: function () { if (self.time.now - m.opened < 250 || choiceT.length) return; advance(); }
+      };
+      this.modal = m;
+      next();
+    }
+
+    confirmSleep() {
+      var self = this, early = this.S.minutes < 18 * 60;
+      this.say([{ text: early ? 'It\'s still early. Go to sleep and end the day anyway?' : 'Climb the tangga and go to sleep?' }],
+        { choices: [{ label: 'Sleep', fn: function () { self.world.sleep(false); } }, { label: 'Not yet' }] });
+    }
+
+    // ================================================================ list menus
+    openMenu(cfg) {
+      this.closeModal();
+      var self = this, S = this.S, tab = 0, sel = 0, scroll = 0, VIS = 6, m;
+      var X = 160, Y = 46, Wd = 640, Hd = 548, RH = 58;
+      var c = this.add.container(0, 0).setDepth(90);
+      c.add(this.add.rectangle(0, 0, 960, 640, 0x000000, 0.45).setOrigin(0).setInteractive());
+      var bg = this.add.graphics(); this.panel(bg, X, Y, Wd, Hd); c.add(bg);
+      c.add(this.txt(X + Wd / 2, Y + 16, cfg.title, 28, '#ffd166', { ox: 0.5 }));
+      var coinT = null;
+      if (cfg.coins) { c.add(this.add.image(X + Wd - 118, Y + 34, 'ic_coin').setScale(2)); coinT = this.txt(X + Wd - 100, Y + 21, '', 22, '#f7dd8a'); c.add(coinT); }
+      var tabs = cfg.tabs, tabT = [], listY = Y + 70;
+      if (tabs.length > 1) {
+        listY = Y + 104;
+        tabs.forEach(function (tb, k) {
+          var t = self.txt(X + 36 + k * 150, Y + 62, tb.label, 20, '#cdb8a0').setInteractive({ useHandCursor: true });
+          t.on('pointerdown', function () { tab = k; sel = 0; scroll = 0; LC.Audio.sfx('click'); render(); });
+          c.add(t); tabT.push(t);
+        });
+      }
+      var rg = this.add.graphics(); c.add(rg);
+      var rowsUI = [];
+      function cur() { return tabs[tab].rows(); }
+      for (var r = 0; r < VIS; r++) {
+        (function (r) {
+          var y = listY + r * RH;
+          var ic = self.add.image(X + 52, y + 27, 'i_hoe').setScale(2);
+          var lb = self.txt(X + 82, y + 6, '', 19, '#fbecc8');
+          var sb = self.txt(X + 82, y + 29, '', 13, '#b8a890', { wrap: Wd - 220 });
+          var rt = self.txt(X + Wd - 36, y + 16, '', 18, '#f7dd8a', { ox: 1 });
+          var z = self.add.zone(X + 20, y, Wd - 40, RH - 4).setOrigin(0).setInteractive({ useHandCursor: true });
+          z.on('pointerover', function () { if (scroll + r < cur().length && sel !== scroll + r) { sel = scroll + r; render(); } });
+          z.on('pointerdown', function () { if (scroll + r < cur().length) { sel = scroll + r; activate(); } });
+          c.add([ic, lb, sb, rt, z]);
+          rowsUI.push({ y: y, ic: ic, lb: lb, sb: sb, rt: rt });
+        })(r);
+      }
+      var up = this.txt(X + Wd / 2, listY - 18, '^  more  ^', 14, '#ffd166', { ox: 0.5 });
+      var dn = this.txt(X + Wd / 2, listY + VIS * RH - 6, 'v  more  v', 14, '#ffd166', { ox: 0.5 });
+      // tappable scroll zones (no mouse wheel or keyboard on phones)
+      var upZ = this.add.zone(X + Wd / 2 - 90, listY - 22, 180, 22).setOrigin(0).setInteractive({ useHandCursor: true });
+      var dnZ = this.add.zone(X + Wd / 2 - 90, listY + VIS * RH - 8, 180, 22).setOrigin(0).setInteractive({ useHandCursor: true });
+      upZ.on('pointerdown', function () { if (scroll > 0) { sel = scroll - 1; LC.Audio.sfx('click'); render(); } });
+      dnZ.on('pointerdown', function () { var n = cur().length; if (scroll + VIS < n) { sel = Math.min(n - 1, scroll + VIS); LC.Audio.sfx('click'); render(); } });
+      c.add([upZ, dnZ]);
+      var empty = this.txt(X + Wd / 2, listY + 110, '', 18, '#a08a6a', { ox: 0.5, wrap: Wd - 100, align: 'center' });
+      var foot = this.txt(X + Wd / 2, Y + Hd - 62, '', 14, '#cdb8a0', { ox: 0.5, wrap: Wd - 70, align: 'center' });
+      var keys = this.txt(X + Wd / 2, Y + Hd - 22, this.touchOn ? 'Tap a row to choose' + (tabs.length > 1 ? '  ·  tap a tab to switch' : '') + '  ·  X (top) to close'
+        : 'W/S choose  ·  E select' + (tabs.length > 1 ? '  ·  A/D switch tab' : '') + '  ·  Esc close', 12, '#8a7a6a', { ox: 0.5 });
+      c.add([up, dn, empty, foot, keys]);
+
+      function render() {
+        var list = cur();
+        if (sel >= list.length) sel = Math.max(0, list.length - 1);
+        if (sel < scroll) scroll = sel;
+        if (sel >= scroll + VIS) scroll = sel - VIS + 1;
+        scroll = Math.max(0, Math.min(scroll, list.length - VIS));
+        rg.clear();
+        rowsUI.forEach(function (o, r) {
+          var it = list[scroll + r];
+          if (!it) { o.ic.setVisible(false); o.lb.setText(''); o.sb.setText(''); o.rt.setText(''); return; }
+          var on = scroll + r === sel, dis = it.enabled === false;
+          rg.fillStyle(on ? 0x4a3520 : 0x2b1f17, 1); rg.fillRoundedRect(X + 20, o.y, Wd - 40, RH - 4, 6);
+          if (on) { rg.lineStyle(2, 0xffd166, 1); rg.strokeRoundedRect(X + 20, o.y, Wd - 40, RH - 4, 6); }
+          o.ic.setVisible(!!it.icon); if (it.icon) o.ic.setTexture(it.icon).setAlpha(dis ? 0.45 : 1);
+          o.lb.setText(it.label).setColor(dis ? '#7a6a5a' : '#fbecc8');
+          o.sb.setText(it.sub || '');
+          o.rt.setText(it.right || '').setColor(dis ? '#7a6a5a' : '#f7dd8a');
+        });
+        up.setVisible(scroll > 0); dn.setVisible(scroll + VIS < list.length);
+        tabT.forEach(function (t, k) { t.setColor(k === tab ? '#ffd166' : '#8a7a6a').setText(k === tab ? '[ ' + tabs[k].label + ' ]' : tabs[k].label); });
+        empty.setText(list.length ? '' : (tabs[tab].empty || 'Nothing here.'));
+        if (coinT) coinT.setText(String(S.kepeng));
+        foot.setText(typeof cfg.footer === 'function' ? cfg.footer() : (cfg.footer || ''));
+      }
+      function activate() {
+        var it = cur()[sel];
+        if (!it) return;
+        if (it.enabled === false) { LC.Audio.sfx('error'); if (it.why) self.toast(it.why); return; }
+        if (!it.action) return;
+        var res = it.action();
+        if (self.modal !== m) return;
+        if (res === 'close') { close(); return; }
+        render();
+      }
+      function close() { c.destroy(); if (self.modal === m) self.modal = null; }
+      m = {
+        type: 'menu', close: close, render: render,
+        key: function (code) {
+          var n = cur().length;
+          if (code === 'Escape' || code === 'Tab') { close(); return; }
+          if (code === 'ArrowUp' || code === 'KeyW') { sel = Math.max(0, sel - 1); LC.Audio.sfx('click'); }
+          else if (code === 'ArrowDown' || code === 'KeyS') { sel = Math.min(Math.max(0, n - 1), sel + 1); LC.Audio.sfx('click'); }
+          else if ((code === 'ArrowLeft' || code === 'KeyA') && tabs.length > 1) { tab = (tab + tabs.length - 1) % tabs.length; sel = 0; scroll = 0; LC.Audio.sfx('click'); }
+          else if ((code === 'ArrowRight' || code === 'KeyD') && tabs.length > 1) { tab = (tab + 1) % tabs.length; sel = 0; scroll = 0; LC.Audio.sfx('click'); }
+          else if (ACCEPT[code]) { activate(); return; }
+          render();
+        },
+        wheel: function (dy) { var n = cur().length; sel = Phaser.Math.Clamp(sel + (dy > 0 ? 1 : -1), 0, Math.max(0, n - 1)); render(); }
+      };
+      this.modal = m;
+      render();
+      LC.Audio.sfx('click');
+    }
+
+    ingText(inp) {
+      return Object.keys(inp).map(function (id) { return inp[id] + ' ' + LC.ITEMS[id].name + ' (have ' + LC.State.count(id) + ')'; }).join('  +  ');
+    }
+
+    openShop() {
+      var self = this, S = this.S;
+      if (!this.world.shopOpen()) { this.say([{ name: 'Warung', text: 'The shutters are down. A hand-painted sign reads: "BUKA 7 PAGI - 8 MALAM" (Open 7 AM to 8 PM).' }]); return; }
+      if (!S.flags.metAni) { S.flags.metAni = true; this.say(LC.TEXT.makAniFirst, { onDone: function () { self.openShop(); } }); return; }
+      var tip = LC.TEXT.makAniTips[Math.floor(Math.random() * LC.TEXT.makAniTips.length)];
+      this.openMenu({
+        title: 'Mak Ani\'s Warung', coins: true, footer: 'Mak Ani: "' + tip + '"',
+        tabs: [
+          { label: 'Buy', rows: function () {
+            return LC.SHOP.map(function (id) {
+              var it = LC.ITEMS[id], afford = S.kepeng >= it.price, room = LC.State.canAdd(id);
+              return { icon: it.icon, label: it.name, sub: it.desc, right: it.price + ' k', enabled: afford && room, why: afford ? 'Your bag is full!' : 'Not enough kepeng.',
+                action: function () { S.kepeng -= it.price; LC.State.add(id, 1); LC.Audio.sfx('buy'); } };
+            });
+          } },
+          { label: 'Sell', empty: 'Nothing to sell yet. Bring crops, fruit, flowers or cooking!', rows: function () {
+            var seen = {}, rows = [];
+            S.inv.forEach(function (sl) {
+              if (!sl || seen[sl.id]) return;
+              var it = LC.ITEMS[sl.id]; if (!it.sell) return;
+              seen[sl.id] = 1;
+              rows.push({ icon: it.icon, label: it.name + '  x' + LC.State.count(sl.id), sub: it.desc, right: '+' + it.sell + ' k',
+                action: function () { LC.State.remove(sl.id, 1); S.kepeng += it.sell; S.stats.earned += it.sell; LC.Audio.sfx('coin'); } });
+            });
+            return rows;
+          } }
+        ]
+      });
+    }
+
+    openCook() {
+      var self = this, S = this.S;
+      this.openMenu({
+        title: 'Nenek\'s Dapur', footer: 'Cooked dishes fill Pelita far more than raw crops. Pelita\'s favourites are marked with a heart.',
+        tabs: [{ label: 'Recipes', rows: function () {
+          return LC.RECIPES.map(function (r) {
+            var it = LC.ITEMS[r.out], ok = LC.State.has(r.inp), fav = LC.LOVES.indexOf(r.out) >= 0 ? '  ♥' : '';
+            return { icon: it.icon, label: it.name + fav, sub: self.ingText(r.inp), right: 'x' + LC.State.count(r.out), enabled: ok && LC.State.canAdd(r.out), why: ok ? 'Your bag is full!' : 'Missing ingredients.',
+              action: function () {
+                LC.State.takeAll(r.inp); LC.State.add(r.out, 1);
+                LC.Audio.sfx('cook'); self.world.cookFx(); S.flags.cooked = true;
+                self.toast('You cooked ' + it.name + '!', it.icon);
+              } };
+          });
+        } }]
+      });
+    }
+
+    openSpirit() {
+      var self = this, S = this.S, g = S.ghost, W = this.world;
+      this.openMenu({
+        title: 'Spirit House',
+        footer: function () { return 'Glow ' + Math.round(g.glow) + ' / 100. Offerings keep Pelita\'s light burning. To feed it, hold food and face the house (or Pelita).'; },
+        tabs: [
+          { label: 'Offer', empty: 'You have no offerings. Buy colok at the warung, or craft one in the Craft tab.', rows: function () {
+            var rows = [];
+            if (g.stage === 0 || !W.wasFollowing) rows.push({ icon: 'ic_joy', label: 'Pet Pelita', sub: 'Gently pat the little light in the doorway.', action: function () { W.petGhost(); } });
+            ['colok', 'malai', 'canang'].forEach(function (id) {
+              var n = LC.State.count(id); if (!n) return;
+              var it = LC.ITEMS[id];
+              rows.push({ icon: it.icon, label: 'Place ' + it.name + '  x' + n, sub: it.desc + '  (+' + it.glow + ' glow)', action: function () { W.offer(id); } });
+            });
+            return rows;
+          } },
+          { label: 'Craft', rows: function () {
+            return LC.CRAFTS.map(function (r) {
+              var it = LC.ITEMS[r.out], ok = LC.State.has(r.inp);
+              return { icon: it.icon, label: it.name, sub: self.ingText(r.inp), right: 'x' + LC.State.count(r.out), enabled: ok && LC.State.canAdd(r.out), why: ok ? 'Your bag is full!' : 'Missing flowers. Grow melati and marigold in the field.',
+                action: function () { LC.State.takeAll(r.inp); LC.State.add(r.out, 1); LC.Audio.sfx('chime'); self.toast('You made a ' + it.name + '.', it.icon); } };
+            });
+          } },
+          { label: 'Pelita', rows: function () {
+            var st = g.stage, bless = ['None yet.', 'Follows you and shows its cravings.', 'Waters crops overnight when Glow is 50+.', 'Crops may grow extra fast. Finds lost kepeng.', 'Guardian of the Kampung. All blessings.'];
+            return [
+              { icon: 'ic_full', label: 'Kenyang (fullness): ' + Math.round(g.full), sub: 'Falls through the day, twice as fast on Hungry Ghost Night. Feed it!' },
+              { icon: 'ic_joy', label: 'Gembira (joy): ' + Math.round(g.joy), sub: 'Pet it, feed its favourites and meet its craving. Below 12 it sulks at home.' },
+              { icon: 'ic_glow', label: 'Cahaya (glow): ' + Math.round(g.glow), sub: 'Incense, garlands and canang. Fades every night.' },
+              { icon: 'i_pulut_mangga', label: 'Favourite foods', sub: 'Pulut Mangga, Kuih Pandan, Air Merah and Pisang Goreng. Raw cili? Definitely not.' },
+              { icon: 'ic_bond', label: LC.STAGES[st].name, sub: 'Blessing: ' + bless[st] },
+              { icon: 'ic_moon', label: 'Every night', sub: 'If all three needs are 50+, Pelita sleeps content (+bond). If any is below 20... expect pranks.' }
+            ];
+          } }
+        ]
+      });
+    }
+
+    openPause() {
+      var self = this;
+      this.openMenu({
+        title: 'Paused', footer: 'Your game saves automatically every night, and whenever you leave the game.',
+        tabs: [{ label: 'Menu', rows: function () {
+          return [
+            { icon: 'ic_sun', label: 'Resume', sub: 'Back to the kampung.', action: function () { return 'close'; } },
+            { icon: 'ic_bond', label: 'Save game', sub: 'Save your farm, bag and Pelita right now.', action: function () { self.toast(LC.State.save() ? 'Game saved.' : 'Could not save: browser storage is blocked.', 'ic_bond'); return 'close'; } },
+            { icon: 'ic_glow', label: 'Music: ' + (LC.Audio.musicOn ? 'On' : 'Off'), sub: 'Chill gamelan-style music, generated live. Press M anytime.', action: function () { LC.Audio.toggleMusic(); } },
+            { icon: 'ic_moon', label: 'Nature sounds: ' + (LC.Audio.ambienceOn ? 'On' : 'Off'), sub: 'River, birdsong by day, crickets and frogs at night.', action: function () { LC.Audio.toggleAmbience(); } },
+            { icon: 'ic_joy', label: 'Touch controls: ' + (self.touchOn ? 'On' : 'Off'), sub: 'On-screen joystick and USE / EAT / BAG buttons for phones and tablets.', action: function () { self.setTouch(!self.touchOn); } },
+            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact · tap the hotbar to select · II pauses' : 'WASD/Arrows move · E use · 1-9 or wheel select · Q next tool · X eat · Tab bag · M music' },
+            { icon: 'ic_moon', label: 'Quit to title', sub: 'Anything since your last sleep (or save) is lost.', action: function () { self.quitToTitle(); } }
+          ];
+        } }]
+      });
+    }
+    quitToTitle() { this.closeModal(); this.scene.stop('World'); this.scene.start('Title'); }
+
+    // ================================================================ bag
+    openInventory() {
+      this.closeModal();
+      var self = this, S = this.S, cur = S.sel, picked = -1, m;
+      var c = this.add.container(0, 0).setDepth(90);
+      c.add(this.add.rectangle(0, 0, 960, 640, 0x000000, 0.45).setOrigin(0).setInteractive());
+      var X = 140, Y = 100, Wd = 680, Hd = 400;
+      var bg = this.add.graphics(); this.panel(bg, X, Y, Wd, Hd); c.add(bg);
+      c.add(this.txt(480, Y + 16, 'Bag', 28, '#ffd166', { ox: 0.5 }));
+      var gx0 = 480 - (9 * 60 - 6) / 2, gy0 = Y + 84;
+      c.add(this.txt(gx0, gy0 - 22, 'Hotbar (1-9)', 13, '#a08a6a'));
+      c.add(this.txt(gx0, gy0 + 68, 'Backpack', 13, '#a08a6a'));
+      var gg = this.add.graphics(); c.add(gg);
+      var cells = [];
+      for (var i = 0; i < LC.INV_SIZE; i++) {
+        (function (i) {
+          var x = gx0 + (i % 9) * 60, y = gy0 + Math.floor(i / 9) * 90;
+          var ic = self.add.image(x + 27, y + 27, 'i_hoe').setScale(2);
+          var ct = self.txt(x + 50, y + 51, '', 14, '#ffffff', { stroke: 3, ox: 1, oy: 1 });
+          var z = self.add.zone(x, y, 54, 54).setOrigin(0).setInteractive({ useHandCursor: true });
+          z.on('pointerdown', function () { cur = i; act(); });
+          z.on('pointerover', function () { if (cur !== i) { cur = i; render(); } });
+          c.add([ic, ct, z]); cells.push({ x: x, y: y, ic: ic, ct: ct });
+        })(i);
+      }
+      var tName = this.txt(X + 34, Y + 268, '', 20, '#ffd166');
+      var tDesc = this.txt(X + 34, Y + 296, '', 16, '#fbecc8', { wrap: Wd - 68 });
+      var tInfo = this.txt(X + 34, Y + 322, '', 14, '#b8a890', { wrap: Wd - 68 });
+      c.add([tName, tDesc, tInfo, this.txt(480, Y + Hd - 24, this.touchOn ? 'Tap an item to pick it up, tap another slot to swap  ·  X (top) to close'
+        : 'Arrows/mouse move  ·  E or click: pick up, then swap  ·  Esc close', 12, '#8a7a6a', { ox: 0.5 })]);
+      function render() {
+        gg.clear();
+        cells.forEach(function (o, i) {
+          var sl = S.inv[i], on = i === cur, pk = i === picked;
+          gg.fillStyle(pk ? 0x2a4a6a : on ? 0x5a4024 : 0x2e2219, 1); gg.fillRoundedRect(o.x, o.y, 54, 54, 6);
+          gg.lineStyle(on || pk ? 3 : 1, pk ? 0x8fd3ff : on ? 0xffd166 : 0x6a5034, 1); gg.strokeRoundedRect(o.x, o.y, 54, 54, 6);
+          if (sl) { o.ic.setVisible(true).setTexture(LC.ITEMS[sl.id].icon); o.ct.setText(sl.n > 1 ? String(sl.n) : ''); }
+          else { o.ic.setVisible(false); o.ct.setText(''); }
+        });
+        var sl = S.inv[cur];
+        if (sl) {
+          var it = LC.ITEMS[sl.id], info = [];
+          tName.setText(it.name + (sl.n > 1 ? '  x' + sl.n : ''));
+          tDesc.setText(it.desc || '');
+          if (it.food) info.push('Food: +' + it.food.full + ' fullness, ' + (it.food.joy >= 0 ? '+' : '') + it.food.joy + ' joy');
+          if (it.glow) info.push('Offering: +' + it.glow + ' glow');
+          if (it.sell) info.push('Sells for ' + it.sell + ' kepeng');
+          if (LC.LOVES.indexOf(sl.id) >= 0) info.push('Pelita loves this!');
+          tInfo.setText(info.join('   ·   '));
+        } else { tName.setText(''); tDesc.setText(cur < 9 ? 'Empty hotbar slot.' : 'Empty backpack slot.'); tInfo.setText(''); }
+      }
+      function act() {
+        if (picked < 0) { if (S.inv[cur]) { picked = cur; LC.Audio.sfx('click'); } }
+        else { var t = S.inv[picked]; S.inv[picked] = S.inv[cur]; S.inv[cur] = t; picked = -1; LC.Audio.sfx('plant'); }
+        render();
+      }
+      function close() { c.destroy(); if (self.modal === m) self.modal = null; }
+      m = {
+        type: 'inv', close: close,
+        key: function (code) {
+          if (code === 'Escape' || code === 'Tab' || code === 'KeyI') { close(); return; }
+          if (code === 'ArrowLeft' || code === 'KeyA') cur = (cur + 17) % 18;
+          else if (code === 'ArrowRight' || code === 'KeyD') cur = (cur + 1) % 18;
+          else if (/Arrow(Up|Down)|Key[WS]/.test(code)) cur = (cur + 9) % 18;
+          else if (ACCEPT[code]) { act(); return; }
+          render();
+        }
+      };
+      this.modal = m;
+      render();
+    }
+
+    // ================================================================ day summary
+    showSummary(sum, onDone) {
+      this.closeModal();
+      var self = this, S = this.S, m;
+      var c = this.add.container(0, 0).setDepth(100);
+      c.add(this.add.rectangle(0, 0, 960, 640, 0x08060f, 1).setOrigin(0).setInteractive());
+      var X = 180, Y = 80, Wd = 600, Hd = 470;
+      var bg = this.add.graphics(); this.panel(bg, X, Y, Wd, Hd); c.add(bg);
+      c.add(this.txt(480, Y + 18, (sum.fainted ? 'You passed out...  ' : '') + 'Day ' + sum.day + ' complete', 30, '#ffd166', { ox: 0.5 }));
+      var expr = sum.mood === 'content' ? 'happy' : sum.mood === 'neglected' ? 'sad' : 'sleepy';
+      bg.fillStyle(0x3b2f5c, 1); bg.fillCircle(X + 80, Y + 118, 42);
+      c.add(this.add.image(X + 80, Y + 116, 'ghost_' + S.ghost.stage + '_' + expr).setScale(3));
+      var moodTxt = sum.mood === 'content' ? 'Pelita is content.' : sum.mood === 'neglected' ? 'Pelita feels neglected...' : 'Pelita is a little restless.';
+      c.add(this.txt(X + 140, Y + 92, moodTxt, 22, sum.mood === 'neglected' ? '#ff8a7a' : '#e8dcff'));
+      c.add(this.txt(X + 140, Y + 124, LC.STAGES[S.ghost.stage].name + '  ·  Bond ' + Math.floor(S.ghost.bond), 15, '#b8a8ff'));
+      c.add(this.txt(X + 40, Y + 180, sum.lines.map(function (l) { return '•  ' + l; }).join('\n'), 16, '#fbecc8', { wrap: Wd - 80, ls: 8 }));
+      c.add(this.txt(X + 40, Y + Hd - 92, 'Kepeng earned today: ' + sum.earned, 17, '#f7dd8a'));
+      var next = (this.touchOn ? 'Tap' : 'Press E') + ' to begin Day ' + S.day + ', ' + LC.State.weekday() + (LC.State.isHGN() ? '  (Hungry Ghost Night!)' : '');
+      var ft = this.txt(480, Y + Hd - 44, next, 17, '#ffd166', { ox: 0.5 });
+      c.add(ft);
+      this.tweens.add({ targets: ft, alpha: 0.4, duration: 600, yoyo: true, repeat: -1 });
+      c.add(this.txt(480, Y + Hd - 18, 'Game saved', 12, '#8a7a6a', { ox: 0.5 }));
+      function done() { c.destroy(); if (self.modal === m) self.modal = null; LC.Audio.sfx('click'); onDone(); }
+      m = {
+        type: 'summary', opened: this.time.now, close: function () { c.destroy(); },
+        key: function (code) { if (ACCEPT[code] && self.time.now - m.opened > 400) done(); },
+        click: function () { if (self.time.now - m.opened > 400) done(); }
+      };
+      this.modal = m;
+    }
+  };
+})();

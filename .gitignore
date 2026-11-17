@@ -1,0 +1,18 @@
+# Android build output and machine-specific files
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.iml
+
+# Signing secrets: NEVER commit these (back them up somewhere safe instead)
+android/keystore/
+android/keystore.properties
+*.jks
+*.keystore
+
+# misc
+node_modules/
+.DS_Store
+Thumbs.db
