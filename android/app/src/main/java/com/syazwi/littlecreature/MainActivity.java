@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.DisplayCutout;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
@@ -26,11 +27,20 @@ public class MainActivity extends Activity {
     private static final String HOST = "appassets.androidplatform.net";
     private static final String START_URL = "https://" + HOST + "/assets/www/index.html?platform=android";
     private WebView web;
+    private String safeJs = null;   // last reported cutout insets, as a JS call
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        // Draw the game edge to edge, including the area beside a camera notch / punch-hole.
+        if (Build.VERSION.SDK_INT >= 28) {
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.layoutInDisplayCutoutMode = Build.VERSION.SDK_INT >= 30
+                    ? WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+                    : WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            getWindow().setAttributes(lp);
+        }
 
         final WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
                 .setDomain(HOST)
@@ -62,12 +72,44 @@ public class MainActivity extends Activity {
                 try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); } catch (Exception ignored) { }
                 return true;   // external links open in the browser, never inside the game
             }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                pushSafeArea();
+            }
+        });
+
+        // The game art fills the whole screen; only the HUD is nudged away from the cutout.
+        web.setOnApplyWindowInsetsListener((v, insets) -> {
+            readCutout(insets);
+            return v.onApplyWindowInsets(insets);
         });
 
         setContentView(web);
         hideSystemBars();
         if (state != null) web.restoreState(state);
         else web.loadUrl(START_URL);
+    }
+
+    /** Tells the game how far the camera cutout reaches into each edge, in CSS px (= dp). */
+    private void readCutout(WindowInsets insets) {
+        int l = 0, t = 0, r = 0, b = 0;
+        if (Build.VERSION.SDK_INT >= 28 && insets != null) {
+            DisplayCutout c = insets.getDisplayCutout();
+            if (c != null) {
+                float d = getResources().getDisplayMetrics().density;
+                l = Math.round(c.getSafeInsetLeft() / d);
+                t = Math.round(c.getSafeInsetTop() / d);
+                r = Math.round(c.getSafeInsetRight() / d);
+                b = Math.round(c.getSafeInsetBottom() / d);
+            }
+        }
+        safeJs = "window.LC&&LC.setSafeArea&&LC.setSafeArea(" + l + "," + t + "," + r + "," + b + ")";
+        pushSafeArea();
+    }
+
+    private void pushSafeArea() {
+        if (web != null && safeJs != null) web.evaluateJavascript(safeJs, null);
     }
 
     private void hideSystemBars() {

@@ -5,7 +5,7 @@ LC.BootScene = class extends Phaser.Scene {
 
   create() {
     LC.bus = this.game.events;
-    var t = this.add.text(480, 320, 'Painting the kampung...', { fontFamily: 'monospace', fontSize: '20px', color: '#e8cf86' }).setOrigin(0.5);
+    var t = this.add.text(this.scale.width / 2, this.scale.height / 2, 'Painting the kampung...', { fontFamily: 'monospace', fontSize: '20px', color: '#e8cf86' }).setOrigin(0.5);
 
     LC.Art.generate(this);
     this.createAnims();

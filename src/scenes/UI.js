@@ -14,9 +14,17 @@ window.LC = window.LC || {};
       this.world = this.scene.get('World');
       this.S = LC.State.s;
       this.modal = null; this.toasts = []; this.lastPrompt = null; this.lastBright = null;
+      this.pins = []; this.modalCs = []; this.safe = { l: 0, t: 0, r: 0, b: 0 };
       this.buildHUD();
       this.buildHotbar();
       this.buildTouch();
+      this.layout();
+      this.scale.on('resize', this.layout, this);
+      this.game.events.on('lc-safearea', this.layout, this);
+      this.events.once('shutdown', function () {
+        self.scale.off('resize', self.layout, self);
+        self.game.events.off('lc-safearea', self.layout, self);
+      });
       this.input.keyboard.on('keydown', this.onKey, this);
       this.input.keyboard.addCapture('TAB,SPACE,UP,DOWN,LEFT,RIGHT');
       this.input.on('wheel', function (p, objs, dx, dy) {
@@ -91,6 +99,52 @@ window.LC = window.LC || {};
         g.fillTriangle(p[0], p[1] - 4, p[0] - 4, p[1], p[0], p[1] + 4);
       });
     }
+    // ================================================================ screen layout
+    // Everything is laid out on the original 960 x 640 design, then each group is pinned to a screen edge
+    // (tl, tc, tr, bl, bc, br) and shifted to wherever that edge is on the current screen size, minus the safe
+    // area (camera notches). Menus and dialogs are containers kept in the centre.
+    pin(anchor, objs) {
+      var self = this;
+      objs.forEach(function (o) { self.pins.push({ o: o, a: anchor, x: o.x, y: o.y }); });
+    }
+    anchorOff(a) {
+      var W = this.scale.width, H = this.scale.height, s = this.safe;
+      var cx = Math.round((W - 960) / 2), r = W - 960 - s.r, b = H - 640 - s.b;
+      return a === 'tl' ? { x: s.l, y: s.t } : a === 'tc' ? { x: cx, y: s.t } : a === 'tr' ? { x: r, y: s.t }
+        : a === 'bl' ? { x: s.l, y: b } : a === 'bc' ? { x: cx, y: b } : { x: r, y: b };
+    }
+    layout() {
+      var self = this;
+      this.safe = LC.safeArea();
+      this.pins.forEach(function (p) { var o = self.anchorOff(p.a); p.o.setPosition(p.x + o.x, p.y + o.y); });
+      this.tBtns.forEach(function (b) {
+        var o = self.anchorOff(b.a);
+        b.x = b.bx + o.x; b.y = b.by + o.y;
+        b.t.setPosition(b.x, b.y); b.hit.setPosition(b.x, b.y);
+      });
+      var bl = this.anchorOff('bl');
+      this.stickHome = { x: 110 + bl.x, y: 520 + bl.y };
+      this.toastX = 16 + this.safe.l;
+      this.modalCs = this.modalCs.filter(function (c) { return c.scene; });
+      this.modalCs.forEach(function (c) { self.placeModal(c); });
+      if (this.modal && this.modal.render) this.modal.render();   // e.g. the pause menu's Fullscreen: On/Off
+    }
+    toastBaseY() { return (this.touchOn ? 410 : 540) + this.anchorOff('bl').y; }
+    // A container for a menu or dialog, kept centred (or bottom-centred) on any screen size. The optional shade is
+    // oversized so it always covers the whole screen.
+    modalC(depth, shade, alpha, bottom) {
+      var c = this.add.container(0, 0).setDepth(depth);
+      c.bottom = !!bottom;
+      if (shade !== undefined) c.add(this.add.rectangle(-2000, -2000, 6000, 6000, shade, alpha).setOrigin(0).setInteractive());
+      this.modalCs.push(c);
+      this.placeModal(c);
+      return c;
+    }
+    placeModal(c) {
+      var W = this.scale.width, H = this.scale.height;
+      c.setPosition(Math.round((W - 960) / 2), c.bottom ? H - 640 - this.safe.b : Math.round((H - 640) / 2));
+    }
+
     bar(g, x, y, w, h, frac, color) {
       frac = Math.max(0, Math.min(1, frac));
       g.fillStyle(0x000000, 0.55); g.fillRect(x, y, w, h);
@@ -105,25 +159,30 @@ window.LC = window.LC || {};
       this.tDay = this.txt(28, 22, '', 20);
       this.icTime = this.add.image(42, 66, 'ic_sun').setScale(2);
       this.tTime = this.txt(62, 52, '', 24, '#ffd166');
-      this.add.image(180, 66, 'ic_coin').setScale(2);
+      var icCoin = this.add.image(180, 66, 'ic_coin').setScale(2);
       this.tCoin = this.txt(198, 52, '', 24, '#f7dd8a');
-      this.add.image(42, 101, 'ic_energy').setScale(2);
+      var icEnergy = this.add.image(42, 101, 'ic_energy').setScale(2);
       this.tGoal = this.txt(16, 132, '', 15, '#fbecc8', { wrap: 330, stroke: 4 });
+      this.gfxL = this.add.graphics();
+      this.pin('tl', [g, this.tDay, this.icTime, this.tTime, icCoin, this.tCoin, icEnergy, this.tGoal, this.gfxL]);
 
       var px = this.PX = 960 - 286, py = this.PY = 12;
-      this.panel(g, px, py, 274, 212);
-      g.fillStyle(0x3b2f5c, 1); g.fillCircle(px + 50, py + 68, 38);
-      g.lineStyle(2, 0xb8a8ff, 0.8); g.strokeCircle(px + 50, py + 68, 38);
+      var pg = this.add.graphics();
+      this.panel(pg, px, py, 274, 212);
+      pg.fillStyle(0x3b2f5c, 1); pg.fillCircle(px + 50, py + 68, 38);
+      pg.lineStyle(2, 0xb8a8ff, 0.8); pg.strokeCircle(px + 50, py + 68, 38);
       this.portrait = this.add.image(px + 50, py + 66, 'ghost_0_normal').setScale(3);
-      this.txt(px + 100, py + 14, 'Pelita', 22, '#e8dcff');
+      var tName = this.txt(px + 100, py + 14, 'Pelita', 22, '#e8dcff');
       this.tStage = this.txt(px + 100, py + 42, '', 14, '#b8a8ff');
       var self = this;
-      ['ic_full', 'ic_joy', 'ic_glow'].forEach(function (k, i) { self.add.image(px + 114, py + 74 + i * 25, k).setScale(2); });
+      var needIcons = ['ic_full', 'ic_joy', 'ic_glow'].map(function (k, i) { return self.add.image(px + 114, py + 74 + i * 25, k).setScale(2); });
       this.tBond = this.txt(px + 20, py + 146, '', 13, '#f7dd8a');
       this.tCrave = this.txt(px + 20, py + 180, '', 15, '#fbecc8');
       this.icCrave = this.add.image(px + 238, py + 186, 'i_nasi').setScale(2);
       this.gfx = this.add.graphics();
+      this.pin('tr', [pg, this.portrait, tName, this.tStage].concat(needIcons, [this.tBond, this.tCrave, this.icCrave, this.gfx]));
       this.tCoop = this.txt(480, 50, '', 14, '#b8f0c8', { ox: 0.5, stroke: 4 });
+      this.pin('tc', [this.tCoop]);
       this.nameTags = {};
     }
 
@@ -137,13 +196,15 @@ window.LC = window.LC || {};
           var x = x0 + i * 54;
           var icon = self.add.image(x + 24, y + 24, 'i_hoe').setScale(2);
           var cnt = self.txt(x + 46, y + 47, '', 14, '#ffffff', { stroke: 3, ox: 1, oy: 1 });
-          self.txt(x + 4, y + 2, String(i + 1), 11, '#a08a6a');
+          var num = self.txt(x + 4, y + 2, String(i + 1), 11, '#a08a6a');
           var z = self.add.zone(x, y, 48, 48).setOrigin(0).setInteractive({ useHandCursor: true });
           z.on('pointerdown', function () { if (!self.modal) self.selectSlot(i); });
           self.slotUI.push({ x: x, y: y, icon: icon, cnt: cnt });
+          self.pin('bc', [icon, cnt, num, z]);
         })(i);
       }
       this.tPrompt = this.txt(480, 566, '', 18, '#fffdf2', { stroke: 5, ox: 0.5, oy: 1 });
+      this.pin('bc', [this.hotG, this.tPrompt]);
     }
 
     // ================================================================ touch controls (Android / touchscreens)
@@ -156,7 +217,7 @@ window.LC = window.LC || {};
       this.stickG = this.add.graphics().setDepth(70);
       this.tBtns = [];
       function btn(x, y, r, label, code, always) {
-        var b = { x: x, y: y, r: r, code: code, always: always, down: false, label: label };
+        var b = { x: x, y: y, bx: x, by: y, a: always ? 'tc' : 'br', r: r, code: code, always: always, down: false, label: label };
         b.g = self.add.graphics().setDepth(always ? 110 : 70);
         b.t = self.txt(x, y, label, r > 30 ? 18 : 13, '#fffdf2', { ox: 0.5, oy: 0.5, stroke: 3 }).setDepth(always ? 111 : 71);
         b.hit = self.add.circle(x, y, r + 6, 0xffffff, 0.001).setDepth(always ? 112 : 72).setInteractive({ useHandCursor: true });
@@ -175,7 +236,7 @@ window.LC = window.LC || {};
       this.input.on('pointerdown', function (p, over) {
         if (!self.touchOn || self.modal || self.world.sleeping || self.stick.id !== -1) return;
         if (over && over.length) return;                 // tapped a button, hotbar slot, etc.
-        if (p.x < 430 && p.y > 210) { var s = self.stick; s.id = p.id; s.bx = s.x = p.x; s.by = s.y = p.y; }
+        if (p.x < self.scale.width * 0.45 && p.y > 210) { var s = self.stick; s.id = p.id; s.bx = s.x = p.x; s.by = s.y = p.y; }
       });
       this.input.on('pointermove', function (p) {
         var s = self.stick;
@@ -204,7 +265,7 @@ window.LC = window.LC || {};
       if (this.modal || !this.touchOn) s.id = -1;
       g.clear();
       if (show) {
-        var bx = s.id === -1 ? 110 : s.bx, by = s.id === -1 ? 520 : s.by;
+        var bx = s.id === -1 ? this.stickHome.x : s.bx, by = s.id === -1 ? this.stickHome.y : s.by;
         g.fillStyle(0x1e1510, s.id === -1 ? 0.25 : 0.45); g.fillCircle(bx, by, 58);
         g.lineStyle(2, 0xd9a94e, s.id === -1 ? 0.35 : 0.8); g.strokeCircle(bx, by, 58);
         var kx = s.id === -1 ? bx : s.x, ky = s.id === -1 ? by : s.y;
@@ -280,8 +341,8 @@ window.LC = window.LC || {};
       this.tCoin.setText(String(S.kepeng));
       this.tGoal.setText(this.goalText());
 
-      gf.clear();
-      this.bar(gf, 60, 95, 196, 12, S.energy / S.maxEnergy, S.energy < 20 ? 0xe76f51 : 0x9be15d);
+      gf.clear(); this.gfxL.clear();
+      this.bar(this.gfxL, 60, 95, 196, 12, S.energy / S.maxEnergy, S.energy < 20 ? 0xe76f51 : 0x9be15d);
       var px = this.PX, py = this.PY;
       this.bar(gf, px + 132, py + 68, 124, 12, g.full / 100, g.full < 25 ? 0xe76f51 : 0xf2d06b);
       this.bar(gf, px + 132, py + 93, 124, 12, g.joy / 100, g.joy < 20 ? 0xe76f51 : 0xff7aa8);
@@ -300,7 +361,7 @@ window.LC = window.LC || {};
       this.updateCoopUI();
 
       // toasts (lifted above the thumb-stick in touch mode)
-      var y = this.touchOn ? 410 : 540, now = this.time.now;
+      var y = this.toastBaseY(), tx = this.toastX, now = this.time.now;
       this.toasts = this.toasts.filter(function (c) {
         if (!c.dying && now - c.born > 4200) {
           c.dying = true;
@@ -312,6 +373,7 @@ window.LC = window.LC || {};
         if (c.dying) return;
         y -= c.h + 4;
         c.y += (y - c.y) * 0.35;
+        c.x = tx;
       });
     }
 
@@ -339,7 +401,7 @@ window.LC = window.LC || {};
         if (!o.dying && o.msg === msg) { o.born = now; o.setScale(1.04); this.tweens.add({ targets: o, scale: 1, duration: 140 }); return; }
       }
       var hasIcon = icon && this.textures.exists(icon);
-      var c = this.add.container(16, this.touchOn ? 410 : 540).setDepth(80);
+      var c = this.add.container(this.toastX, this.toastBaseY()).setDepth(80);
       var t = this.txt(hasIcon ? 48 : 12, 0, msg, 16, '#fffdf2', { wrap: 470 });
       var h = Math.max(hasIcon ? 38 : 28, t.height + 12), w = (hasIcon ? 60 : 24) + t.width;
       var bg = this.add.graphics();
@@ -376,6 +438,7 @@ window.LC = window.LC || {};
         case 'Tab': case 'KeyI': this.openInventory(); break;
         case 'KeyM': this.toast('Music ' + (LC.Audio.toggleMusic() ? 'on' : 'off'), 'ic_glow'); break;
         case 'KeyX': this.world.eat(); break;
+        case 'KeyF': if (LC.canFullscreen()) LC.toggleFullscreen(); break;
         case 'Escape': this.openPause(); break;
       }
     }
@@ -388,7 +451,7 @@ window.LC = window.LC || {};
       var self = this, S = this.S;
       lines = lines.map(function (l) { return typeof l === 'string' ? { text: l } : l; });
       this.closeModal();
-      var c = this.add.container(0, 0).setDepth(100);
+      var c = this.modalC(100, undefined, 0, true);
       var bg = this.add.graphics(); this.panel(bg, 60, 430, 840, 160); c.add(bg);
       var pg = this.add.graphics(); c.add(pg);
       var por = this.add.image(140, 510, 'ghost_0_normal').setScale(4); c.add(por);
@@ -478,8 +541,7 @@ window.LC = window.LC || {};
       this.closeModal();
       var self = this, S = this.S, tab = 0, sel = 0, scroll = 0, VIS = 6, m;
       var X = 160, Y = 46, Wd = 640, Hd = 548, RH = 58;
-      var c = this.add.container(0, 0).setDepth(90);
-      c.add(this.add.rectangle(0, 0, 960, 640, 0x000000, 0.45).setOrigin(0).setInteractive());
+      var c = this.modalC(90, 0x000000, 0.45);
       var bg = this.add.graphics(); this.panel(bg, X, Y, Wd, Hd); c.add(bg);
       c.add(this.txt(X + Wd / 2, Y + 16, cfg.title, 28, '#ffd166', { ox: 0.5 }));
       var coinT = null;
@@ -691,9 +753,10 @@ window.LC = window.LC || {};
             { icon: 'ic_glow', label: 'Music: ' + (LC.Audio.musicOn ? 'On' : 'Off'), sub: 'Chill gamelan-style music, generated live. Press M anytime.', action: function () { LC.Audio.toggleMusic(); } },
             { icon: 'ic_moon', label: 'Nature sounds: ' + (LC.Audio.ambienceOn ? 'On' : 'Off'), sub: 'River, birdsong by day, crickets and frogs at night.', action: function () { LC.Audio.toggleAmbience(); } },
             { icon: 'ic_joy', label: 'Touch controls: ' + (self.touchOn ? 'On' : 'Off'), sub: 'On-screen joystick and USE / EAT / BAG buttons for phones and tablets.', action: function () { self.setTouch(!self.touchOn); } },
-            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact · tap the hotbar to select · II pauses' : 'WASD/Arrows move · E use · 1-9 or wheel select · Q next tool · X eat · Tab bag · M music' },
+            LC.canFullscreen() ? { icon: 'ic_sun', label: 'Fullscreen: ' + (LC.isFullscreen() ? 'On' : 'Off'), sub: 'Fill the whole screen with the kampung' + (self.touchOn ? '.' : '. Press F anytime.'), action: function () { LC.toggleFullscreen(); } } : null,
+            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact · tap the hotbar to select · II pauses' : 'WASD/Arrows move · E use · 1-9 or wheel select · Q next tool · X eat · Tab bag · M music · F fullscreen' },
             { icon: 'ic_moon', label: 'Quit to title', sub: LC.Net.role ? 'Also ends the co-op session.' : 'Anything since your last sleep (or save) is lost.', action: function () { self.quitToTitle(); } }
-          ]);
+          ]).filter(Boolean);
         } }]
       });
     }
@@ -709,8 +772,7 @@ window.LC = window.LC || {};
     openInventory() {
       this.closeModal();
       var self = this, S = this.S, cur = S.sel, picked = -1, m;
-      var c = this.add.container(0, 0).setDepth(90);
-      c.add(this.add.rectangle(0, 0, 960, 640, 0x000000, 0.45).setOrigin(0).setInteractive());
+      var c = this.modalC(90, 0x000000, 0.45);
       var X = 140, Y = 100, Wd = 680, Hd = 400;
       var bg = this.add.graphics(); this.panel(bg, X, Y, Wd, Hd); c.add(bg);
       c.add(this.txt(480, Y + 16, 'Bag', 28, '#ffd166', { ox: 0.5 }));
@@ -781,8 +843,7 @@ window.LC = window.LC || {};
     showSummary(sum, onDone) {
       this.closeModal();
       var self = this, S = this.S, m;
-      var c = this.add.container(0, 0).setDepth(100);
-      c.add(this.add.rectangle(0, 0, 960, 640, 0x08060f, 1).setOrigin(0).setInteractive());
+      var c = this.modalC(100, 0x08060f, 1);
       var X = 180, Y = 80, Wd = 600, Hd = 470;
       var bg = this.add.graphics(); this.panel(bg, X, Y, Wd, Hd); c.add(bg);
       c.add(this.txt(480, Y + 18, (sum.fainted ? 'You passed out...  ' : '') + 'Day ' + sum.day + ' complete', 30, '#ffd166', { ox: 0.5 }));

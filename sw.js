@@ -1,6 +1,6 @@
 /* Little Creature — service worker for the hosted web version (e.g. GitHub Pages).
  * Network-first so updates show up straight away; falls back to the cache when offline. */
-var CACHE = 'little-creature-v3';
+var CACHE = 'little-creature-v4';
 var FILES = [
   './', 'index.html', 'manifest.webmanifest',
   'lib/phaser.min.js', 'lib/peerjs.min.js', 'lib/fonts/PixelifySans-latin.woff2', 'lib/fonts/PixelifySans-latin-ext.woff2',

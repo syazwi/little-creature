@@ -9,12 +9,15 @@ You farm by day, cook at the clay stove, and leave offerings so Pelita's light g
 
 ### On a computer: double-click and play
 - **Easiest:** download [`dist/LittleCreature.html`](dist/LittleCreature.html). It is **one file** containing the whole game. Copy it anywhere (a USB stick, another PC) and double-click it to open it in any browser. No install and no internet needed.
-- **Or:** download this whole repository (**Code → Download ZIP**), unzip it, and double-click **`index.html`**.
+- **Or:** download this whole repository (**Code → Download ZIP**), unzip it, and double-click **`index.html`**. (`index.html` needs the folders next to it, so to copy just one file, use `dist/LittleCreature.html`.)
+- The game fills the whole browser window at any size. Press **F** (or use the pause menu) to go fullscreen.
+- Saves are kept by the browser on that PC. A different PC or browser starts its own farm.
+- If double-clicking opens the file in something other than a browser, right-click it and choose **Open with → Microsoft Edge** (or Chrome or Firefox).
 
 ### On an Android phone
 1. On your phone, open [`dist/LittleCreature.apk`](dist/LittleCreature.apk) on GitHub and tap **Download** (the ⋯ / download button).
 2. Open the downloaded file. If Android asks, allow your browser or Files app to **install unknown apps**.
-3. Tap **Install**, then open **Little Creature**. It plays fullscreen in landscape and fully offline.
+3. Tap **Install**, then open **Little Creature**. It plays fullscreen in landscape and fully offline. The game fills the whole screen, edge to edge (including beside the camera notch), and the HUD stays clear of the notch.
 
 > Android may warn that the app isn't from the Play Store. That's normal for apps you install yourself.
 > If you already have an older version installed, installing the new APK updates it and keeps your save.
@@ -48,6 +51,7 @@ PC browsers and Android phones can all play together.
 | Bag | Tab / I | **BAG** button |
 | Pause menu | Esc | **II** button (top), or Android **Back** |
 | Music on/off | M | Pause menu |
+| Fullscreen | F | Automatic (Android app, and phone browsers on the first tap) |
 
 Touch controls switch on automatically on touch screens. You can toggle them, the music and the nature sounds in the pause menu.
 

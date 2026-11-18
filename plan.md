@@ -154,7 +154,9 @@ Mouse clicks also work on all menus.
 
 - **Engine:** [Phaser 3.80.1](https://phaser.io), MIT licence. It is vendored to `lib/phaser.min.js` so the game runs offline, with a CDN fallback.
 - **No build step.** Plain `<script>` files share one global namespace `LC`. That makes double-clicking `index.html` (`file://`) work.
-- **Resolution:** 960×640 canvas. The world uses 16 px tiles at camera zoom 3 with `pixelArt: true`. The UI is drawn at native resolution so text stays crisp.
+- **Resolution:** the layout is designed at 960×640. The world uses 16 px tiles at camera zoom 3 with `pixelArt: true`. The UI is drawn at native resolution so text stays crisp.
+- **Any screen shape, no black bars (v1.2):** `LC.viewSize()` keeps the height at 640 and widens the canvas to the screen's aspect ratio (e.g. 1421×640 on a 20:9 phone, 1138×640 at 16:9), or keeps the width at 960 and heightens it on squarer screens (960×720 at 4:3). Ratios outside 1:1 to 2.6:1 are letterboxed. It refits on resize, rotation and fullscreen changes. The camera simply shows more of the farm. In `UI.js`, HUD groups are pinned to an edge (`pin(anchor, objs)`: tl/tc/tr/bl/bc/br), and menus and dialogs are centred containers (`modalC`). The safe area (camera notch) insets the HUD only: the Android app reports it through `LC.setSafeArea()`, and browsers through CSS `env(safe-area-inset-*)`. New HUD elements must be pinned, and new menus must use `modalC`, or they will drift on non-3:2 screens.
+- **Fullscreen:** the Android app is immersive. Phone browsers request fullscreen and lock to landscape on the first tap. On a PC, press F or use the pause menu.
 - **Art:** every sprite is **generated at boot in code** (`src/art.js`), using pixel-string sprites and small drawing routines. There are no external image files, so there are no licence issues and the look is consistent and Southeast Asian throughout.
   - *Optional swap-in:* any CC0 16×16 pack (for example Kenney's "Tiny Town") can replace the generated textures by loading PNGs under the same texture keys.
 - **Font:** "Pixelify Sans" (SIL OFL), bundled in `lib/fonts/`, so offline play has no network stall.
@@ -187,7 +189,7 @@ src/
 
 ### Platforms (added in v1.0)
 - **PC:** double-click `index.html`, or the single-file `dist/LittleCreature.html` built by `tools/build-web.mjs`. Everything is inlined in it.
-- **Android:** `android/` holds a minimal Java WebView app. Gradle copies the web game into `assets/www`, and `WebViewAssetLoader` serves it from a virtual https origin so localStorage, fonts and audio behave like a browser, offline. The app is fullscreen, locked to landscape, maps the Back button to the pause menu, and autosaves on pause. The output is `dist/LittleCreature.apk`.
+- **Android:** `android/` holds a minimal Java WebView app. Gradle copies the web game into `assets/www`, and `WebViewAssetLoader` serves it from a virtual https origin so localStorage, fonts and audio behave like a browser, offline. The app is fullscreen, locked to landscape, draws into the display cutout (and reports it to the game), maps the Back button to the pause menu, and autosaves on pause. The output is `dist/LittleCreature.apk`.
 - **Touch controls:** a floating joystick on the left half, USE/EAT/BAG buttons, a pause button, and tappable menu scrolling. They turn on automatically on touch devices and can be toggled in the pause menu.
 - **Autosave:** the game saves on `visibilitychange`/`pagehide`, as well as at bedtime.
 - **Hosted web (optional):** GitHub Pages with `manifest.webmanifest` and `sw.js` (network-first) for an installable, offline-capable web app.

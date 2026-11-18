@@ -2038,7 +2038,7 @@ LC.BootScene = class extends Phaser.Scene {
 
   create() {
     LC.bus = this.game.events;
-    var t = this.add.text(480, 320, 'Painting the kampung...', { fontFamily: 'monospace', fontSize: '20px', color: '#e8cf86' }).setOrigin(0.5);
+    var t = this.add.text(this.scale.width / 2, this.scale.height / 2, 'Painting the kampung...', { fontFamily: 'monospace', fontSize: '20px', color: '#e8cf86' }).setOrigin(0.5);
 
     LC.Art.generate(this);
     this.createAnims();
@@ -2075,64 +2075,75 @@ window.LC = window.LC || {};
 LC.TitleScene = class extends Phaser.Scene {
   constructor() { super('Title'); }
 
-  create() {
-    var W = 960, H = 640, self = this;
+  create(data) {
+    // The screen can be any shape (see LC.viewSize): the scenery spans the full width and height,
+    // and the title, Pelita and the menu stay centred.
+    var W = this.scale.width, H = this.scale.height, self = this;
+    var cx = W / 2, dy = Math.round((H - 640) / 2), sx = W / 960, hz = 430 + dy, k = Math.min(sx, 1.3);
+    function X(x) { return Math.round(cx + (x - 480) * k); }   // spread the skyline a little on wide screens
     LC.Audio.setNight(true);   // dusk on the title screen: slow music, crickets and frogs
     var g = this.add.graphics();
-    g.fillGradientStyle(0x1f1840, 0x1f1840, 0xd9805a, 0xd9805a, 1); g.fillRect(0, 0, W, 430);
-    for (var i = 0; i < 70; i++) {
-      var s = this.add.image(Math.random() * W, Math.random() * 250, 'px').setScale(0.25 + Math.random() * 0.35).setAlpha(0.3 + Math.random() * 0.7);
+    g.fillGradientStyle(0x1f1840, 0x1f1840, 0xd9805a, 0xd9805a, 1); g.fillRect(0, 0, W, hz);
+    for (var i = 0; i < Math.round(70 * sx); i++) {
+      var s = this.add.image(Math.random() * W, Math.random() * (250 + dy), 'px').setScale(0.25 + Math.random() * 0.35).setAlpha(0.3 + Math.random() * 0.7);
       this.tweens.add({ targets: s, alpha: 0.1, duration: 900 + Math.random() * 1800, yoyo: true, repeat: -1, delay: Math.random() * 1500 });
     }
-    this.add.image(790, 120, 'glow').setScale(4).setTint(0xffe8b0).setAlpha(0.45).setBlendMode(Phaser.BlendModes.ADD);
-    this.add.circle(790, 120, 34, 0xfff1d0);
+    this.add.image(X(790), 120 + dy, 'glow').setScale(4).setTint(0xffe8b0).setAlpha(0.45).setBlendMode(Phaser.BlendModes.ADD);
+    this.add.circle(X(790), 120 + dy, 34, 0xfff1d0);
     // distant hills
+    function hills(pts) { return [{ x: 0, y: hz }].concat(pts.map(function (p) { return { x: p[0] * sx, y: p[1] + dy }; }), [{ x: W, y: hz }]); }
     var h = this.add.graphics();
-    h.fillStyle(0x3a2a55, 1); h.fillPoints([{ x: 0, y: 430 }, { x: 0, y: 330 }, { x: 140, y: 290 }, { x: 300, y: 350 }, { x: 470, y: 300 }, { x: 640, y: 360 }, { x: 820, y: 310 }, { x: 960, y: 350 }, { x: 960, y: 430 }], true);
-    h.fillStyle(0x2a1f42, 1); h.fillPoints([{ x: 0, y: 430 }, { x: 0, y: 380 }, { x: 200, y: 360 }, { x: 380, y: 395 }, { x: 560, y: 370 }, { x: 760, y: 400 }, { x: 960, y: 375 }, { x: 960, y: 430 }], true);
+    h.fillStyle(0x3a2a55, 1); h.fillPoints(hills([[0, 330], [140, 290], [300, 350], [470, 300], [640, 360], [820, 310], [960, 350]]), true);
+    h.fillStyle(0x2a1f42, 1); h.fillPoints(hills([[0, 380], [200, 360], [380, 395], [560, 370], [760, 400], [960, 375]]), true);
     // river
     var r = this.add.graphics();
-    r.fillGradientStyle(0x3b3266, 0x3b3266, 0x16122a, 0x16122a, 1); r.fillRect(0, 430, W, 210);
-    for (i = 0; i < 26; i++) {
-      var ln = this.add.rectangle(Math.random() * W, 440 + Math.random() * 190, 20 + Math.random() * 60, 2, 0xffc890, 0.25 + Math.random() * 0.25);
+    r.fillGradientStyle(0x3b3266, 0x3b3266, 0x16122a, 0x16122a, 1); r.fillRect(0, hz, W, H - hz);
+    for (i = 0; i < Math.round(26 * sx); i++) {
+      var ln = this.add.rectangle(Math.random() * W, hz + 10 + Math.random() * (H - hz - 20), 20 + Math.random() * 60, 2, 0xffc890, 0.25 + Math.random() * 0.25);
       this.tweens.add({ targets: ln, x: ln.x + 30, alpha: 0.05, duration: 2000 + Math.random() * 2000, yoyo: true, repeat: -1 });
     }
     // silhouettes
     var SIL = 0x170f2a;
-    this.add.image(120, 440, 'palm').setOrigin(0.5, 1).setScale(4.5).setTint(SIL);
-    this.add.image(230, 445, 'palm_f').setOrigin(0.5, 1).setScale(3.6).setFlipX(true).setTint(SIL);
-    this.add.image(330, 440, 'house').setOrigin(0.5, 1).setScale(2.6).setTint(SIL);
-    this.add.image(468, 440, 'spirit_house').setOrigin(0.5, 1).setScale(2.6).setTint(SIL);
-    this.add.image(840, 445, 'palm').setOrigin(0.5, 1).setScale(4.2).setFlipX(true).setTint(SIL);
-    this.add.image(720, 440, 'banana_f').setOrigin(0.5, 1).setScale(3).setTint(SIL);
+    this.add.image(X(120), hz + 10, 'palm').setOrigin(0.5, 1).setScale(4.5).setTint(SIL);
+    this.add.image(X(230), hz + 15, 'palm_f').setOrigin(0.5, 1).setScale(3.6).setFlipX(true).setTint(SIL);
+    this.add.image(X(330), hz + 10, 'house').setOrigin(0.5, 1).setScale(2.6).setTint(SIL);
+    this.add.image(X(468), hz + 10, 'spirit_house').setOrigin(0.5, 1).setScale(2.6).setTint(SIL);
+    this.add.image(X(840), hz + 15, 'palm').setOrigin(0.5, 1).setScale(4.2).setFlipX(true).setTint(SIL);
+    this.add.image(X(720), hz + 10, 'banana_f').setOrigin(0.5, 1).setScale(3).setTint(SIL);
+    if (W > 1150) {   // more of the riverbank on wide screens
+      this.add.image(X(-90), hz + 12, 'banana_f').setOrigin(0.5, 1).setScale(3.2).setFlipX(true).setTint(SIL);
+      this.add.image(X(1040), hz + 10, 'palm_f').setOrigin(0.5, 1).setScale(3.8).setTint(SIL);
+    }
     // fireflies
     this.flies = [];
-    for (i = 0; i < 30; i++) {
-      var f = this.add.image(Math.random() * W, 330 + Math.random() * 200, 'firefly').setScale(2).setBlendMode(Phaser.BlendModes.ADD);
+    for (i = 0; i < Math.round(30 * sx); i++) {
+      var f = this.add.image(Math.random() * W, 330 + dy + Math.random() * 200, 'firefly').setScale(2).setBlendMode(Phaser.BlendModes.ADD);
       this.flies.push({ img: f, bx: f.x, by: f.y, ph: Math.random() * 10, sp: 0.5 + Math.random() });
     }
     // Pelita
-    this.add.image(480, 300, 'glow').setScale(3.2).setTint(0xb8a8ff).setAlpha(0.55).setBlendMode(Phaser.BlendModes.ADD);
-    this.ghost = this.add.image(480, 300, 'ghost_2_happy').setScale(6);
-    this.tweens.add({ targets: this.ghost, y: 288, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.add.image(cx, 300 + dy, 'glow').setScale(3.2).setTint(0xb8a8ff).setAlpha(0.55).setBlendMode(Phaser.BlendModes.ADD);
+    this.ghost = this.add.image(cx, 300 + dy, 'ghost_2_happy').setScale(6);
+    this.tweens.add({ targets: this.ghost, y: 288 + dy, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
 
-    this.add.text(W / 2, 92, 'Little Creature', { fontFamily: LC.FONT, fontSize: '76px', fontStyle: '700', color: '#ffd166', stroke: '#2a1d18', strokeThickness: 10 }).setOrigin(0.5);
-    this.add.text(W / 2, 156, 'a spirit-keeping farm tale from the kampung', { fontFamily: LC.FONT, fontSize: '22px', color: '#fbecc8', stroke: '#2a1d18', strokeThickness: 5 }).setOrigin(0.5);
+    this.add.text(cx, 92 + dy, 'Little Creature', { fontFamily: LC.FONT, fontSize: '76px', fontStyle: '700', color: '#ffd166', stroke: '#2a1d18', strokeThickness: 10 }).setOrigin(0.5);
+    this.add.text(cx, 156 + dy, 'a spirit-keeping farm tale from the kampung', { fontFamily: LC.FONT, fontSize: '22px', color: '#fbecc8', stroke: '#2a1d18', strokeThickness: 5 }).setOrigin(0.5);
 
     this.hasSave = LC.State.hasSave();
     this.options = [{ label: 'New Game', fn: function () { self.begin(false); } }];
     if (this.hasSave) this.options.unshift({ label: 'Continue', fn: function () { self.begin(true); } });
     this.options.push({ label: 'Play with Friends', fn: function () { self.openLobby(); } });
-    this.sel = 0;
+    this.sel = data && data.sel < this.options.length ? data.sel : 0;
     this.optTexts = this.options.map(function (o, k) {
-      var t = self.add.text(W / 2, 458 + k * 44, o.label, { fontFamily: LC.FONT, fontSize: '30px', color: '#fbecc8', stroke: '#2a1d18', strokeThickness: 6 }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      var t = self.add.text(cx, 458 + dy + k * 44, o.label, { fontFamily: LC.FONT, fontSize: '30px', color: '#fbecc8', stroke: '#2a1d18', strokeThickness: 6 }).setOrigin(0.5).setInteractive({ useHandCursor: true });
       t.on('pointerover', function () { self.sel = k; self.renderOpts(); });
       t.on('pointerdown', function () { self.sel = k; self.choose(); });
       return t;
     });
     this.renderOpts();
     var touch = this.sys.game.device.input.touch || LC.PLATFORM === 'android';
-    this.add.text(W / 2, 600, touch ? 'Tap to choose  ·  drag the left side to walk  ·  USE to interact  ·  II to pause' : 'WASD / Arrows to move  ·  E to interact  ·  1-9 hotbar  ·  Tab bag  ·  M music',{ fontFamily: LC.FONT, fontSize: '16px', color: '#cdb8a0', stroke: '#1a120c', strokeThickness: 4 }).setOrigin(0.5);
+    this.add.text(cx, 600 + dy, touch ? 'Tap to choose  ·  drag the left side to walk  ·  USE to interact  ·  II to pause'
+      : 'WASD / Arrows to move  ·  E to interact  ·  1-9 hotbar  ·  Tab bag  ·  M music' + (LC.canFullscreen() ? '  ·  F fullscreen' : ''),
+      { fontFamily: LC.FONT, fontSize: '16px', color: '#cdb8a0', stroke: '#1a120c', strokeThickness: 4 }).setOrigin(0.5);
     this.add.text(W - 10, H - 8, 'Made with Phaser 3 · art & music generated in code', { fontFamily: LC.FONT, fontSize: '12px', color: '#8a7a9a' }).setOrigin(1, 1);
 
     this.input.keyboard.on('keydown', function (ev) {
@@ -2141,10 +2152,20 @@ LC.TitleScene = class extends Phaser.Scene {
       if (ev.code === 'ArrowUp' || ev.code === 'KeyW') { self.sel = (self.sel + self.options.length - 1) % self.options.length; self.renderOpts(); LC.Audio.sfx('click'); }
       else if (ev.code === 'ArrowDown' || ev.code === 'KeyS') { self.sel = (self.sel + 1) % self.options.length; self.renderOpts(); LC.Audio.sfx('click'); }
       else if (ev.code === 'Enter' || ev.code === 'KeyE' || ev.code === 'Space') self.choose();
+      else if (ev.code === 'KeyF' && LC.canFullscreen()) LC.toggleFullscreen();
     });
     this.input.on('pointerdown', function () { LC.Audio.init(); });
-    this.cameras.main.fadeIn(500);
+    if (!(data && data.quiet)) this.cameras.main.fadeIn(500);
     this.starting = false;
+
+    // Redraw for the new shape when the window is resized, rotated or goes fullscreen.
+    var w0 = W, h0 = H;
+    function onResize() {
+      if (self.starting || (self.scale.width === w0 && self.scale.height === h0)) return;
+      self.scene.restart({ quiet: true, sel: self.sel });
+    }
+    this.scale.on('resize', onResize);
+    this.events.once('shutdown', function () { self.scale.off('resize', onResize); });
   }
 
   renderOpts() {
@@ -3140,9 +3161,17 @@ window.LC = window.LC || {};
       this.world = this.scene.get('World');
       this.S = LC.State.s;
       this.modal = null; this.toasts = []; this.lastPrompt = null; this.lastBright = null;
+      this.pins = []; this.modalCs = []; this.safe = { l: 0, t: 0, r: 0, b: 0 };
       this.buildHUD();
       this.buildHotbar();
       this.buildTouch();
+      this.layout();
+      this.scale.on('resize', this.layout, this);
+      this.game.events.on('lc-safearea', this.layout, this);
+      this.events.once('shutdown', function () {
+        self.scale.off('resize', self.layout, self);
+        self.game.events.off('lc-safearea', self.layout, self);
+      });
       this.input.keyboard.on('keydown', this.onKey, this);
       this.input.keyboard.addCapture('TAB,SPACE,UP,DOWN,LEFT,RIGHT');
       this.input.on('wheel', function (p, objs, dx, dy) {
@@ -3217,6 +3246,52 @@ window.LC = window.LC || {};
         g.fillTriangle(p[0], p[1] - 4, p[0] - 4, p[1], p[0], p[1] + 4);
       });
     }
+    // ================================================================ screen layout
+    // Everything is laid out on the original 960 x 640 design, then each group is pinned to a screen edge
+    // (tl, tc, tr, bl, bc, br) and shifted to wherever that edge is on the current screen size, minus the safe
+    // area (camera notches). Menus and dialogs are containers kept in the centre.
+    pin(anchor, objs) {
+      var self = this;
+      objs.forEach(function (o) { self.pins.push({ o: o, a: anchor, x: o.x, y: o.y }); });
+    }
+    anchorOff(a) {
+      var W = this.scale.width, H = this.scale.height, s = this.safe;
+      var cx = Math.round((W - 960) / 2), r = W - 960 - s.r, b = H - 640 - s.b;
+      return a === 'tl' ? { x: s.l, y: s.t } : a === 'tc' ? { x: cx, y: s.t } : a === 'tr' ? { x: r, y: s.t }
+        : a === 'bl' ? { x: s.l, y: b } : a === 'bc' ? { x: cx, y: b } : { x: r, y: b };
+    }
+    layout() {
+      var self = this;
+      this.safe = LC.safeArea();
+      this.pins.forEach(function (p) { var o = self.anchorOff(p.a); p.o.setPosition(p.x + o.x, p.y + o.y); });
+      this.tBtns.forEach(function (b) {
+        var o = self.anchorOff(b.a);
+        b.x = b.bx + o.x; b.y = b.by + o.y;
+        b.t.setPosition(b.x, b.y); b.hit.setPosition(b.x, b.y);
+      });
+      var bl = this.anchorOff('bl');
+      this.stickHome = { x: 110 + bl.x, y: 520 + bl.y };
+      this.toastX = 16 + this.safe.l;
+      this.modalCs = this.modalCs.filter(function (c) { return c.scene; });
+      this.modalCs.forEach(function (c) { self.placeModal(c); });
+      if (this.modal && this.modal.render) this.modal.render();   // e.g. the pause menu's Fullscreen: On/Off
+    }
+    toastBaseY() { return (this.touchOn ? 410 : 540) + this.anchorOff('bl').y; }
+    // A container for a menu or dialog, kept centred (or bottom-centred) on any screen size. The optional shade is
+    // oversized so it always covers the whole screen.
+    modalC(depth, shade, alpha, bottom) {
+      var c = this.add.container(0, 0).setDepth(depth);
+      c.bottom = !!bottom;
+      if (shade !== undefined) c.add(this.add.rectangle(-2000, -2000, 6000, 6000, shade, alpha).setOrigin(0).setInteractive());
+      this.modalCs.push(c);
+      this.placeModal(c);
+      return c;
+    }
+    placeModal(c) {
+      var W = this.scale.width, H = this.scale.height;
+      c.setPosition(Math.round((W - 960) / 2), c.bottom ? H - 640 - this.safe.b : Math.round((H - 640) / 2));
+    }
+
     bar(g, x, y, w, h, frac, color) {
       frac = Math.max(0, Math.min(1, frac));
       g.fillStyle(0x000000, 0.55); g.fillRect(x, y, w, h);
@@ -3231,25 +3306,30 @@ window.LC = window.LC || {};
       this.tDay = this.txt(28, 22, '', 20);
       this.icTime = this.add.image(42, 66, 'ic_sun').setScale(2);
       this.tTime = this.txt(62, 52, '', 24, '#ffd166');
-      this.add.image(180, 66, 'ic_coin').setScale(2);
+      var icCoin = this.add.image(180, 66, 'ic_coin').setScale(2);
       this.tCoin = this.txt(198, 52, '', 24, '#f7dd8a');
-      this.add.image(42, 101, 'ic_energy').setScale(2);
+      var icEnergy = this.add.image(42, 101, 'ic_energy').setScale(2);
       this.tGoal = this.txt(16, 132, '', 15, '#fbecc8', { wrap: 330, stroke: 4 });
+      this.gfxL = this.add.graphics();
+      this.pin('tl', [g, this.tDay, this.icTime, this.tTime, icCoin, this.tCoin, icEnergy, this.tGoal, this.gfxL]);
 
       var px = this.PX = 960 - 286, py = this.PY = 12;
-      this.panel(g, px, py, 274, 212);
-      g.fillStyle(0x3b2f5c, 1); g.fillCircle(px + 50, py + 68, 38);
-      g.lineStyle(2, 0xb8a8ff, 0.8); g.strokeCircle(px + 50, py + 68, 38);
+      var pg = this.add.graphics();
+      this.panel(pg, px, py, 274, 212);
+      pg.fillStyle(0x3b2f5c, 1); pg.fillCircle(px + 50, py + 68, 38);
+      pg.lineStyle(2, 0xb8a8ff, 0.8); pg.strokeCircle(px + 50, py + 68, 38);
       this.portrait = this.add.image(px + 50, py + 66, 'ghost_0_normal').setScale(3);
-      this.txt(px + 100, py + 14, 'Pelita', 22, '#e8dcff');
+      var tName = this.txt(px + 100, py + 14, 'Pelita', 22, '#e8dcff');
       this.tStage = this.txt(px + 100, py + 42, '', 14, '#b8a8ff');
       var self = this;
-      ['ic_full', 'ic_joy', 'ic_glow'].forEach(function (k, i) { self.add.image(px + 114, py + 74 + i * 25, k).setScale(2); });
+      var needIcons = ['ic_full', 'ic_joy', 'ic_glow'].map(function (k, i) { return self.add.image(px + 114, py + 74 + i * 25, k).setScale(2); });
       this.tBond = this.txt(px + 20, py + 146, '', 13, '#f7dd8a');
       this.tCrave = this.txt(px + 20, py + 180, '', 15, '#fbecc8');
       this.icCrave = this.add.image(px + 238, py + 186, 'i_nasi').setScale(2);
       this.gfx = this.add.graphics();
+      this.pin('tr', [pg, this.portrait, tName, this.tStage].concat(needIcons, [this.tBond, this.tCrave, this.icCrave, this.gfx]));
       this.tCoop = this.txt(480, 50, '', 14, '#b8f0c8', { ox: 0.5, stroke: 4 });
+      this.pin('tc', [this.tCoop]);
       this.nameTags = {};
     }
 
@@ -3263,13 +3343,15 @@ window.LC = window.LC || {};
           var x = x0 + i * 54;
           var icon = self.add.image(x + 24, y + 24, 'i_hoe').setScale(2);
           var cnt = self.txt(x + 46, y + 47, '', 14, '#ffffff', { stroke: 3, ox: 1, oy: 1 });
-          self.txt(x + 4, y + 2, String(i + 1), 11, '#a08a6a');
+          var num = self.txt(x + 4, y + 2, String(i + 1), 11, '#a08a6a');
           var z = self.add.zone(x, y, 48, 48).setOrigin(0).setInteractive({ useHandCursor: true });
           z.on('pointerdown', function () { if (!self.modal) self.selectSlot(i); });
           self.slotUI.push({ x: x, y: y, icon: icon, cnt: cnt });
+          self.pin('bc', [icon, cnt, num, z]);
         })(i);
       }
       this.tPrompt = this.txt(480, 566, '', 18, '#fffdf2', { stroke: 5, ox: 0.5, oy: 1 });
+      this.pin('bc', [this.hotG, this.tPrompt]);
     }
 
     // ================================================================ touch controls (Android / touchscreens)
@@ -3282,7 +3364,7 @@ window.LC = window.LC || {};
       this.stickG = this.add.graphics().setDepth(70);
       this.tBtns = [];
       function btn(x, y, r, label, code, always) {
-        var b = { x: x, y: y, r: r, code: code, always: always, down: false, label: label };
+        var b = { x: x, y: y, bx: x, by: y, a: always ? 'tc' : 'br', r: r, code: code, always: always, down: false, label: label };
         b.g = self.add.graphics().setDepth(always ? 110 : 70);
         b.t = self.txt(x, y, label, r > 30 ? 18 : 13, '#fffdf2', { ox: 0.5, oy: 0.5, stroke: 3 }).setDepth(always ? 111 : 71);
         b.hit = self.add.circle(x, y, r + 6, 0xffffff, 0.001).setDepth(always ? 112 : 72).setInteractive({ useHandCursor: true });
@@ -3301,7 +3383,7 @@ window.LC = window.LC || {};
       this.input.on('pointerdown', function (p, over) {
         if (!self.touchOn || self.modal || self.world.sleeping || self.stick.id !== -1) return;
         if (over && over.length) return;                 // tapped a button, hotbar slot, etc.
-        if (p.x < 430 && p.y > 210) { var s = self.stick; s.id = p.id; s.bx = s.x = p.x; s.by = s.y = p.y; }
+        if (p.x < self.scale.width * 0.45 && p.y > 210) { var s = self.stick; s.id = p.id; s.bx = s.x = p.x; s.by = s.y = p.y; }
       });
       this.input.on('pointermove', function (p) {
         var s = self.stick;
@@ -3330,7 +3412,7 @@ window.LC = window.LC || {};
       if (this.modal || !this.touchOn) s.id = -1;
       g.clear();
       if (show) {
-        var bx = s.id === -1 ? 110 : s.bx, by = s.id === -1 ? 520 : s.by;
+        var bx = s.id === -1 ? this.stickHome.x : s.bx, by = s.id === -1 ? this.stickHome.y : s.by;
         g.fillStyle(0x1e1510, s.id === -1 ? 0.25 : 0.45); g.fillCircle(bx, by, 58);
         g.lineStyle(2, 0xd9a94e, s.id === -1 ? 0.35 : 0.8); g.strokeCircle(bx, by, 58);
         var kx = s.id === -1 ? bx : s.x, ky = s.id === -1 ? by : s.y;
@@ -3406,8 +3488,8 @@ window.LC = window.LC || {};
       this.tCoin.setText(String(S.kepeng));
       this.tGoal.setText(this.goalText());
 
-      gf.clear();
-      this.bar(gf, 60, 95, 196, 12, S.energy / S.maxEnergy, S.energy < 20 ? 0xe76f51 : 0x9be15d);
+      gf.clear(); this.gfxL.clear();
+      this.bar(this.gfxL, 60, 95, 196, 12, S.energy / S.maxEnergy, S.energy < 20 ? 0xe76f51 : 0x9be15d);
       var px = this.PX, py = this.PY;
       this.bar(gf, px + 132, py + 68, 124, 12, g.full / 100, g.full < 25 ? 0xe76f51 : 0xf2d06b);
       this.bar(gf, px + 132, py + 93, 124, 12, g.joy / 100, g.joy < 20 ? 0xe76f51 : 0xff7aa8);
@@ -3426,7 +3508,7 @@ window.LC = window.LC || {};
       this.updateCoopUI();
 
       // toasts (lifted above the thumb-stick in touch mode)
-      var y = this.touchOn ? 410 : 540, now = this.time.now;
+      var y = this.toastBaseY(), tx = this.toastX, now = this.time.now;
       this.toasts = this.toasts.filter(function (c) {
         if (!c.dying && now - c.born > 4200) {
           c.dying = true;
@@ -3438,6 +3520,7 @@ window.LC = window.LC || {};
         if (c.dying) return;
         y -= c.h + 4;
         c.y += (y - c.y) * 0.35;
+        c.x = tx;
       });
     }
 
@@ -3465,7 +3548,7 @@ window.LC = window.LC || {};
         if (!o.dying && o.msg === msg) { o.born = now; o.setScale(1.04); this.tweens.add({ targets: o, scale: 1, duration: 140 }); return; }
       }
       var hasIcon = icon && this.textures.exists(icon);
-      var c = this.add.container(16, this.touchOn ? 410 : 540).setDepth(80);
+      var c = this.add.container(this.toastX, this.toastBaseY()).setDepth(80);
       var t = this.txt(hasIcon ? 48 : 12, 0, msg, 16, '#fffdf2', { wrap: 470 });
       var h = Math.max(hasIcon ? 38 : 28, t.height + 12), w = (hasIcon ? 60 : 24) + t.width;
       var bg = this.add.graphics();
@@ -3502,6 +3585,7 @@ window.LC = window.LC || {};
         case 'Tab': case 'KeyI': this.openInventory(); break;
         case 'KeyM': this.toast('Music ' + (LC.Audio.toggleMusic() ? 'on' : 'off'), 'ic_glow'); break;
         case 'KeyX': this.world.eat(); break;
+        case 'KeyF': if (LC.canFullscreen()) LC.toggleFullscreen(); break;
         case 'Escape': this.openPause(); break;
       }
     }
@@ -3514,7 +3598,7 @@ window.LC = window.LC || {};
       var self = this, S = this.S;
       lines = lines.map(function (l) { return typeof l === 'string' ? { text: l } : l; });
       this.closeModal();
-      var c = this.add.container(0, 0).setDepth(100);
+      var c = this.modalC(100, undefined, 0, true);
       var bg = this.add.graphics(); this.panel(bg, 60, 430, 840, 160); c.add(bg);
       var pg = this.add.graphics(); c.add(pg);
       var por = this.add.image(140, 510, 'ghost_0_normal').setScale(4); c.add(por);
@@ -3604,8 +3688,7 @@ window.LC = window.LC || {};
       this.closeModal();
       var self = this, S = this.S, tab = 0, sel = 0, scroll = 0, VIS = 6, m;
       var X = 160, Y = 46, Wd = 640, Hd = 548, RH = 58;
-      var c = this.add.container(0, 0).setDepth(90);
-      c.add(this.add.rectangle(0, 0, 960, 640, 0x000000, 0.45).setOrigin(0).setInteractive());
+      var c = this.modalC(90, 0x000000, 0.45);
       var bg = this.add.graphics(); this.panel(bg, X, Y, Wd, Hd); c.add(bg);
       c.add(this.txt(X + Wd / 2, Y + 16, cfg.title, 28, '#ffd166', { ox: 0.5 }));
       var coinT = null;
@@ -3817,9 +3900,10 @@ window.LC = window.LC || {};
             { icon: 'ic_glow', label: 'Music: ' + (LC.Audio.musicOn ? 'On' : 'Off'), sub: 'Chill gamelan-style music, generated live. Press M anytime.', action: function () { LC.Audio.toggleMusic(); } },
             { icon: 'ic_moon', label: 'Nature sounds: ' + (LC.Audio.ambienceOn ? 'On' : 'Off'), sub: 'River, birdsong by day, crickets and frogs at night.', action: function () { LC.Audio.toggleAmbience(); } },
             { icon: 'ic_joy', label: 'Touch controls: ' + (self.touchOn ? 'On' : 'Off'), sub: 'On-screen joystick and USE / EAT / BAG buttons for phones and tablets.', action: function () { self.setTouch(!self.touchOn); } },
-            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact · tap the hotbar to select · II pauses' : 'WASD/Arrows move · E use · 1-9 or wheel select · Q next tool · X eat · Tab bag · M music' },
+            LC.canFullscreen() ? { icon: 'ic_sun', label: 'Fullscreen: ' + (LC.isFullscreen() ? 'On' : 'Off'), sub: 'Fill the whole screen with the kampung' + (self.touchOn ? '.' : '. Press F anytime.'), action: function () { LC.toggleFullscreen(); } } : null,
+            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact · tap the hotbar to select · II pauses' : 'WASD/Arrows move · E use · 1-9 or wheel select · Q next tool · X eat · Tab bag · M music · F fullscreen' },
             { icon: 'ic_moon', label: 'Quit to title', sub: LC.Net.role ? 'Also ends the co-op session.' : 'Anything since your last sleep (or save) is lost.', action: function () { self.quitToTitle(); } }
-          ]);
+          ]).filter(Boolean);
         } }]
       });
     }
@@ -3835,8 +3919,7 @@ window.LC = window.LC || {};
     openInventory() {
       this.closeModal();
       var self = this, S = this.S, cur = S.sel, picked = -1, m;
-      var c = this.add.container(0, 0).setDepth(90);
-      c.add(this.add.rectangle(0, 0, 960, 640, 0x000000, 0.45).setOrigin(0).setInteractive());
+      var c = this.modalC(90, 0x000000, 0.45);
       var X = 140, Y = 100, Wd = 680, Hd = 400;
       var bg = this.add.graphics(); this.panel(bg, X, Y, Wd, Hd); c.add(bg);
       c.add(this.txt(480, Y + 16, 'Bag', 28, '#ffd166', { ox: 0.5 }));
@@ -3907,8 +3990,7 @@ window.LC = window.LC || {};
     showSummary(sum, onDone) {
       this.closeModal();
       var self = this, S = this.S, m;
-      var c = this.add.container(0, 0).setDepth(100);
-      c.add(this.add.rectangle(0, 0, 960, 640, 0x08060f, 1).setOrigin(0).setInteractive());
+      var c = this.modalC(100, 0x08060f, 1);
       var X = 180, Y = 80, Wd = 600, Hd = 470;
       var bg = this.add.graphics(); this.panel(bg, X, Y, Wd, Hd); c.add(bg);
       c.add(this.txt(480, Y + 18, (sum.fainted ? 'You passed out...  ' : '') + 'Day ' + sum.day + ' complete', 30, '#ffd166', { ox: 0.5 }));
@@ -3972,12 +4054,94 @@ window.LC = window.LC || {};
     if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
   }
 
+  // ---- Fill the screen. The layout is designed at 960 x 640 (3:2). Instead of letterboxing other screen shapes
+  // with black bars, the game keeps its 640 px height and gets wider on wide screens (phones are about 20:9,
+  // monitors 16:9), or keeps its 960 px width and gets taller on squarer ones (4:3 tablets).
+  // The HUD and menus anchor to the edges and centre (see UI.js), and the camera simply shows more of the farm.
+  var BASE_W = 960, BASE_H = 640;
+  LC.viewSize = function () {
+    var el = document.getElementById('game');
+    var w = (el && el.clientWidth) || window.innerWidth, h = (el && el.clientHeight) || window.innerHeight;
+    var a = w > 0 && h > 0 ? w / h : BASE_W / BASE_H;
+    a = Math.max(1, Math.min(2.6, a));   // beyond this (portrait windows, super-ultrawide), letterbox
+    if (a >= BASE_W / BASE_H) return { w: Math.round(BASE_H * a), h: BASE_H };
+    return { w: BASE_W, h: Math.round(BASE_W / a) };
+  };
+  function refit() {
+    var g = LC.game;
+    if (!g || !g.scale) return;
+    var v = LC.viewSize();
+    if (v.w !== g.scale.width || v.h !== g.scale.height) g.scale.setGameSize(v.w, v.h);
+    else g.scale.refresh();
+  }
+  var refitT = 0;
+  function queueRefit() { clearTimeout(refitT); refitT = setTimeout(refit, 100); }
+  window.addEventListener('resize', queueRefit);
+  window.addEventListener('orientationchange', queueRefit);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', queueRefit);
+
+  // ---- Safe area: keep the HUD clear of camera notches/cutouts while the game art still fills the whole screen.
+  // The Android app reports the cutout through LC.setSafeArea(); browsers report it through CSS env().
+  var nativeSafe = { l: 0, t: 0, r: 0, b: 0 }, probe = null;
+  function cssSafe() {
+    if (!probe) {
+      probe = document.createElement('div');
+      probe.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;' +
+        'padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)';
+      document.body.appendChild(probe);
+    }
+    var cs = getComputedStyle(probe);
+    return { l: parseFloat(cs.paddingLeft) || 0, t: parseFloat(cs.paddingTop) || 0, r: parseFloat(cs.paddingRight) || 0, b: parseFloat(cs.paddingBottom) || 0 };
+  }
+  LC.setSafeArea = function (l, t, r, b) {   // CSS px, called by the Android app
+    nativeSafe = { l: +l || 0, t: +t || 0, r: +r || 0, b: +b || 0 };
+    if (LC.game) LC.game.events.emit('lc-safearea');
+  };
+  LC.safeArea = function () {   // in game px
+    var c = cssSafe(), g = LC.game, k = g && g.scale && g.scale.displayScale ? g.scale.displayScale.x : 1;
+    function side(n) { return Math.round(Math.min(120, Math.max(c[n], nativeSafe[n]) * k)); }
+    return { l: side('l'), t: side('t'), r: side('r'), b: side('b') };
+  };
+
+  // ---- Fullscreen. The Android app is always fullscreen. On a phone browser the game goes fullscreen (and locks to
+  // landscape) on the first tap; on a PC, press F or use the pause menu.
+  var mobileWeb = LC.PLATFORM === 'web' && !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+  var wantFs = mobileWeb;
+  LC.canFullscreen = function () {
+    return LC.PLATFORM !== 'android' && !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  };
+  LC.isFullscreen = function () { return !!(document.fullscreenElement || document.webkitFullscreenElement); };
+  LC.setFullscreen = function (on) {
+    try {
+      if (on && !LC.isFullscreen()) {
+        var el = document.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
+        var p = req ? req.call(el, { navigationUI: 'hide' }) : null;
+        if (p && p.then) p.then(function () {
+          if (mobileWeb && screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(function () {});
+        }).catch(function () {});
+      } else if (!on && LC.isFullscreen()) {
+        var ex = document.exitFullscreen || document.webkitExitFullscreen;
+        var q = ex && ex.call(document);
+        if (q && q.catch) q.catch(function () {});
+      }
+    } catch (e) { /* not allowed here: ignore */ }
+  };
+  LC.toggleFullscreen = function () {
+    var on = !LC.isFullscreen();
+    wantFs = on && mobileWeb;   // turning it off on a phone stops the automatic fullscreen
+    LC.setFullscreen(on);
+  };
+  if (mobileWeb) window.addEventListener('pointerup', function () { if (wantFs && LC.canFullscreen()) LC.setFullscreen(true); }, true);
+  document.addEventListener('fullscreenchange', queueRefit);
+  document.addEventListener('webkitfullscreenchange', queueRefit);
+
   window.addEventListener('load', function () {
+    var v = LC.viewSize();
     LC.game = new Phaser.Game({
       type: Phaser.AUTO,
       parent: 'game',
-      width: 960,
-      height: 640,
+      width: v.w,
+      height: v.h,
       backgroundColor: '#120d0a',
       pixelArt: true,
       roundPixels: true,
@@ -3985,7 +4149,21 @@ window.LC = window.LC || {};
       scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
       scene: [LC.BootScene, LC.TitleScene, LC.WorldScene, LC.UIScene]
     });
+    LC.game.scale.on('resize', snapCanvas);
+    setTimeout(snapCanvas, 500);
   });
+
+  // FIT rounds the canvas size, which can leave a sub-pixel sliver of background at one edge. Stretch over it.
+  function snapCanvas() {
+    var g = LC.game, s = g && g.scale, c = g && g.canvas;
+    if (!c || !s.parentSize) return;
+    var pw = s.parentSize.width, ph = s.parentSize.height, r = c.getBoundingClientRect();
+    if (Math.abs(pw - r.width) < 2 && Math.abs(ph - r.height) < 2 && (pw !== r.width || ph !== r.height)) {
+      c.style.width = pw + 'px'; c.style.height = ph + 'px'; c.style.marginLeft = '0px'; c.style.marginTop = '0px';
+      s.updateBounds();
+      s.displayScale.set(s.baseSize.width / s.canvasBounds.width, s.baseSize.height / s.canvasBounds.height);
+    }
+  }
 })();
 
 </script>
