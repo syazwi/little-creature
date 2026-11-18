@@ -64,6 +64,11 @@ LC.TitleScene = class extends Phaser.Scene {
       { fontFamily: LC.FONT, fontSize: '16px', color: '#cdb8a0', stroke: '#1a120c', strokeThickness: 4 }).setOrigin(0.5);
     if (data && data.menu === 'slots') this.slotMenu(data.mode, data.sel); else this.mainMenu(data && data.sel);
     this.add.text(W - 10, H - 8, 'Made with Phaser 3 · art & music generated in code', { fontFamily: LC.FONT, fontSize: '12px', color: '#8a7a9a' }).setOrigin(1, 1);
+    // v1.7.1: this version and when it was built, and a button when a newer one is on GitHub
+    this.add.text(10, H - 8, LC.Update.versionLine(), { fontFamily: LC.FONT, fontSize: '13px', color: '#b8a8c8', stroke: '#1a120c', strokeThickness: 3 }).setOrigin(0, 1);
+    this.updBox = null; this.updHint = null;
+    if (LC.Update.newer()) this.showUpdate();
+    else LC.Update.check(function () { if (self.sys && self.sys.isActive()) self.showUpdate(); });
 
     this.input.keyboard.on('keydown', function (ev) {
       if (LC.Lobby.isOpen) return;
@@ -73,6 +78,7 @@ LC.TitleScene = class extends Phaser.Scene {
       else if (ev.code === 'Enter' || ev.code === 'KeyE' || ev.code === 'Space') self.choose();
       else if (ev.code === 'Escape' && self.inSlots) { LC.Audio.sfx('click'); self.mainMenu(); }
       else if (ev.code === 'KeyF' && LC.canFullscreen()) LC.toggleFullscreen();
+      else if (ev.code === 'KeyU' && LC.Update.newer()) self.getUpdate();
     });
     this.input.on('pointerdown', function () { LC.Audio.init(); });
     if (!(data && data.quiet)) this.cameras.main.fadeIn(500);
@@ -144,6 +150,31 @@ LC.TitleScene = class extends Phaser.Scene {
   }
 
   choose() { if (!this.starting) this.options[this.sel].fn(); }
+
+  // v1.7.1: "a new version is ready", with its date and time, between the title and Pelita
+  showUpdate() {
+    if (this.updBox || !LC.Update.newer()) return;
+    var self = this, v = LC.Update.info, cx = this.cx, y = 176 + this.dy, touch = this.sys.game.device.input.touch || LC.PLATFORM === 'android';
+    var st = function (size, color) { return { fontFamily: LC.FONT, fontSize: size + 'px', color: color, stroke: '#1a120c', strokeThickness: 3 }; };
+    var t1 = this.add.text(0, 6, 'New version ' + v.name + ' is ready!  (updated ' + LC.Update.when(v.built) + ')', st(17, '#ffd166')).setOrigin(0.5, 0);
+    var t2 = this.add.text(0, 28, (touch ? 'Tap here' : 'Click here or press U') + ' to download it  ·  you have ' + LC.Update.current().name, st(14, '#9be15d')).setOrigin(0.5, 0);
+    var w = Math.max(t1.width, t2.width) + 32, h = 50;
+    var bg = this.add.graphics();
+    bg.fillStyle(0x1e1510, 0.88); bg.fillRoundedRect(-w / 2, 0, w, h, 8);
+    bg.lineStyle(2, 0xffd166, 1); bg.strokeRoundedRect(-w / 2, 0, w, h, 8);
+    var box = this.updBox = this.add.container(cx, y, [bg, t1, t2]).setDepth(50).setAlpha(0);
+    this.add.zone(cx - w / 2, y, w, h).setOrigin(0).setDepth(51).setInteractive({ useHandCursor: true }).on('pointerdown', function () { self.getUpdate(); });
+    this.tweens.add({ targets: box, alpha: 1, duration: 500 });
+    this.tweens.add({ targets: t2, alpha: 0.5, duration: 800, yoyo: true, repeat: -1 });
+    LC.Audio.sfx('chime');
+  }
+  getUpdate() {
+    LC.Audio.init(); LC.Audio.sfx('click');
+    if (!LC.Update.download()) return;
+    if (this.updHint) this.updHint.destroy();
+    var t = this.updHint = this.add.text(this.cx, 384 + this.dy, LC.Update.howTo(), { fontFamily: LC.FONT, fontSize: '15px', color: '#fbecc8', stroke: '#1a120c', strokeThickness: 4, align: 'center', wordWrap: { width: 720 } }).setOrigin(0.5).setDepth(50);
+    this.tweens.add({ targets: t, alpha: 0, delay: 9000, duration: 800, onComplete: function () { t.destroy(); } });
+  }
 
   // slot: which save slot · fresh: start a new farm there
   begin(slot, fresh) {

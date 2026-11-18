@@ -38,6 +38,7 @@ window.LC = window.LC || {};
         if (self.modal && self.modal.click) self.modal.click();
       });
       this.ready = true;
+      this.time.delayedCall(4000, function () { LC.Update.remind(); });   // v1.7.1: a newer version on GitHub?
 
       if (!this.S.flags.introDone) {
         this.time.delayedCall(800, function () {
@@ -811,6 +812,7 @@ window.LC = window.LC || {};
             { icon: 'ic_glow', label: 'Music: ' + (LC.Audio.musicOn ? 'On' : 'Off'), sub: 'Chill gamelan-style music (and battle drums), generated live. Press N anytime.', action: function () { LC.Audio.toggleMusic(); } },
             { icon: 'ic_joy', label: 'Touch controls: ' + (self.touchOn ? 'On' : 'Off'), sub: 'On-screen joystick and USE / EAT / BAG buttons for phones and tablets.', action: function () { self.setTouch(!self.touchOn); } },
             LC.canFullscreen() ? { icon: 'ic_sun', label: 'Fullscreen: ' + (LC.isFullscreen() ? 'On' : 'Off'), sub: 'Fill the whole screen with the kampung' + (self.touchOn ? '.' : '. Press F anytime.'), action: function () { LC.toggleFullscreen(); } } : null,
+            self.updateRow(),
             { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact (and swing a weapon) · tap the stone by the hotbar for the stone curse · MAP · II pauses' : 'WASD/Arrows move · E use/swing · V stone curse · 1-9/wheel select · Q tool · X eat · R ride · G glasses · Tab bag · J journal · M map · N music · F fullscreen' },
             { icon: 'ic_moon', label: 'Quit to title', sub: LC.Net.role ? 'Also ends the co-op session.' : 'Anything since your last sleep (or save) is lost.', action: function () { self.quitToTitle(); } }
           ]).filter(Boolean);
