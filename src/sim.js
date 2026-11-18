@@ -8,7 +8,7 @@ window.LC = window.LC || {};
   'use strict';
   function clamp(v) { return Math.max(0, Math.min(100, v)); }
   var grid = null;
-  function ch(x, y) { if (!grid) grid = LC.buildMap(); return grid[y] && grid[y][x]; }
+  function ch(x, y) { if (!grid) grid = LC.areaGrid('farm'); return grid[y] && grid[y][x]; }   // (the same grid the farm is drawn from: Badang's field appears in it)
 
   LC.Sim = {
     till: function (a) {
@@ -61,6 +61,14 @@ window.LC = window.LC || {};
       var S = LC.State.s, o = LC.objById(a.plot);
       if (!o || o.type !== 'plot' || !LC.HOUSES[a.style] || S.buildings[a.plot]) return { ok: false };
       S.buildings[a.plot] = { style: a.style, day: S.day, done: false, vid: null };
+      if (a.quick) { var vid = LC.State.moveIn(a.plot); return { ok: true, quick: true, vid: vid }; }   // v1.7: Badang raises it at once
+      return { ok: true };
+    },
+    // v1.7: Badang clears the stumps and boulders south of Nenek's field overnight (the feast is paid by whoever asked)
+    ladang: function () {
+      var S = LC.State.s;
+      if (S.ladang) return { ok: false };
+      S.ladang = 1;
       return { ok: true };
     },
     // grant a spirit's wish (the items are paid by whoever asked)
@@ -209,6 +217,7 @@ window.LC = window.LC || {};
     }
     if (op === 'shake') { var tr = {}; tr[a.id] = S.trees[a.id]; return { trees: tr }; }
     if (op === 'build') return { buildings: S.buildings };
+    if (op === 'ladang') return { ladang: S.ladang };
     if (op === 'befriend' || op === 'play') return { ghost: S.ghost, spirits: S.spirits };
     return { ghost: S.ghost, offerings: S.offerings };
   };

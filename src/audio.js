@@ -413,6 +413,14 @@ window.LC = window.LC || {};
       case 'lunge': A.tone(t, 'sine', 260, 520, 0.12, 0.05); break;
       case 'restu': [0, 2, 4, 7, 9].forEach(function (d, k) { A.bell(A.freq(d + 5), t + k * 0.12, 2, 0.1); }); A.gong(A.freq(-5), t, 5, 0.22); break;
       case 'reunion': [4, 2, 0, 2, 4, 5, 7].forEach(function (d, k) { A.bell(A.freq(d + 5), t + k * 0.32, 2.4, 0.09); }); A.gong(A.freq(-10), t + 2.2, 6, 0.2); break;
+      // v1.7: Badang and the river hantu
+      case 'splash': A.noise(t, 0.5, 0.26, 'bandpass', 900, 400); A.noise(t + 0.08, 0.3, 0.12, 'highpass', 3000); break;
+      case 'giggle': for (i = 0; i < 5; i++) A.tone(t + i * 0.07, 'sine', 1300 + (i % 2) * 260, 1100 + (i % 2) * 260, 0.05, 0.05); break;
+      case 'bleurgh': A.tone(t, 'sawtooth', 160, 90, 0.5, 0.05); A.noise(t + 0.1, 0.35, 0.14, 'lowpass', 600); break;
+      case 'gulp': A.tone(t, 'sine', 300, 110, 0.18, 0.18); break;
+      case 'grow': A.tone(t, 'sine', 60, 50, 1.4, 0.3); for (i = 0; i < 6; i++) A.tone(t + 0.15 * i, 'triangle', 180 + i * 70, 220 + i * 70, 0.14, 0.05); A.gong(A.freq(-12), t + 0.9, 3, 0.18); break;
+      case 'punch': A.tone(t, 'sine', 120, 45, 0.2, 0.4); A.noise(t, 0.1, 0.3, 'lowpass', 900); break;
+      case 'throw': A.noise(t, 0.5, 0.18, 'bandpass', 1800, 900); A.tone(t, 'sine', 500, 180, 0.4, 0.04); break;
     }
   };
 })(window.LC);

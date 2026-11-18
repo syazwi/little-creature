@@ -12,8 +12,10 @@ window.LC = window.LC || {};
     createFolk: function () {
       var self = this;
       this.folkSpr = {}; this.kites = []; this.fishing = null; this.bobber = null; this.fishLine = null;
+      this.compSpr = null; this.compKey = null;   // (v1.7 fix: the old place's companion sprite is gone; make a new one here)
       Object.keys(LC.VILLAGERS).forEach(function (vid) {
         if (vid === 'tanggang' && self.S.escort) return;   // v1.6: he is following you instead
+        if (vid === 'badang' && LC.badangBuddy()) return;   // v1.7: so is Badang, when you ask him along
         if (LC.villagerArea(vid) === self.area) self.placeVillager(vid);
       });
       this.refreshFolkSpirits();
@@ -68,7 +70,7 @@ window.LC = window.LC || {};
       var self = this, S = this.S, H = LC.HOUSES[style];
       if (!LC.State.has(H.cost) || S.kepeng < H.kepeng) { LC.Audio.sfx('error'); return false; }
       LC.State.takeAll(H.cost); S.kepeng -= H.kepeng;
-      this.doShared('build', { plot: plot, style: style }, function (res) {
+      this.doShared('build', { plot: plot, style: style, quick: LC.hasBadang() }, function (res) {
         if (!res || !res.ok) {
           Object.keys(H.cost).forEach(function (id) { LC.State.add(id, H.cost[id]); }); S.kepeng += H.kepeng;
           self.toast('Someone already started a house there!'); return;
@@ -76,6 +78,13 @@ window.LC = window.LC || {};
         LC.Audio.sfx('build');
         var p = self.plots[plot]; if (p) { self.fx.smoke.explode(14, p.spr.x, p.spr.y - 20); self.cameras.main.shake(200, 0.002); }
         S.flags.built = true;
+        if (res.quick) {   // v1.7: Badang carries the posts, and the house goes up at once
+          var mv = res.vid && LC.VILLAGERS[res.vid];
+          self.ui.say([{ text: 'Tukang Leong blows a whistle and neighbours come running with poles, ropes and baskets of food.' },
+            { name: 'Badang', portrait: 'npc_badangK_0', text: LC.BADANG.houseQuick },
+            { name: 'Tok Penghulu', portrait: 'npc_penghulu_0', text: 'Gotong-royong, with a giant! Your ' + H.name + ' is finished already.' + (mv ? ' ' + mv.name + ' (' + mv.role.toLowerCase() + ') is moving in!' : '') }]);
+          return;
+        }
         self.ui.say([{ text: 'Tukang Leong blows a whistle and neighbours come running with poles, ropes and baskets of food.' },
           { name: 'Tok Penghulu', portrait: 'npc_penghulu_0', text: 'Gotong-royong! By tomorrow morning your ' + H.name + ' will be standing. Somebody will be very happy to come home.' }]);
       });
@@ -316,7 +325,7 @@ window.LC = window.LC || {};
     updateFolk: function (time, dt) {
       var self = this, S = this.S, awake = present(S), p = this.player;
       Object.keys(this.npcs).forEach(function (vid) {
-        var n = self.npcs[vid], here = n.ghost || awake;   // ghosts keep their watch all night
+        var n = self.npcs[vid], here = n.ghost || awake || (vid === 'badang' && LC.badangWatch());   // ghosts (and Badang, on his night watch) stay up all night
         if (n.here !== here) {
           n.here = here; n.spr.setVisible(here);
           self.solid[n.ty][n.tx] = here; self.objAt[n.ty][n.tx] = here ? n.o : null;

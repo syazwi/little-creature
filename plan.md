@@ -190,8 +190,12 @@ src/
   art5.js           v1.6 textures: boar, rock crab, scorpion, fire jellyfish, Mak Deruma (ghost and alive), Si Tanggang alive, battle FX, ability icons
   scenes/WorldTanggang.js  guiding Si Tanggang to his mother, the reunion cutscene
   scenes/UISettings.js     sound & music volumes, save/load slot menus, ability slots, damage numbers, hurt flash
+  badang.js         v1.7 data: Badang (skinny and strong), the hantu's spots, bubu, Ladang Badang, Batu Badang, Lempar Batu, his story lines
+  art6.js           v1.7 textures: Badang (both), the river hantu, bubu, stumps and boulders, Batu Badang, the contest stone, icons
+  scenes/WorldBadang.js    Badang at your side (fighting), the night watch and wish cutscene, bubu traps, clearing the land
+  scenes/UIBadang.js       the grab game, Badang's Talk rows, the Lempar Batu game, Journal row
   cheats.js         test build only (dist/LittleCreature_full.html)
-  scenes/UIGames.js      map, chest, reban, Pesta and its three games, strength training, quests, the journal's You page
+  scenes/UIGames.js      map, chest, reban, Pesta and its contest games, strength training, quests, the journal's You page
   art.js            procedural pixel-art texture generation
   audio.js          procedural music and sound effects
   state.js          game state model, save/load, day simulation
@@ -290,6 +294,23 @@ Slow pads, sparse bells, a soft bass pulse and a distant gong through a generate
 **Si Tanggang's mother.** `quests.tanggang`: 1 met, 2 at peace (shawl), 3 escorting (`S.escort`), 4 reunited. Mak Deruma (`deruma`) is a ghost villager on Pulau Mutiara (ghosts are present day and night). The escort follows you across places; the reunion triggers within 44 px of her: a scripted cutscene (movement locked by `World.reuniting`), then both switch to their `alive` definitions (`LC.villager(vid)` merges `v.alive` once `tanggang >= 4`: kampung posts, human sprites `npc_tanggangH`/`npc_derumaH`, new chat). Fainting or a new day ends an escort. **Restu Ibu** (`LC.hasRestu()`): once a day (`S.restuDay`) a lethal blow instead heals fully, gives 2.5 s of invulnerability and turns everything within 120 px to stone.
 
 **Save slots and co-op.** `State.slot`, `slotInfo`, `slotText`, `saveTo(n)`, `load(n)`, `lastSlot()`. The lobby's host column has a slot picker. Co-op protocol 5 adds `reload{world, by}` (the host loaded a slot: guests apply the snapshot, save their bag and restart on the farm) and `saved{by}` (guests save their bag when the host saves). Guests' pause menu has "Save my bag" and no Load.
+
+### Badang, the strongest man in the land (v1.7)
+From the tale in the *Sejarah Melayu*. The player does **not** become Badang: he is a friend who gets the strength and helps you.
+
+**Story** (`quests.badang`, personal): 1 met (asked), 2 keeping watch, 3 strong, 4 Lempar Batu champion. Skinny Badang stands by the forest pool (`LC.VILLAGERS.badang`, post 28,22, `sprite: true`). While he keeps watch (`LC.badangWatch()`) he stays out all night, and from 19:00 the **river hantu** sits at one of `LC.HANTU_SPOTS` around the pool (kept clear of trees via `A.clear`). It is a world entity, not an enemy: `objAt` type `hantu`, action "Grab the hantu!". The grab game (`UI.openGrab`): three hits in the green before two misses; a miss or giving up makes it dive and pop up at another spot. Sumpahan Batu also stones it (`hantuInRange`/`stoneHantu`), and a stoned hantu is caught at once. The wish cutscene (`World.cutscene` locks movement): choices (let Badang wish / ask for gold: the hantu refuses), the glowing lump, the gulp, a growth tween and texture swap to `npc_badangK`, the hantu dives, and Badang gives you 2 `bubu` (kept for you if your bag is full: `quests.bubuOwed`). `LC.villager` now takes `v.aliveIf(S)` (default: `tanggang >= 4`), so strong Badang lives in Kampung Tepian by the batu angkat.
+
+**At your side** (`S.buddy`/`S.buddyDay`, personal, once a day): he follows you (no collisions; he catches up if left far behind), targets the nearest enemy within 110 px of you, walks to it at 120 px/s and punches (3 damage, double on stone, 260 knockback, shockwave, "BAM!"), with a 1.5 s cooldown (`LC.BADANG_FIGHT`). He stays ashore in underwater places. Fainting ends his day (and he carries you home). Simulated per device, like enemies.
+
+**Ladang Badang** (shared `S.ladang`: 0 / 1 tonight / 2 done; in the snapshot). `Sim.ladang` (a feast of 3 nasi lemak + 300 kepeng, paid by whoever asked); `endDay` turns 1 into 2. The strip x 6-17, y 23-25 south of the fence holds six `tunggul` objects (stumps and boulders, `when: ladang !== 2`). `LC.syncLadang()` rewrites those tiles in the cached farm grid (`.` or `f`) whenever a World is built and each morning (`World.refreshLadang`), and `Sim`'s tile checks use that same grid, so tilling works for guests too. Decor never lands on the strip. Objects may now have `when(S)`; `World.objImgs` keeps their images by id.
+
+**Houses at once.** `Sim.build` with `quick` (sent when `LC.hasBadang()`) finishes the house straight away (`State.moveIn`, shared with `endDay`).
+
+**Bubu** (personal `S.bubus` [{area, x, y, day, kind}], max 3, in the co-op bag): set on any water tile on land (not underwater); each later morning a check gives 1-2 fish per night (up to 3 nights, max 4), never junk; or pick it up again.
+
+**Lempar Batu.** `LC.CONTESTS.lempar` uses new optional contest hooks: `show`, `ready`, `play` (the game function), `champLine` and `onChamp`. Badang throws, you cheer: three timing taps (lift, spin, throw) give 28 + 11 × accuracy + 0.6 × hearts depa against the rival's flag (34-42, 42-50, 48-56; the last rival is Benderang). The first championship sets `quests.badang = 4` and shows **Batu Badang**, a 2×2 rock in the kampung river (`when: trophies.lempar > 0`).
+
+**Fixes found while testing.** `warungImgs`/`portalImg` and the spirit companion's sprite are reset for each new place: before, a Pelita level-up at Lv 10+ away from the farm froze the game, and the companion vanished after travelling. Co-op protocol 6.
 
 ## 8. Milestones
 

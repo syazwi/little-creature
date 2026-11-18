@@ -73,10 +73,11 @@ window.LC = window.LC || {};
   };
   LC.AREAS.island.objects.push({ id: 'i_sampan_ibu', type: 'bldg', x: 23, y: 26, w: 2, h: 1, tex: 'sampan_lama', text: 'A tiny old sampan, grey with age and half buried in sand. A faded name is painted on its side: DERUMA.' });
 
-  // a villager as they are right now (Si Tanggang and his mother live again once you bring them together)
+  // a villager as they are right now (Si Tanggang and his mother live again once you bring them together;
+  // v1.7: Badang after his wish uses the same switch, with his own aliveIf)
   LC.villager = function (vid) {
     var v = LC.VILLAGERS[vid], S = LC.State.s;
-    if (v && v.alive && S && (S.quests.tanggang || 0) >= 4) return Object.assign({}, v, v.alive);
+    if (v && v.alive && S && (v.aliveIf ? v.aliveIf(S) : (S.quests.tanggang || 0) >= 4)) return Object.assign({}, v, v.alive);
     return v;
   };
   LC.villagerKey = function (vid) { return LC.villager(vid).key || vid; };

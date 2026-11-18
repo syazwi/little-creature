@@ -1690,10 +1690,11 @@ window.LC = window.LC || {};
   };
   LC.AREAS.island.objects.push({ id: 'i_sampan_ibu', type: 'bldg', x: 23, y: 26, w: 2, h: 1, tex: 'sampan_lama', text: 'A tiny old sampan, grey with age and half buried in sand. A faded name is painted on its side: DERUMA.' });
 
-  // a villager as they are right now (Si Tanggang and his mother live again once you bring them together)
+  // a villager as they are right now (Si Tanggang and his mother live again once you bring them together;
+  // v1.7: Badang after his wish uses the same switch, with his own aliveIf)
   LC.villager = function (vid) {
     var v = LC.VILLAGERS[vid], S = LC.State.s;
-    if (v && v.alive && S && (S.quests.tanggang || 0) >= 4) return Object.assign({}, v, v.alive);
+    if (v && v.alive && S && (v.aliveIf ? v.aliveIf(S) : (S.quests.tanggang || 0) >= 4)) return Object.assign({}, v, v.alive);
     return v;
   };
   LC.villagerKey = function (vid) { return LC.villager(vid).key || vid; };
@@ -1735,6 +1736,146 @@ window.LC = window.LC || {};
     { who: 'tanggang', text: 'Sumpahan Batu, the stone curse. Point your heart at anything that means you harm, and for a few breaths it will be as still as my old ship.' },
     { text: '✦ New ability: Sumpahan Batu! Press V (or tap the stone beside your hotbar) to turn nearby enemies to stone for a few seconds. ✦' }
   ];
+})(window.LC);
+
+</script>
+  <script>/* src/badang.js */
+/* Little Creature — v1.7: Badang, the strongman of the old Malay tales (from the Sejarah Melayu).
+ *  - Badang is a poor, skinny farmhand who sets his bubu (bamboo fish traps) in the forest pool of Hutan Rimba.
+ *    Every morning they are empty. Keep watch with him after dark and catch the cheeky river hantu that steals
+ *    his fish (grab it by its long wet beard, or freeze it first with Sumpahan Batu).
+ *  - The hantu grants BADANG a wish, and he becomes the strongest man in the land. You stay as you are:
+ *    Badang is your friend, and he helps you.
+ *  - Once a day he comes along and fights beside you. He clears the stumps and boulders south of Nenek's field
+ *    overnight (a new field), raises gotong-royong houses at once, and throws stones in the Pesta's new contest,
+ *    Lempar Batu, while you cheer. When he wins, his stone stays in the river: Batu Badang.
+ *  - His thank-you gift: bubu fish traps of your own, which catch fish while you sleep. */
+window.LC = window.LC || {};
+(function (LC) {
+  'use strict';
+  function addItems(map) { Object.keys(map).forEach(function (id) { var it = map[id]; it.id = id; it.icon = it.icon || 'i_' + id; LC.ITEMS[id] = it; }); }
+
+  addItems({
+    bubu: { name: 'Bubu', kind: 'trap', sell: 30, desc: 'A bamboo fish trap from Badang. Hold it, face a river, pool, lake or the sea and press USE to set it. Fish swim in while you sleep: check it in the morning. (You can tend 3.)' },
+    piala_batu: { name: 'Piala Lempar Batu', kind: 'treasure', sell: 200, desc: 'Champion of the stone throwing! A little silver boulder. Badang insisted that you keep it.' }
+  });
+
+  // ================================================================ who Badang is, before and after his wish
+  LC.VILLAGERS.badang = {
+    name: 'Badang', role: 'A poor farmhand', area: 'forest', post: { x: 28, y: 22 }, sprite: true,
+    intro: [
+      'Oh! Salam, kawan. I did not hear you coming. I am Badang.',
+      'I clear jungle for my master across the river. Every day I chop and dig until dark... and look at these arms. Thin as rattan!',
+      'My only luck is my bubu, my fish traps, there in the pool. But every morning they are empty! Only fish bones... and long, wet, green hairs.',
+      'Something steals my fish in the night. If I go home with nothing again, there will be no supper for me.'
+    ],
+    chat: ['One day I will clear a whole hill in one morning. Haha... one day.', 'Ubi rebus is the best food in the world. Mostly because it is the only food I have.', 'My master says I am too weak to be useful. Maybe he is right.', 'The pool is quiet in the day. But at night... I hear giggling.'],
+    tasks: [['ubi_rebus', 1, 2], ['nasi', 1, 2], ['pisang', 2, 3], ['kelapa', 1, 2], ['nasi_lemak', 1, 1], ['ikan_bakar', 1, 2]],
+    taskText: 'for his supper', gifts: { 3: ['bubu', 1], 6: ['kayu', 20], 10: ['kepeng', 800] },
+    aliveIf: function (S) { return (S.quests.badang || 0) >= 3; },
+    alive: {
+      area: 'kampung', post: { x: 11, y: 20 }, key: 'badangK', role: 'The strongest man in the land',
+      intro: [
+        'Hah! A new face! I am Badang, the strongest man in the land.',
+        'Not long ago I was a skinny farmhand. Then a cheeky river hantu granted me a wish... it is a long story, and a little disgusting.',
+        'Need a hand? I clear land, carry houses and throw stones at the Pesta. Just ask, kawan!'
+      ],
+      chat: ['My master set me free! Now I clear land for anyone who asks. And I eat for ten.', 'I lifted the batu angkat with one finger. The children screamed. I put it back very gently.', 'Strength is for helping, kawan. Never for showing off. Well... maybe a little at the Pesta.', 'That cheeky hantu still steals a fish or two. I let it. It is only fair.'],
+      taskText: 'for his giant appetite'
+    }
+  };
+  LC.hasBadang = function () { var S = LC.State.s; return !!S && (S.quests.badang || 0) >= 3; };
+  LC.badangWatch = function () { var S = LC.State.s; return !!S && (S.quests.badang || 0) === 2; };   // the night watch
+  LC.badangBuddy = function () { var S = LC.State.s; return !!S && S.buddy === 'badang' && S.buddyDay === S.day && LC.hasBadang(); };
+  LC.BADANG_FIGHT = { dmg: 3, cd: 1.5, sight: 110, speed: 120 };
+
+  // ================================================================ the forest pool: his bubu, and where the hantu sits
+  LC.AREAS.forest.objects.push({ id: 'f_bubu', type: 'bubu_badang', x: 30, y: 23, w: 1, h: 1, tex: 'bubu_set', keep: true, when: function (S) { return (S.quests.badang || 0) < 3; } });
+  LC.HANTU_SPOTS = [{ x: 29, y: 24 }, { x: 33, y: 26 }, { x: 37, y: 26 }, { x: 40, y: 21 }, { x: 31, y: 18 }];
+  LC.AREAS.forest.clear = LC.HANTU_SPOTS.map(function (p) { return { x: p.x, y: p.y, r: 1 }; });   // no trees on these spots
+
+  // ================================================================ Ladang Badang: the land south of Nenek's field
+  LC.LADANG = { x0: 6, y0: 23, x1: 17, y1: 25, cost: { nasi_lemak: 3 }, kepeng: 300 };
+  var notCleared = function (S) { return S.ladang !== 2; };
+  [['l_tunggul1', 'tunggul', 6, 23], ['l_batu1', 'batu_besar', 9, 25], ['l_batu2', 'batu_kecil', 11, 23, 1], ['l_tunggul2', 'tunggul', 13, 24], ['l_batu3', 'batu_besar', 16, 23], ['l_tunggul3', 'tunggul', 15, 25]]
+    .forEach(function (s) { LC.OBJECTS.push({ id: s[0], type: 'tunggul', x: s[2], y: s[3], w: s[4] || 2, h: 1, tex: s[1], when: notCleared }); });
+  LC.inLadang = function (x, y) { var L = LC.LADANG; return x >= L.x0 && x <= L.x1 && y >= L.y0 && y <= L.y1; };
+  // the farm map knows whether Badang has cleared the land (called whenever the world is built or a day begins)
+  LC.syncLadang = function () {
+    var S = LC.State.s, g = LC.areaGrid('farm'), L = LC.LADANG, ch = S && S.ladang === 2 ? 'f' : '.';
+    for (var y = L.y0; y <= L.y1; y++) for (var x = L.x0; x <= L.x1; x++) g[y][x] = ch;
+  };
+
+  // ================================================================ Batu Badang: the stone he threw into the river
+  LC.AREAS.kampung.objects.push({ id: 'k_batu_badang', type: 'bldg', x: 40, y: 28, w: 2, h: 2, tex: 'batu_badang', keep: true,
+    when: function (S) { return (S.trophies.lempar || 0) > 0; },
+    text: 'Batu Badang: the great stone Badang threw at the Pesta. It flew over the crowd and landed in the river, and it has stayed there ever since. Children dare each other to swim out and touch it.' });
+
+  // ================================================================ the Pesta's fourth contest
+  LC.CONTESTS.lempar = { name: 'Lempar Batu', what: 'Stone throwing', icon: 'ic_badang', trophy: 'piala_batu', rivals: ['Mat Kilat', 'Awang Besar', 'Benderang'], play: 'playLempar',
+    show: function () { return (LC.State.s.quests.badang || 0) >= 1; },
+    ready: function () { return LC.hasBadang() ? { ok: true } : { ok: false, why: 'Only a true strongman can enter. Help Badang in Hutan Rimba first...' }; },
+    champLine: '✦ Badang is CHAMPION of the Lempar Batu! ✦ He lifts you onto his shoulders while the whole kampung cheers.',
+    how: 'Badang throws, you cheer! Tap when the marker is in the centre as he lifts, spins and throws. The longest throw wins.' };
+
+  // ================================================================ the story, in their own words
+  LC.BADANG = {
+    ask: 'Will you keep watch with me tonight, kawan? Two pairs of eyes are better than one. And to be honest... I am scared of the dark.',
+    agree: 'Terima kasih! Come back to the pool after dark (7 PM). We will hide behind the trees and catch the thief!',
+    later: 'Hmm. If you change your mind, I am always here. Digging.',
+    day: 'We keep watch after dark (7 PM). Until then, I dig. And dig. And dig.',
+    night: 'Shh! Look... by the water! Something is eating my fish! Go on, grab it! I am right behind you. (Probably.)',
+    seen: 'Splash... something is giggling by Badang\'s bubu at the forest pool!',
+    slipped: 'Splash! The slippery hantu wriggled free and dived into the pool. Hihihi! It pops up somewhere else...',
+    caught: [
+      { who: 'hantu', text: 'Aduh! Aduh! Let go, let go! Not the beard!' },
+      { who: 'badang', text: 'So YOU are the one who eats my fish every night!' },
+      { who: 'hantu', text: 'Hehe... they were very tasty fish. Please, let me go! I will grant a wish. Gold? A palace? A hundred kerbau?' }
+    ],
+    greedy: [
+      { who: 'hantu', text: 'Hmph! They were HIS fish, not yours, greedy one!' },
+      { who: 'badang', text: 'Hehe. Thank you for trying, kawan. But I know what I want.' }
+    ],
+    wish: [
+      { who: 'badang', text: 'I do not want gold, or a palace. I only want to be strong. Strong enough to finish my master\'s work, and be free.' },
+      { who: 'hantu', text: 'Strength? Easy-peasy! But you must eat... whatever I bring up. Hrrk... hrrrrk...' },
+      { text: 'BLEURGH! The hantu coughs up a glowing green lump. It wobbles.' },
+      { who: 'badang', text: '...Must I?' },
+      { who: 'hantu', text: 'Every last bit. Or no deal!' },
+      { text: 'Badang shuts his eyes, pinches his nose... and gulps it down. GULP. Ewww.' }
+    ],
+    after: [
+      { who: 'badangK', text: 'My arms! My back! Kawan, I feel like I could lift a mountain!' },
+      { text: 'He picks up a fallen log as thick as a kerbau and tosses it over his shoulder like a pillow.' },
+      { who: 'hantu', text: 'A deal is a deal! Hihihi, enjoy your strength!' }
+    ],
+    thanks: [
+      { who: 'badangK', text: 'You did this for me, kawan. Tonight I will clear all of my master\'s land, and then I will be free!' },
+      { who: 'badangK', text: 'Come and find me in Kampung Tepian, by the batu angkat. And take my old bubu: I can catch fish with my bare hands now!' },
+      { text: '✦ Badang is the strongest man in the land! He can fight beside you, clear land, raise houses and throw stones at the Pesta. You got 2 Bubu (fish traps)! ✦' }
+    ],
+    come: 'Hah! Let us go, kawan. Anything that bothers you will have to bother me first.',
+    away: 'Badang can\'t swim that deep. He waits for you on the shore.',
+    home: 'Badang waves and strolls home to Kampung Tepian. "Call me again tomorrow!"',
+    carried: 'Badang found you and carried you home on his shoulders like a sack of rice.',
+    morning: 'Badang went home to sleep. Ask him again today if you want him along.',
+    ladangAsk: 'Those old stumps south of Nenek\'s field? Hah! Give me a good feast and I will clear them tonight. You will wake up to a new field!',
+    ladangDone: 'Overnight, Badang pulled up every stump and rolled every boulder into the river. There is a new field south of Nenek\'s fence: Ladang Badang!',
+    houseQuick: 'Badang carries the posts on his shoulders, three at a time. Before the sun even moves, the house is standing!',
+    champ: [
+      { who: 'benderang', text: 'Ha! I sailed across the strait to beat the strongest man in the land. Instead I found a friend. Next year, Badang!' },
+      { text: 'Badang\'s last stone flew so far that it landed in the river, and there it stays. Everyone calls it Batu Badang.' }
+    ]
+  };
+  var WHO = { badang: ['Badang', 'npc_badang_0'], badangK: ['Badang', 'npc_badangK_0'], hantu: ['Hantu Air', 'hantu_air_0'], benderang: ['Benderang', null] };
+  LC.badangLines = function (arr) {
+    return arr.map(function (l) { var w = l.who && WHO[l.who]; return w ? { name: w[0], portrait: w[1] || undefined, text: l.text } : { text: l.text }; });
+  };
+
+  Object.assign(LC.TEXT, {
+    tunggul: 'Huge old stumps and boulders, roots as thick as your leg. Far too heavy for you... It would take the strength of ten men to clear this land.',
+    bubu_badang: 'Badang\'s bubu: a long bamboo fish trap. It is empty, except for fish bones and a few long, wet, green hairs...'
+  });
 })(window.LC);
 
 </script>
@@ -1793,10 +1934,12 @@ window.LC = window.LC || {};
       str: 10, hp: 55, maxHp: 55, strFoodDay: 0, strFood: 0, liftDay: 0, silatDay: 0, jamuDay: 0,
       wear: {}, quests: {}, contest: {}, trophies: {},
       // v1.6 personal: guiding Si Tanggang home, and the day Restu Ibu last saved you
-      escort: null, restuDay: 0
+      escort: null, restuDay: 0,
+      // v1.7: your bubu in the water (personal), Badang at your side (personal, for one day), the land he clears (shared: 0 / 1 tonight / 2 done)
+      bubus: [], buddy: null, buddyDay: 0, ladang: 0
     };
   }
-  var BAG_EXTRA = ['str', 'wear', 'trophies', 'contest', 'quests'];   // a co-op guest's own progress travels in their bag
+  var BAG_EXTRA = ['str', 'wear', 'trophies', 'contest', 'quests', 'bubus'];   // a co-op guest's own progress travels in their bag
 
   LC.SAVE_SLOTS = 3;
   var State = LC.State = {
@@ -1854,7 +1997,7 @@ window.LC = window.LC || {};
     snapshot: function () {
       var s = this.s;
       return JSON.parse(JSON.stringify({ day: s.day, minutes: s.minutes, tiles: s.tiles, trees: s.trees, ghost: s.ghost, offerings: s.offerings, buildings: s.buildings, spirits: s.spirits,
-        chests: s.chests, chestSeq: s.chestSeq, animals: s.animals, animalSeq: s.animalSeq, coop: s.coop, nest: s.nest, flags: { penunggu: s.flags.penunggu || 0 } }));
+        chests: s.chests, chestSeq: s.chestSeq, animals: s.animals, animalSeq: s.animalSeq, coop: s.coop, nest: s.nest, ladang: s.ladang || 0, flags: { penunggu: s.flags.penunggu || 0 } }));
     },
     applySnapshot: function (w) {
       var s = this.s;
@@ -1862,7 +2005,7 @@ window.LC = window.LC || {};
       s.offerings = w.offerings || [];
       s.buildings = w.buildings || {}; s.spirits = w.spirits || {};
       s.chests = w.chests || {}; s.chestSeq = w.chestSeq || 0; s.animals = w.animals || []; s.animalSeq = w.animalSeq || 0;
-      s.coop = w.coop || { telur: 0, telur_itik: 0, susu: 0 }; s.nest = w.nest || [];
+      s.coop = w.coop || { telur: 0, telur_itik: 0, susu: 0 }; s.nest = w.nest || []; s.ladang = w.ladang || 0;
       if (s.ghost) Object.keys(w.ghost).forEach(function (k) { s.ghost[k] = w.ghost[k]; }); else s.ghost = w.ghost;
     },
     // A guest plays on the host's shared world with their own travelling bag.
@@ -2092,6 +2235,14 @@ window.LC = window.LC || {};
       return out;
     },
     // which villager lives on each built plot, and who is in the kampung right now
+    // a new house is done: the next family waiting for a home moves in (returns who)
+    moveIn: function (plot) {
+      var B = this.s.buildings, b = B[plot], taken = {};
+      Object.keys(B).forEach(function (q) { if (B[q].vid) taken[B[q].vid] = 1; });
+      var vid = LC.MOVE_IN.filter(function (v) { return !taken[v]; })[0] || null;
+      b.done = true; b.vid = vid;
+      return vid;
+    },
     villagerAtPlot: function (plot) { var b = this.s.buildings[plot]; return b && b.done ? b.vid : null; },
     villagerHome: function (vid) {
       var v = LC.villager ? LC.villager(vid) : LC.VILLAGERS[vid];
@@ -2111,6 +2262,7 @@ window.LC = window.LC || {};
       }
       this.recalc();
       s.hp = s.maxHp;   // a night's sleep heals every bruise
+      s.buddy = null;   // v1.7: Badang went home to sleep
       if (s.escort) { s.escort = null; lines.push('Before dawn, Si Tanggang drifted back to his sunken ship. He is waiting for you to try again.'); }
       return lines;
     },
@@ -2228,11 +2380,11 @@ window.LC = window.LC || {};
       Object.keys(B).sort().forEach(function (p) {
         var b = B[p];
         if (b.done) return;
-        var taken = {}; Object.keys(B).forEach(function (q) { if (B[q].vid) taken[B[q].vid] = 1; });
-        var vid = LC.MOVE_IN.filter(function (v) { return !taken[v]; })[0] || null;
-        b.done = true; b.vid = vid;
+        var vid = self.moveIn(p);
         lines.push('Gotong-royong! The whole kampung raised the ' + LC.HOUSES[b.style].name + ' overnight.' + (vid ? ' ' + LC.VILLAGERS[vid].name + ' (' + LC.VILLAGERS[vid].role.toLowerCase() + ') has moved in!' : ''));
       });
+      // v1.7: Badang keeps his promise
+      if (s.ladang === 1) { s.ladang = 2; lines.push(LC.BADANG.ladangDone); }
 
       // trees and forage regrow
       Object.keys(s.trees).forEach(function (id) { if (s.trees[id] > 0) s.trees[id]--; });
@@ -2255,7 +2407,7 @@ window.LC = window.LC || {};
         Object.keys(s.tiles).forEach(function (k) { var t = s.tiles[k]; if (t.tilled && !t.wet) { t.wet = true; rained++; } });
         lines.push('Rain drummed on the atap all night.' + (rained ? ' The whole field is watered.' : ''));
       }
-      if (this.isPesta()) lines.push('Today is Sabtu: Pesta day in Kampung Tepian! Kite fighting, top spinning and the Serama show, 8 AM to 6 PM.');
+      if (this.isPesta()) lines.push('Today is Sabtu: Pesta day in Kampung Tepian! Kite fighting, top spinning' + (LC.hasBadang && LC.hasBadang() ? ', the Serama show and Badang\'s stone throwing' : ' and the Serama show') + ', 8 AM to 6 PM.');
       s.minutes = LC.DAY_START;
       s.energy = fainted ? Math.round(s.maxEnergy * 0.6) : s.maxEnergy;
       s.offerings = [];
@@ -2289,7 +2441,7 @@ window.LC = window.LC || {};
   'use strict';
   function clamp(v) { return Math.max(0, Math.min(100, v)); }
   var grid = null;
-  function ch(x, y) { if (!grid) grid = LC.buildMap(); return grid[y] && grid[y][x]; }
+  function ch(x, y) { if (!grid) grid = LC.areaGrid('farm'); return grid[y] && grid[y][x]; }   // (the same grid the farm is drawn from: Badang's field appears in it)
 
   LC.Sim = {
     till: function (a) {
@@ -2342,6 +2494,14 @@ window.LC = window.LC || {};
       var S = LC.State.s, o = LC.objById(a.plot);
       if (!o || o.type !== 'plot' || !LC.HOUSES[a.style] || S.buildings[a.plot]) return { ok: false };
       S.buildings[a.plot] = { style: a.style, day: S.day, done: false, vid: null };
+      if (a.quick) { var vid = LC.State.moveIn(a.plot); return { ok: true, quick: true, vid: vid }; }   // v1.7: Badang raises it at once
+      return { ok: true };
+    },
+    // v1.7: Badang clears the stumps and boulders south of Nenek's field overnight (the feast is paid by whoever asked)
+    ladang: function () {
+      var S = LC.State.s;
+      if (S.ladang) return { ok: false };
+      S.ladang = 1;
       return { ok: true };
     },
     // grant a spirit's wish (the items are paid by whoever asked)
@@ -2490,6 +2650,7 @@ window.LC = window.LC || {};
     }
     if (op === 'shake') { var tr = {}; tr[a.id] = S.trees[a.id]; return { trees: tr }; }
     if (op === 'build') return { buildings: S.buildings };
+    if (op === 'ladang') return { ladang: S.ladang };
     if (op === 'befriend' || op === 'play') return { ghost: S.ghost, spirits: S.spirits };
     return { ghost: S.ghost, offerings: S.offerings };
   };
@@ -2514,7 +2675,7 @@ window.LC = window.LC || {};
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
-  var PROTO = 5, MAX_PLAYERS = 4, PREFIX = 'littlecreature-';
+  var PROTO = 6, MAX_PLAYERS = 4, PREFIX = 'littlecreature-';
   var ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   var NAME_KEY = 'littleCreature.name';
 
@@ -3483,6 +3644,7 @@ window.LC = window.LC || {};
     if (Art.generate3) Art.generate3(scene);
     if (Art.generate4) Art.generate4(scene);
     if (Art.generate5) Art.generate5(scene);
+    if (Art.generate6) Art.generate6(scene);
   };
 })(window.LC);
 
@@ -4923,6 +5085,130 @@ window.LC = window.LC || {};
 })(window.LC);
 
 </script>
+  <script>/* src/art6.js */
+/* Little Creature — procedural pixel art for v1.7: Badang (a skinny farmhand, then the strongest man in the land),
+ * the cheeky river hantu, bamboo bubu traps, the stumps and boulders south of Nenek's field, Batu Badang in the
+ * river, the stone for the Lempar Batu contest, and their icons. */
+window.LC = window.LC || {};
+(function (LC) {
+  'use strict';
+  var Art = LC.Art;
+
+  // ================================================================== BADANG
+  function drawBadang(p, blink) {   // 16x20 a skinny farmhand in a patched singlet and a rolled-up kain
+    var SK = '#a8714a', SK2 = '#8e5c3a';
+    p.rect(5, 18, 2, 2, '#5a3a24'); p.rect(9, 18, 2, 2, '#5a3a24');
+    p.rect(6, 15, 1, 3, SK); p.rect(9, 15, 1, 3, SK);                       // thin legs
+    p.rect(5, 12, 6, 4, '#5a6a8a'); p.rect(5, 13, 6, 1, '#46546e'); p.rect(7, 12, 1, 4, '#46546e'); p.rect(10, 12, 1, 4, '#46546e');   // checked kain
+    p.rect(5, 8, 6, 4, '#d8cfb8'); p.rect(9, 9, 2, 2, '#a89a78'); p.px(6, 11, '#b8ae96');                                           // patched singlet
+    p.rect(4, 8, 1, 5, SK); p.rect(11, 8, 1, 5, SK2); p.px(4, 13, SK2); p.px(11, 13, SK2);   // arms like rattan
+    p.rect(5, 3, 6, 5, SK); p.rect(10, 4, 1, 3, SK2);
+    if (blink) { p.rect(6, 5, 2, 1, '#2a1a10'); p.rect(9, 5, 2, 1, '#2a1a10'); } else { p.px(6, 5, '#2a1a10'); p.px(9, 5, '#2a1a10'); }
+    p.px(7, 7, '#7a3a2a'); p.px(8, 7, '#7a3a2a');
+    p.rect(5, 2, 6, 2, '#8a3a2a'); p.rect(5, 3, 6, 1, '#6a2a1e'); p.px(11, 2, '#8a3a2a'); p.px(12, 3, '#8a3a2a');   // a faded semutar
+  }
+  function drawBadangKuat(p, blink) {   // 22x26 the strongest man in the land
+    var SK = '#a8714a', SK2 = '#8a5634', SK3 = '#c08a5e';
+    p.rect(6, 24, 4, 2, '#4a3020'); p.rect(12, 24, 4, 2, '#4a3020');
+    p.rect(7, 21, 3, 3, SK); p.rect(12, 21, 3, 3, SK2);                                                  // sturdy legs
+    p.rect(5, 16, 12, 6, '#2f6a4a'); p.rect(5, 21, 12, 1, '#245438');                                    // batik kain samping
+    for (var y = 17; y < 21; y += 2) for (var x = 6 + (y % 4 ? 1 : 0); x < 16; x += 3) p.px(x, y, '#e9c46a');
+    p.rect(5, 15, 12, 2, '#b8322a'); p.px(15, 17, '#b8322a'); p.px(16, 18, '#7a1e1a');                    // red sash
+    p.rect(4, 8, 14, 8, '#3a2a20'); p.rect(8, 8, 6, 8, SK); p.rect(8, 11, 6, 1, SK2); p.px(10, 13, SK2); p.px(11, 13, SK2); p.rect(10, 9, 2, 2, SK3);   // open vest, broad chest
+    p.ell(3, 11, 2.4, 3.6, SK); p.ell(18.5, 11, 2.4, 3.6, SK2); p.px(2, 9, SK3); p.px(18, 9, SK3);      // arms like jackfruit
+    p.rect(2, 13, 3, 4, SK); p.rect(17, 13, 3, 4, SK2); p.rect(1, 16, 4, 2, SK2); p.rect(17, 16, 4, 2, SK2);   // forearms and fists
+    p.rect(7, 2, 8, 6, SK); p.rect(14, 3, 1, 4, SK2); p.rect(8, 7, 6, 1, SK2);                         // square jaw
+    if (blink) { p.rect(8, 4, 2, 1, '#2a1a10'); p.rect(12, 4, 2, 1, '#2a1a10'); } else { p.px(9, 4, '#2a1a10'); p.px(12, 4, '#2a1a10'); }
+    p.rect(8, 3, 2, 1, '#2a1a10'); p.rect(12, 3, 2, 1, '#2a1a10');                                    // bold brows
+    p.rect(9, 6, 4, 1, '#3a2418'); p.px(10, 7, '#f0e8d8'); p.px(11, 7, '#f0e8d8');                      // moustache and a grin
+    p.rect(7, 0, 8, 3, '#b8322a'); p.rect(7, 2, 8, 1, '#7a1e1a'); p.poly([[12, 1], [16, -2], [15, 2]], '#b8322a'); p.px(10, 1, '#e9c46a');   // tanjak
+  }
+
+  // ================================================================== THE RIVER HANTU (16x18: cheeky, not scary)
+  function drawHantu(p, f) {
+    var B = 'rgba(70,170,150,0.92)', B2 = 'rgba(110,210,180,0.9)', H = '#2e7a68';
+    p.ell(8, 9, 6, 6, B); p.ell(7, 7, 4, 3.4, B2);
+    for (var x = 2; x <= 14; x += 2) p.line(x, 4 + (x % 4 ? 1 : 0), x + (f ? 1 : -1) * (x < 8 ? -1 : 1), 13, H);   // shaggy wet hair
+    p.ell(8, 14.5, 2.6, 3 + f * 0.5, '#9ae8c8'); p.line(8, 12, 8, 17, '#6ac8a0'); p.px(7, 17, '#6ac8a0');           // the long dripping beard
+    p.disc(5.5, 8, 2, '#ffffff'); p.disc(10.5, 8, 2, '#ffffff'); p.px(6, 8 + f, '#14201c'); p.px(11, 8 + f, '#14201c');   // big round eyes
+    p.line(6, 11, 10, 11, '#14201c'); p.px(5, 10, '#14201c'); p.px(11, 10, '#14201c'); p.px(9, 12, '#ffffff');      // a cheeky grin, one tooth
+    p.px(1, 10 + f, B2); p.px(0, 11 + f, B2); p.px(15, 10 - f, B2); p.px(16, 9 - f, B2);                           // little arms
+    p.px(3, 16 + f, '#bfe6ff'); p.px(13, 15 - f, '#bfe6ff');                                                      // drips
+    p.outline('#1e4a40');
+  }
+
+  // ================================================================== BUBU, STUMPS, BOULDERS, BATU BADANG
+  function drawBubu(p) {   // 16x14 a bamboo fish trap set in the water
+    p.ell(8, 11, 7.5, 2.4, 'rgba(160,215,240,0.55)');
+    p.poly([[1, 9], [12, 3], [15, 6], [4, 12]], '#c8a46a'); p.poly([[3, 9], [12, 4.5], [13, 6], [4, 10.5]], '#a8844a');
+    for (var i = 0; i < 4; i++) p.line(3 + i * 3, 11 - i * 1.6, 5 + i * 3, 7 - i * 1.6, '#7a5a2e');
+    p.disc(13.5, 4.8, 2, '#5a3a20'); p.disc(13.5, 4.8, 1, '#2a1a10');                // the mouth of the trap
+    p.rect(1, 11, 14, 1, 'rgba(220,240,255,0.7)'); p.px(3, 12, 'rgba(220,240,255,0.6)'); p.px(12, 12, 'rgba(220,240,255,0.6)');
+    p.line(14, 3, 15, 0, '#8a6a3a'); p.disc(15, 0.6, 1, '#e76f51');                  // a little float on a string
+  }
+  function drawTunggul(p) {   // 30x20 a great old stump with its roots
+    p.ell(15, 17, 14, 3, 'rgba(0,0,0,0.18)');
+    p.poly([[2, 18], [8, 12], [11, 15]], '#5a3a20'); p.poly([[28, 18], [21, 12], [19, 15]], '#4a2e18'); p.poly([[12, 19], [15, 12], [18, 19]], '#5a3a20');
+    p.rect(7, 6, 16, 11, '#6b4423'); p.rect(19, 6, 4, 11, '#4e3018'); p.line(10, 8, 10, 15, '#4e3018'); p.line(15, 8, 14, 16, '#4e3018');
+    p.ell(15, 6, 8, 3, '#c99a5e'); p.ell(15, 6, 5.5, 2, '#b8844a'); p.ell(15, 6, 3, 1, '#c99a5e'); p.px(15, 6, '#8a5a2b');   // the rings
+    p.speck(7, 9, 15, 7, '#3f7a32', 6);
+  }
+  function drawBatuBesar(p) {   // 30x20 a great mossy boulder
+    p.ell(15, 17, 14, 3, 'rgba(0,0,0,0.2)');
+    p.ell(15, 11, 13, 8, '#7a7680'); p.ell(13, 9, 10, 6, '#8e8a94'); p.ell(11, 7, 5, 3, '#a8a4ae');
+    p.line(18, 5, 22, 12, '#5a5660'); p.line(6, 12, 11, 15, '#5a5660');
+    p.ell(9, 5, 5, 2, '#4f8a3a'); p.speck(4, 3, 12, 4, '#6aa84f', 6);
+  }
+  function drawBatuKecil(p) {   // 16x14 a smaller boulder
+    p.ell(8, 12, 7, 2, 'rgba(0,0,0,0.2)');
+    p.ell(8, 8, 7, 5.5, '#7a7680'); p.ell(7, 7, 5, 4, '#8e8a94'); p.ell(6, 5, 2.4, 1.6, '#a8a4ae'); p.line(10, 4, 12, 9, '#5a5660');
+    p.speck(3, 3, 9, 3, '#6aa84f', 4);
+  }
+  function drawBatuBadang(p) {   // 34x30 the great stone in the river
+    p.ell(17, 25, 16, 4, 'rgba(200,230,250,0.6)'); p.ell(17, 25, 12, 2.6, 'rgba(120,180,220,0.6)');
+    p.poly([[4, 25], [6, 10], [13, 3], [24, 4], [30, 12], [31, 25]], '#7a7680');
+    p.poly([[7, 23], [8, 11], [14, 5], [22, 6], [27, 13], [26, 23]], '#8e8a94');
+    p.poly([[10, 12], [15, 7], [21, 8], [19, 12]], '#a8a4ae');
+    p.line(20, 9, 24, 20, '#5a5660'); p.line(9, 16, 14, 22, '#5a5660'); p.line(15, 14, 17, 23, '#6a6670');
+    p.ell(12, 6, 6, 2, '#4f8a3a'); p.speck(6, 4, 20, 6, '#6aa84f', 10);
+    p.rect(4, 24, 27, 1, 'rgba(230,245,255,0.8)'); p.px(2, 26, '#e8f6ff'); p.px(32, 26, '#e8f6ff');
+  }
+
+  // ================================================================== ICONS AND SMALL THINGS
+  var IC = {
+    bubu: function (p) { p.poly([[1, 12], [11, 3], [15, 7], [5, 15]], '#c8a46a'); for (var i = 0; i < 4; i++) p.line(3 + i * 3, 12 - i * 2.2, 6 + i * 3, 9 - i * 2.2, '#7a5a2e'); p.disc(13, 5, 2, '#5a3a20'); p.disc(13, 5, 1, '#2a1a10'); },
+    piala_batu: function (p) { p.rect(4, 13, 8, 2, '#8a8a92'); p.rect(6, 10, 4, 3, '#c8c8d0'); p.ell(8, 6, 5, 4, '#d8d8e0'); p.ell(7, 5, 3, 2, '#f4f4fa'); p.line(10, 3, 12, 7, '#a8a8b0'); }
+  };
+  var HUD = {
+    ic_badang: function (p) {   // a flexed arm
+      p.ell(5, 4, 3, 3, '#a8714a'); p.ell(4, 3, 1.4, 1.2, '#c08a5e'); p.rect(2, 6, 4, 5, '#a8714a'); p.rect(6, 8, 5, 3, '#8a5634'); p.disc(10, 7, 1.6, '#8a5634');
+      p.rect(1, 10, 6, 2, '#b8322a');
+    }
+  };
+
+  Art.generate6 = function (scene) {
+    var make = Art.make;
+    for (var f = 0; f < 2; f++) (function (f) {
+      make(scene, 'npc_badang_' + f, 16, 20, function (p) { drawBadang(p, !!f); }, true);
+      make(scene, 'npc_badangK_' + f, 22, 26, function (p) { drawBadangKuat(p, !!f); }, true);
+      make(scene, 'hantu_air_' + f, 17, 18, function (p) { drawHantu(p, f); });
+    })(f);
+    make(scene, 'bubu_set', 16, 14, drawBubu);
+    make(scene, 'tunggul', 30, 20, drawTunggul, true);
+    make(scene, 'batu_besar', 30, 20, drawBatuBesar, true);
+    make(scene, 'batu_kecil', 16, 14, drawBatuKecil, true);
+    make(scene, 'batu_badang', 34, 30, drawBatuBadang);
+    make(scene, 'batu_lempar', 12, 10, function (p) { p.ell(6, 5.5, 5.5, 4.2, '#7a7680'); p.ell(5, 4.5, 3.6, 2.6, '#9a96a0'); p.px(4, 3, '#c8c4ce'); }, true);
+    make(scene, 'gumpal', 8, 8, function (p) { p.disc(4, 4, 3.4, '#7aff9a'); p.disc(3.4, 3.4, 1.6, '#d8ffe0'); p.px(6, 6, '#3ac86a'); });
+    Object.keys(IC).forEach(function (id) { make(scene, 'i_' + id, 16, 16, IC[id], true); });
+    Object.keys(HUD).forEach(function (k) { make(scene, k, 12, 12, HUD[k], true); });
+    var a = scene.anims;
+    if (!a.exists('npc_badangK_idle')) a.create({ key: 'npc_badangK_idle', frames: [{ key: 'npc_badangK_0', duration: 2400 }, { key: 'npc_badangK_1', duration: 140 }], repeat: -1 });
+    if (!a.exists('hantu_air_idle')) a.create({ key: 'hantu_air_idle', frames: [{ key: 'hantu_air_0' }, { key: 'hantu_air_1' }], frameRate: 3, repeat: -1 });
+  };
+})(window.LC);
+
+</script>
   <script>/* src/audio.js */
 /* Little Creature — procedural Web Audio: a chill, slow gamelan-lofi soundtrack, nature ambience and sound effects.
  *
@@ -5339,6 +5625,14 @@ window.LC = window.LC || {};
       case 'lunge': A.tone(t, 'sine', 260, 520, 0.12, 0.05); break;
       case 'restu': [0, 2, 4, 7, 9].forEach(function (d, k) { A.bell(A.freq(d + 5), t + k * 0.12, 2, 0.1); }); A.gong(A.freq(-5), t, 5, 0.22); break;
       case 'reunion': [4, 2, 0, 2, 4, 5, 7].forEach(function (d, k) { A.bell(A.freq(d + 5), t + k * 0.32, 2.4, 0.09); }); A.gong(A.freq(-10), t + 2.2, 6, 0.2); break;
+      // v1.7: Badang and the river hantu
+      case 'splash': A.noise(t, 0.5, 0.26, 'bandpass', 900, 400); A.noise(t + 0.08, 0.3, 0.12, 'highpass', 3000); break;
+      case 'giggle': for (i = 0; i < 5; i++) A.tone(t + i * 0.07, 'sine', 1300 + (i % 2) * 260, 1100 + (i % 2) * 260, 0.05, 0.05); break;
+      case 'bleurgh': A.tone(t, 'sawtooth', 160, 90, 0.5, 0.05); A.noise(t + 0.1, 0.35, 0.14, 'lowpass', 600); break;
+      case 'gulp': A.tone(t, 'sine', 300, 110, 0.18, 0.18); break;
+      case 'grow': A.tone(t, 'sine', 60, 50, 1.4, 0.3); for (i = 0; i < 6; i++) A.tone(t + 0.15 * i, 'triangle', 180 + i * 70, 220 + i * 70, 0.14, 0.05); A.gong(A.freq(-12), t + 0.9, 3, 0.18); break;
+      case 'punch': A.tone(t, 'sine', 120, 45, 0.2, 0.4); A.noise(t, 0.1, 0.3, 'lowpass', 900); break;
+      case 'throw': A.noise(t, 0.5, 0.18, 'bandpass', 1800, 900); A.tone(t, 'sine', 500, 180, 0.4, 0.04); break;
     }
   };
 })(window.LC);
@@ -5736,6 +6030,7 @@ window.LC = window.LC || {};
       var area = data.area && LC.AREAS[data.area] ? data.area : 'farm';
       this.area = area; this.A = LC.AREAS[area];
       S.area = area; S.visited[area] = true;
+      LC.syncLadang();   // v1.7: has Badang cleared the land south of the field?
       this.grid = LC.areaGrid(area);
       this.H = this.grid.length; this.W = this.grid[0].length;
       this.objects = LC.areaObjects(area);
@@ -5766,6 +6061,7 @@ window.LC = window.LC || {};
       this.createFarmLife();   // v1.5: animals, chests, hidden things, seasons (WorldFarm.js)
       this.createEnemies();    // v1.5: the shadows of the mine, v1.6: the wild places too (WorldCombat.js)
       this.createTanggang();   // v1.6: guiding Si Tanggang home to his mother (WorldTanggang.js)
+      this.createBadang();     // v1.7: Badang at your side, the river hantu, your bubu (WorldBadang.js)
 
       var cam = this.cameras.main;
       cam.setBounds(0, 0, this.W * T, this.H * T);
@@ -5798,7 +6094,7 @@ window.LC = window.LC || {};
         });
       } else if (data.area && this.ui.ready) this.ui.areaBanner(this.A.name, this.A.sub);
       if (data.knocked) this.time.delayedCall(700, function () {
-        self.ui.say([{ text: 'Everything went dark... You wake up at home with a sore head. Pelita must have guided you home.' }, { text: data.knocked + ' (Eat good food to heal, and come back stronger!)' }]);
+        self.ui.say([{ text: 'Everything went dark... You wake up at home with a sore head. ' + (data.carried ? LC.BADANG.carried : 'Pelita must have guided you home.') }, { text: data.knocked + ' (Eat good food to heal, and come back stronger!)' }]);
       });
       if (data.loaded) this.time.delayedCall(500, function () {
         self.ui.toast(data.loaded > 0 ? 'Loaded slot ' + data.loaded + ': Day ' + S.day + ', ' + LC.State.weekday() + '.' : (data.by || 'Your friend') + ' loaded a saved farm. Day ' + S.day + '!', 'ic_bond');
@@ -5891,8 +6187,10 @@ window.LC = window.LC || {};
 
     buildObjects() {
       var self = this, S = this.S;
-      this.trees = {}; this.torches = []; this.plots = {}; this.boats = []; this.hiddenObjs = []; this.objLights = [];
+      this.trees = {}; this.torches = []; this.plots = {}; this.boats = []; this.hiddenObjs = []; this.objLights = []; this.objImgs = {};
+      this.warungImgs = null; this.portalImg = null;   // (v1.7 fix: these belong to one place; a level-up elsewhere must not touch the old ones)
       this.objects.forEach(function (o) {
+        if (o.when && !o.when(S)) return;   // v1.7: things that come and go (Badang's stumps, Batu Badang)
         var w = o.w || 1, h = o.h || 1, bx = (o.x + w / 2) * T, by = (o.y + h) * T;
         if (o.hidden) {   // only seen through the Bunian glasses (WorldFarm.refreshHidden)
           self.hiddenObjs.push({ o: o, img: self.add.image(bx, by, o.tex).setOrigin(0.5, 1).setDepth(by).setVisible(false) });
@@ -5929,6 +6227,7 @@ window.LC = window.LC || {};
           self.boats.push({ spr: bt, y0: by - 2 });
         } else {
           var im = self.add.image(bx, by, o.type === 'portal' && !LC.State.isOpen(o.to) ? 'lombong_tutup' : o.tex).setOrigin(0.5, 1).setDepth(by);
+          if (o.id) self.objImgs[o.id] = im;
           if (o.type === 'portal') self.portalImg = im;
           if (o.type === 'spirit') self.spiritPos = { x: bx, y: by };
           if (o.type === 'dapur') self.dapurPos = { x: bx, y: by };
@@ -5947,6 +6246,7 @@ window.LC = window.LC || {};
       function mark(x, y, r) { for (var dy = -r; dy <= r; dy++) for (var dx = -r; dx <= r; dx++) keep[(x + dx) + ',' + (y + dy)] = 1; }
       LC.SPIRIT_ORDER.forEach(function (sid) { var sp = LC.SPIRITS[sid]; if (sp.area === self.area) mark(sp.x, sp.y, 2); });
       LC.villagerPosts(this.area).forEach(function (p) { mark(p.x, p.y, 2); });
+      (this.A.clear || []).forEach(function (c) { mark(c.x, c.y, c.r); });   // v1.7: e.g. where the river hantu sits
       Object.keys(LC.PLOT_POSTS).forEach(function (k) { if (self.area === 'kampung') mark(LC.PLOT_POSTS[k].x, LC.PLOT_POSTS[k].y, 2); });
       mark(Math.floor(this.A.home.x), Math.floor(this.A.home.y), 3);
       this.objects.forEach(function (o) {   // never hide a building or a house plot behind a tree
@@ -6008,6 +6308,7 @@ window.LC = window.LC || {};
         tries++;
         var x = rnd.between(1, this.W - 3), y = rnd.between(2, this.H - 3);
         if (g[y][x] !== D.on || this.solid[y][x] || near(x, y)) continue;
+        if (this.area === 'farm' && LC.inLadang(x, y)) continue;   // v1.7: Badang's land may become a field
         var by = (y + 1) * T - 1;
         this.add.image(x * T + 8 + rnd.between(-3, 3), by, rnd.pick(D.types)).setOrigin(0.5, 1).setDepth(by);
         placed++;
@@ -6307,6 +6608,7 @@ window.LC = window.LC || {};
           if (parts.ghost) Object.keys(parts.ghost).forEach(function (k) { S.ghost[k] = parts.ghost[k]; });
           if (parts.offerings) { S.offerings = parts.offerings; self.refreshOfferings(); }
           if (parts.buildings) { S.buildings = parts.buildings; self.refreshPlots(); }
+          if (parts.ladang !== undefined) S.ladang = parts.ladang;   // v1.7: Badang will clear the land tonight
           if (parts.spirits) { S.spirits = parts.spirits; LC.State.recalc(); self.refreshFolkSpirits(); }
           if (parts.chests) { S.chests = parts.chests; S.chestSeq = parts.chestSeq || S.chestSeq; self.refreshChests(); }
           if (parts.animals) { S.animals = parts.animals; S.animalSeq = parts.animalSeq || S.animalSeq; S.coop = parts.coop || S.coop; S.nest = parts.nest || S.nest; self.refreshAnimals(); }
@@ -6570,7 +6872,7 @@ window.LC = window.LC || {};
     update(time, delta) {
       if (!this.ui || !this.ui.ready) return;
       var dt = Math.min(delta, 50) / 1000, S = this.S, g = S.ghost;
-      var blocked = this.ui.isBlocking() || this.sleeping || this.leaving || this.reuniting;   // (v1.6: hold still while mother and son meet)
+      var blocked = this.ui.isBlocking() || this.sleeping || this.leaving || this.reuniting || this.cutscene;   // (hold still while mother and son meet, or Badang makes his wish)
 
       this.updatePlayer(dt, blocked);
       this.checkExits();
@@ -6609,6 +6911,7 @@ window.LC = window.LC || {};
       this.updateFarmLife(time, dt);
       this.updateEnemies(time, dt, blocked);
       this.updateTanggang(time, dt, blocked);
+      this.updateBadang(time, dt, blocked);
       this.updateLighting(time, dt);
 
       var act = blocked ? null : this.getAction();
@@ -6694,6 +6997,8 @@ window.LC = window.LC || {};
         case 'bunian_gate': return { label: 'Step through the Bunian gate', fn: function () { LC.Audio.sfx('gate'); self.goArea('bunian', self.tilePx(LC.AREAS.bunian.home), 'up'); } };
         case 'wreck': return this.seaGateAction(o, 'Swim inside the sunken junk');
         case 'seagate': return this.seaGateAction(o, o.to === 'kidul' ? 'Swim through the green arch' : 'Dive into the deep trench');
+        // v1.7 (WorldBadang.js)
+        case 'hantu': case 'bubu': case 'bubu_badang': case 'tunggul': return this.badangObjAction(o, sl, it);
         default: return LC.TEXT[o.type] ? { label: 'Look', fn: function () { self.ui.say([{ text: LC.TEXT[o.type] }]); } } : null;
       }
     }
@@ -6709,6 +7014,8 @@ window.LC = window.LC || {};
       }
       var v15 = this.toolAction15(sl, it, ch, t, tx, ty, hint);   // v1.5 items (WorldFarm.js)
       if (v15) return v15;
+      var bb = this.bubuToolAction(sl, water, tx, ty, hint);   // v1.7: set a bubu in the water
+      if (bb) return bb;
       if (sl.id === 'joran') {
         if (water) return { label: 'Cast your line', tile: true, fn: function () { self.startFishing(tx, ty, water); } };
         return hint(this.A.underwater ? 'You are already under the sea! Fish from the land.' : 'Face the water to fish: a river, pool, lake or the sea.');
@@ -6956,6 +7263,7 @@ window.LC = window.LC || {};
         var sum = LC.State.endDay(fainted);
         if (LC.Net.isHost()) LC.Net.broadcast({ t: 'dayStart', sum: sum, world: LC.State.snapshot() });
         if (self.area !== 'farm') { LC.followPid = self.followPid; self.scene.restart({ area: 'farm', summary: sum }); return; }   // you are carried home
+        self.refreshLadang();
         self.refreshAllTiles();
         self.refreshOfferings();
         self.refreshPlots(); self.refreshSeason(); self.refreshAnimals(); self.refreshChests();
@@ -6990,6 +7298,7 @@ window.LC = window.LC || {};
       S.stats.earned = 0;
       LC.State.save();
       if (this.area !== 'farm') { this.scene.restart({ area: 'farm', summary: sum }); return; }
+      this.refreshLadang();
       this.refreshAllTiles();
       this.refreshOfferings();
       this.refreshPlots(); this.refreshSeason(); this.refreshAnimals(); this.refreshChests();
@@ -7082,8 +7391,10 @@ window.LC = window.LC || {};
     createFolk: function () {
       var self = this;
       this.folkSpr = {}; this.kites = []; this.fishing = null; this.bobber = null; this.fishLine = null;
+      this.compSpr = null; this.compKey = null;   // (v1.7 fix: the old place's companion sprite is gone; make a new one here)
       Object.keys(LC.VILLAGERS).forEach(function (vid) {
         if (vid === 'tanggang' && self.S.escort) return;   // v1.6: he is following you instead
+        if (vid === 'badang' && LC.badangBuddy()) return;   // v1.7: so is Badang, when you ask him along
         if (LC.villagerArea(vid) === self.area) self.placeVillager(vid);
       });
       this.refreshFolkSpirits();
@@ -7138,7 +7449,7 @@ window.LC = window.LC || {};
       var self = this, S = this.S, H = LC.HOUSES[style];
       if (!LC.State.has(H.cost) || S.kepeng < H.kepeng) { LC.Audio.sfx('error'); return false; }
       LC.State.takeAll(H.cost); S.kepeng -= H.kepeng;
-      this.doShared('build', { plot: plot, style: style }, function (res) {
+      this.doShared('build', { plot: plot, style: style, quick: LC.hasBadang() }, function (res) {
         if (!res || !res.ok) {
           Object.keys(H.cost).forEach(function (id) { LC.State.add(id, H.cost[id]); }); S.kepeng += H.kepeng;
           self.toast('Someone already started a house there!'); return;
@@ -7146,6 +7457,13 @@ window.LC = window.LC || {};
         LC.Audio.sfx('build');
         var p = self.plots[plot]; if (p) { self.fx.smoke.explode(14, p.spr.x, p.spr.y - 20); self.cameras.main.shake(200, 0.002); }
         S.flags.built = true;
+        if (res.quick) {   // v1.7: Badang carries the posts, and the house goes up at once
+          var mv = res.vid && LC.VILLAGERS[res.vid];
+          self.ui.say([{ text: 'Tukang Leong blows a whistle and neighbours come running with poles, ropes and baskets of food.' },
+            { name: 'Badang', portrait: 'npc_badangK_0', text: LC.BADANG.houseQuick },
+            { name: 'Tok Penghulu', portrait: 'npc_penghulu_0', text: 'Gotong-royong, with a giant! Your ' + H.name + ' is finished already.' + (mv ? ' ' + mv.name + ' (' + mv.role.toLowerCase() + ') is moving in!' : '') }]);
+          return;
+        }
         self.ui.say([{ text: 'Tukang Leong blows a whistle and neighbours come running with poles, ropes and baskets of food.' },
           { name: 'Tok Penghulu', portrait: 'npc_penghulu_0', text: 'Gotong-royong! By tomorrow morning your ' + H.name + ' will be standing. Somebody will be very happy to come home.' }]);
       });
@@ -7386,7 +7704,7 @@ window.LC = window.LC || {};
     updateFolk: function (time, dt) {
       var self = this, S = this.S, awake = present(S), p = this.player;
       Object.keys(this.npcs).forEach(function (vid) {
-        var n = self.npcs[vid], here = n.ghost || awake;   // ghosts keep their watch all night
+        var n = self.npcs[vid], here = n.ghost || awake || (vid === 'badang' && LC.badangWatch());   // ghosts (and Badang, on his night watch) stay up all night
         if (n.here !== here) {
           n.here = here; n.spr.setVisible(here);
           self.solid[n.ty][n.tx] = here; self.objAt[n.ty][n.tx] = here ? n.o : null;
@@ -7889,7 +8207,9 @@ window.LC = window.LC || {};
       var restu = LC.hasRestu(), C = restu ? LC.RESTU : LC.STONE, left = this.stoneLeft();
       if (left > 0) { this.toast('The stone curse is still gathering... (' + Math.ceil(left) + 's)', 'ic_batu'); LC.Audio.sfx('error'); return; }
       var hits = (this.enemies || []).filter(function (e) { return !e.dead && !e.away && Math.hypot(e.spr.x - p.x, e.spr.y - p.y) < C.r; });
-      if (!hits.length) { this.toast('Sumpahan Batu needs an enemy close by.', 'ic_batu'); LC.Audio.sfx('error'); return; }
+      var hantu = this.hantuInRange(C.r);   // v1.7: it holds the slippery river hantu still, too
+      if (!hits.length && !hantu) { this.toast('Sumpahan Batu needs an enemy close by.', 'ic_batu'); LC.Audio.sfx('error'); return; }
+      if (hantu) this.stoneHantu(C.dur + 2);
       LC.stoneReadyAt = Date.now() + C.cd * 1000;
       LC.Audio.sfx('stone');
       this.shockwave(p.x, p.y - 8, C.r, 0x9ad8ff);
@@ -7955,17 +8275,17 @@ window.LC = window.LC || {};
     },
     faint: function () {
       if (this.leaving) return;
-      var S = this.S, lost = [], escort = !!S.escort;
+      var S = this.S, lost = [], escort = !!S.escort, buddy = LC.badangBuddy();
       LOOT.forEach(function (id) { var n = Math.floor(LC.State.count(id) / 2); if (n > 0) { LC.State.remove(id, n); lost.push(n + ' ' + LC.ITEMS[id].name); } });
       S.hp = Math.ceil(S.maxHp * 0.5);
       S.energy = Math.max(10, Math.round(S.energy * 0.6));
-      S.escort = null;
+      S.escort = null; S.buddy = null;
       if (!LC.Net.active()) S.minutes = Math.min(LC.DAY_END - 30, S.minutes + 60);
       this.player.clearTint().setAlpha(1);
       LC.Audio.sfx('sad');
       LC.Audio.setBattle(false);
       var msg = lost.length ? 'You dropped ' + lost.join(' and ') + ' in the struggle.' : 'Luckily you did not drop anything.';
-      this.goArea('farm', this.homeSpot(LC.Net.isGuest() ? this.pc : 0), 'down', { knocked: msg + (escort ? ' ' + LC.TANGGANG.lost : '') });
+      this.goArea('farm', this.homeSpot(LC.Net.isGuest() ? this.pc : 0), 'down', { knocked: msg + (escort ? ' ' + LC.TANGGANG.lost : ''), carried: buddy });
     }
   });
 })(window.LC);
@@ -8081,6 +8401,409 @@ window.LC = window.LC || {};
           self.escortSpr = null; self.reuniting = false;
           (self.enemies || []).forEach(function (e) { if (e.stoneT > 0) e.stoneT = 1.5; });
         } });
+      });
+    }
+  });
+})(window.LC);
+
+</script>
+  <script>/* src/scenes/WorldBadang.js */
+/* World, part 6 (v1.7): Badang. The night watch at the forest pool and the cheeky river hantu, Badang's wish
+ * (he becomes the strongest man in the land; you stay as you are), Badang walking beside you and fighting for you
+ * (once a day), the stumps he clears from the land south of Nenek's field, Batu Badang in the river, and your own
+ * bubu fish traps. Badang is simulated on your own device, like the enemies. Mixed into LC.WorldScene. */
+window.LC = window.LC || {};
+(function (LC) {
+  'use strict';
+  var T = 16;
+  var DIRV = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
+  var ADD = function () { return Phaser.BlendModes.ADD; };
+  function isNight(S) { return S.minutes >= 19 * 60 || S.minutes < 6 * 60; }
+  // a fish (never a flip-flop) for a bubu set in this kind of water
+  function fishFor(kind) {
+    for (var k = 0; k < 8; k++) { var id = LC.State.rollFish(kind); if (LC.ITEMS[id].kind === 'fish') return id; }
+    return (LC.FISHING[kind] || LC.FISHING.river)[0][0];
+  }
+
+  Object.assign(LC.WorldScene.prototype, {
+    createBadang: function () {
+      var self = this;
+      this.buddy = null; this.hantu = null; this.hantuDone = false; this.cutscene = false; this.bubuImgs = [];
+      if (LC.badangBuddy()) {
+        if (this.A.underwater) this.time.delayedCall(900, function () { self.toast(LC.BADANG.away, 'ic_badang'); });
+        else this.makeBuddy();
+      }
+      this.refreshBubus();
+    },
+    updateBadang: function (time, dt, blocked) {
+      this.updateBuddy(time, dt, blocked);
+      this.updateHantu(time, dt, blocked);
+    },
+
+    // ================================================================ Badang at your side
+    makeBuddy: function () {
+      var p = this.player, b = this.buddy = { x: p.x - 18, y: p.y + 2, cd: 1, target: null, said: false };
+      b.spr = this.add.sprite(b.x, b.y, 'npc_badangK_0').setOrigin(0.5, 1).setDepth(b.y);
+      b.spr.play('npc_badangK_idle');
+    },
+    startBuddy: function () {   // from Badang's Talk menu
+      var S = this.S, n = this.npcs.badang;
+      S.buddy = 'badang'; S.buddyDay = S.day;
+      if (n) {
+        if (n.here) { this.solid[n.ty][n.tx] = false; this.objAt[n.ty][n.tx] = null; }
+        this.fx.sparkle.explode(8, n.spr.x, n.spr.y - 12);
+        n.spr.destroy(); delete this.npcs.badang;
+      }
+      if (!this.buddy && !this.A.underwater) this.makeBuddy();
+      LC.Audio.sfx('chime');
+      this.toast('Badang comes with you today. He will fight anything that threatens you!', 'ic_badang');
+    },
+    sendBuddyHome: function () {
+      var self = this, b = this.buddy;
+      this.S.buddy = null;
+      if (b) {
+        this.buddy = null;
+        this.fx.sparkle.explode(6, b.spr.x, b.spr.y - 12);
+        this.tweens.add({ targets: b.spr, alpha: 0, duration: 600, onComplete: function () { b.spr.destroy(); } });
+      }
+      if (LC.villagerArea('badang') === this.area) this.placeVillager('badang');
+      this.toast(LC.BADANG.home, 'ic_badang');
+    },
+    updateBuddy: function (time, dt, blocked) {
+      var b = this.buddy;
+      if (!b) return;
+      if (!LC.badangBuddy()) { b.spr.destroy(); this.buddy = null; return; }   // a new day, or a loaded game
+      if (blocked) return;
+      var self = this, s = b.spr, p = this.player, F = LC.BADANG_FIGHT;
+      b.cd -= dt;
+      if (b.target && (b.target.dead || b.target.away || Math.hypot(b.target.spr.x - p.x, b.target.spr.y - p.y) > F.sight + 60)) b.target = null;
+      if (!b.target && b.cd <= 0 && this.enemies && this.enemies.length) {   // the nearest thing hunting you
+        var best = null, bd = F.sight;
+        this.enemies.forEach(function (e) {
+          if (e.dead || e.away) return;
+          var d = Math.hypot(e.spr.x - p.x, e.spr.y - p.y);
+          if (d < bd) { bd = d; best = e; }
+        });
+        b.target = best;
+        if (best && !b.said) { b.said = true; this.ui.floatText(s.x, s.y - 30, 'Leave my kawan alone!', '#ffd166'); }
+      }
+      if (b.target) {
+        var e = b.target, ex = e.spr.x - b.x, ey = e.spr.y - b.y, d = Math.hypot(ex, ey) || 1;
+        if (d < e.def.w + 11) { this.badangPunch(e); b.target = null; b.cd = F.cd; }
+        else { b.x += ex / d * F.speed * dt; b.y += ey / d * F.speed * dt; s.setFlipX(ex < 0); }
+      } else {
+        var dv = DIRV[this.dir] || DIRV.down, tx = p.x - dv[0] * 22 - (dv[0] === 0 ? 18 : 0), ty = p.y - dv[1] * 16 + 2, k = Math.min(1, dt * 2.6);
+        var mx = (tx - b.x) * k;
+        b.x += mx; b.y += (ty - b.y) * k;
+        if (Math.abs(mx) > 0.15) s.setFlipX(mx < 0); else if (Math.abs(p.x - b.x) > 4) s.setFlipX(p.x < b.x);
+        if (Math.hypot(p.x - b.x, p.y - b.y) > 220) { b.x = p.x - 18; b.y = p.y + 2; }   // he catches up
+      }
+      var hop = b.target ? -Math.round(Math.abs(Math.sin(time / 70)) * 2) : 0;
+      s.setPosition(Math.round(b.x), Math.round(b.y) + hop).setDepth(b.y);
+    },
+    badangPunch: function (e) {
+      var s = this.buddy.spr, F = LC.BADANG_FIGHT, stone = e.stoneT > 0, n = stone ? F.dmg * 2 : F.dmg;
+      var ex = e.spr.x - this.buddy.x, ey = e.spr.y - this.buddy.y, d = Math.hypot(ex, ey) || 1;
+      LC.Audio.sfx('punch');
+      this.tweens.add({ targets: s, scaleX: 1.14, scaleY: 0.9, duration: 80, yoyo: true });
+      e.hp -= n; e.hurtT = 0.12; e.spr.setTintFill(0xffffff);
+      if (!stone) { var k = e.def.boss ? 90 : 260; e.kx = ex / d * k; e.ky = ey / d * k; e.windT = 0; e.strikeT = 0; e.restT = 0.9; }
+      var hx = e.spr.x - ex / d * 4, hy = e.spr.y - e.spr.height / 2;
+      var spark = this.add.image(hx, hy, 'hitfx').setDepth(9600).setBlendMode(ADD()).setScale(0.6).setAngle(Math.random() * 90);
+      this.tweens.add({ targets: spark, scale: 1.6, alpha: 0, duration: 220, onComplete: function () { spark.destroy(); } });
+      this.shockwave(hx, hy, 22, 0xffd166);
+      this.fx.sparkle.explode(6, hx, hy);
+      if (stone) this.fx.pebble.explode(6, hx, hy);
+      this.ui.floatText(e.spr.x, e.spr.y - e.spr.height - 2, (stone ? 'CRACK! ' : 'BAM! ') + n, '#ffd166');
+      this.cameras.main.shake(90, 0.003);
+      if (e.hp <= 0) this.enemyDie(e);
+    },
+
+    // ================================================================ the night watch: the river hantu
+    makeHantu: function () {
+      var h = this.hantu = { spot: Math.floor(Math.random() * 3), on: false, stoneT: 0, munch: 2, seen: false, gone: false };
+      h.glow = this.add.image(0, 0, 'glow').setBlendMode(ADD()).setDepth(9001).setTint(0x7affc8).setScale(0.6).setVisible(false);
+      h.spr = this.add.sprite(0, 0, 'hantu_air_0').setOrigin(0.5, 1).setVisible(false);
+      h.spr.play('hantu_air_idle');
+      this.hantuTo(h.spot);
+    },
+    hantuTile: function (on) {
+      var h = this.hantu;
+      if (on) { this.solid[h.ty][h.tx] = true; this.objAt[h.ty][h.tx] = { type: 'hantu' }; }
+      else if (this.objAt[h.ty][h.tx] && this.objAt[h.ty][h.tx].type === 'hantu') { this.solid[h.ty][h.tx] = false; this.objAt[h.ty][h.tx] = null; }
+    },
+    hantuTo: function (i) {
+      var h = this.hantu, sp = LC.HANTU_SPOTS[i];
+      if (h.tx !== undefined) this.hantuTile(false);
+      h.spot = i; h.tx = sp.x; h.ty = sp.y; h.x = sp.x * T + 8; h.y = (sp.y + 1) * T - 1;
+      h.spr.setPosition(h.x, h.y).setDepth(h.y); h.glow.setPosition(h.x, h.y - 8);
+      if (h.on) this.hantuTile(true);
+    },
+    updateHantu: function (time, dt, blocked) {
+      if (!this.hantu && !this.hantuDone && this.area === 'forest' && LC.badangWatch()) this.makeHantu();   // the watch began while you were here
+      var h = this.hantu;
+      if (!h || h.gone) return;
+      var S = this.S, p = this.player, want = isNight(S) && LC.badangWatch();
+      if (want !== h.on) {
+        if (want) {
+          var i = h.spot;
+          for (var k = 0; k < LC.HANTU_SPOTS.length && Math.hypot(p.x - (LC.HANTU_SPOTS[i].x * T + 8), p.y - (LC.HANTU_SPOTS[i].y + 1) * T) < 48; k++) i = (i + 1) % LC.HANTU_SPOTS.length;
+          h.on = true; this.hantuTo(i);
+          h.spr.setVisible(true).setAlpha(0); h.glow.setVisible(true);
+          this.tweens.add({ targets: h.spr, alpha: 0.95, duration: 700 });
+          this.fx.drop.explode(8, h.x, h.y - 4);
+          if (!h.seen) { h.seen = true; this.toast(LC.BADANG.seen, 'ic_badang'); }
+        } else {
+          h.on = false; this.hantuTile(false);
+          h.spr.setVisible(false); h.glow.setVisible(false);
+        }
+      }
+      if (!h.on) return;
+      if (h.stoneT > 0) {
+        if (!blocked) { h.stoneT -= dt; if (h.stoneT <= 0) { h.spr.clearTint(); h.spr.anims.resume(); this.fx.pebble.explode(8, h.x, h.y - 8); } }
+      } else {
+        h.spr.y = h.y + Math.round(Math.sin(time / 300) * 1.5);
+        if (Math.abs(p.x - h.x) > 3) h.spr.setFlipX(p.x < h.x);
+      }
+      h.glow.setPosition(h.spr.x, h.spr.y - 8).setAlpha(0.3 + 0.2 * Math.sin(time / 400));
+      if (!blocked && (h.munch -= dt) <= 0) {
+        h.munch = 3 + Math.random() * 3;
+        if (h.stoneT <= 0 && Math.hypot(p.x - h.x, p.y - h.y) < 150) this.ui.floatText(h.x, h.y - 20, Math.random() < 0.5 ? 'nyam nyam...' : 'hihihi!', '#9ae8c8');
+      }
+    },
+    hantuInRange: function (r) {
+      var h = this.hantu;
+      return !!(h && h.on && !h.gone && Math.hypot(this.player.x - h.x, this.player.y - h.y) < r);
+    },
+    stoneHantu: function (dur) {
+      var h = this.hantu;
+      h.stoneT = dur; h.spr.anims.pause(); h.spr.setTint(0x9a96a0);
+      this.fx.pebble.explode(8, h.x, h.y - 8);
+      this.tweens.add({ targets: h.spr, scaleX: 1.08, scaleY: 0.94, duration: 90, yoyo: true });
+    },
+    grabHantu: function () {
+      var self = this, h = this.hantu;
+      if (!h || !h.on || h.gone || this.cutscene) return;
+      if (h.stoneT > 0) { this.catchHantu(true); return; }
+      LC.Audio.sfx('lunge');
+      this.ui.openGrab(function (win) { if (win) self.catchHantu(false); else self.hantuSlip(); });
+    },
+    hantuSlip: function () {
+      var h = this.hantu;
+      if (!h || h.gone) return;
+      LC.Audio.sfx('splash');
+      this.fx.drop.explode(12, h.x, h.y - 6);
+      var p = this.player, others = LC.HANTU_SPOTS.map(function (s, i) { return i; }).filter(function (i) { return i !== h.spot; });
+      var away = others.filter(function (i) { var s = LC.HANTU_SPOTS[i]; return Math.hypot(p.x - (s.x * T + 8), p.y - (s.y + 1) * T) > 48; });
+      if (away.length) others = away;   // never pop up on top of you
+      this.hantuTo(others[Math.floor(Math.random() * others.length)]);
+      h.spr.setAlpha(0); this.tweens.add({ targets: h.spr, alpha: 0.95, duration: 600, delay: 400 });
+      this.fx.drop.explode(10, h.x, h.y - 6);
+      this.ui.floatText(h.x, h.y - 20, 'hihihi!', '#9ae8c8');
+      LC.Audio.sfx('giggle');
+      this.toast(LC.BADANG.slipped, 'ic_badang');
+    },
+
+    // ---------------------------------------------------------------- caught! Badang's wish
+    catchHantu: function (stoned) {
+      var self = this, h = this.hantu, p = this.player, B = LC.BADANG, L = LC.badangLines, n = this.npcs.badang, bs;
+      this.cutscene = true; h.gone = true; this.hantuDone = true;
+      this.ui.closeModal();
+      LC.Audio.setBattle(false);
+      if (h.stoneT > 0) { h.stoneT = 0; h.spr.anims.resume(); }
+      h.spr.clearTint().setAlpha(1);
+      this.tweens.add({ targets: h.spr, x: h.x + 1, duration: 50, yoyo: true, repeat: 10 });
+      LC.Audio.sfx('giggle');
+      if (n) {   // Badang leaves his hiding place (he is part of the scene now, not standing at his post)
+        if (n.here) { this.solid[n.ty][n.tx] = false; this.objAt[n.ty][n.tx] = null; }
+        bs = n.spr.setVisible(true); delete this.npcs.badang;
+      } else bs = this.add.sprite(p.x - 40, p.y, 'npc_badang_0').setOrigin(0.5, 1).play('npc_badang_idle');
+      this.badangCut = bs;
+      var side = h.x > p.x ? -1 : 1, bx = p.x + side * 18, by = p.y + 3;
+      this.tweens.add({ targets: bs, x: bx, y: by, duration: 800, ease: 'Sine.easeOut', onUpdate: function () { bs.setDepth(bs.y); } });
+      bs.setFlipX(h.x < bx);
+      function wish() {
+        self.time.delayedCall(150, function () {
+          self.ui.say(L(B.wish.slice(0, 2)), { onDone: function () {
+            LC.Audio.sfx('bleurgh');
+            var lump = self.add.image(h.spr.x, h.spr.y - 12, 'gumpal').setDepth(9600);
+            var lg = self.add.image(lump.x, lump.y, 'glow').setBlendMode(ADD()).setDepth(9599).setTint(0x7aff9a).setScale(0.35).setAlpha(0.8);
+            self.tweens.add({ targets: [lump, lg], y: lump.y - 8, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+            self.ui.say(L(B.wish.slice(2, 5)), { onDone: function () {
+              self.tweens.killTweensOf([lump, lg]);
+              self.tweens.add({ targets: [lump, lg], x: bs.x, y: bs.y - 18, scale: 0.3, duration: 450, onComplete: function () {
+                lump.destroy(); lg.destroy(); LC.Audio.sfx('gulp');
+                self.ui.say(L(B.wish.slice(5)), { onDone: function () { self.badangGrow(bs); } });
+              } });
+            } });
+          } });
+        });
+      }
+      this.time.delayedCall(stoned ? 300 : 400, function () {
+        self.ui.say([{ text: stoned ? 'The hantu is frozen stiff by your stone curse! You grab it by its long, dripping beard.' : 'Got it! You grab the slippery little hantu by its long, dripping beard!' }].concat(L(B.caught)), { choices: [
+          { label: 'Let Badang make the wish', fn: wish },
+          { label: 'Wish for gold yourself', fn: function () { self.time.delayedCall(150, function () { self.ui.say(L(B.greedy), { onDone: wish }); }); } }
+        ] });
+      });
+    },
+    badangGrow: function (bs) {
+      var self = this, x = bs.x, y = bs.y, B = LC.BADANG, L = LC.badangLines;
+      LC.Audio.sfx('grow');
+      this.cameras.main.shake(1000, 0.004);
+      var col = this.add.image(x, y - 24, 'glow').setDepth(9600).setTint(0x9affb0).setBlendMode(ADD()).setScale(1, 4).setAlpha(0);
+      this.tweens.add({ targets: col, alpha: 1, duration: 600, yoyo: true, hold: 500, onComplete: function () { col.destroy(); } });
+      this.fx.sparkle.explode(30, x, y - 12); this.fx.leaf.explode(14, x, y - 10);
+      this.tweens.add({ targets: bs, scaleX: 1.4, scaleY: 1.4, duration: 900, ease: 'Back.easeIn', onComplete: function () {
+        bs.anims.stop(); bs.setScale(1).setTexture('npc_badangK_0'); bs.play('npc_badangK_idle');
+        self.cameras.main.flash(450, 220, 255, 220);
+        LC.Audio.sfx('stone');
+        self.fx.dirt.explode(14, x, y - 2);
+        self.time.delayedCall(800, function () {
+          self.ui.say([{ text: 'A rumble rolls through the forest. Badang grows taller, broader, STRONGER... and his thin arms swell like jackfruit!' }].concat(L(B.after.slice(0, 2))), { onDone: function () {
+            self.ui.say(L(B.after.slice(2)), { onDone: function () {
+              self.hantuDive();
+              self.time.delayedCall(1100, function () { self.ui.say(L(B.thanks), { onDone: function () { self.finishBadang(bs); } }); });
+            } });
+          } });
+        });
+      } });
+    },
+    hantuDive: function () {
+      var self = this, h = this.hantu;
+      if (!h) return;
+      this.hantuTile(false);
+      LC.Audio.sfx('splash');
+      this.ui.floatText(h.x, h.y - 20, 'hihihi!', '#9ae8c8');
+      this.tweens.add({ targets: [h.spr, h.glow], x: 34 * T + 8, y: 22 * T + 8, alpha: 0, duration: 900, ease: 'Quad.easeIn', onComplete: function () {
+        self.fx.drop.explode(16, 34 * T + 8, 22 * T + 8);
+        h.spr.destroy(); h.glow.destroy();
+        if (self.hantu === h) self.hantu = null;
+      } });
+    },
+    finishBadang: function (bs) {
+      var self = this, S = this.S;
+      S.quests.badang = 3;
+      LC.State.folk('badang').met = true;
+      if (!LC.State.add('bubu', 2)) S.quests.bubuOwed = 1;   // a full bag: he keeps them for you
+      LC.Audio.sfx('stage');
+      this.doShared('kind', { n: 12 }, function (res) { if (res && res.ok) self.toast('Pelita glows with pride. (+' + res.b + ' bond)', 'ic_bond'); });
+      this.toast(S.quests.bubuOwed ? 'Your bag is full: Badang will keep the bubu for you. Visit him in Kampung Tepian!' : 'Badang now lives in Kampung Tepian, by the batu angkat. Ask him to come along!', 'ic_badang');
+      this.cutscene = false;
+      // he strides off down the trail to tell his master the news
+      this.tweens.add({ targets: bs, y: bs.y + 70, alpha: 0, duration: 1900, delay: 300, onUpdate: function () { bs.setDepth(bs.y); }, onComplete: function () { bs.destroy(); if (self.badangCut === bs) self.badangCut = null; } });
+    },
+
+    // ================================================================ your bubu (fish traps)
+    refreshBubus: function () {
+      var self = this, S = this.S;
+      (this.bubuImgs || []).forEach(function (b) {
+        b.img.destroy();
+        var o = self.objAt[b.y] && self.objAt[b.y][b.x];
+        if (o && o.type === 'bubu') self.objAt[b.y][b.x] = null;
+      });
+      this.bubuImgs = [];
+      (S.bubus || []).forEach(function (b, i) {
+        if (b.area !== self.area || !self.objAt[b.y]) return;
+        var img = self.add.image(b.x * T + 8, (b.y + 1) * T - 1, 'bubu_set').setOrigin(0.5, 1).setDepth((b.y + 1) * T - 8);
+        self.tweens.add({ targets: img, y: img.y - 1, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        self.objAt[b.y][b.x] = { type: 'bubu', idx: i };
+        self.bubuImgs.push({ img: img, x: b.x, y: b.y });
+      });
+    },
+    bubuToolAction: function (sl, water, tx, ty, hint) {
+      var self = this, S = this.S;
+      if (sl.id !== 'bubu') return null;
+      if (this.A.underwater) return hint('Set your bubu from the land: in a river, pool, lake or the sea.');
+      if (!water) return hint('Face the water to set the bubu: a river, pool, lake or the sea.');
+      if ((S.bubus || []).length >= 3) return hint('You already tend 3 bubu. Pick one up first.');
+      return { label: 'Set the bubu', tile: true, fn: function () { self.setBubu(tx, ty, water); } };
+    },
+    setBubu: function (tx, ty, kind) {
+      var S = this.S;
+      if (!LC.State.remove('bubu', 1)) return;
+      (S.bubus = S.bubus || []).push({ area: this.area, x: tx, y: ty, day: S.day, kind: kind });
+      LC.Audio.sfx('water');
+      this.fx.drop.explode(8, tx * T + 8, ty * T + 10);
+      this.refreshBubus();
+      this.toast('You set the bubu in the ' + (LC.WATER_NAMES[kind] || 'water') + '. Fish swim in at night: check it tomorrow!', 'i_bubu');
+    },
+    bubuAction: function (o) {
+      var self = this, S = this.S, b = S.bubus && S.bubus[o.idx];
+      if (!b) return null;
+      return { label: S.day > b.day ? 'Check your bubu' : 'Your bubu', fn: function () { self.checkBubu(o.idx); } };
+    },
+    checkBubu: function (idx) {
+      var self = this, S = this.S, b = S.bubus[idx];
+      if (!b) return;
+      if (S.day > b.day) {
+        var nights = Math.min(3, S.day - b.day), n = 0, got = {}, order = [], caught = 0;
+        for (var k = 0; k < nights; k++) n += 1 + (Math.random() < 0.5 ? 1 : 0);
+        n = Math.min(4, n);
+        for (var i = 0; i < n; i++) {
+          var id = fishFor(b.kind);
+          if (!LC.State.add(id, 1)) break;
+          if (!got[id]) order.push(id);
+          got[id] = (got[id] || 0) + 1; caught++;
+          S.fishLog[id] = (S.fishLog[id] || 0) + 1; S.stats.fish = (S.stats.fish || 0) + 1;
+        }
+        if (!caught) { this.toast('Your bag is full! The fish slip back out of the bubu.'); LC.Audio.sfx('error'); return; }
+        b.day = S.day;
+        LC.Audio.sfx('catch'); this.bump();
+        this.fx.drop.explode(10, b.x * T + 8, b.y * T + 10);
+        this.toast('Your bubu caught ' + order.map(function (id) { return got[id] + ' ' + LC.ITEMS[id].name; }).join(' and ') + '!', LC.ITEMS[order[0]].icon);
+        return;
+      }
+      this.ui.say([{ text: 'Your bubu sits quietly in the water. Fish swim in at night: check it again tomorrow.' }], { choices: [
+        { label: 'Leave it' },
+        { label: 'Pick it up', fn: function () {
+          if (!LC.State.canAdd('bubu')) { self.toast('Your bag is full!'); LC.Audio.sfx('error'); return; }
+          S.bubus.splice(idx, 1); LC.State.add('bubu', 1);
+          LC.Audio.sfx('water'); self.refreshBubus();
+        } }
+      ] });
+    },
+
+    // ================================================================ things in the world: stumps, his old bubu, the hantu
+    badangObjAction: function (o) {
+      var self = this, S = this.S;
+      switch (o.type) {
+        case 'hantu': return { label: 'Grab the hantu!', fn: function () { self.grabHantu(); } };
+        case 'bubu': return this.bubuAction(o);
+        case 'bubu_badang': return { label: 'Look', fn: function () {
+          self.ui.say([{ text: (S.quests.badang || 0) >= 3 ? 'Badang\'s old bubu. He catches fish with his bare hands now!' : LC.TEXT.bubu_badang }]);
+        } };
+        case 'tunggul': return { label: 'Look', fn: function () {
+          var extra = S.ladang === 1 ? ' Badang has promised to clear them tonight!' : LC.hasBadang() ? ' Badang could clear this land in a single night (ask him in Kampung Tepian).' : '';
+          self.ui.say([{ text: LC.TEXT.tunggul + extra }]);
+        } };
+      }
+      return undefined;
+    },
+
+    // ================================================================ Ladang Badang and Batu Badang
+    // a new day: if Badang cleared the land last night, the stumps vanish and the field appears (the tiles are redrawn by the caller)
+    refreshLadang: function () {
+      var self = this;
+      LC.syncLadang();
+      if (this.area !== 'farm' || this.S.ladang !== 2) return;
+      this.objects.forEach(function (o) {
+        if (o.type !== 'tunggul') return;
+        var im = self.objImgs[o.id];
+        if (im) { im.destroy(); delete self.objImgs[o.id]; }
+        for (var y = o.y; y < o.y + (o.h || 1); y++) for (var x = o.x; x < o.x + (o.w || 1); x++) if (self.objAt[y][x] === o) { self.solid[y][x] = false; self.objAt[y][x] = null; }
+      });
+    },
+    // after the Pesta: his last stone lands in the river
+    refreshBatuBadang: function () {
+      var self = this, S = this.S;
+      if (this.area !== 'kampung') return;
+      this.objects.forEach(function (o) {
+        if (o.id !== 'k_batu_badang' || self.objImgs[o.id] || !o.when(S)) return;
+        var bx = (o.x + o.w / 2) * T, by = (o.y + o.h) * T;
+        var im = self.objImgs[o.id] = self.add.image(bx, by, o.tex).setOrigin(0.5, 1).setDepth(by).setAlpha(0);
+        self.tweens.add({ targets: im, alpha: 1, duration: 600 });
+        self.fx.drop.explode(16, bx, by - 6);
+        for (var y = o.y; y < o.y + o.h; y++) for (var x = o.x; x < o.x + o.w; x++) { self.solid[y][x] = true; self.objAt[y][x] = o; }
       });
     }
   });
@@ -9114,6 +9837,7 @@ window.LC = window.LC || {};
             if (LC.State.add('dedak', 5)) self.toast('...and 5 dedak to feed her.', 'i_dedak');
           }
           if (vid === 'tanggang' && !S.quests.tanggang) S.quests.tanggang = 1;
+          if (vid === 'badang' && !S.quests.badang) { S.quests.badang = 1; self.badangAsk(); return; }   // v1.7: will you keep watch with him?
           self.openVillager(vid);
         } });
         return;
@@ -9261,8 +9985,8 @@ window.LC = window.LC || {};
         tabs: [
           { label: 'Requests', empty: 'No villagers met yet. Kampung Tepian is along the road east (Pelita Lv 2).', rows: function () {
             return Object.keys(LC.VILLAGERS).filter(function (vid) { return S.folk[vid] && S.folk[vid].met; }).map(function (vid) {
-              var v = LC.VILLAGERS[vid], f = LC.State.folk(vid), t = f.task, it = LC.ITEMS[t.item], have = LC.State.count(t.item);
-              return { icon: 'npc_' + vid + '_0', iconScale: 1.6, label: v.name + ' (' + v.role.toLowerCase() + ')',
+              var v = LC.villager(vid), key = LC.villagerKey(vid), f = LC.State.folk(vid), t = f.task, it = LC.ITEMS[t.item], have = LC.State.count(t.item);
+              return { icon: 'npc_' + key + '_0', iconScale: key === 'badangK' ? 1.25 : 1.6, label: v.name + ' (' + v.role.toLowerCase() + ')',
                 sub: f.done ? 'Request done for today. Thank you!' : 'Wants ' + t.n + ' ' + it.name + ' ' + v.taskText + ' (you have ' + have + '). Reward ' + t.reward + ' kepeng.',
                 right: f.done ? 'Done' : have >= t.n ? 'Ready!' : have + '/' + t.n };
             });
@@ -9568,7 +10292,9 @@ window.LC = window.LC || {};
         tabs: [{ label: 'Contests', rows: function () {
           var rows = [];
           Object.keys(LC.CONTESTS).forEach(function (k) {
-            var C = LC.CONTESTS[k], ready = self.contestReady(k), entered = S.contest[k] === S.day, wins = (S.trophies[k] || 0);
+            var C = LC.CONTESTS[k];
+            if (C.show && !C.show()) return;   // v1.7: Lempar Batu appears once you have met Badang
+            var ready = self.contestReady(k), entered = S.contest[k] === S.day, wins = (S.trophies[k] || 0);
             if (on) rows.push({ icon: C.icon, iconScale: k === 'serama' ? 2 : 2, label: 'Enter the ' + C.name + ' (' + C.what.toLowerCase() + ')', sub: (ready.ok ? C.how : ready.why) + (wins ? '  Champion ' + wins + 'x!' : ''),
               right: entered ? 'Done' : 'Enter', enabled: ready.ok && !entered, why: entered ? 'You already competed today. Come back next Sabtu!' : ready.why, action: function () { self.runContest(k, false); } });
             rows.push({ icon: C.icon, iconScale: 2, label: 'Practise: ' + C.what, sub: ready.ok ? 'A friendly round, no prizes. ' + C.how : ready.why, right: 'Try', enabled: ready.ok, why: ready.why, action: function () { self.runContest(k, true); } });
@@ -9579,6 +10305,7 @@ window.LC = window.LC || {};
     },
     contestReady: function (k) {
       var C = LC.CONTESTS[k];
+      if (C.ready) return C.ready();
       if (C.animal) return LC.State.hasSerama() ? { ok: true } : { ok: false, why: 'You need an Ayam Serama from your reban (Pak Lah sells them).' };
       return C.gear.some(function (g) { return LC.State.count(g) > 0; }) ? { ok: true } : { ok: false, why: 'You need a ' + LC.ITEMS[C.gear[1]].name + ' (Pak Wan sells them, next to the pavilion).' };
     },
@@ -9587,7 +10314,7 @@ window.LC = window.LC || {};
       if (!practice) S.contest[k] = S.day;
       function play() {
         var rival = C.rivals[round];
-        var fn = k === 'wau' ? self.playWau : k === 'gasing' ? self.playGasing : self.playSerama;
+        var fn = C.play ? self[C.play] : k === 'wau' ? self.playWau : k === 'gasing' ? self.playGasing : self.playSerama;
         fn.call(self, round, rival, function (win, detail) {
           LC.Audio.sfx(win ? 'cheer' : 'sad');
           var lines = [{ text: detail }];
@@ -9600,8 +10327,9 @@ window.LC = window.LC || {};
             return;
           }
           if (practice) { lines.push({ text: 'You beat all three in practice! You are ready for Sabtu.' }); self.say(lines); return; }
-          lines.push({ text: '✦ CHAMPION of the ' + C.name + '! ✦ The whole kampung cheers.' });
+          lines.push({ text: C.champLine || '✦ CHAMPION of the ' + C.name + '! ✦ The whole kampung cheers.' });
           lines.push({ text: self.contestPrize(k, wauBoost) });
+          if (C.onChamp) C.onChamp.call(self, lines);
           S.stats.contestWins = (S.stats.contestWins || 0) + 1;
           self.world.doShared('kind', { n: 6 }, function () {});
           self.say(lines);
@@ -9891,7 +10619,7 @@ window.LC = window.LC || {};
         { icon: 'ic_str', label: 'Strength ' + Math.floor(S.str || 0) + ' / ' + LC.STR_MAX, sub: 'Lift the batu angkat in Kampung Tepian and train silat in the hidden village (once a day each), and eat home-cooked dishes. ' + LC.STR_KERIS + ' draws the keris from the stone.' },
         { icon: 'ic_hp', label: 'Health ' + Math.ceil(S.hp) + ' / ' + S.maxHp, sub: 'Strength raises your health. Food heals you; a night\'s sleep heals everything.' },
         { icon: sea.icon, label: sea.name + ' (' + sea.short + '), day ' + LC.State.seasonDay() + ' of 7', sub: sea.desc },
-        { icon: 'i_wau', label: d === 0 ? 'Today is Pesta day!' : 'Next Pesta: Sabtu, in ' + d + ' day' + (d > 1 ? 's' : ''), sub: 'Kite fighting, top spinning and the Serama show at the pavilion in Kampung Tepian, 8 AM to 6 PM. Champion: wau ' + (tro.wau || 0) + 'x, gasing ' + (tro.gasing || 0) + 'x, Serama ' + (tro.serama || 0) + 'x.' },
+        { icon: 'i_wau', label: d === 0 ? 'Today is Pesta day!' : 'Next Pesta: Sabtu, in ' + d + ' day' + (d > 1 ? 's' : ''), sub: 'Kite fighting, top spinning' + (LC.hasBadang() ? ', the Serama show and Badang\'s stone throwing' : ' and the Serama show') + ' at the pavilion in Kampung Tepian, 8 AM to 6 PM. Champion: wau ' + (tro.wau || 0) + 'x, gasing ' + (tro.gasing || 0) + 'x, Serama ' + (tro.serama || 0) + 'x' + (LC.hasBadang() ? ', Lempar Batu ' + (tro.lempar || 0) + 'x' : '') + '.' },
         { icon: 'chicken_0', iconScale: 2, label: 'Farm animals: ' + S.animals.length, sub: 'Feed them every day at the reban. Eggs in the nest hatch after three nights.' }
       ];
       if (LC.hasStone()) rows.push({ icon: 'ic_batu', label: 'Sumpahan Batu (V)', sub: "Si Tanggang's stone curse: nearby enemies turn to stone for " + (LC.hasRestu() ? LC.RESTU.dur : LC.STONE.dur) + ' seconds (bosses less). Stone cracks: your blows do double damage. Ready again after ' + (LC.hasRestu() ? LC.RESTU.cd : LC.STONE.cd) + ' seconds.' });
@@ -10099,6 +10827,176 @@ window.LC = window.LC || {};
       });
     }
   });
+})(window.LC);
+
+</script>
+  <script>/* src/scenes/UIBadang.js */
+/* UI, part 5 (v1.7): Badang. Grabbing the slippery river hantu, Badang's Talk menu (the night watch, coming along,
+ * clearing land), the Pesta's Lempar Batu contest (Badang throws, you cheer), and his line in your Journal.
+ * Mixed into LC.UIScene. */
+window.LC = window.LC || {};
+(function (LC) {
+  'use strict';
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+  var POR = 'npc_badang_0', PORK = 'npc_badangK_0';
+
+  Object.assign(LC.UIScene.prototype, {
+    // ================================================================ grab the hantu: three good grabs before it slips away twice
+    openGrab: function (done) {
+      var self = this, F = this.gameFrame('Grab the hantu!', 520, 380), g = F.g, X = F.X, Y = F.Y;
+      var hits = 0, misses = 0, t0 = this.time.now, over = false, speeds = [3.0, 3.8, 4.6];
+      var h = this.add.sprite(X + 260, Y + 216, 'hantu_air_0').setScale(6).setOrigin(0.5, 1);
+      h.play('hantu_air_idle');
+      F.c.add(h);
+      F.msg.setText('Its beard is slippery! Tap when the marker is in the green (3 good grabs).');
+      LC.Audio.sfx('giggle');
+      function pos(now) { return 0.5 + 0.5 * Math.sin((now - t0) / 1000 * speeds[Math.min(2, hits)]); }
+      var close = this.runGame(F, function () {
+        if (over) return;
+        var a = pos(self.time.now);
+        if (a >= 0.4 && a <= 0.6) {
+          hits++; LC.Audio.sfx('hit');
+          self.tweens.add({ targets: h, scaleX: 5.2, scaleY: 6.6, duration: 90, yoyo: true });
+          F.msg.setText(['Got its beard!', 'It wriggles... hold on!', 'GOT IT!'][hits - 1]).setColor('#b8f0c8');
+          if (hits >= 3) { over = true; self.time.delayedCall(700, function () { close(); done(true); }); }
+        } else {
+          misses++; LC.Audio.sfx('giggle');
+          self.tweens.add({ targets: h, x: h.x + (Math.random() < 0.5 ? -18 : 18), duration: 80, yoyo: true, repeat: 1 });
+          F.msg.setText(misses >= 2 ? 'Splash! It slipped out of your hands!' : 'Hihihi! Too slippery! (one more slip and it escapes)').setColor('#ff8a7a');
+          if (misses >= 2) { over = true; self.time.delayedCall(800, function () { close(); done(false); }); }
+        }
+        t0 = self.time.now - Math.random() * 400;
+      }, function (now) {
+        g.clear();
+        for (var i = 0; i < 3; i++) { g.fillStyle(i < hits ? 0x9be15d : 0x5a4a3a, 1); g.fillCircle(X + 228 + i * 32, Y + 248, 8); }
+        if (over) return;
+        var BX = X + 80, BW = 360, BY = Y + 270, a = pos(now);
+        g.fillStyle(0x000000, 0.6); g.fillRect(BX, BY, BW, 16);
+        g.fillStyle(0x6fd06a, 1); g.fillRect(BX + 0.4 * BW, BY + 1, 0.2 * BW, 14);
+        g.fillStyle(0xffd166, 1); g.fillRect(BX + a * BW - 2, BY - 5, 4, 26);
+      }, function () { done(false); });
+    },
+
+    // ================================================================ Badang's Talk menu
+    badangAsk: function () {
+      var self = this, S = this.S;
+      this.say([{ name: 'Badang', portrait: POR, text: LC.BADANG.ask }], { choices: [
+        { label: 'I\'ll keep watch with you', fn: function () { S.quests.badang = 2; LC.Audio.sfx('chime'); self.time.delayedCall(150, function () { self.say([{ name: 'Badang', portrait: POR, text: LC.BADANG.agree }]); }); } },
+        { label: 'Not now', fn: function () { S.quests.badang = Math.max(1, S.quests.badang || 0); self.time.delayedCall(150, function () { self.say([{ name: 'Badang', portrait: POR, text: LC.BADANG.later }]); }); } }
+      ] });
+    },
+    badangRows: function () {
+      var self = this, S = this.S, W = this.world, q = S.quests.badang || 0, B = LC.BADANG, rows = [];
+      var night = S.minutes >= 19 * 60 || S.minutes < 6 * 60;
+      if (q <= 1) rows.push({ icon: 'i_bubu', label: 'Help Badang catch the fish thief', sub: 'Something empties his bubu every night.', action: function () { self.badangAsk(); return 'close'; } });
+      if (q === 2) rows.push({ icon: 'i_bubu', label: night ? 'The night watch' : 'Keep watch tonight', sub: night ? 'Something is giggling by the pool... grab it! (Sumpahan Batu would hold it still.)' : 'Come back to the forest pool after dark (7 PM).',
+        action: function () { self.say([{ name: 'Badang', portrait: POR, text: night ? B.night : B.day }]); return 'close'; } });
+      if (q < 3) return rows;
+      if (S.quests.bubuOwed) rows.push({ icon: 'i_bubu', label: 'Take his old bubu', sub: 'He kept them for you while your bag was full.', action: function () {
+        if (S.inv.filter(function (sl) { return !sl; }).length < 1 && !LC.State.count('bubu')) { self.toast('Make room in your bag first!'); LC.Audio.sfx('error'); return; }
+        LC.State.add('bubu', 2); delete S.quests.bubuOwed; LC.Audio.sfx('chime');
+        self.toast('Badang gives you 2 Bubu. Set them in any river, pool, lake or the sea!', 'i_bubu');
+      } });
+      if (LC.badangBuddy()) rows.push({ icon: 'ic_badang', label: 'Send him home to rest', sub: 'Badang is walking with you today.', action: function () { W.sendBuddyHome(); return 'close'; } });
+      else rows.push({ icon: 'ic_badang', label: 'Come with me today!', sub: S.buddyDay === S.day ? 'He already went out with you today. Tomorrow!' : 'He follows you all day and fights anything that threatens you (once a day).',
+        enabled: S.buddyDay !== S.day, why: 'Once a day. He needs his rest (and his supper).',
+        action: function () { self.say([{ name: 'Badang', portrait: PORK, text: B.come }], { onDone: function () { W.startBuddy(); } }); return 'close'; } });
+      var Lg = LC.LADANG, need = Object.keys(Lg.cost).map(function (id) { return Lg.cost[id] + ' ' + LC.ITEMS[id].name + ' (' + LC.State.count(id) + ')'; }).join(', ');
+      if (!S.ladang) {
+        var ok = LC.State.has(Lg.cost) && S.kepeng >= Lg.kepeng;
+        rows.push({ icon: 'i_kayu', label: 'Clear the land south of Nenek\'s field', sub: 'Big old stumps and boulders. For a feast of ' + need + ' and ' + Lg.kepeng + ' kepeng, he will clear them in one night: a new field!',
+          right: ok ? 'Ask' : '', enabled: ok, why: 'You need ' + need + ' and ' + Lg.kepeng + ' kepeng.', action: function () {
+            LC.State.takeAll(Lg.cost); S.kepeng -= Lg.kepeng;
+            W.doShared('ladang', {}, function (res) {
+              if (!res || !res.ok) { Object.keys(Lg.cost).forEach(function (id) { LC.State.add(id, Lg.cost[id]); }); S.kepeng += Lg.kepeng; self.toast('Someone already asked Badang to clear it!'); return; }
+              LC.Audio.sfx('build');
+              self.say([{ name: 'Badang', portrait: PORK, text: B.ladangAsk }]);
+            });
+            return 'close';
+          } });
+      } else rows.push({ icon: 'i_kayu', label: S.ladang === 1 ? 'Clearing the land tonight' : 'Ladang Badang', sub: S.ladang === 1 ? 'He will clear the stumps and boulders south of Nenek\'s field overnight.' : 'The new field south of Nenek\'s fence, cleared by Badang. Till it and plant!' });
+      rows.push({ icon: 'i_kayu', label: 'Gotong-royong houses', sub: 'With Badang carrying the posts, new houses on the kampung plots are raised at once, not overnight.' });
+      rows.push({ icon: 'ic_badang', label: 'Lempar Batu at the Pesta', sub: 'Every Sabtu, cheer him on in the stone-throwing contest at the pavilion.' + ((S.trophies.lempar || 0) ? ' Champion ' + S.trophies.lempar + 'x!' : '') });
+      return rows;
+    },
+
+    // ================================================================ Lempar Batu: Badang throws, you cheer
+    playLempar: function (round, rival, done) {
+      var self = this, F = this.gameFrame('Lempar Batu · Round ' + (round + 1) + ' vs ' + rival, 660, 430), g = F.g, X = F.X, Y = F.Y;
+      var theirs = Math.round(rnd.apply(null, [[34, 42], [42, 50], [48, 56]][round])), bonus = LC.State.hearts('badang') * 0.6;
+      var phases = ['Angkat! (lift)', 'Pusing! (spin)', 'Lempar! (throw)'], speed = [2.6, 3.3, 4.0], k = 0, acc = 0, t0 = this.time.now, over = false, mine = 0;
+      var GY = Y + 300, X0 = X + 150, PX = 7;   // ground line; the throwing line; pixels per depa
+      function xAt(d) { return X0 + d * PX; }
+      var bad = this.add.sprite(X + 100, GY, PORK).setScale(4).setOrigin(0.5, 1), rock = this.add.image(X + 100, GY - 6, 'batu_lempar').setScale(3).setOrigin(0.5, 1);
+      var flag = this.txt(xAt(theirs), Y + 94, rival + ': ' + theirs, 13, '#ffb0b0', { ox: 0.5 }), tMine = this.txt(X + F.W / 2, Y + 66, '', 18, '#ffd166', { ox: 0.5 });
+      bad.play('npc_badangK_idle');
+      F.c.add([bad, rock, flag, tMine]);
+      F.msg.setText(phases[0] + '  Cheer when the marker is in the centre!');
+      function aim(now) { return 0.5 + 0.5 * Math.sin((now - t0) / 1000 * (speed[k] + round * 0.3)); }
+      function throwIt() {
+        mine = Math.round(28 + 11 * acc + bonus);
+        LC.Audio.sfx('throw');
+        var x1 = Math.min(X + F.W - 30, xAt(mine)), o = { t: 0 }, sx = rock.x, sy = rock.y;
+        self.tweens.add({ targets: o, t: 1, duration: 1300, ease: 'Sine.easeIn', onUpdate: function () {
+          rock.setPosition(sx + (x1 - sx) * o.t, sy - 150 * Math.sin(Math.PI * o.t) + (GY + 14 - sy) * o.t).setAngle(o.t * 540);
+        }, onComplete: function () {
+          LC.Audio.sfx('splash');
+          rock.setVisible(false);
+          var sp = self.add.image(x1, GY + 14, 'glow').setTint(0xcfefff).setBlendMode(Phaser.BlendModes.ADD).setScale(0.8, 0.4); F.c.add(sp);
+          self.tweens.add({ targets: sp, scaleX: 1.6, scaleY: 0.9, alpha: 0, duration: 600 });
+          var win = mine >= theirs;
+          tMine.setText('Badang: ' + mine + ' depa!');
+          F.msg.setText(win ? 'What a throw! The crowd goes wild!' : rival + ' threw further...').setColor(win ? '#b8f0c8' : '#ff8a7a');
+          self.time.delayedCall(1500, function () { close(); done(win, 'Badang\'s stone flew ' + mine + ' depa; ' + rival + '\'s flew ' + theirs + '.' + (win ? ' The whole pavilion shakes with cheering!' : ' Badang shrugs and grins.')); });
+        } });
+      }
+      var close = this.runGame(F, function () {
+        if (over || k >= 3) return;
+        var a = aim(self.time.now), q = Math.max(0, 1 - Math.abs(a - 0.5) * 2);
+        acc += q; k++;
+        LC.Audio.sfx(q >= 0.8 ? 'cheer' : 'drum');
+        var cheer = self.txt(X + 100 + rnd(-40, 40), GY - 120, q >= 0.8 ? 'Hebat!' : q >= 0.5 ? 'Bagus!' : 'Alamak...', 18, q >= 0.8 ? '#b8f0c8' : q >= 0.5 ? '#fbecc8' : '#ff8a7a', { ox: 0.5 });
+        F.c.add(cheer); self.tweens.add({ targets: cheer, y: cheer.y - 30, alpha: 0, duration: 900, onComplete: function () { cheer.destroy(); } });
+        if (k === 1) { LC.Audio.sfx('strain'); self.tweens.add({ targets: rock, y: GY - 108, duration: 300, ease: 'Back.easeOut' }); }
+        if (k === 2) { self.tweens.add({ targets: bad, scaleX: -4, duration: 120, yoyo: true, repeat: 3 }); }
+        if (k < 3) { t0 = self.time.now; F.msg.setText(phases[k] + '  (' + Math.round(q * 100) + '% cheer)'); }
+        else { over = true; F.msg.setText('Badang hurls the stone!'); throwIt(); }
+      }, function (now) {
+        g.clear();
+        for (var i = 0; i < 5; i++) { g.fillStyle([0x7ab8e8, 0x8ac4ec, 0x9ad0f0, 0xaadaf2, 0xbae2f4][i], 1); g.fillRect(X + 24, Y + 80 + i * 44, F.W - 48, 44); }
+        g.fillStyle(0x6aa84f, 1); g.fillRect(X + 24, GY, X0 - X - 10, 40); g.fillStyle(0x8a6a3a, 1); g.fillRect(X0 - 14, GY, 4, 40);
+        g.fillStyle(0x3a7ab8, 1); g.fillRect(X0 - 10, GY + 8, X + F.W - 24 - X0 + 10, 32); g.fillStyle(0x5a9ac8, 1); g.fillRect(X0 - 10, GY + 8, X + F.W - 24 - X0 + 10, 3);
+        for (var d = 10; d <= 60; d += 10) { var xx = xAt(d); if (xx > X + F.W - 30) break; g.fillStyle(0xffffff, 0.5); g.fillRect(xx, GY + 6, 1, 6); }
+        g.fillStyle(0xe76f51, 1); g.fillRect(xAt(theirs) - 1, Y + 112, 2, GY + 8 - Y - 112); g.fillTriangle(xAt(theirs) + 1, Y + 112, xAt(theirs) + 13, Y + 118, xAt(theirs) + 1, Y + 124);
+        if (over) return;
+        var BX = X + 150, BW = 360, BY = Y + 352, a = aim(now);
+        g.fillStyle(0x000000, 0.6); g.fillRect(BX, BY, BW, 16); g.fillStyle(0x6fd06a, 1); g.fillRect(BX + 0.42 * BW, BY + 1, 0.16 * BW, 14);
+        g.fillStyle(0xffd166, 1); g.fillRect(BX + a * BW - 2, BY - 5, 4, 26);
+        for (var j = 0; j < 3; j++) { g.fillStyle(j < k ? 0x9be15d : 0x5a4a3a, 1); g.fillCircle(BX + BW + 24 + j * 18, BY + 8, 6); }
+      }, function () { done(false, 'Badang puts the stone down gently and steps out of the ring.'); });
+    }
+  });
+
+  // ---------------------------------------------------------------- hooks into the villager menus, the Pesta and the Journal
+  var specialRows = LC.UIScene.prototype.specialRows;
+  LC.UIScene.prototype.specialRows = function (vid, v, por) {
+    var rows = specialRows.call(this, vid, v, por);
+    return vid === 'badang' ? rows.concat(this.badangRows()) : rows;
+  };
+  var youRows = LC.UIScene.prototype.youRows;
+  LC.UIScene.prototype.youRows = function () {
+    var rows = youRows.call(this), S = this.S, q = S.quests.badang || 0;
+    if (q >= 3) rows.push({ icon: 'ic_badang', label: 'Badang, the strongest man in the land', sub: 'Your friend in Kampung Tepian. Once a day he walks with you and fights for you; he clears land, raises houses at once, and throws stones at the Pesta' + ((S.trophies.lempar || 0) ? ' (champion ' + S.trophies.lempar + 'x)' : '') + '. Bubu set: ' + (S.bubus || []).length + ' / 3.' });
+    else if (q >= 1) rows.push({ icon: 'i_bubu', label: 'Badang\'s empty bubu', sub: q === 2 ? 'Keep watch with him at the forest pool in Hutan Rimba after dark (7 PM), and grab the thief!' : 'Badang, by the forest pool in Hutan Rimba, needs help catching whoever steals his fish.' });
+    return rows;
+  };
+  LC.CONTESTS.lempar.onChamp = function (lines) {
+    var S = this.S;
+    if (S.trophies.lempar !== 1) return;
+    S.quests.badang = Math.max(4, S.quests.badang || 0);
+    LC.badangLines(LC.BADANG.champ).forEach(function (l) { lines.push(l); });
+    if (this.world && this.world.refreshBatuBadang) this.world.refreshBatuBadang();
+  };
 })(window.LC);
 
 </script>

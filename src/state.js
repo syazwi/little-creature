@@ -52,10 +52,12 @@ window.LC = window.LC || {};
       str: 10, hp: 55, maxHp: 55, strFoodDay: 0, strFood: 0, liftDay: 0, silatDay: 0, jamuDay: 0,
       wear: {}, quests: {}, contest: {}, trophies: {},
       // v1.6 personal: guiding Si Tanggang home, and the day Restu Ibu last saved you
-      escort: null, restuDay: 0
+      escort: null, restuDay: 0,
+      // v1.7: your bubu in the water (personal), Badang at your side (personal, for one day), the land he clears (shared: 0 / 1 tonight / 2 done)
+      bubus: [], buddy: null, buddyDay: 0, ladang: 0
     };
   }
-  var BAG_EXTRA = ['str', 'wear', 'trophies', 'contest', 'quests'];   // a co-op guest's own progress travels in their bag
+  var BAG_EXTRA = ['str', 'wear', 'trophies', 'contest', 'quests', 'bubus'];   // a co-op guest's own progress travels in their bag
 
   LC.SAVE_SLOTS = 3;
   var State = LC.State = {
@@ -113,7 +115,7 @@ window.LC = window.LC || {};
     snapshot: function () {
       var s = this.s;
       return JSON.parse(JSON.stringify({ day: s.day, minutes: s.minutes, tiles: s.tiles, trees: s.trees, ghost: s.ghost, offerings: s.offerings, buildings: s.buildings, spirits: s.spirits,
-        chests: s.chests, chestSeq: s.chestSeq, animals: s.animals, animalSeq: s.animalSeq, coop: s.coop, nest: s.nest, flags: { penunggu: s.flags.penunggu || 0 } }));
+        chests: s.chests, chestSeq: s.chestSeq, animals: s.animals, animalSeq: s.animalSeq, coop: s.coop, nest: s.nest, ladang: s.ladang || 0, flags: { penunggu: s.flags.penunggu || 0 } }));
     },
     applySnapshot: function (w) {
       var s = this.s;
@@ -121,7 +123,7 @@ window.LC = window.LC || {};
       s.offerings = w.offerings || [];
       s.buildings = w.buildings || {}; s.spirits = w.spirits || {};
       s.chests = w.chests || {}; s.chestSeq = w.chestSeq || 0; s.animals = w.animals || []; s.animalSeq = w.animalSeq || 0;
-      s.coop = w.coop || { telur: 0, telur_itik: 0, susu: 0 }; s.nest = w.nest || [];
+      s.coop = w.coop || { telur: 0, telur_itik: 0, susu: 0 }; s.nest = w.nest || []; s.ladang = w.ladang || 0;
       if (s.ghost) Object.keys(w.ghost).forEach(function (k) { s.ghost[k] = w.ghost[k]; }); else s.ghost = w.ghost;
     },
     // A guest plays on the host's shared world with their own travelling bag.
@@ -351,6 +353,14 @@ window.LC = window.LC || {};
       return out;
     },
     // which villager lives on each built plot, and who is in the kampung right now
+    // a new house is done: the next family waiting for a home moves in (returns who)
+    moveIn: function (plot) {
+      var B = this.s.buildings, b = B[plot], taken = {};
+      Object.keys(B).forEach(function (q) { if (B[q].vid) taken[B[q].vid] = 1; });
+      var vid = LC.MOVE_IN.filter(function (v) { return !taken[v]; })[0] || null;
+      b.done = true; b.vid = vid;
+      return vid;
+    },
     villagerAtPlot: function (plot) { var b = this.s.buildings[plot]; return b && b.done ? b.vid : null; },
     villagerHome: function (vid) {
       var v = LC.villager ? LC.villager(vid) : LC.VILLAGERS[vid];
@@ -370,6 +380,7 @@ window.LC = window.LC || {};
       }
       this.recalc();
       s.hp = s.maxHp;   // a night's sleep heals every bruise
+      s.buddy = null;   // v1.7: Badang went home to sleep
       if (s.escort) { s.escort = null; lines.push('Before dawn, Si Tanggang drifted back to his sunken ship. He is waiting for you to try again.'); }
       return lines;
     },
@@ -487,11 +498,11 @@ window.LC = window.LC || {};
       Object.keys(B).sort().forEach(function (p) {
         var b = B[p];
         if (b.done) return;
-        var taken = {}; Object.keys(B).forEach(function (q) { if (B[q].vid) taken[B[q].vid] = 1; });
-        var vid = LC.MOVE_IN.filter(function (v) { return !taken[v]; })[0] || null;
-        b.done = true; b.vid = vid;
+        var vid = self.moveIn(p);
         lines.push('Gotong-royong! The whole kampung raised the ' + LC.HOUSES[b.style].name + ' overnight.' + (vid ? ' ' + LC.VILLAGERS[vid].name + ' (' + LC.VILLAGERS[vid].role.toLowerCase() + ') has moved in!' : ''));
       });
+      // v1.7: Badang keeps his promise
+      if (s.ladang === 1) { s.ladang = 2; lines.push(LC.BADANG.ladangDone); }
 
       // trees and forage regrow
       Object.keys(s.trees).forEach(function (id) { if (s.trees[id] > 0) s.trees[id]--; });
@@ -514,7 +525,7 @@ window.LC = window.LC || {};
         Object.keys(s.tiles).forEach(function (k) { var t = s.tiles[k]; if (t.tilled && !t.wet) { t.wet = true; rained++; } });
         lines.push('Rain drummed on the atap all night.' + (rained ? ' The whole field is watered.' : ''));
       }
-      if (this.isPesta()) lines.push('Today is Sabtu: Pesta day in Kampung Tepian! Kite fighting, top spinning and the Serama show, 8 AM to 6 PM.');
+      if (this.isPesta()) lines.push('Today is Sabtu: Pesta day in Kampung Tepian! Kite fighting, top spinning' + (LC.hasBadang && LC.hasBadang() ? ', the Serama show and Badang\'s stone throwing' : ' and the Serama show') + ', 8 AM to 6 PM.');
       s.minutes = LC.DAY_START;
       s.energy = fainted ? Math.round(s.maxEnergy * 0.6) : s.maxEnergy;
       s.offerings = [];

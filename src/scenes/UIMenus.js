@@ -92,6 +92,7 @@ window.LC = window.LC || {};
             if (LC.State.add('dedak', 5)) self.toast('...and 5 dedak to feed her.', 'i_dedak');
           }
           if (vid === 'tanggang' && !S.quests.tanggang) S.quests.tanggang = 1;
+          if (vid === 'badang' && !S.quests.badang) { S.quests.badang = 1; self.badangAsk(); return; }   // v1.7: will you keep watch with him?
           self.openVillager(vid);
         } });
         return;
@@ -239,8 +240,8 @@ window.LC = window.LC || {};
         tabs: [
           { label: 'Requests', empty: 'No villagers met yet. Kampung Tepian is along the road east (Pelita Lv 2).', rows: function () {
             return Object.keys(LC.VILLAGERS).filter(function (vid) { return S.folk[vid] && S.folk[vid].met; }).map(function (vid) {
-              var v = LC.VILLAGERS[vid], f = LC.State.folk(vid), t = f.task, it = LC.ITEMS[t.item], have = LC.State.count(t.item);
-              return { icon: 'npc_' + vid + '_0', iconScale: 1.6, label: v.name + ' (' + v.role.toLowerCase() + ')',
+              var v = LC.villager(vid), key = LC.villagerKey(vid), f = LC.State.folk(vid), t = f.task, it = LC.ITEMS[t.item], have = LC.State.count(t.item);
+              return { icon: 'npc_' + key + '_0', iconScale: key === 'badangK' ? 1.25 : 1.6, label: v.name + ' (' + v.role.toLowerCase() + ')',
                 sub: f.done ? 'Request done for today. Thank you!' : 'Wants ' + t.n + ' ' + it.name + ' ' + v.taskText + ' (you have ' + have + '). Reward ' + t.reward + ' kepeng.',
                 right: f.done ? 'Done' : have >= t.n ? 'Ready!' : have + '/' + t.n };
             });

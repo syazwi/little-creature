@@ -263,7 +263,9 @@ window.LC = window.LC || {};
         tabs: [{ label: 'Contests', rows: function () {
           var rows = [];
           Object.keys(LC.CONTESTS).forEach(function (k) {
-            var C = LC.CONTESTS[k], ready = self.contestReady(k), entered = S.contest[k] === S.day, wins = (S.trophies[k] || 0);
+            var C = LC.CONTESTS[k];
+            if (C.show && !C.show()) return;   // v1.7: Lempar Batu appears once you have met Badang
+            var ready = self.contestReady(k), entered = S.contest[k] === S.day, wins = (S.trophies[k] || 0);
             if (on) rows.push({ icon: C.icon, iconScale: k === 'serama' ? 2 : 2, label: 'Enter the ' + C.name + ' (' + C.what.toLowerCase() + ')', sub: (ready.ok ? C.how : ready.why) + (wins ? '  Champion ' + wins + 'x!' : ''),
               right: entered ? 'Done' : 'Enter', enabled: ready.ok && !entered, why: entered ? 'You already competed today. Come back next Sabtu!' : ready.why, action: function () { self.runContest(k, false); } });
             rows.push({ icon: C.icon, iconScale: 2, label: 'Practise: ' + C.what, sub: ready.ok ? 'A friendly round, no prizes. ' + C.how : ready.why, right: 'Try', enabled: ready.ok, why: ready.why, action: function () { self.runContest(k, true); } });
@@ -274,6 +276,7 @@ window.LC = window.LC || {};
     },
     contestReady: function (k) {
       var C = LC.CONTESTS[k];
+      if (C.ready) return C.ready();
       if (C.animal) return LC.State.hasSerama() ? { ok: true } : { ok: false, why: 'You need an Ayam Serama from your reban (Pak Lah sells them).' };
       return C.gear.some(function (g) { return LC.State.count(g) > 0; }) ? { ok: true } : { ok: false, why: 'You need a ' + LC.ITEMS[C.gear[1]].name + ' (Pak Wan sells them, next to the pavilion).' };
     },
@@ -282,7 +285,7 @@ window.LC = window.LC || {};
       if (!practice) S.contest[k] = S.day;
       function play() {
         var rival = C.rivals[round];
-        var fn = k === 'wau' ? self.playWau : k === 'gasing' ? self.playGasing : self.playSerama;
+        var fn = C.play ? self[C.play] : k === 'wau' ? self.playWau : k === 'gasing' ? self.playGasing : self.playSerama;
         fn.call(self, round, rival, function (win, detail) {
           LC.Audio.sfx(win ? 'cheer' : 'sad');
           var lines = [{ text: detail }];
@@ -295,8 +298,9 @@ window.LC = window.LC || {};
             return;
           }
           if (practice) { lines.push({ text: 'You beat all three in practice! You are ready for Sabtu.' }); self.say(lines); return; }
-          lines.push({ text: '✦ CHAMPION of the ' + C.name + '! ✦ The whole kampung cheers.' });
+          lines.push({ text: C.champLine || '✦ CHAMPION of the ' + C.name + '! ✦ The whole kampung cheers.' });
           lines.push({ text: self.contestPrize(k, wauBoost) });
+          if (C.onChamp) C.onChamp.call(self, lines);
           S.stats.contestWins = (S.stats.contestWins || 0) + 1;
           self.world.doShared('kind', { n: 6 }, function () {});
           self.say(lines);
@@ -586,7 +590,7 @@ window.LC = window.LC || {};
         { icon: 'ic_str', label: 'Strength ' + Math.floor(S.str || 0) + ' / ' + LC.STR_MAX, sub: 'Lift the batu angkat in Kampung Tepian and train silat in the hidden village (once a day each), and eat home-cooked dishes. ' + LC.STR_KERIS + ' draws the keris from the stone.' },
         { icon: 'ic_hp', label: 'Health ' + Math.ceil(S.hp) + ' / ' + S.maxHp, sub: 'Strength raises your health. Food heals you; a night\'s sleep heals everything.' },
         { icon: sea.icon, label: sea.name + ' (' + sea.short + '), day ' + LC.State.seasonDay() + ' of 7', sub: sea.desc },
-        { icon: 'i_wau', label: d === 0 ? 'Today is Pesta day!' : 'Next Pesta: Sabtu, in ' + d + ' day' + (d > 1 ? 's' : ''), sub: 'Kite fighting, top spinning and the Serama show at the pavilion in Kampung Tepian, 8 AM to 6 PM. Champion: wau ' + (tro.wau || 0) + 'x, gasing ' + (tro.gasing || 0) + 'x, Serama ' + (tro.serama || 0) + 'x.' },
+        { icon: 'i_wau', label: d === 0 ? 'Today is Pesta day!' : 'Next Pesta: Sabtu, in ' + d + ' day' + (d > 1 ? 's' : ''), sub: 'Kite fighting, top spinning' + (LC.hasBadang() ? ', the Serama show and Badang\'s stone throwing' : ' and the Serama show') + ' at the pavilion in Kampung Tepian, 8 AM to 6 PM. Champion: wau ' + (tro.wau || 0) + 'x, gasing ' + (tro.gasing || 0) + 'x, Serama ' + (tro.serama || 0) + 'x' + (LC.hasBadang() ? ', Lempar Batu ' + (tro.lempar || 0) + 'x' : '') + '.' },
         { icon: 'chicken_0', iconScale: 2, label: 'Farm animals: ' + S.animals.length, sub: 'Feed them every day at the reban. Eggs in the nest hatch after three nights.' }
       ];
       if (LC.hasStone()) rows.push({ icon: 'ic_batu', label: 'Sumpahan Batu (V)', sub: "Si Tanggang's stone curse: nearby enemies turn to stone for " + (LC.hasRestu() ? LC.RESTU.dur : LC.STONE.dur) + ' seconds (bosses less). Stone cracks: your blows do double damage. Ready again after ' + (LC.hasRestu() ? LC.RESTU.cd : LC.STONE.cd) + ' seconds.' });

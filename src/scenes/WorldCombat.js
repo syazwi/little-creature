@@ -231,7 +231,9 @@ window.LC = window.LC || {};
       var restu = LC.hasRestu(), C = restu ? LC.RESTU : LC.STONE, left = this.stoneLeft();
       if (left > 0) { this.toast('The stone curse is still gathering... (' + Math.ceil(left) + 's)', 'ic_batu'); LC.Audio.sfx('error'); return; }
       var hits = (this.enemies || []).filter(function (e) { return !e.dead && !e.away && Math.hypot(e.spr.x - p.x, e.spr.y - p.y) < C.r; });
-      if (!hits.length) { this.toast('Sumpahan Batu needs an enemy close by.', 'ic_batu'); LC.Audio.sfx('error'); return; }
+      var hantu = this.hantuInRange(C.r);   // v1.7: it holds the slippery river hantu still, too
+      if (!hits.length && !hantu) { this.toast('Sumpahan Batu needs an enemy close by.', 'ic_batu'); LC.Audio.sfx('error'); return; }
+      if (hantu) this.stoneHantu(C.dur + 2);
       LC.stoneReadyAt = Date.now() + C.cd * 1000;
       LC.Audio.sfx('stone');
       this.shockwave(p.x, p.y - 8, C.r, 0x9ad8ff);
@@ -297,17 +299,17 @@ window.LC = window.LC || {};
     },
     faint: function () {
       if (this.leaving) return;
-      var S = this.S, lost = [], escort = !!S.escort;
+      var S = this.S, lost = [], escort = !!S.escort, buddy = LC.badangBuddy();
       LOOT.forEach(function (id) { var n = Math.floor(LC.State.count(id) / 2); if (n > 0) { LC.State.remove(id, n); lost.push(n + ' ' + LC.ITEMS[id].name); } });
       S.hp = Math.ceil(S.maxHp * 0.5);
       S.energy = Math.max(10, Math.round(S.energy * 0.6));
-      S.escort = null;
+      S.escort = null; S.buddy = null;
       if (!LC.Net.active()) S.minutes = Math.min(LC.DAY_END - 30, S.minutes + 60);
       this.player.clearTint().setAlpha(1);
       LC.Audio.sfx('sad');
       LC.Audio.setBattle(false);
       var msg = lost.length ? 'You dropped ' + lost.join(' and ') + ' in the struggle.' : 'Luckily you did not drop anything.';
-      this.goArea('farm', this.homeSpot(LC.Net.isGuest() ? this.pc : 0), 'down', { knocked: msg + (escort ? ' ' + LC.TANGGANG.lost : '') });
+      this.goArea('farm', this.homeSpot(LC.Net.isGuest() ? this.pc : 0), 'down', { knocked: msg + (escort ? ' ' + LC.TANGGANG.lost : ''), carried: buddy });
     }
   });
 })(window.LC);

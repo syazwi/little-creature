@@ -1,7 +1,8 @@
 /* Little Creature — TESTING build only (dist/LittleCreature_full.html). Everything is unlocked, with its own save
  * (so it never touches your real farm), and a few test keys:
  *   ]  sleep now (next day)      [  skip to the next season      \  skip to the next Pesta (Sabtu)      H  full health and energy
- *   T  replay Si Tanggang's story (switch between "before he meets his mother" and "reunited") */
+ *   T  replay Si Tanggang's story (switch between "before he meets his mother" and "reunited")
+ *   B  replay Badang's story (switch between "skinny, on the night watch" and "the strongest man in the land") */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -26,9 +27,10 @@ window.LC = window.LC || {};
     });
     S.quests.bunian = 2; S.wear.glasses = true; S.str = LC.STR_MAX;
     S.quests.tanggang = 4; S.quests.stoneTold = 1;   // v1.6: Sumpahan Batu and Restu Ibu
+    S.quests.badang = 3;                              // v1.7: Badang is already strong (B replays his story)
     var inv = ['hoe', 'can', 'joran', 'keris', 'trisula', 'basikal', 'kereta', 'cermin_mata', 'peti_ukir',
-      'wau_bulan', 'gasing_uri', 'sikat', 'dedak', 'baja', 'nasi_lemak', 'pulut_mangga', 'jamu_kuat', 'canang'];
-    var many = { dedak: 99, baja: 99, nasi_lemak: 99, pulut_mangga: 99, jamu_kuat: 20, canang: 20 };
+      'wau_bulan', 'gasing_uri', 'sikat', 'dedak', 'baja', 'nasi_lemak', 'pulut_mangga', 'jamu_kuat', 'canang', 'bubu'];
+    var many = { dedak: 99, baja: 99, nasi_lemak: 99, pulut_mangga: 99, jamu_kuat: 20, canang: 20, bubu: 3 };
     S.inv = inv.map(function (id) { return { id: id, n: many[id] || 1 }; });
     S.sel = 0;
     if (!S.animals.length) ['ayam', 'ayam', 'serama', 'itik', 'kambing'].forEach(function (k) { var a = State.newAnimal(k); a.love = 20; });
@@ -56,6 +58,12 @@ window.LC = window.LC || {};
         this.toast(re ? 'Tanggang story reset: talk to Si Tanggang in the sunken junk (Kampung Karang) to guide him to his mother.' : 'Si Tanggang and Mak Deruma reunited: Restu Ibu unlocked.', 'ic_restu');
         return;
       }
+      case 'KeyB': {   // v1.7: replay Badang's story (skinny, by the forest pool) or make him strong again
+        var strong = (S.quests.badang || 0) >= 3;
+        S.quests.badang = strong ? 2 : 3; S.buddy = null;
+        this.toast(strong ? 'Badang story reset: he is skinny again, keeping watch at the forest pool in Hutan Rimba. Go after 7 PM and grab the hantu! (Re-enter the forest to see it.)' : 'Badang is the strongest man in the land again (Kampung Tepian).', 'ic_badang');
+        return;
+      }
     }
     return onKey.call(this, ev);
   };
@@ -63,6 +71,6 @@ window.LC = window.LC || {};
   LC.UIScene.prototype.create = function () {
     create.apply(this, arguments);
     var self = this;
-    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story.', 'ic_glow'); });
+    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story, B replay the Badang story.', 'ic_glow'); });
   };
 })(window.LC);

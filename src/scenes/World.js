@@ -40,6 +40,7 @@ window.LC = window.LC || {};
       var area = data.area && LC.AREAS[data.area] ? data.area : 'farm';
       this.area = area; this.A = LC.AREAS[area];
       S.area = area; S.visited[area] = true;
+      LC.syncLadang();   // v1.7: has Badang cleared the land south of the field?
       this.grid = LC.areaGrid(area);
       this.H = this.grid.length; this.W = this.grid[0].length;
       this.objects = LC.areaObjects(area);
@@ -70,6 +71,7 @@ window.LC = window.LC || {};
       this.createFarmLife();   // v1.5: animals, chests, hidden things, seasons (WorldFarm.js)
       this.createEnemies();    // v1.5: the shadows of the mine, v1.6: the wild places too (WorldCombat.js)
       this.createTanggang();   // v1.6: guiding Si Tanggang home to his mother (WorldTanggang.js)
+      this.createBadang();     // v1.7: Badang at your side, the river hantu, your bubu (WorldBadang.js)
 
       var cam = this.cameras.main;
       cam.setBounds(0, 0, this.W * T, this.H * T);
@@ -102,7 +104,7 @@ window.LC = window.LC || {};
         });
       } else if (data.area && this.ui.ready) this.ui.areaBanner(this.A.name, this.A.sub);
       if (data.knocked) this.time.delayedCall(700, function () {
-        self.ui.say([{ text: 'Everything went dark... You wake up at home with a sore head. Pelita must have guided you home.' }, { text: data.knocked + ' (Eat good food to heal, and come back stronger!)' }]);
+        self.ui.say([{ text: 'Everything went dark... You wake up at home with a sore head. ' + (data.carried ? LC.BADANG.carried : 'Pelita must have guided you home.') }, { text: data.knocked + ' (Eat good food to heal, and come back stronger!)' }]);
       });
       if (data.loaded) this.time.delayedCall(500, function () {
         self.ui.toast(data.loaded > 0 ? 'Loaded slot ' + data.loaded + ': Day ' + S.day + ', ' + LC.State.weekday() + '.' : (data.by || 'Your friend') + ' loaded a saved farm. Day ' + S.day + '!', 'ic_bond');
@@ -195,8 +197,10 @@ window.LC = window.LC || {};
 
     buildObjects() {
       var self = this, S = this.S;
-      this.trees = {}; this.torches = []; this.plots = {}; this.boats = []; this.hiddenObjs = []; this.objLights = [];
+      this.trees = {}; this.torches = []; this.plots = {}; this.boats = []; this.hiddenObjs = []; this.objLights = []; this.objImgs = {};
+      this.warungImgs = null; this.portalImg = null;   // (v1.7 fix: these belong to one place; a level-up elsewhere must not touch the old ones)
       this.objects.forEach(function (o) {
+        if (o.when && !o.when(S)) return;   // v1.7: things that come and go (Badang's stumps, Batu Badang)
         var w = o.w || 1, h = o.h || 1, bx = (o.x + w / 2) * T, by = (o.y + h) * T;
         if (o.hidden) {   // only seen through the Bunian glasses (WorldFarm.refreshHidden)
           self.hiddenObjs.push({ o: o, img: self.add.image(bx, by, o.tex).setOrigin(0.5, 1).setDepth(by).setVisible(false) });
@@ -233,6 +237,7 @@ window.LC = window.LC || {};
           self.boats.push({ spr: bt, y0: by - 2 });
         } else {
           var im = self.add.image(bx, by, o.type === 'portal' && !LC.State.isOpen(o.to) ? 'lombong_tutup' : o.tex).setOrigin(0.5, 1).setDepth(by);
+          if (o.id) self.objImgs[o.id] = im;
           if (o.type === 'portal') self.portalImg = im;
           if (o.type === 'spirit') self.spiritPos = { x: bx, y: by };
           if (o.type === 'dapur') self.dapurPos = { x: bx, y: by };
@@ -251,6 +256,7 @@ window.LC = window.LC || {};
       function mark(x, y, r) { for (var dy = -r; dy <= r; dy++) for (var dx = -r; dx <= r; dx++) keep[(x + dx) + ',' + (y + dy)] = 1; }
       LC.SPIRIT_ORDER.forEach(function (sid) { var sp = LC.SPIRITS[sid]; if (sp.area === self.area) mark(sp.x, sp.y, 2); });
       LC.villagerPosts(this.area).forEach(function (p) { mark(p.x, p.y, 2); });
+      (this.A.clear || []).forEach(function (c) { mark(c.x, c.y, c.r); });   // v1.7: e.g. where the river hantu sits
       Object.keys(LC.PLOT_POSTS).forEach(function (k) { if (self.area === 'kampung') mark(LC.PLOT_POSTS[k].x, LC.PLOT_POSTS[k].y, 2); });
       mark(Math.floor(this.A.home.x), Math.floor(this.A.home.y), 3);
       this.objects.forEach(function (o) {   // never hide a building or a house plot behind a tree
@@ -312,6 +318,7 @@ window.LC = window.LC || {};
         tries++;
         var x = rnd.between(1, this.W - 3), y = rnd.between(2, this.H - 3);
         if (g[y][x] !== D.on || this.solid[y][x] || near(x, y)) continue;
+        if (this.area === 'farm' && LC.inLadang(x, y)) continue;   // v1.7: Badang's land may become a field
         var by = (y + 1) * T - 1;
         this.add.image(x * T + 8 + rnd.between(-3, 3), by, rnd.pick(D.types)).setOrigin(0.5, 1).setDepth(by);
         placed++;
@@ -611,6 +618,7 @@ window.LC = window.LC || {};
           if (parts.ghost) Object.keys(parts.ghost).forEach(function (k) { S.ghost[k] = parts.ghost[k]; });
           if (parts.offerings) { S.offerings = parts.offerings; self.refreshOfferings(); }
           if (parts.buildings) { S.buildings = parts.buildings; self.refreshPlots(); }
+          if (parts.ladang !== undefined) S.ladang = parts.ladang;   // v1.7: Badang will clear the land tonight
           if (parts.spirits) { S.spirits = parts.spirits; LC.State.recalc(); self.refreshFolkSpirits(); }
           if (parts.chests) { S.chests = parts.chests; S.chestSeq = parts.chestSeq || S.chestSeq; self.refreshChests(); }
           if (parts.animals) { S.animals = parts.animals; S.animalSeq = parts.animalSeq || S.animalSeq; S.coop = parts.coop || S.coop; S.nest = parts.nest || S.nest; self.refreshAnimals(); }
@@ -874,7 +882,7 @@ window.LC = window.LC || {};
     update(time, delta) {
       if (!this.ui || !this.ui.ready) return;
       var dt = Math.min(delta, 50) / 1000, S = this.S, g = S.ghost;
-      var blocked = this.ui.isBlocking() || this.sleeping || this.leaving || this.reuniting;   // (v1.6: hold still while mother and son meet)
+      var blocked = this.ui.isBlocking() || this.sleeping || this.leaving || this.reuniting || this.cutscene;   // (hold still while mother and son meet, or Badang makes his wish)
 
       this.updatePlayer(dt, blocked);
       this.checkExits();
@@ -913,6 +921,7 @@ window.LC = window.LC || {};
       this.updateFarmLife(time, dt);
       this.updateEnemies(time, dt, blocked);
       this.updateTanggang(time, dt, blocked);
+      this.updateBadang(time, dt, blocked);
       this.updateLighting(time, dt);
 
       var act = blocked ? null : this.getAction();
@@ -998,6 +1007,8 @@ window.LC = window.LC || {};
         case 'bunian_gate': return { label: 'Step through the Bunian gate', fn: function () { LC.Audio.sfx('gate'); self.goArea('bunian', self.tilePx(LC.AREAS.bunian.home), 'up'); } };
         case 'wreck': return this.seaGateAction(o, 'Swim inside the sunken junk');
         case 'seagate': return this.seaGateAction(o, o.to === 'kidul' ? 'Swim through the green arch' : 'Dive into the deep trench');
+        // v1.7 (WorldBadang.js)
+        case 'hantu': case 'bubu': case 'bubu_badang': case 'tunggul': return this.badangObjAction(o, sl, it);
         default: return LC.TEXT[o.type] ? { label: 'Look', fn: function () { self.ui.say([{ text: LC.TEXT[o.type] }]); } } : null;
       }
     }
@@ -1013,6 +1024,8 @@ window.LC = window.LC || {};
       }
       var v15 = this.toolAction15(sl, it, ch, t, tx, ty, hint);   // v1.5 items (WorldFarm.js)
       if (v15) return v15;
+      var bb = this.bubuToolAction(sl, water, tx, ty, hint);   // v1.7: set a bubu in the water
+      if (bb) return bb;
       if (sl.id === 'joran') {
         if (water) return { label: 'Cast your line', tile: true, fn: function () { self.startFishing(tx, ty, water); } };
         return hint(this.A.underwater ? 'You are already under the sea! Fish from the land.' : 'Face the water to fish: a river, pool, lake or the sea.');
@@ -1260,6 +1273,7 @@ window.LC = window.LC || {};
         var sum = LC.State.endDay(fainted);
         if (LC.Net.isHost()) LC.Net.broadcast({ t: 'dayStart', sum: sum, world: LC.State.snapshot() });
         if (self.area !== 'farm') { LC.followPid = self.followPid; self.scene.restart({ area: 'farm', summary: sum }); return; }   // you are carried home
+        self.refreshLadang();
         self.refreshAllTiles();
         self.refreshOfferings();
         self.refreshPlots(); self.refreshSeason(); self.refreshAnimals(); self.refreshChests();
@@ -1294,6 +1308,7 @@ window.LC = window.LC || {};
       S.stats.earned = 0;
       LC.State.save();
       if (this.area !== 'farm') { this.scene.restart({ area: 'farm', summary: sum }); return; }
+      this.refreshLadang();
       this.refreshAllTiles();
       this.refreshOfferings();
       this.refreshPlots(); this.refreshSeason(); this.refreshAnimals(); this.refreshChests();
