@@ -12,7 +12,10 @@ window.LC = window.LC || {};
     createFolk: function () {
       var self = this;
       this.folkSpr = {}; this.kites = []; this.fishing = null; this.bobber = null; this.fishLine = null;
-      Object.keys(LC.VILLAGERS).forEach(function (vid) { if ((LC.VILLAGERS[vid].area || 'kampung') === self.area) self.placeVillager(vid); });
+      Object.keys(LC.VILLAGERS).forEach(function (vid) {
+        if (vid === 'tanggang' && self.S.escort) return;   // v1.6: he is following you instead
+        if (LC.villagerArea(vid) === self.area) self.placeVillager(vid);
+      });
       this.refreshFolkSpirits();
       this.refreshCompanion();
       if (this.A.kites) {
@@ -28,15 +31,16 @@ window.LC = window.LC || {};
     placeVillager: function (vid) {
       var home = LC.State.villagerHome(vid);
       if (!home || this.npcs[vid]) return;
-      var x = home.x * T + 8, y = (home.y + 1) * T, o = { type: 'npc', vid: vid };
-      var spr = this.add.sprite(x, y, 'npc_' + vid + '_0').setOrigin(0.5, 1).setDepth(y);
-      spr.play('npc_' + vid + '_idle');
-      if (LC.VILLAGERS[vid].glow) {   // a ghost glows in the dark, above the shadows
+      var x = home.x * T + 8, y = (home.y + 1) * T, o = { type: 'npc', vid: vid }, v = LC.villager(vid), key = LC.villagerKey(vid), glow = null;
+      var spr = this.add.sprite(x, y, 'npc_' + key + '_0').setOrigin(0.5, 1).setDepth(y);
+      spr.play('npc_' + key + '_idle');
+      if (v.glow) {   // a ghost glows in the dark, above the shadows
         spr.setDepth(9002).setAlpha(0.9);
-        this.tweens.add({ targets: this.add.image(x, y - 10, 'glow').setBlendMode(Phaser.BlendModes.ADD).setDepth(9001).setTint(LC.VILLAGERS[vid].glow).setScale(0.9).setAlpha(0.5), alpha: 0.25, duration: 1600, yoyo: true, repeat: -1 });
+        glow = this.add.image(x, y - 10, 'glow').setBlendMode(Phaser.BlendModes.ADD).setDepth(9001).setTint(v.glow).setScale(0.9).setAlpha(0.5);
+        this.tweens.add({ targets: glow, alpha: 0.25, duration: 1600, yoyo: true, repeat: -1 });
         this.tweens.add({ targets: spr, y: y - 2, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       }
-      this.npcs[vid] = { spr: spr, tx: home.x, ty: home.y, o: o, here: null };
+      this.npcs[vid] = { spr: spr, glow: glow, tx: home.x, ty: home.y, o: o, here: null, ghost: !!v.glow };
     },
     npcAction: function (o) {
       var self = this, v = LC.VILLAGERS[o.vid];
@@ -310,9 +314,9 @@ window.LC = window.LC || {};
 
     // ================================================================ per-frame
     updateFolk: function (time, dt) {
-      var self = this, S = this.S, here = present(S), p = this.player;
+      var self = this, S = this.S, awake = present(S), p = this.player;
       Object.keys(this.npcs).forEach(function (vid) {
-        var n = self.npcs[vid];
+        var n = self.npcs[vid], here = n.ghost || awake;   // ghosts keep their watch all night
         if (n.here !== here) {
           n.here = here; n.spr.setVisible(here);
           self.solid[n.ty][n.tx] = here; self.objAt[n.ty][n.tx] = here ? n.o : null;

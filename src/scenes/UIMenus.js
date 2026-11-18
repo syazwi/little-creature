@@ -79,7 +79,7 @@ window.LC = window.LC || {};
 
     // ================================================================ villagers
     openVillager: function (vid) {
-      var self = this, S = this.S, W = this.world, v = LC.VILLAGERS[vid], f = LC.State.folk(vid), por = 'npc_' + vid + '_0';
+      var self = this, S = this.S, W = this.world, v = LC.villager(vid), f = LC.State.folk(vid), por = 'npc_' + LC.villagerKey(vid) + '_0';
       if (!f.met) {
         f.met = true;
         this.say(v.intro.map(function (t) { return { name: v.name, portrait: por, text: t }; }), { onDone: function () {
@@ -94,6 +94,11 @@ window.LC = window.LC || {};
           if (vid === 'tanggang' && !S.quests.tanggang) S.quests.tanggang = 1;
           self.openVillager(vid);
         } });
+        return;
+      }
+      if (vid === 'tanggang' && LC.hasStone() && !S.quests.stoneTold) {   // v1.6: a friend's gift, the stone curse
+        S.quests.stoneTold = 1; LC.Audio.sfx('stage');
+        this.say(LC.storyLines(LC.TEXT.stoneGift), { onDone: function () { self.openVillager(vid); } });
         return;
       }
       var quote = v.chat[Math.floor(Math.random() * v.chat.length)];

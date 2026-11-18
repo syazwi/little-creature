@@ -147,7 +147,7 @@ window.LC = window.LC || {};
     var bad = LC.areaObjects(area).some(function (o) { return x >= o.x - (o.type === 'forage' ? 0 : 0) && x < o.x + (o.w || 1) && y >= o.y && y < o.y + (o.h || 1) + (o.type === 'bldg' || o.type === 'coop' || o.type === 'pesta' ? 1 : 0); });
     if (bad) return false;
     if (A.exits.some(function (e) { return x >= e.x0 - 1 && x <= e.x1 + 1 && y >= e.y0 - 1 && y <= e.y1 + 1; })) return false;
-    var vil = Object.keys(LC.VILLAGERS).some(function (vid) { var v = LC.VILLAGERS[vid], p = v.post; return (v.area || 'kampung') === area && p && p.x === x && p.y === y; });
+    var vil = LC.villagerPosts(area).some(function (p) { return p.x === x && p.y === y; });
     if (vil) return false;
     if (area === 'kampung' && Object.keys(LC.PLOT_POSTS).some(function (k) { var p = LC.PLOT_POSTS[k]; return p.x === x && p.y === y; })) return false;
     if (LC.SPIRIT_ORDER.some(function (sid) { var sp = LC.SPIRITS[sid]; return sp.area === area && sp.x === x && sp.y === y; })) return false;

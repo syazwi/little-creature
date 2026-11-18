@@ -9,11 +9,12 @@
  *   guest -> host : hello{name,v} · pos{x,y,dir,mv,ar,cp,rd} · op{rid,op,a} · sleepy      (ar = area, cp = companion spirit, rd = riding)
  *   host -> guest : welcome{id,color,hostName,code,world} · reject{why} · tick{m,d,g,gs,p} · res{rid,res}
  *                   sync{op,a,by,parts} · toast{msg,icon} · event{ev,st} · sleepStart · dayStart{sum,world} · bye{why}
+ *                   reload{world,by} (the host loaded a saved farm) · saved{by} (the host saved: guests save their bags too)
  */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
-  var PROTO = 4, MAX_PLAYERS = 4, PREFIX = 'littlecreature-';
+  var PROTO = 5, MAX_PLAYERS = 4, PREFIX = 'littlecreature-';
   var ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   var NAME_KEY = 'littleCreature.name';
 
@@ -178,6 +179,8 @@ window.LC = window.LC || {};
       case 'event': N.emit('event', m); break;
       case 'sleepStart': N.emit('sleepStart', m); break;
       case 'dayStart': N.emit('dayStart', m); break;
+      case 'reload': N.emit('reload', m); break;
+      case 'saved': N.emit('saved', m); break;
       case 'bye': var why = m.why; N.leave(); N.emit('closed', why || 'Your friend closed their farm.'); break;
     }
   }

@@ -166,7 +166,7 @@ Mouse clicks also work on all menus.
   - *Optional swap-in:* any CC0 16×16 pack (for example Kenney's "Tiny Town") can replace the generated textures by loading PNGs under the same texture keys.
 - **Font:** "Pixelify Sans" (SIL OFL), bundled in `lib/fonts/`, so offline play has no network stall.
 - **Audio:** Web Audio only. Gamelan-like pentatonic music, plus synthesised sound effects (till, water, harvest, coin, spirit chime).
-- **Save:** `localStorage` saves automatically on every sleep. "Continue" appears on the title screen.
+- **Save:** `localStorage`, three slots (v1.6): slot 1 is `LC.SAVE_KEY`, slots 2-3 add `.2`/`.3`, and `.last` remembers the slot in play. It saves automatically on every sleep and when the game is hidden; the pause menu saves to or loads from any slot. The title screen has Continue (last slot), Load Game and New Game (pick a slot; overwriting asks twice).
 
 ### File layout
 ```
@@ -185,7 +185,12 @@ src/
   undersea.js       v1.5 deep sea: Kapal Karam (Si Tanggang), Istana Laut Selatan (Ratu Kidul), Kota Atlantis (Poseidon)
   art4.js           v1.5 textures: cave/ship/jade/marble tiles, crops, orchard, animals, enemies, buildings, deep-sea folk, icons
   scenes/WorldFarm.js    animals, chests, rain, glasses and hidden things, keris, mine and sea gates
-  scenes/WorldCombat.js  enemies, swinging, health, fainting
+  scenes/WorldCombat.js  enemies (day/night/escort groups, telegraphed attacks), swinging, battle FX and music, Sumpahan Batu, Restu Ibu, fainting
+  battle.js         v1.6 data: wild enemies per place, the stone curse and Restu Ibu, Mak Deruma, alive villagers (LC.villager)
+  art5.js           v1.6 textures: boar, rock crab, scorpion, fire jellyfish, Mak Deruma (ghost and alive), Si Tanggang alive, battle FX, ability icons
+  scenes/WorldTanggang.js  guiding Si Tanggang to his mother, the reunion cutscene
+  scenes/UISettings.js     sound & music volumes, save/load slot menus, ability slots, damage numbers, hurt flash
+  cheats.js         test build only (dist/LittleCreature_full.html)
   scenes/UIGames.js      map, chest, reban, Pesta and its three games, strength training, quests, the journal's You page
   art.js            procedural pixel-art texture generation
   audio.js          procedural music and sound effects
@@ -273,6 +278,19 @@ Slow pads, sparse bells, a soft bass pulse and a distant gong through a generate
 
 **The deep.** Kapal Karam (Lv 5 + Naga): Si Tanggang's quest (`S.quests.tanggang`, selendang from Tok Duyung). Istana Laut Selatan (Lv 12): the Queen's gift (`LC.KIDUL_GIFT`, flag `kidul`: sea forage +1). Kota Atlantis (Lv 15): Poseidon's tribute (`LC.POSEIDON_TRIBUTE`: trident and +20 max HP). Co-op protocol is now 4.
 
+### Battles everywhere, Si Tanggang's mother, save slots and volume (v1.6)
+**Enemies in the wild.** `battle.js` adds groups to `A.enemies` in the forest (boars; shadows at night), the island (rock crabs; shadows at night), the mountain (a centipede; ghost bats at night), the dunes (scorpions), Kampung Karang (fire jellyfish; escort shadows) and the sunken junk (shadows). `LC.SAFE_AREAS` (farm, kampung, Bunian, the palaces) have none. Group flags: `night` (19:00-06:00; they fade in and out, checked every second) and `escort` (only while `S.escort`). AI states: drift, hunt, wind-up (0.32 s, boss 0.6 s, boar 0.55 s: the sprite shivers and flashes), strike (a lunge; damage only lands during it), rest (back off), and stone. `D.charge` (boar), `D.side` (crab), `D.floaty` (bob).
+
+**Battle feedback.** The weapon icon sweeps a 140° arc (the keris is held point-up), plus a slash arc, a hit spark, a 50 ms hit-stop, a white flash, knockback, and floating damage numbers drawn by the UI scene from world coordinates (`UI.floatText`). Getting hurt: a red screen flash and a red number. The cangkul is an improvised weapon (1 damage) when an enemy is within 70 px.
+
+**Battle music.** `Audio.setBattle(on, boss)` from `updateEnemies`: on while any enemy is within its sight (+10 px), off 4 s later. A separate `battleBus` (low-passed at 5.2 kHz) plays a 112 bpm kendang groove, gong, ostinato and pelog saron melody (64-step loop; a drone and a lower voice with the boss); the calm music ducks to 0 unless the battle volume is 0. Volumes: `Audio.vol` {music, battle, sfx, amb} in localStorage `littleCreature.vol`, set in Pause → Sound & music (`UI.openSound`, with a live preview on the battle row).
+
+**Sumpahan Batu** (`LC.hasStone()`: `quests.tanggang >= 2` or 3 ♥ with him). V, or the stone slot beside the hotbar: enemies within 80 px turn to stone for 4 s (bosses 1.5 s), with a 15 s cooldown (`LC.stoneReadyAt`, global so travelling does not reset it). Stoned enemies freeze, turn grey and take double damage. With Restu Ibu: 120 px, 6 s, 10 s cooldown.
+
+**Si Tanggang's mother.** `quests.tanggang`: 1 met, 2 at peace (shawl), 3 escorting (`S.escort`), 4 reunited. Mak Deruma (`deruma`) is a ghost villager on Pulau Mutiara (ghosts are present day and night). The escort follows you across places; the reunion triggers within 44 px of her: a scripted cutscene (movement locked by `World.reuniting`), then both switch to their `alive` definitions (`LC.villager(vid)` merges `v.alive` once `tanggang >= 4`: kampung posts, human sprites `npc_tanggangH`/`npc_derumaH`, new chat). Fainting or a new day ends an escort. **Restu Ibu** (`LC.hasRestu()`): once a day (`S.restuDay`) a lethal blow instead heals fully, gives 2.5 s of invulnerability and turns everything within 120 px to stone.
+
+**Save slots and co-op.** `State.slot`, `slotInfo`, `slotText`, `saveTo(n)`, `load(n)`, `lastSlot()`. The lobby's host column has a slot picker. Co-op protocol 5 adds `reload{world, by}` (the host loaded a slot: guests apply the snapshot, save their bag and restart on the farm) and `saved{by}` (guests save their bag when the host saves). Guests' pause menu has "Save my bag" and no Load.
+
 ## 8. Milestones
 
 1. **Skeleton.** Phaser boots, procedural textures, tilemap, player movement with collision, camera.
@@ -290,4 +308,4 @@ Slow pads, sparse bells, a soft bass pulse and a distant gong through a generate
 - A night market (pasar malam), wayang kulit nights, sepak takraw with the villagers.
 - Saving a co-op guest's villager friendships and fish log with their bag.
 - Gamepad support, and a Play Store release (that would need an AAB build).
-- Co-op extras: shared enemies in the mine, gifting items between players, a "everyone ready to sleep" vote, chat emotes, and a self-hosted PeerJS server for reliability.
+- Co-op extras: shared (synced) enemies, gifting items between players, a "everyone ready to sleep" vote, chat emotes, and a self-hosted PeerJS server for reliability.

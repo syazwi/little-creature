@@ -18,6 +18,7 @@ window.LC = window.LC || {};
       this.buildHUD();
       this.buildHotbar();
       this.buildTouch();
+      this.buildSkills();   // v1.6: Sumpahan Batu and Restu Ibu beside the hotbar (UISettings.js)
       this.layout();
       this.scale.on('resize', this.layout, this);
       this.game.events.on('lc-safearea', this.layout, this);
@@ -377,6 +378,8 @@ window.LC = window.LC || {};
 
       this.drawHotbar();
       this.drawTouch();
+      this.drawSkills();
+      this.updateFloats();
       this.updateCoopUI();
 
       // toasts (lifted above the thumb-stick in touch mode)
@@ -463,6 +466,7 @@ window.LC = window.LC || {};
         case 'KeyF': if (LC.canFullscreen()) LC.toggleFullscreen(); break;
         case 'KeyJ': this.openJournal(); break;
         case 'KeyR': this.world.toggleRide(); break;
+        case 'KeyV': this.world.castStone(); break;
         case 'Escape': this.openPause(); break;
       }
     }
@@ -800,12 +804,14 @@ window.LC = window.LC || {};
             { icon: 'ic_bond', label: 'Journal', sub: 'Villager requests, places, spirits, fish and Pelita\'s levels. Press J anytime.', action: function () { self.openJournal(); } },
             { icon: 'ic_map', label: 'Map', sub: 'This place, and the whole land. Press M anytime' + (self.touchOn ? ' (or tap MAP).' : '.'), action: function () { self.openMap(); } }
           ].concat(coop, [
-            { icon: 'ic_bond', label: 'Save game', sub: 'Save your farm, bag and Pelita right now.', action: function () { self.toast(LC.State.save() ? 'Game saved.' : 'Could not save: browser storage is blocked.', 'ic_bond'); return 'close'; } },
-            { icon: 'ic_glow', label: 'Music: ' + (LC.Audio.musicOn ? 'On' : 'Off'), sub: 'Chill gamelan-style music, generated live. Press N anytime.', action: function () { LC.Audio.toggleMusic(); } },
-            { icon: 'ic_moon', label: 'Nature sounds: ' + (LC.Audio.ambienceOn ? 'On' : 'Off'), sub: 'River, birdsong by day, crickets and frogs at night.', action: function () { LC.Audio.toggleAmbience(); } },
+            N.isGuest() ? { icon: 'ic_bond', label: 'Save my bag', sub: 'Your bag, kepeng, strength and quests are kept on this device. ' + N.hostName + ' saves the farm itself.', action: function () { self.toast(LC.State.save() ? 'Your bag is saved.' : 'Could not save: browser storage is blocked.', 'ic_bond'); return 'close'; } }
+              : { icon: 'ic_bond', label: 'Save game', sub: 'Choose a slot (1-' + LC.SAVE_SLOTS + '). You are playing slot ' + LC.State.slot + '.', action: function () { self.openSaves('save'); } },
+            N.isGuest() ? null : { icon: 'ic_sun', label: 'Load game', sub: N.isHost() ? 'Load a saved farm. Your friends come along to the loaded farm.' : 'Go back to a farm saved in another slot (or this one).', action: function () { self.openSaves('load'); } },
+            { icon: 'ic_glow', label: 'Sound & music', sub: 'Volume for the music, the battle music, sound effects and nature sounds.', action: function () { self.openSound(); } },
+            { icon: 'ic_glow', label: 'Music: ' + (LC.Audio.musicOn ? 'On' : 'Off'), sub: 'Chill gamelan-style music (and battle drums), generated live. Press N anytime.', action: function () { LC.Audio.toggleMusic(); } },
             { icon: 'ic_joy', label: 'Touch controls: ' + (self.touchOn ? 'On' : 'Off'), sub: 'On-screen joystick and USE / EAT / BAG buttons for phones and tablets.', action: function () { self.setTouch(!self.touchOn); } },
             LC.canFullscreen() ? { icon: 'ic_sun', label: 'Fullscreen: ' + (LC.isFullscreen() ? 'On' : 'Off'), sub: 'Fill the whole screen with the kampung' + (self.touchOn ? '.' : '. Press F anytime.'), action: function () { LC.toggleFullscreen(); } } : null,
-            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact (and swing a weapon) · tap the hotbar to select · MAP · II pauses' : 'WASD/Arrows move · E use/swing · 1-9/wheel select · Q tool · X eat · R ride · G glasses · Tab bag · J journal · M map · N music · F fullscreen' },
+            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact (and swing a weapon) · tap the stone by the hotbar for the stone curse · MAP · II pauses' : 'WASD/Arrows move · E use/swing · V stone curse · 1-9/wheel select · Q tool · X eat · R ride · G glasses · Tab bag · J journal · M map · N music · F fullscreen' },
             { icon: 'ic_moon', label: 'Quit to title', sub: LC.Net.role ? 'Also ends the co-op session.' : 'Anything since your last sleep (or save) is lost.', action: function () { self.quitToTitle(); } }
           ]).filter(Boolean);
         } }]

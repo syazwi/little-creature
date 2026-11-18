@@ -56,22 +56,13 @@ LC.TitleScene = class extends Phaser.Scene {
     this.add.text(cx, 92 + dy, 'Little Creature', { fontFamily: LC.FONT, fontSize: '76px', fontStyle: '700', color: '#ffd166', stroke: '#2a1d18', strokeThickness: 10 }).setOrigin(0.5);
     this.add.text(cx, 156 + dy, 'a spirit-keeping farm tale from the kampung', { fontFamily: LC.FONT, fontSize: '22px', color: '#fbecc8', stroke: '#2a1d18', strokeThickness: 5 }).setOrigin(0.5);
 
-    this.hasSave = LC.State.hasSave();
-    this.options = [{ label: 'New Game', fn: function () { self.begin(false); } }];
-    if (this.hasSave) this.options.unshift({ label: 'Continue', fn: function () { self.begin(true); } });
-    this.options.push({ label: 'Play with Friends', fn: function () { self.openLobby(); } });
-    this.sel = data && data.sel < this.options.length ? data.sel : 0;
-    this.optTexts = this.options.map(function (o, k) {
-      var t = self.add.text(cx, 458 + dy + k * 44, o.label, { fontFamily: LC.FONT, fontSize: '30px', color: '#fbecc8', stroke: '#2a1d18', strokeThickness: 6 }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-      t.on('pointerover', function () { self.sel = k; self.renderOpts(); });
-      t.on('pointerdown', function () { self.sel = k; self.choose(); });
-      return t;
-    });
-    this.renderOpts();
+    this.cx = cx; this.dy = dy; this.optTexts = [];
+    this.heading = this.add.text(cx, 404 + dy, '', { fontFamily: LC.FONT, fontSize: '20px', color: '#e8cf86', stroke: '#2a1d18', strokeThickness: 5 }).setOrigin(0.5);
     var touch = this.sys.game.device.input.touch || LC.PLATFORM === 'android';
-    this.add.text(cx, 600 + dy, touch ? 'Tap to choose  ·  drag the left side to walk  ·  USE to interact  ·  II to pause'
-      : 'WASD / Arrows to move  ·  E to interact  ·  1-9 hotbar  ·  Tab bag  ·  M music' + (LC.canFullscreen() ? '  ·  F fullscreen' : ''),
+    this.hint = this.add.text(cx, 600 + dy, touch ? 'Tap to choose  ·  drag the left side to walk  ·  USE to interact  ·  II to pause'
+      : 'WASD / Arrows to move  ·  E to interact  ·  1-9 hotbar  ·  Tab bag  ·  N music' + (LC.canFullscreen() ? '  ·  F fullscreen' : ''),
       { fontFamily: LC.FONT, fontSize: '16px', color: '#cdb8a0', stroke: '#1a120c', strokeThickness: 4 }).setOrigin(0.5);
+    if (data && data.menu === 'slots') this.slotMenu(data.mode, data.sel); else this.mainMenu(data && data.sel);
     this.add.text(W - 10, H - 8, 'Made with Phaser 3 · art & music generated in code', { fontFamily: LC.FONT, fontSize: '12px', color: '#8a7a9a' }).setOrigin(1, 1);
 
     this.input.keyboard.on('keydown', function (ev) {
@@ -80,6 +71,7 @@ LC.TitleScene = class extends Phaser.Scene {
       if (ev.code === 'ArrowUp' || ev.code === 'KeyW') { self.sel = (self.sel + self.options.length - 1) % self.options.length; self.renderOpts(); LC.Audio.sfx('click'); }
       else if (ev.code === 'ArrowDown' || ev.code === 'KeyS') { self.sel = (self.sel + 1) % self.options.length; self.renderOpts(); LC.Audio.sfx('click'); }
       else if (ev.code === 'Enter' || ev.code === 'KeyE' || ev.code === 'Space') self.choose();
+      else if (ev.code === 'Escape' && self.inSlots) { LC.Audio.sfx('click'); self.mainMenu(); }
       else if (ev.code === 'KeyF' && LC.canFullscreen()) LC.toggleFullscreen();
     });
     this.input.on('pointerdown', function () { LC.Audio.init(); });
@@ -90,26 +82,73 @@ LC.TitleScene = class extends Phaser.Scene {
     var w0 = W, h0 = H;
     function onResize() {
       if (self.starting || (self.scale.width === w0 && self.scale.height === h0)) return;
-      self.scene.restart({ quiet: true, sel: self.sel });
+      self.scene.restart({ quiet: true, sel: self.sel, menu: self.inSlots ? 'slots' : 'main', mode: self.slotMode });
     }
     this.scale.on('resize', onResize);
     this.events.once('shutdown', function () { self.scale.off('resize', onResize); });
   }
 
+  // a list of options, centred under Pelita. size/gap shrink for the save-slot list.
+  setOptions(options, sel, size, gap, y0) {
+    var self = this, cx = this.cx, dy = this.dy;
+    this.optTexts.forEach(function (t) { t.destroy(); });
+    this.options = options;
+    this.sel = sel >= 0 && sel < options.length ? sel : 0;
+    this.optTexts = options.map(function (o, k) {
+      var t = self.add.text(cx, y0 + dy + k * gap, o.label, { fontFamily: LC.FONT, fontSize: size + 'px', color: '#fbecc8', stroke: '#2a1d18', strokeThickness: 6, align: 'center' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      t.on('pointerover', function () { if (self.sel !== k) { self.sel = k; self.renderOpts(); } });
+      t.on('pointerdown', function () { self.sel = k; self.choose(); });
+      return t;
+    });
+    this.renderOpts();
+  }
+  mainMenu(sel) {
+    var self = this, has = LC.State.hasSave(), opts = [];
+    this.inSlots = false; this.slotMode = null; this.armed = 0;
+    this.heading.setText('');
+    if (this.hint) this.hint.setVisible(true);
+    if (has) opts.push({ label: 'Continue', fn: function () { self.begin(LC.State.lastSlot()); } });
+    if (has) opts.push({ label: 'Load Game', fn: function () { self.slotMenu('load'); } });
+    opts.push({ label: 'New Game', fn: function () { self.slotMenu('new'); } });
+    opts.push({ label: 'Play with Friends', fn: function () { self.openLobby(); } });
+    this.setOptions(opts, sel || 0, has ? 28 : 30, has ? 40 : 44, has ? 446 : 458);
+  }
+  // pick a save slot to load, or to start a new farm in (a used slot asks twice before it is overwritten)
+  slotMenu(mode, sel) {
+    var self = this, opts = [];
+    this.inSlots = true; this.slotMode = mode;
+    this.heading.setText(mode === 'load' ? 'Load which farm?' : 'Start a new farm in which slot?');
+    if (this.hint) this.hint.setVisible(false);
+    for (var n = 1; n <= LC.SAVE_SLOTS; n++) (function (n) {
+      var info = LC.State.slotInfo(n);
+      var label = 'Slot ' + n + ':  ' + (info ? 'Day ' + info.day + '  ·  Pelita Lv ' + info.level + '  ·  ' + info.kepeng + ' kepeng' : 'empty');
+      opts.push({ label: label, slot: n, used: !!info, fn: function () {
+        if (mode === 'load') { if (info) self.begin(n); else LC.Audio.sfx('error'); return; }
+        if (info && self.armed !== n) { self.armed = n; LC.Audio.sfx('click'); self.renderOpts(); return; }
+        self.begin(n, true);
+      } });
+    })(n);
+    opts.push({ label: 'Back', fn: function () { LC.Audio.sfx('click'); self.mainMenu(); } });
+    this.armed = 0;
+    this.setOptions(opts, sel === undefined ? (mode === 'load' ? LC.State.lastSlot() - 1 : 0) : sel, 22, 40, 446);
+  }
+
   renderOpts() {
     var self = this;
     this.optTexts.forEach(function (t, k) {
-      var on = k === self.sel;
-      t.setText(on ? '>  ' + self.options[k].label + '  <' : self.options[k].label);
-      t.setColor(on ? '#ffd166' : '#cdb8a0');
+      var on = k === self.sel, o = self.options[k], lab = o.label;
+      if (o.slot && self.armed === o.slot) lab = 'Slot ' + o.slot + ': overwrite this farm? Press again';
+      t.setText(on ? '>  ' + lab + '  <' : lab);
+      t.setColor(o.slot && self.armed === o.slot ? '#ff9a7a' : on ? '#ffd166' : o.slot && !o.used && self.slotMode === 'load' ? '#7a6a5a' : '#cdb8a0');
     });
   }
 
   choose() { if (!this.starting) this.options[this.sel].fn(); }
 
-  begin(cont) {
+  // slot: which save slot · fresh: start a new farm there
+  begin(slot, fresh) {
     if (LC.Net.role) LC.Net.leave();
-    if (!(cont && LC.State.load())) LC.State.newGame();
+    if (fresh || !LC.State.load(slot)) LC.State.newGame(slot);
     this.go();
   }
   go() {
@@ -120,12 +159,12 @@ LC.TitleScene = class extends Phaser.Scene {
     this.cameras.main.once('camerafadeoutcomplete', function () { self.scene.start('World'); });
   }
 
-  // co-op: the host plays their own saved farm; a guest plays on the host's farm with their own bag
+  // co-op: the host plays one of their saved farms (picked in the lobby); a guest plays on the host's farm with their own bag
   openLobby() {
     var self = this;
     LC.Audio.init();
     LC.Lobby.open({
-      onHosted: function () { if (!LC.State.load()) LC.State.newGame(); self.go(); },
+      onHosted: function (code, slot) { slot = slot || LC.State.lastSlot(); if (!LC.State.load(slot)) LC.State.newGame(slot); self.go(); },
       onJoined: function (w) { LC.State.makeGuest(w.world); self.go(); }
     });
   }

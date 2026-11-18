@@ -43,6 +43,9 @@
       border: 2px solid #8a6a3a; background: #2e2219; color: #fffdf2; outline: none; }
     #lobby input:focus { border-color: #ffd166; }
     #lobby input.code { text-transform: uppercase; letter-spacing: 6px; text-align: center; }
+    #lobby select { width: 100%; box-sizing: border-box; font: inherit; font-size: 15px; padding: 5px 6px; margin-top: 6px; border-radius: 6px;
+      border: 2px solid #8a6a3a; background: #2e2219; color: #fffdf2; outline: none; }
+    #lobby select:focus { border-color: #ffd166; }
     #lobby .cols { display: flex; gap: 14px; margin-top: 10px; }
     #lobby .col { flex: 1; background: #2b1f17; border: 1px solid #6a5034; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; }
     #lobby .col button { margin-top: auto; }
@@ -1390,7 +1393,7 @@ window.LC = window.LC || {};
     var bad = LC.areaObjects(area).some(function (o) { return x >= o.x - (o.type === 'forage' ? 0 : 0) && x < o.x + (o.w || 1) && y >= o.y && y < o.y + (o.h || 1) + (o.type === 'bldg' || o.type === 'coop' || o.type === 'pesta' ? 1 : 0); });
     if (bad) return false;
     if (A.exits.some(function (e) { return x >= e.x0 - 1 && x <= e.x1 + 1 && y >= e.y0 - 1 && y <= e.y1 + 1; })) return false;
-    var vil = Object.keys(LC.VILLAGERS).some(function (vid) { var v = LC.VILLAGERS[vid], p = v.post; return (v.area || 'kampung') === area && p && p.x === x && p.y === y; });
+    var vil = LC.villagerPosts(area).some(function (p) { return p.x === x && p.y === y; });
     if (vil) return false;
     if (area === 'kampung' && Object.keys(LC.PLOT_POSTS).some(function (k) { var p = LC.PLOT_POSTS[k]; return p.x === x && p.y === y; })) return false;
     if (LC.SPIRIT_ORDER.some(function (sid) { var sp = LC.SPIRITS[sid]; return sp.area === area && sp.x === x && sp.y === y; })) return false;
@@ -1611,6 +1614,130 @@ window.LC = window.LC || {};
 })(window.LC);
 
 </script>
+  <script>/* src/battle.js */
+/* Little Creature — v1.6: battles beyond the mine, the stone curse, and Si Tanggang's mother.
+ *  - Wild creatures now roam the forest, the island, the mountain, the dunes, the reef and the sunken junk
+ *    (some only come out at night). The farm, the kampungs and the palaces stay peaceful.
+ *  - Sumpahan Batu: once Si Tanggang is your friend, he shares the last of his curse with you. Press V (or tap
+ *    the stone beside your hotbar) to turn nearby enemies to stone for a few seconds.
+ *  - Mak Deruma: the ghost of Si Tanggang's mother waits on the beach of Pulau Mutiara. Guide her son to her and
+ *    the old curse breaks: both of them live again, in Kampung Tepian, and she gives you Restu Ibu (a mother's
+ *    blessing) that saves you once a day when you are about to fall. */
+window.LC = window.LC || {};
+(function (LC) {
+  'use strict';
+
+  // ================================================================ new creatures
+  Object.assign(LC.ENEMIES, {
+    babi:       { name: 'Babi Hutan', hp: 6, speed: 24, dmg: 6, sight: 80, w: 7, charge: true, drop: [['kepeng', 0.7, 4, 10]] },
+    ketam_batu: { name: 'Ketam Batu', hp: 5, speed: 20, dmg: 5, sight: 70, w: 6, side: true, drop: [['kerang', 0.6, 1, 2], ['mutiara', 0.06, 1, 1]] },
+    kala:       { name: 'Kala Jengking Gergasi', hp: 7, speed: 24, dmg: 8, sight: 90, w: 7, drop: [['kepeng', 0.6, 6, 14], ['duit_lama', 0.2, 1, 1]] },
+    obor:       { name: 'Obor-obor Api', hp: 3, speed: 13, dmg: 5, sight: 70, w: 5, erratic: true, floaty: true, drop: [['rumpai_laut', 0.5, 1, 2]] }
+  });
+  LC.ENEMY_ANIMS = { babi: 7, ketam_batu: 6, kala: 6, obor: 3 };   // walk-cycle speeds for the new creatures
+
+  function fight(area, groups) { LC.AREAS[area].enemies = (LC.AREAS[area].enemies || []).concat(groups); }
+  // night: only after dark (they melt away at dawn) · escort: only while you guide Si Tanggang home
+  fight('forest', [
+    { kind: 'babi', n: 2, zone: { x0: 25, y0: 3, x1: 40, y1: 19 } },
+    { kind: 'bayang', n: 2, night: true, zone: { x0: 3, y0: 3, x1: 20, y1: 19 } }
+  ]);
+  fight('island', [
+    { kind: 'ketam_batu', n: 1, zone: { x0: 5, y0: 10, x1: 12, y1: 16 } },
+    { kind: 'ketam_batu', n: 1, zone: { x0: 33, y0: 16, x1: 38, y1: 22 } },
+    { kind: 'bayang', n: 2, night: true, zone: { x0: 8, y0: 9, x1: 36, y1: 20 } }
+  ]);
+  fight('mountain', [
+    { kind: 'kelawar', n: 3, night: true, zone: { x0: 4, y0: 3, x1: 40, y1: 16 } },
+    { kind: 'lipan', n: 1, zone: { x0: 33, y0: 24, x1: 40, y1: 31 } }
+  ]);
+  fight('desert', [{ kind: 'kala', n: 3, zone: { x0: 12, y0: 3, x1: 42, y1: 28 } }]);
+  fight('laut', [
+    { kind: 'obor', n: 2, zone: { x0: 3, y0: 20, x1: 15, y1: 28 } },
+    { kind: 'bayang', n: 3, escort: true, zone: { x0: 23, y0: 12, x1: 38, y1: 26 } }
+  ]);
+  fight('kapal', [{ kind: 'bayang', n: 2, zone: { x0: 3, y0: 4, x1: 9, y1: 12 } }]);
+  LC.SAFE_AREAS = ['farm', 'kampung', 'bunian', 'kidul', 'atlantis'];
+
+  // ================================================================ the stone curse and a mother's blessing
+  LC.STONE = { cd: 15, dur: 4, r: 80, bossDur: 1.5 };
+  LC.RESTU = { cd: 10, dur: 6, r: 120 };   // with Restu Ibu: the stone curse is quicker, longer and wider
+  LC.hasStone = function () { var S = LC.State.s; return !!S && ((S.quests.tanggang || 0) >= 2 || LC.State.hearts('tanggang') >= 3); };
+  LC.hasRestu = function () { var S = LC.State.s; return !!S && (S.quests.tanggang || 0) >= 4; };
+
+  // ================================================================ Mak Deruma, Si Tanggang's mother
+  LC.VILLAGERS.deruma = {
+    name: 'Mak Deruma', role: 'A mother, still waiting', area: 'island', post: { x: 21, y: 25 }, sprite: true, glow: 0xffd8a0,
+    intro: [
+      '...Oh! Forgive me, child. I thought you were a ship. I am always watching for a ship.',
+      'I am Deruma. Long ago my only son, Tanggang, sailed away to make his fortune. When he came home a great captain, he would not know me.',
+      'My heart broke, and I cried out to the sky. The sea rose and took him, his ship and his pride. A mother\'s words are heavy things.',
+      'I forgave him that same night. But I could never forgive myself. So I wait here, where my little sampan washed ashore, and I watch the sea.'
+    ],
+    chat: ['The tide always comes back. That is why I wait.', 'Tanggang loved pandan rice. He would eat three plates!', 'Be gentle with your words, child. Some can never be taken back.', 'Every night I sing his old lullaby to the waves.'],
+    tasks: [['melati', 1, 3], ['nasi', 1, 2], ['kerang', 2, 4], ['ikan_kembung', 1, 2]],
+    taskText: 'for her son\'s homecoming', gifts: { 3: ['canang', 2], 6: ['mutiara', 1], 10: ['emas', 2] },
+    alive: {
+      area: 'kampung', post: { x: 34, y: 24 }, key: 'derumaH', glow: 0, role: 'Si Tanggang\'s mother, home again',
+      chat: ['My son cooks for me now. Badly! But with love.', 'Restu Ibu goes with you, child. Wherever you walk.', 'I had forgotten how warm the sun is.', 'Bring your Nenek\'s recipes. I will teach you the old ones too.'],
+      taskText: 'for the family kitchen'
+    }
+  };
+  LC.VILLAGERS.tanggang.alive = {
+    area: 'kampung', post: { x: 36, y: 24 }, key: 'tanggangH', glow: 0, role: 'A sailor, home at last',
+    chat: ['I mend Pak Mat\'s nets now. Honest work. It feels good.', 'Mak says I eat like a starving ghost. Ha! I was one.', 'If you ever feel too proud, come and hear my story again.', 'The sea is beautiful from the shore. I never noticed before.'],
+    taskText: 'for his mother'
+  };
+  LC.AREAS.island.objects.push({ id: 'i_sampan_ibu', type: 'bldg', x: 23, y: 26, w: 2, h: 1, tex: 'sampan_lama', text: 'A tiny old sampan, grey with age and half buried in sand. A faded name is painted on its side: DERUMA.' });
+
+  // a villager as they are right now (Si Tanggang and his mother live again once you bring them together)
+  LC.villager = function (vid) {
+    var v = LC.VILLAGERS[vid], S = LC.State.s;
+    if (v && v.alive && S && (S.quests.tanggang || 0) >= 4) return Object.assign({}, v, v.alive);
+    return v;
+  };
+  LC.villagerKey = function (vid) { return LC.villager(vid).key || vid; };
+  LC.villagerArea = function (vid) { return LC.villager(vid).area || 'kampung'; };
+  LC.villagerPosts = function (area) {   // every spot where a villager might stand in this place (now or later)
+    var out = [];
+    Object.keys(LC.VILLAGERS).forEach(function (vid) {
+      var v = LC.VILLAGERS[vid];
+      if (v.post && (v.area || 'kampung') === area) out.push(v.post);
+      if (v.alive && v.alive.post && v.alive.area === area) out.push(v.alive.post);
+    });
+    return out;
+  };
+
+  // ================================================================ the story, in Si Tanggang's and Mak Deruma's words
+  LC.TANGGANG = {
+    ask: [
+      'Child... the shawl gave me peace, but there is one thing more. Something I must do, or I will never truly rest.',
+      'The fishermen say a woman\'s ghost sits on the beach of Pulau Mutiara every night, looking out to sea. Waiting for a ship.',
+      'It is Mak. I know it is. She has been waiting three hundred years, and I am the ship that never came.',
+      'The curse binds me to this wreck. But if a living friend walks ahead of me, I think I can follow. Will you take me to her?'
+    ],
+    go: 'Then lead on, child. The sea\'s old curse will not let me go easily: shadows will try to drag me back. Protect me, and do not fall!',
+    lost: 'The shadows dragged Si Tanggang back to his ship... He is waiting in the sunken junk. Ask him again when you are ready.',
+    reunion: [
+      { who: 'tanggang', text: '...Mak?' },
+      { who: 'deruma', text: 'That voice... Tanggang? Anakku? My son?' },
+      { who: 'tanggang', text: 'Mak, I am so sorry. I was ashamed of you, when I should have been proud. You gave me everything, and I gave you nothing but tears. Maafkan aku, Mak. Forgive me.' },
+      { who: 'deruma', text: 'Oh, my foolish boy. I forgave you the night the sea took you. It is I who should be sorry, for the words I cried out in anger.' },
+      { text: 'She opens her thin old arms, and the proud captain falls into them like a little boy who has run home in the rain.' },
+      { text: 'A warm light rises from the sand. The ghostly glow fades from them... and two living people stand on the beach, blinking in the moonlight, holding each other tight.' },
+      { who: 'derumaH', text: 'Child, you brought my son home. Take a mother\'s blessing, Restu Ibu. When you are about to fall, my prayer will lift you up again.' },
+      { who: 'tanggangH', text: 'And my stone curse will serve you better now: quicker, wider, longer. We are going to Kampung Tepian, Mak and I. Come and visit us!' },
+      { text: '✦ Special ability: Restu Ibu! Once a day, when your health runs out, a mother\'s prayer heals you fully and turns every enemy around you to stone. Your Sumpahan Batu is stronger too. ✦' }
+    ]
+  };
+  LC.TEXT.stoneGift = [
+    { who: 'tanggang', text: 'Wait, child. You have been a true friend to a lonely ghost. Take this: the last of my mother\'s curse, still clinging to me.' },
+    { who: 'tanggang', text: 'Sumpahan Batu, the stone curse. Point your heart at anything that means you harm, and for a few breaths it will be as still as my old ship.' },
+    { text: '✦ New ability: Sumpahan Batu! Press V (or tap the stone beside your hotbar) to turn nearby enemies to stone for a few seconds. ✦' }
+  ];
+})(window.LC);
+
+</script>
   <script>/* src/state.js */
 /* Little Creature — game state model, save/load and day simulation */
 window.LC = window.LC || {};
@@ -1664,19 +1791,49 @@ window.LC = window.LC || {};
       animals: [], animalSeq: 0, coop: { telur: 0, telur_itik: 0, susu: 0 }, nest: [],
       // v1.5 personal: strength and health, worn things, quests, the Pesta
       str: 10, hp: 55, maxHp: 55, strFoodDay: 0, strFood: 0, liftDay: 0, silatDay: 0, jamuDay: 0,
-      wear: {}, quests: {}, contest: {}, trophies: {}
+      wear: {}, quests: {}, contest: {}, trophies: {},
+      // v1.6 personal: guiding Si Tanggang home, and the day Restu Ibu last saved you
+      escort: null, restuDay: 0
     };
   }
   var BAG_EXTRA = ['str', 'wear', 'trophies', 'contest', 'quests'];   // a co-op guest's own progress travels in their bag
 
+  LC.SAVE_SLOTS = 3;
   var State = LC.State = {
     s: null,
+    slot: 1,   // v1.6: which save slot this farm lives in (1-3). Slot 1 is the original save.
 
-    newGame: function () { this.s = newState(); return this.s; },
+    newGame: function (slot) { this.s = newState(); if (slot) this.rememberSlot(slot); return this.s; },
 
-    hasSave: function () {
-      try { return !!localStorage.getItem(LC.SAVE_KEY); } catch (e) { return false; }
+    // -------------------------------------------------------------- save slots
+    slotKey: function (n) { return n > 1 ? LC.SAVE_KEY + '.' + n : LC.SAVE_KEY; },
+    lastSlot: function () {
+      var n = 1;
+      try { n = parseInt(localStorage.getItem(LC.SAVE_KEY + '.last'), 10) || 1; } catch (e) { /* ignore */ }
+      if (n < 1 || n > LC.SAVE_SLOTS) n = 1;
+      if (!this.slotExists(n)) for (var k = 1; k <= LC.SAVE_SLOTS; k++) if (this.slotExists(k)) return k;
+      return n;
     },
+    rememberSlot: function (n) { this.slot = n; try { localStorage.setItem(LC.SAVE_KEY + '.last', String(n)); } catch (e) { /* ignore */ } },
+    slotExists: function (n) { try { return !!localStorage.getItem(this.slotKey(n)); } catch (e) { return false; } },
+    slotInfo: function (n) {
+      try {
+        var d = JSON.parse(localStorage.getItem(this.slotKey(n)) || 'null');
+        if (!d || !d.ghost) return null;
+        return { day: d.day, kepeng: d.kepeng, level: LC.levelFor(d.ghost.bond || 0), savedAt: d.savedAt || 0, places: Object.keys(d.visited || {}).length,
+          houses: Object.keys(d.buildings || {}).length, animals: (d.animals || []).length };
+      } catch (e) { return null; }
+    },
+    slotText: function (i) {
+      var sea = LC.seasonOf ? LC.seasonOf(i.day).name : '', when = '';
+      if (i.savedAt) { var t = new Date(i.savedAt); when = '  ·  saved ' + t.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + ', ' + t.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); }
+      return 'Day ' + i.day + (sea ? ' (' + sea + ')' : '') + '  ·  Pelita Lv ' + i.level + '  ·  ' + i.kepeng + ' kepeng  ·  ' + i.places + ' places' + when;
+    },
+    hasSave: function () {
+      for (var n = 1; n <= LC.SAVE_SLOTS; n++) if (this.slotExists(n)) return true;
+      return false;
+    },
+    saveTo: function (n) { if (this.s && !this.s.guest) this.slot = n; return this.save(); },
     save: function () {
       try {
         if (this.s && this.s.guest) {   // co-op guest: only the personal bag is ours to keep
@@ -1686,7 +1843,9 @@ window.LC = window.LC || {};
           localStorage.setItem(BAG_KEY, JSON.stringify(bag));
           return true;
         }
-        localStorage.setItem(LC.SAVE_KEY, JSON.stringify(this.s));
+        this.s.savedAt = Date.now();
+        localStorage.setItem(this.slotKey(this.slot), JSON.stringify(this.s));
+        this.rememberSlot(this.slot);
         return true;
       } catch (e) { return false; }
     },
@@ -1727,9 +1886,10 @@ window.LC = window.LC || {};
       this.recalc();
       return s;
     },
-    load: function () {
+    load: function (n) {
+      n = n || this.lastSlot();
       try {
-        var raw = localStorage.getItem(LC.SAVE_KEY);
+        var raw = localStorage.getItem(this.slotKey(n));
         if (!raw) return false;
         var data = JSON.parse(raw), base = newState();
         Object.keys(base).forEach(function (k) { if (data[k] === undefined) data[k] = base[k]; });
@@ -1747,6 +1907,7 @@ window.LC = window.LC || {};
         // saves happen at bedtime and whenever the app is backgrounded, so keep the clock
         if (!(data.minutes >= LC.DAY_START && data.minutes < LC.DAY_END - 10)) data.minutes = LC.DAY_START;
         this.s = data;
+        this.rememberSlot(n);
         this.recalc();
         return true;
       } catch (e) { return false; }
@@ -1933,7 +2094,8 @@ window.LC = window.LC || {};
     // which villager lives on each built plot, and who is in the kampung right now
     villagerAtPlot: function (plot) { var b = this.s.buildings[plot]; return b && b.done ? b.vid : null; },
     villagerHome: function (vid) {
-      if (!LC.VILLAGERS[vid].movesIn) return LC.VILLAGERS[vid].post;
+      var v = LC.villager ? LC.villager(vid) : LC.VILLAGERS[vid];
+      if (!v.movesIn) return v.post;
       var B = this.s.buildings;
       for (var p in B) if (B[p].done && B[p].vid === vid) return LC.PLOT_POSTS[p];
       return null;
@@ -1949,6 +2111,7 @@ window.LC = window.LC || {};
       }
       this.recalc();
       s.hp = s.maxHp;   // a night's sleep heals every bruise
+      if (s.escort) { s.escort = null; lines.push('Before dawn, Si Tanggang drifted back to his sunken ship. He is waiting for you to try again.'); }
       return lines;
     },
 
@@ -2346,11 +2509,12 @@ window.LC = window.LC || {};
  *   guest -> host : hello{name,v} · pos{x,y,dir,mv,ar,cp,rd} · op{rid,op,a} · sleepy      (ar = area, cp = companion spirit, rd = riding)
  *   host -> guest : welcome{id,color,hostName,code,world} · reject{why} · tick{m,d,g,gs,p} · res{rid,res}
  *                   sync{op,a,by,parts} · toast{msg,icon} · event{ev,st} · sleepStart · dayStart{sum,world} · bye{why}
+ *                   reload{world,by} (the host loaded a saved farm) · saved{by} (the host saved: guests save their bags too)
  */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
-  var PROTO = 4, MAX_PLAYERS = 4, PREFIX = 'littlecreature-';
+  var PROTO = 5, MAX_PLAYERS = 4, PREFIX = 'littlecreature-';
   var ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   var NAME_KEY = 'littleCreature.name';
 
@@ -2515,6 +2679,8 @@ window.LC = window.LC || {};
       case 'event': N.emit('event', m); break;
       case 'sleepStart': N.emit('sleepStart', m); break;
       case 'dayStart': N.emit('dayStart', m); break;
+      case 'reload': N.emit('reload', m); break;
+      case 'saved': N.emit('saved', m); break;
       case 'bye': var why = m.why; N.leave(); N.emit('closed', why || 'Your friend closed their farm.'); break;
     }
   }
@@ -3316,6 +3482,7 @@ window.LC = window.LC || {};
     if (Art.generate2) Art.generate2(scene);
     if (Art.generate3) Art.generate3(scene);
     if (Art.generate4) Art.generate4(scene);
+    if (Art.generate5) Art.generate5(scene);
   };
 })(window.LC);
 
@@ -4648,6 +4815,114 @@ window.LC = window.LC || {};
 })(window.LC);
 
 </script>
+  <script>/* src/art5.js */
+/* Little Creature — procedural pixel art for v1.6: the wild creatures (boar, rock crab, giant scorpion, fire
+ * jellyfish), Mak Deruma (as a ghost, and alive), Si Tanggang alive, her old sampan, and battle effects:
+ * hit sparks, stone dust, the Sumpahan Batu and Restu Ibu icons. */
+window.LC = window.LC || {};
+(function (LC) {
+  'use strict';
+  var Art = LC.Art;
+
+  // ================================================================== WILD CREATURES (they face right)
+  function drawBabi(p, f) {   // 22x14 a wild boar
+    var B = '#4a3628', B2 = '#5e4634', D = '#2e2018';
+    (f ? [5, 8, 13, 16] : [6, 7, 14, 15]).forEach(function (x) { p.rect(x, 10, 2, 4, D); });
+    p.ell(11, 8, 8, 4.2, B); p.ell(10, 7, 6, 2.4, B2);
+    for (var x = 5; x < 15; x += 2) p.px(x, 3 + (x % 4 ? 0 : 1), D);   // bristly mane
+    p.ell(17.5, 8, 3.6, 3, B); p.rect(20, 8, 2, 2, '#7a5a48'); p.px(21, 8, '#2a1a10');
+    p.px(17, 6, '#ff5040'); p.line(19, 10, 21, 6, '#f0e8d8');            // red eye, white tusk
+    p.px(15, 4, D); p.px(16, 4, D); p.px(16, 5, D);                      // ear
+    p.px(3, 6, D); p.px(2, 7, D);                                         // tail
+    p.outline('#1a120c');
+  }
+  function drawKetamBatu(p, f) {   // 18x12 a giant rock crab
+    var S = '#6a5a52', S2 = '#857168', C = '#c0503a';
+    for (var i = 0; i < 3; i++) { p.line(5 - i, 8, 2 - i + (f ? 1 : 0), 11, '#5a4038'); p.line(13 + i, 8, 16 + i - (f ? 1 : 0), 11, '#5a4038'); }
+    p.ell(9, 7, 6, 3.6, S); p.ell(9, 6, 4.6, 2.4, S2); p.speck(4, 4, 10, 5, '#a89a90', 5);
+    p.disc(2.5, 4 + (f ? 1 : 0), 2.2, C); p.disc(15.5, 4 + (f ? 0 : 1), 2.2, C); p.px(1, 3, '#2a1a10'); p.px(17, 3, '#2a1a10');
+    p.px(7, 3, S2); p.px(11, 3, S2); p.px(7, 2, '#ffd040'); p.px(11, 2, '#ffd040');
+    p.outline('#1a120c');
+  }
+  function drawKala(p, f) {   // 22x14 a giant scorpion
+    var K = '#3a2a3a', K2 = '#5a4058', A = '#ff9a3a';
+    for (var i = 0; i < 4; i++) { var x = 8 + i * 2.4; p.line(x, 10, x - 1 + ((i + f) % 2), 13, K); }
+    p.ell(11, 9, 6, 2.6, K); p.ell(11, 8.4, 4.4, 1.6, K2);
+    p.disc(5, 8, 1.7, K); p.disc(3.4, 6, 1.6, K); p.disc(3, 3.8, 1.5, K); p.disc(4.6, 2, 1.4, K);   // the tail curls over its back
+    p.poly([[5.5, 0.5], [9, 1.4 + (f ? 0.8 : 0)], [6, 3]], A);                                        // a glowing sting
+    p.line(16, 8, 19, 6 + (f ? 1 : 0), K); p.disc(20, 5.4 + (f ? 1 : 0), 1.7, K2); p.line(16, 10, 19, 11, K); p.disc(20, 11.4, 1.7, K2);
+    p.px(15, 8, '#ff5040'); p.px(16, 7, '#ff5040');
+    p.outline('#120a10');
+  }
+  function drawObor(p, f) {   // 12x16 a fire jellyfish (it glows, so no outline)
+    p.ell(6, 5, 5, 4, 'rgba(255,96,64,0.95)'); p.ell(6, 4, 3.4, 2.4, 'rgba(255,190,120,1)'); p.ell(6, 3.5, 1.6, 1, '#fff4d0'); p.px(4, 3, '#ffffff');
+    for (var x = 2; x < 11; x += 2) p.line(x, 8, x + (f ? 1 : -1) * (x % 4 ? 1 : 0), 15 - (x % 3), 'rgba(255,130,70,0.95)');
+    p.px(5, 5, '#c02020'); p.px(7, 5, '#c02020');
+  }
+
+  // ================================================================== MAK DERUMA, AND SI TANGGANG ALIVE
+  function drawDeruma(p, blink) {   // 16x22 the ghost of an old mother in her selendang
+    var A = 'rgba(255,236,210,0.86)', A2 = 'rgba(232,200,170,0.82)', SH = 'rgba(220,150,180,0.88)';
+    p.poly([[3, 12], [13, 12], [13, 18], [11, 21], [9, 18], [7, 21], [5, 18], [3, 21]], A2);
+    p.rect(4, 9, 8, 4, A);
+    p.rect(5, 3, 6, 6, 'rgba(250,228,205,0.92)');
+    p.rect(4, 1, 8, 2, SH); p.rect(4, 2, 1, 8, SH); p.rect(11, 2, 1, 8, SH); p.rect(3, 9, 10, 1, SH); p.px(12, 10, SH); p.px(12, 11, SH);
+    if (blink) { p.rect(6, 5, 2, 1, '#6a4a3a'); p.rect(9, 5, 2, 1, '#6a4a3a'); } else { p.px(7, 5, '#6a4a3a'); p.px(9, 5, '#6a4a3a'); }
+    p.px(7, 7, '#a07a6a'); p.px(8, 7, '#a07a6a'); p.px(6, 6, 'rgba(200,170,150,0.9)'); p.px(10, 6, 'rgba(200,170,150,0.9)');
+    p.outline('#c8a080');
+  }
+  var LOOKS = {
+    tanggangH: { skin: '#c9905e', shirt: '#3a5a8a', shirt2: '#2a4470', bottom: '#c8a040', bottom2: '#a07a28', hair: '#1a1210', hat: 'songkok' },
+    derumaH: { skin: '#b9825a', shirt: '#8a4a6a', shirt2: '#6a3a52', bottom: '#5a3a4a', bottom2: '#42283a', hair: '#d8d4cc', hat: 'tudung', hatColor: '#c88aa8' }
+  };
+  function drawSampanLama(p) {   // 32x12 her old boat, beached on the sand
+    p.poly([[1, 4], [31, 4], [27, 10], [5, 10]], '#8a8478'); p.rect(3, 4, 26, 1, '#a8a294'); p.rect(5, 6, 22, 3, '#6e685e');
+    p.line(9, 5, 8, 9, '#5a544c'); p.line(16, 5, 16, 9, '#5a544c'); p.line(23, 5, 24, 9, '#5a544c');
+    p.speck(4, 6, 24, 4, '#b8b0a0', 6); p.rect(12, 7, 8, 1, '#c8a8b0');
+    p.ell(26, 10.5, 5, 1.6, '#e8d8a8'); p.ell(4, 10.5, 3, 1.2, '#e8d8a8');
+  }
+
+  // ================================================================== ICONS AND EFFECTS
+  var HUD = {
+    ic_batu: function (p) {   // the stone curse: a grey stone face with glowing eyes
+      p.ell(6, 6.5, 5, 5, '#8a8690'); p.ell(5, 5, 3.4, 3, '#a8a4ae'); p.line(3, 9, 6, 7, '#5a5660'); p.line(8, 3, 10, 6, '#5a5660');
+      p.rect(3, 5, 2, 1, '#8fd3ff'); p.rect(7, 5, 2, 1, '#8fd3ff'); p.rect(4, 8, 4, 1, '#4a4650');
+    },
+    ic_restu: function (p) {   // a mother's blessing: two hands cupping a little flame
+      p.poly([[1, 6], [5, 11], [6, 11], [3, 5]], '#e2b48a'); p.poly([[11, 6], [7, 11], [6, 11], [9, 5]], '#d6a77a');
+      p.ell(6, 4.5, 2, 3, '#ffd166'); p.ell(6, 5, 1, 1.6, '#fff8d0'); p.px(6, 1, '#ffe8a0');
+    }
+  };
+
+  Art.generate5 = function (scene) {
+    var make = Art.make;
+    for (var f = 0; f < 2; f++) (function (f) {
+      make(scene, 'babi_' + f, 22, 14, function (p) { drawBabi(p, f); });
+      make(scene, 'ketam_batu_' + f, 18, 12, function (p) { drawKetamBatu(p, f); });
+      make(scene, 'kala_' + f, 22, 14, function (p) { drawKala(p, f); });
+      make(scene, 'obor_' + f, 12, 16, function (p) { drawObor(p, f); });
+      make(scene, 'npc_deruma_' + f, 16, 22, function (p) { drawDeruma(p, !!f); });
+      Object.keys(LOOKS).forEach(function (k) { make(scene, 'npc_' + k + '_' + f, 16, 20, function (p) { Art.drawVillager(p, LOOKS[k], !!f); }); });
+    })(f);
+    make(scene, 'sampan_lama', 32, 12, drawSampanLama, true);
+    make(scene, 'hitfx', 13, 13, function (p) {   // a burst where a blow lands
+      [[6, 0, 6, 12], [0, 6, 12, 6], [2, 2, 10, 10], [10, 2, 2, 10]].forEach(function (l, i) { p.line(l[0], l[1], l[2], l[3], i < 2 ? '#fff8e0' : '#ffd166'); });
+      p.disc(6, 6, 2.2, '#ffffff');
+    });
+    make(scene, 'pebble', 3, 3, function (p) { p.rect(0, 0, 3, 3, '#8a8690'); p.px(0, 0, '#b8b4be'); p.px(2, 2, '#5a5660'); });
+    Object.keys(HUD).forEach(function (k) { make(scene, k, 12, 12, HUD[k], true); });
+    // animations: the creatures' walk cycles, and the two villagers' idle blink once they live again
+    var a = scene.anims;
+    Object.keys(LC.ENEMY_ANIMS).forEach(function (k) {
+      if (!a.exists(k + '_walk')) a.create({ key: k + '_walk', frames: [{ key: k + '_0' }, { key: k + '_1' }], frameRate: LC.ENEMY_ANIMS[k], repeat: -1 });
+    });
+    Object.keys(LOOKS).forEach(function (k) {
+      if (!a.exists('npc_' + k + '_idle')) a.create({ key: 'npc_' + k + '_idle', frames: [{ key: 'npc_' + k + '_0', duration: 2600 }, { key: 'npc_' + k + '_1', duration: 140 }], repeat: -1 });
+    });
+  };
+})(window.LC);
+
+</script>
   <script>/* src/audio.js */
 /* Little Creature — procedural Web Audio: a chill, slow gamelan-lofi soundtrack, nature ambience and sound effects.
  *
@@ -4659,13 +4934,18 @@ window.LC = window.LC || {};
 (function (LC) {
   'use strict';
   var A = LC.Audio = { ctx: null, musicOn: true, ambienceOn: true, night: false, step: 0 };
+  // v1.6: a volume level (0 to 1) for each part of the sound, set in Pause > Sound & music
+  var VOL_KEY = 'littleCreature.vol';
+  A.vol = { music: 1, battle: 0.7, sfx: 1, amb: 1 };
   try {
     A.musicOn = localStorage.getItem('littleCreature.music') !== 'off';
     A.ambienceOn = localStorage.getItem('littleCreature.ambience') !== 'off';
+    var sv = JSON.parse(localStorage.getItem(VOL_KEY) || 'null');
+    if (sv) Object.keys(A.vol).forEach(function (k) { if (typeof sv[k] === 'number') A.vol[k] = Math.max(0, Math.min(1, sv[k])); });
   } catch (e) { /* ignore */ }
 
   var BASE = 220;
-  var MUSIC_VOL = 0.34, AMB_VOL = 0.22;
+  var MUSIC_VOL = 0.34, AMB_VOL = 0.22, SFX_VOL = 0.5, BATTLE_VOL = 0.3;
   A.freq = function (deg) { return BASE * Math.pow(2, deg / 5); };
   function rnd(a, b) { return a + Math.random() * (b - a); }
 
@@ -4695,14 +4975,20 @@ window.LC = window.LC || {};
     A.verbIn = c.createGain(); A.verbIn.gain.value = 1;
     A.verbIn.connect(A.verb); A.verb.connect(A.master);
     // buses
-    A.music = c.createGain(); A.music.gain.value = A.musicOn ? MUSIC_VOL : 0;
+    A.music = c.createGain(); A.music.gain.value = A.musicOn ? MUSIC_VOL * A.vol.music : 0;
     A.musicLP = c.createBiquadFilter(); A.musicLP.type = 'lowpass'; A.musicLP.frequency.value = 20000; A.music.connect(A.musicLP);
     var mDry = c.createGain(); mDry.gain.value = 0.62; A.musicLP.connect(mDry); mDry.connect(A.master);
     var mWet = c.createGain(); mWet.gain.value = 0.55; A.musicLP.connect(mWet); mWet.connect(A.verbIn);
-    A.amb = c.createGain(); A.amb.gain.value = A.ambienceOn ? AMB_VOL : 0;
+    A.amb = c.createGain(); A.amb.gain.value = A.ambienceOn ? AMB_VOL * A.vol.amb : 0;
     A.amb.connect(A.master);
     var aWet = c.createGain(); aWet.gain.value = 0.25; A.amb.connect(aWet); aWet.connect(A.verbIn);
-    A.sfxBus = c.createGain(); A.sfxBus.gain.value = 0.5; A.sfxBus.connect(A.master);
+    A.sfxBus = c.createGain(); A.sfxBus.gain.value = SFX_VOL * A.vol.sfx; A.sfxBus.connect(A.master);
+    // v1.6: the battle song has its own bus (and volume), with a gentle top end so it never turns harsh
+    A.battleBus = c.createGain(); A.battleBus.gain.value = 0;
+    var bLP = c.createBiquadFilter(); bLP.type = 'lowpass'; bLP.frequency.value = 5200; A.battleBus.connect(bLP);
+    bLP.connect(A.master);
+    var bWet = c.createGain(); bWet.gain.value = 0.22; bLP.connect(bWet); bWet.connect(A.verbIn);
+    A.battleOut = bLP;
     var sWet = c.createGain(); sWet.gain.value = 0.12; A.sfxBus.connect(sWet); sWet.connect(A.verbIn);
     var len = c.sampleRate * 2, buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
     for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
@@ -4883,10 +5169,18 @@ window.LC = window.LC || {};
     var c = A.ctx; if (!c || c.state !== 'running') return;
     var now = c.currentTime;
     if (A.next < now - 0.5) A.next = now + 0.05;     // tab was asleep
-    var song = A.night ? NIGHT : DAY, spb = 60 / song.bpm;
+    var song = A.night ? NIGHT : DAY, spb = 60 / song.bpm, ducked = A.battleDucks();
     while (A.next < now + 0.35) {
-      if (A.musicOn) A.playStep(song, A.step, A.next, spb);
+      if (A.musicOn && !ducked) A.playStep(song, A.step, A.next, spb);
       A.next += spb; A.step++;
+    }
+    // v1.6: the battle song (it plays on for a few seconds after a fight, while it fades out)
+    var bPlay = A.musicOn && A.vol.battle > 0 && (A.battleOn || A.preview || now < (A.battleUntil || 0));
+    if (!bPlay) A.bNext = now + 0.05;
+    else {
+      if (A.bNext < now - 0.5) A.bNext = now + 0.05;
+      var bs = 60 / BATTLE.bpm / 2;
+      while (A.bNext < now + 0.3) { A.battleStep(A.bStep, A.bNext, bs); A.bNext += bs; A.bStep++; }
     }
     if (A.ambienceOn) {
       if (!A.night && now >= A.nextBird) { A.bird(now + 0.05); A.nextBird = now + rnd(2.5, 7) / A.areaSound.birds; }
@@ -4913,16 +5207,78 @@ window.LC = window.LC || {};
   };
   A.setNight = function (b) { if (b !== A.night) { A.night = b; A.step = 0; } };
 
+  // ------------------------------------------------------------- v1.6: the battle song
+  // A driving kendang (two-headed drum) groove, a gong every two bars, a low ostinato and a pelog-flavoured
+  // saron melody. Built from tuned tones (only the tiniest touch of noise in the drum slap), so it stays
+  // musical rather than hissy. It crossfades with the calm music and has its own volume.
+  var BATTLE = {
+    bpm: 112,
+    mel: [5, null, 6, 7, 8, null, 7, 6, 5, null, 3, null, 2, 3, 5, null,
+          5, null, 6, 7, 8, null, 10, null, 9, 8, 7, null, 6, null, 5, null,
+          3, null, 5, 6, 7, null, 6, 5, 3, null, 2, null, 0, 2, 3, null,
+          5, 7, 8, null, 10, null, 9, 8, 7, null, 6, null, 5, null, null, null],
+    drum: 'D.p.t.DpD.p.t.pp',            // D: the deep "dung" · t: the bright "tak" · p: a soft ghost tap
+    bass: [[0, 0], [3, 0], [6, 3], [8, 0], [11, 0], [14, 2]],
+    roots: [0, 0, -2, 1]
+  };
+  var PELOG = [0, 1, 3, 7, 8];
+  function pel(d) { var o = Math.floor(d / 5), i = ((d % 5) + 5) % 5; return 196 * Math.pow(2, (o * 12 + PELOG[i]) / 12); }
+  A.battleStep = function (step, t, s) {
+    var B = A.battleBus, i = step % 16, bar = Math.floor(step / 16), root = BATTLE.roots[bar % 4], ch = BATTLE.drum[i];
+    if (ch === 'D') { A.tone(t, 'sine', 150, 58, 0.24, 0.42, B); A.tone(t, 'triangle', 90, 50, 0.12, 0.12, B); }
+    else if (ch === 't') { A.tone(t, 'triangle', 820, 460, 0.06, 0.16, B); A.noise(t, 0.025, 0.06, 'bandpass', 2600, null, B); }
+    else if (ch === 'p') A.tone(t, 'sine', 330, 220, 0.07, 0.1, B);
+    BATTLE.bass.forEach(function (b) { if (b[0] === i) A.tone(t, 'triangle', pel(root + b[1] - 10), pel(root + b[1] - 10) * 0.99, s * 2.2, 0.2, B); });
+    var m = BATTLE.mel[step % BATTLE.mel.length];
+    if (m !== null) A.bell(pel(m), t, s * 2.6, 0.075, B);
+    if (A.battleBoss && m !== null && i % 4 === 0) A.bell(pel(m - 5), t, s * 3, 0.05, B);
+    if (i === 0 && bar % 2 === 0) A.gong(pel(root - 10), t, 4.5, 0.2, B);
+    if (i === 8 && bar % 2 === 1) A.gong(pel(root - 7), t, 2.2, 0.1, B);
+    if (A.battleBoss && i === 0) [-10, -7].forEach(function (d) { A.tone(t, 'sine', pel(root + d), pel(root + d), s * 14, 0.05, B); });   // a dark drone for the guardian
+  };
+  A.battleDucks = function () { return (A.battleOn || A.preview) && A.vol.battle > 0; };
+  A.setBattle = function (on, boss) {
+    on = !!on; A.battleBoss = !!boss;
+    if (on === !!A.battleOn) return;
+    A.battleOn = on;
+    var now = A.ctx ? A.ctx.currentTime : 0;
+    if (on) { A.bStep = 0; A.bNext = now + 0.05; A.battleUntil = 0; } else A.battleUntil = now + 3.5;
+    A.applyVolumes();
+  };
+  A.setPreview = function (on) {   // hear the battle song while choosing its volume
+    if (!!on === !!A.preview) return;
+    A.preview = !!on;
+    var now = A.ctx ? A.ctx.currentTime : 0;
+    if (on) { A.bStep = 0; A.bNext = now + 0.05; } else if (!A.battleOn) A.battleUntil = now + 2;
+    A.applyVolumes();
+  };
+
+  // ------------------------------------------------------------- volumes
+  A.applyVolumes = function () {
+    if (!A.ctx || !A.music) return;
+    var t = A.ctx.currentTime, v = A.vol, duck = A.battleDucks(), fight = (A.battleOn || A.preview) && A.musicOn;
+    A.music.gain.setTargetAtTime(A.musicOn && !duck ? MUSIC_VOL * v.music : 0, t, duck ? 0.25 : 0.9);
+    A.battleBus.gain.setTargetAtTime(fight ? BATTLE_VOL * v.battle : 0, t, fight ? 0.15 : 1.1);
+    A.amb.gain.setTargetAtTime(A.ambienceOn ? AMB_VOL * v.amb : 0, t, 0.3);
+    A.sfxBus.gain.setTargetAtTime(SFX_VOL * v.sfx, t, 0.05);
+  };
+  A.setVolume = function (kind, val) {
+    A.vol[kind] = Math.round(Math.max(0, Math.min(1, val)) * 20) / 20;
+    try { localStorage.setItem(VOL_KEY, JSON.stringify(A.vol)); } catch (e) { /* ignore */ }
+    A.applyVolumes();
+    return A.vol[kind];
+  };
+
   A.toggleMusic = function () {
     A.musicOn = !A.musicOn;
     try { localStorage.setItem('littleCreature.music', A.musicOn ? 'on' : 'off'); } catch (e) { /* ignore */ }
-    if (A.music) A.music.gain.setTargetAtTime(A.musicOn ? MUSIC_VOL : 0, A.ctx.currentTime, 0.3);
+    A.applyVolumes();
     return A.musicOn;
   };
   A.toggleAmbience = function () {
     A.ambienceOn = !A.ambienceOn;
     try { localStorage.setItem('littleCreature.ambience', A.ambienceOn ? 'on' : 'off'); } catch (e) { /* ignore */ }
-    if (A.amb) A.amb.gain.setTargetAtTime(A.ambienceOn ? AMB_VOL : 0, A.ctx.currentTime, 0.3);
+    A.applyVolumes();
     return A.ambienceOn;
   };
   A.suspend = function () { if (A.ctx && A.ctx.state === 'running') A.ctx.suspend(); };
@@ -4977,6 +5333,12 @@ window.LC = window.LC || {};
       case 'gate': for (i = 0; i < 7; i++) A.bell(A.freq(i * 2), t + i * 0.06, 1.4, 0.07); break;
       case 'drum': A.tone(t, 'sine', 140, 60, 0.25, 0.3); A.noise(t, 0.05, 0.15, 'lowpass', 500); break;
       case 'strain': A.tone(t, 'sawtooth', 120, 100, 0.2, 0.05); break;
+      // v1.6
+      case 'stone': A.tone(t, 'sine', 90, 40, 0.7, 0.35); for (i = 0; i < 5; i++) A.tone(t + 0.05 + i * 0.07, 'triangle', 1400 - i * 150, 700 - i * 60, 0.05, 0.05); A.bell(A.freq(-3), t + 0.1, 1.4, 0.08); break;
+      case 'crumble': for (i = 0; i < 4; i++) A.tone(t + i * 0.06, 'triangle', 500 - i * 60, 200, 0.06, 0.05); break;
+      case 'lunge': A.tone(t, 'sine', 260, 520, 0.12, 0.05); break;
+      case 'restu': [0, 2, 4, 7, 9].forEach(function (d, k) { A.bell(A.freq(d + 5), t + k * 0.12, 2, 0.1); }); A.gong(A.freq(-5), t, 5, 0.22); break;
+      case 'reunion': [4, 2, 0, 2, 4, 5, 7].forEach(function (d, k) { A.bell(A.freq(d + 5), t + k * 0.32, 2.4, 0.09); }); A.gong(A.freq(-10), t + 2.2, 6, 0.2); break;
     }
   };
 })(window.LC);
@@ -5004,6 +5366,7 @@ LC.Lobby = (function () {
       '    <div class="col" id="lb-hostcol">' +
       '      <h3>Host my farm</h3>' +
       '      <p id="lb-hostinfo">Opens your saved farm (or a new one) and gives you a code to share.</p>' +
+      '      <select id="lb-slot" aria-label="Which farm to open"></select>' +
       '      <button id="lb-host">Open my farm</button>' +
       '    </div>' +
       '    <div class="col" id="lb-joincol">' +
@@ -5026,7 +5389,16 @@ LC.Lobby = (function () {
     el.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); e.stopPropagation(); });
   }
   function status(msg, err) { var s = $('lb-status'); s.textContent = msg || ''; s.className = 'status' + (err ? ' err' : ''); }
-  function setBusy(b) { busy = b; $('lb-host').disabled = b; $('lb-join').disabled = b; }
+  function setBusy(b) { busy = b; $('lb-host').disabled = b; $('lb-join').disabled = b; $('lb-slot').disabled = b; }
+  // v1.6: the host chooses which saved farm (slot) to open; friends continue it with their own saved bags
+  function fillSlots() {
+    var sel = $('lb-slot'), last = LC.State.lastSlot(), html = '';
+    for (var n = 1; n <= LC.SAVE_SLOTS; n++) {
+      var i = LC.State.slotInfo(n);
+      html += '<option value="' + n + '"' + (n === last ? ' selected' : '') + '>Slot ' + n + ': ' + (i ? 'Day ' + i.day + ' · Pelita Lv ' + i.level + ' · ' + i.kepeng + ' kepeng' : 'new farm') + '</option>';
+    }
+    sel.innerHTML = html;
+  }
   function getName() {
     var n = LC.Net.cleanName($('lb-name').value);
     if (!n) { status('Please type your name first.', true); $('lb-name').focus(); return null; }
@@ -5037,7 +5409,8 @@ LC.Lobby = (function () {
     if (busy) return;
     var n = getName(); if (!n) return;
     setBusy(true); status('Opening your farm gate...');
-    LC.Net.host(n, function (code) { setBusy(false); hide(); if (opts.onHosted) opts.onHosted(code); },
+    var slot = opts.hostOnly ? 0 : parseInt($('lb-slot').value, 10) || 1;
+    LC.Net.host(n, function (code) { setBusy(false); hide(); if (opts.onHosted) opts.onHosted(code, slot); },
       function (err) { setBusy(false); status(err, true); });
   }
   function doJoin() {
@@ -5066,7 +5439,9 @@ LC.Lobby = (function () {
       if (!el) build();
       $('lb-joincol').style.display = opts.hostOnly ? 'none' : '';
       $('lb-title').textContent = opts.hostOnly ? 'Invite Friends' : 'Play with Friends';
-      $('lb-hostinfo').textContent = opts.hostOnly ? 'Open this farm to friends. You\'ll get a 5-letter code to share.' : 'Opens your saved farm (or a new one) and gives you a code to share.';
+      $('lb-hostinfo').textContent = opts.hostOnly ? 'Open this farm to friends. You\'ll get a 5-letter code to share.' : 'Choose which of your farms to open (or start a new one), then share the code. Friends keep their own bags.';
+      $('lb-slot').style.display = opts.hostOnly ? 'none' : '';
+      if (!opts.hostOnly) fillSlots();
       $('lb-name').value = LC.Net.savedName();
       status(''); setBusy(false);
       el.classList.add('open');
@@ -5195,22 +5570,13 @@ LC.TitleScene = class extends Phaser.Scene {
     this.add.text(cx, 92 + dy, 'Little Creature', { fontFamily: LC.FONT, fontSize: '76px', fontStyle: '700', color: '#ffd166', stroke: '#2a1d18', strokeThickness: 10 }).setOrigin(0.5);
     this.add.text(cx, 156 + dy, 'a spirit-keeping farm tale from the kampung', { fontFamily: LC.FONT, fontSize: '22px', color: '#fbecc8', stroke: '#2a1d18', strokeThickness: 5 }).setOrigin(0.5);
 
-    this.hasSave = LC.State.hasSave();
-    this.options = [{ label: 'New Game', fn: function () { self.begin(false); } }];
-    if (this.hasSave) this.options.unshift({ label: 'Continue', fn: function () { self.begin(true); } });
-    this.options.push({ label: 'Play with Friends', fn: function () { self.openLobby(); } });
-    this.sel = data && data.sel < this.options.length ? data.sel : 0;
-    this.optTexts = this.options.map(function (o, k) {
-      var t = self.add.text(cx, 458 + dy + k * 44, o.label, { fontFamily: LC.FONT, fontSize: '30px', color: '#fbecc8', stroke: '#2a1d18', strokeThickness: 6 }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-      t.on('pointerover', function () { self.sel = k; self.renderOpts(); });
-      t.on('pointerdown', function () { self.sel = k; self.choose(); });
-      return t;
-    });
-    this.renderOpts();
+    this.cx = cx; this.dy = dy; this.optTexts = [];
+    this.heading = this.add.text(cx, 404 + dy, '', { fontFamily: LC.FONT, fontSize: '20px', color: '#e8cf86', stroke: '#2a1d18', strokeThickness: 5 }).setOrigin(0.5);
     var touch = this.sys.game.device.input.touch || LC.PLATFORM === 'android';
-    this.add.text(cx, 600 + dy, touch ? 'Tap to choose  ·  drag the left side to walk  ·  USE to interact  ·  II to pause'
-      : 'WASD / Arrows to move  ·  E to interact  ·  1-9 hotbar  ·  Tab bag  ·  M music' + (LC.canFullscreen() ? '  ·  F fullscreen' : ''),
+    this.hint = this.add.text(cx, 600 + dy, touch ? 'Tap to choose  ·  drag the left side to walk  ·  USE to interact  ·  II to pause'
+      : 'WASD / Arrows to move  ·  E to interact  ·  1-9 hotbar  ·  Tab bag  ·  N music' + (LC.canFullscreen() ? '  ·  F fullscreen' : ''),
       { fontFamily: LC.FONT, fontSize: '16px', color: '#cdb8a0', stroke: '#1a120c', strokeThickness: 4 }).setOrigin(0.5);
+    if (data && data.menu === 'slots') this.slotMenu(data.mode, data.sel); else this.mainMenu(data && data.sel);
     this.add.text(W - 10, H - 8, 'Made with Phaser 3 · art & music generated in code', { fontFamily: LC.FONT, fontSize: '12px', color: '#8a7a9a' }).setOrigin(1, 1);
 
     this.input.keyboard.on('keydown', function (ev) {
@@ -5219,6 +5585,7 @@ LC.TitleScene = class extends Phaser.Scene {
       if (ev.code === 'ArrowUp' || ev.code === 'KeyW') { self.sel = (self.sel + self.options.length - 1) % self.options.length; self.renderOpts(); LC.Audio.sfx('click'); }
       else if (ev.code === 'ArrowDown' || ev.code === 'KeyS') { self.sel = (self.sel + 1) % self.options.length; self.renderOpts(); LC.Audio.sfx('click'); }
       else if (ev.code === 'Enter' || ev.code === 'KeyE' || ev.code === 'Space') self.choose();
+      else if (ev.code === 'Escape' && self.inSlots) { LC.Audio.sfx('click'); self.mainMenu(); }
       else if (ev.code === 'KeyF' && LC.canFullscreen()) LC.toggleFullscreen();
     });
     this.input.on('pointerdown', function () { LC.Audio.init(); });
@@ -5229,26 +5596,73 @@ LC.TitleScene = class extends Phaser.Scene {
     var w0 = W, h0 = H;
     function onResize() {
       if (self.starting || (self.scale.width === w0 && self.scale.height === h0)) return;
-      self.scene.restart({ quiet: true, sel: self.sel });
+      self.scene.restart({ quiet: true, sel: self.sel, menu: self.inSlots ? 'slots' : 'main', mode: self.slotMode });
     }
     this.scale.on('resize', onResize);
     this.events.once('shutdown', function () { self.scale.off('resize', onResize); });
   }
 
+  // a list of options, centred under Pelita. size/gap shrink for the save-slot list.
+  setOptions(options, sel, size, gap, y0) {
+    var self = this, cx = this.cx, dy = this.dy;
+    this.optTexts.forEach(function (t) { t.destroy(); });
+    this.options = options;
+    this.sel = sel >= 0 && sel < options.length ? sel : 0;
+    this.optTexts = options.map(function (o, k) {
+      var t = self.add.text(cx, y0 + dy + k * gap, o.label, { fontFamily: LC.FONT, fontSize: size + 'px', color: '#fbecc8', stroke: '#2a1d18', strokeThickness: 6, align: 'center' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      t.on('pointerover', function () { if (self.sel !== k) { self.sel = k; self.renderOpts(); } });
+      t.on('pointerdown', function () { self.sel = k; self.choose(); });
+      return t;
+    });
+    this.renderOpts();
+  }
+  mainMenu(sel) {
+    var self = this, has = LC.State.hasSave(), opts = [];
+    this.inSlots = false; this.slotMode = null; this.armed = 0;
+    this.heading.setText('');
+    if (this.hint) this.hint.setVisible(true);
+    if (has) opts.push({ label: 'Continue', fn: function () { self.begin(LC.State.lastSlot()); } });
+    if (has) opts.push({ label: 'Load Game', fn: function () { self.slotMenu('load'); } });
+    opts.push({ label: 'New Game', fn: function () { self.slotMenu('new'); } });
+    opts.push({ label: 'Play with Friends', fn: function () { self.openLobby(); } });
+    this.setOptions(opts, sel || 0, has ? 28 : 30, has ? 40 : 44, has ? 446 : 458);
+  }
+  // pick a save slot to load, or to start a new farm in (a used slot asks twice before it is overwritten)
+  slotMenu(mode, sel) {
+    var self = this, opts = [];
+    this.inSlots = true; this.slotMode = mode;
+    this.heading.setText(mode === 'load' ? 'Load which farm?' : 'Start a new farm in which slot?');
+    if (this.hint) this.hint.setVisible(false);
+    for (var n = 1; n <= LC.SAVE_SLOTS; n++) (function (n) {
+      var info = LC.State.slotInfo(n);
+      var label = 'Slot ' + n + ':  ' + (info ? 'Day ' + info.day + '  ·  Pelita Lv ' + info.level + '  ·  ' + info.kepeng + ' kepeng' : 'empty');
+      opts.push({ label: label, slot: n, used: !!info, fn: function () {
+        if (mode === 'load') { if (info) self.begin(n); else LC.Audio.sfx('error'); return; }
+        if (info && self.armed !== n) { self.armed = n; LC.Audio.sfx('click'); self.renderOpts(); return; }
+        self.begin(n, true);
+      } });
+    })(n);
+    opts.push({ label: 'Back', fn: function () { LC.Audio.sfx('click'); self.mainMenu(); } });
+    this.armed = 0;
+    this.setOptions(opts, sel === undefined ? (mode === 'load' ? LC.State.lastSlot() - 1 : 0) : sel, 22, 40, 446);
+  }
+
   renderOpts() {
     var self = this;
     this.optTexts.forEach(function (t, k) {
-      var on = k === self.sel;
-      t.setText(on ? '>  ' + self.options[k].label + '  <' : self.options[k].label);
-      t.setColor(on ? '#ffd166' : '#cdb8a0');
+      var on = k === self.sel, o = self.options[k], lab = o.label;
+      if (o.slot && self.armed === o.slot) lab = 'Slot ' + o.slot + ': overwrite this farm? Press again';
+      t.setText(on ? '>  ' + lab + '  <' : lab);
+      t.setColor(o.slot && self.armed === o.slot ? '#ff9a7a' : on ? '#ffd166' : o.slot && !o.used && self.slotMode === 'load' ? '#7a6a5a' : '#cdb8a0');
     });
   }
 
   choose() { if (!this.starting) this.options[this.sel].fn(); }
 
-  begin(cont) {
+  // slot: which save slot · fresh: start a new farm there
+  begin(slot, fresh) {
     if (LC.Net.role) LC.Net.leave();
-    if (!(cont && LC.State.load())) LC.State.newGame();
+    if (fresh || !LC.State.load(slot)) LC.State.newGame(slot);
     this.go();
   }
   go() {
@@ -5259,12 +5673,12 @@ LC.TitleScene = class extends Phaser.Scene {
     this.cameras.main.once('camerafadeoutcomplete', function () { self.scene.start('World'); });
   }
 
-  // co-op: the host plays their own saved farm; a guest plays on the host's farm with their own bag
+  // co-op: the host plays one of their saved farms (picked in the lobby); a guest plays on the host's farm with their own bag
   openLobby() {
     var self = this;
     LC.Audio.init();
     LC.Lobby.open({
-      onHosted: function () { if (!LC.State.load()) LC.State.newGame(); self.go(); },
+      onHosted: function (code, slot) { slot = slot || LC.State.lastSlot(); if (!LC.State.load(slot)) LC.State.newGame(slot); self.go(); },
       onJoined: function (w) { LC.State.makeGuest(w.world); self.go(); }
     });
   }
@@ -5350,7 +5764,8 @@ window.LC = window.LC || {};
       this.refreshOfferings();
       this.createFolk();   // villagers, folk spirits, your companion, kites (WorldLife.js)
       this.createFarmLife();   // v1.5: animals, chests, hidden things, seasons (WorldFarm.js)
-      this.createEnemies();    // v1.5: the shadows of the mine (WorldCombat.js)
+      this.createEnemies();    // v1.5: the shadows of the mine, v1.6: the wild places too (WorldCombat.js)
+      this.createTanggang();   // v1.6: guiding Si Tanggang home to his mother (WorldTanggang.js)
 
       var cam = this.cameras.main;
       cam.setBounds(0, 0, this.W * T, this.H * T);
@@ -5383,7 +5798,10 @@ window.LC = window.LC || {};
         });
       } else if (data.area && this.ui.ready) this.ui.areaBanner(this.A.name, this.A.sub);
       if (data.knocked) this.time.delayedCall(700, function () {
-        self.ui.say([{ text: 'Everything went dark... You wake up at home with a sore head. Pelita must have guided you out of the mine.' }, { text: data.knocked + ' (Eat good food to heal, and come back stronger!)' }]);
+        self.ui.say([{ text: 'Everything went dark... You wake up at home with a sore head. Pelita must have guided you home.' }, { text: data.knocked + ' (Eat good food to heal, and come back stronger!)' }]);
+      });
+      if (data.loaded) this.time.delayedCall(500, function () {
+        self.ui.toast(data.loaded > 0 ? 'Loaded slot ' + data.loaded + ': Day ' + S.day + ', ' + LC.State.weekday() + '.' : (data.by || 'Your friend') + ' loaded a saved farm. Day ' + S.day + '!', 'ic_bond');
       });
       if (parked) this.time.delayedCall(500, function () { self.toast(parked === 'car' ? 'The car can\'t go here. You park it at the edge and walk on.' : 'You leave the basikal by the path.', parked === 'car' ? 'i_kereta' : 'i_basikal'); });
     }
@@ -5528,7 +5946,7 @@ window.LC = window.LC || {};
       var keep = {}, g = this.grid;
       function mark(x, y, r) { for (var dy = -r; dy <= r; dy++) for (var dx = -r; dx <= r; dx++) keep[(x + dx) + ',' + (y + dy)] = 1; }
       LC.SPIRIT_ORDER.forEach(function (sid) { var sp = LC.SPIRITS[sid]; if (sp.area === self.area) mark(sp.x, sp.y, 2); });
-      Object.keys(LC.VILLAGERS).forEach(function (vid) { var p = LC.VILLAGERS[vid].post; if (p && self.area === 'kampung') mark(p.x, p.y, 2); });
+      LC.villagerPosts(this.area).forEach(function (p) { mark(p.x, p.y, 2); });
       Object.keys(LC.PLOT_POSTS).forEach(function (k) { if (self.area === 'kampung') mark(LC.PLOT_POSTS[k].x, LC.PLOT_POSTS[k].y, 2); });
       mark(Math.floor(this.A.home.x), Math.floor(this.A.home.y), 3);
       this.objects.forEach(function (o) {   // never hide a building or a house plot behind a tree
@@ -5898,6 +6316,14 @@ window.LC = window.LC || {};
         N.on.event = function (m) { if (m.ev === 'level') self.levelUp(m.lv); };
         N.on.sleepStart = function (m) { self.guestSleep(m); };
         N.on.dayStart = function (m) { self.guestDayStart(m); };
+        // v1.6: the host loaded a saved farm: everyone goes to it (guests keep their own bags)
+        N.on.reload = function (m) {
+          LC.State.applySnapshot(m.world); LC.State.save();
+          self.ui.closeModal(); self.leaving = true;
+          self.cameras.main.fadeOut(400, 0, 0, 0);
+          self.cameras.main.once('camerafadeoutcomplete', function () { self.scene.restart({ loaded: -1, by: m.by }); });
+        };
+        N.on.saved = function (m) { if (LC.State.save()) self.ui.toast((m.by || 'Your friend') + ' saved the farm. Your bag is saved too.', 'ic_bond'); };
         N.on.closed = function (why) {
           LC.State.save();
           self.ui.say([{ text: why + ' You keep everything in your bag.' }], { onDone: function () { self.ui.quitToTitle(); } });
@@ -6113,7 +6539,8 @@ window.LC = window.LC || {};
         drop: mk('drop', { speed: { min: 15, max: 35 }, angle: { min: 200, max: 340 }, gravityY: 130, lifespan: 500, alpha: { start: 1, end: 0.2 } }),
         dirt: mk('dirt', { speed: { min: 15, max: 35 }, angle: { min: 200, max: 340 }, gravityY: 130, lifespan: 450 }),
         smoke: mk('smoke', { speedY: { min: -16, max: -8 }, speedX: { min: -4, max: 4 }, lifespan: 1400, alpha: { start: 0.7, end: 0 }, scale: { start: 0.5, end: 1.5 } }),
-        petal: mk('petal', { speed: { min: 6, max: 18 }, angle: { min: 60, max: 120 }, gravityY: 10, lifespan: 2200, alpha: { start: 1, end: 0 } })
+        petal: mk('petal', { speed: { min: 6, max: 18 }, angle: { min: 60, max: 120 }, gravityY: 10, lifespan: 2200, alpha: { start: 1, end: 0 } }),
+        pebble: mk('pebble', { speed: { min: 20, max: 60 }, angle: { min: 200, max: 340 }, gravityY: 170, lifespan: 600, alpha: { start: 1, end: 0 }, scale: { start: 1, end: 0.5 } })
       };
       if (this.spiritPos) {
         this.incense = this.add.particles(this.spiritPos.x - 8, this.spiritPos.y - 31, 'smoke', {
@@ -6143,7 +6570,7 @@ window.LC = window.LC || {};
     update(time, delta) {
       if (!this.ui || !this.ui.ready) return;
       var dt = Math.min(delta, 50) / 1000, S = this.S, g = S.ghost;
-      var blocked = this.ui.isBlocking() || this.sleeping || this.leaving;
+      var blocked = this.ui.isBlocking() || this.sleeping || this.leaving || this.reuniting;   // (v1.6: hold still while mother and son meet)
 
       this.updatePlayer(dt, blocked);
       this.checkExits();
@@ -6181,6 +6608,7 @@ window.LC = window.LC || {};
       this.updateCritters(dt);
       this.updateFarmLife(time, dt);
       this.updateEnemies(time, dt, blocked);
+      this.updateTanggang(time, dt, blocked);
       this.updateLighting(time, dt);
 
       var act = blocked ? null : this.getAction();
@@ -6203,7 +6631,8 @@ window.LC = window.LC || {};
         var oa = this.objectAction(o, sl, it, isFood);
         if (oa) return oa;
       }
-      if (it && it.kind === 'weapon' && this.A.enemies) return { label: 'Swing the ' + it.name, swing: true, fn: function () { self.attack(); } };
+      var wp = this.weaponOf(sl);   // swing a weapon wherever enemies roam (or the cangkul, when one comes close)
+      if (wp && this.hasEnemies() && (!wp.improvised || this.enemyNear(70))) return { label: 'Swing the ' + wp.name, swing: true, fn: function () { self.attack(); } };
       var cr = this.critterAt(f.fx, f.fy);
       if (cr && cr.aid) { var aa = this.animalAction(cr, sl, it); if (aa) return aa; }
       else if (cr) return { label: 'Pet the ' + cr.kind, fn: function () { self.petCritter(cr); } };
@@ -6653,7 +7082,10 @@ window.LC = window.LC || {};
     createFolk: function () {
       var self = this;
       this.folkSpr = {}; this.kites = []; this.fishing = null; this.bobber = null; this.fishLine = null;
-      Object.keys(LC.VILLAGERS).forEach(function (vid) { if ((LC.VILLAGERS[vid].area || 'kampung') === self.area) self.placeVillager(vid); });
+      Object.keys(LC.VILLAGERS).forEach(function (vid) {
+        if (vid === 'tanggang' && self.S.escort) return;   // v1.6: he is following you instead
+        if (LC.villagerArea(vid) === self.area) self.placeVillager(vid);
+      });
       this.refreshFolkSpirits();
       this.refreshCompanion();
       if (this.A.kites) {
@@ -6669,15 +7101,16 @@ window.LC = window.LC || {};
     placeVillager: function (vid) {
       var home = LC.State.villagerHome(vid);
       if (!home || this.npcs[vid]) return;
-      var x = home.x * T + 8, y = (home.y + 1) * T, o = { type: 'npc', vid: vid };
-      var spr = this.add.sprite(x, y, 'npc_' + vid + '_0').setOrigin(0.5, 1).setDepth(y);
-      spr.play('npc_' + vid + '_idle');
-      if (LC.VILLAGERS[vid].glow) {   // a ghost glows in the dark, above the shadows
+      var x = home.x * T + 8, y = (home.y + 1) * T, o = { type: 'npc', vid: vid }, v = LC.villager(vid), key = LC.villagerKey(vid), glow = null;
+      var spr = this.add.sprite(x, y, 'npc_' + key + '_0').setOrigin(0.5, 1).setDepth(y);
+      spr.play('npc_' + key + '_idle');
+      if (v.glow) {   // a ghost glows in the dark, above the shadows
         spr.setDepth(9002).setAlpha(0.9);
-        this.tweens.add({ targets: this.add.image(x, y - 10, 'glow').setBlendMode(Phaser.BlendModes.ADD).setDepth(9001).setTint(LC.VILLAGERS[vid].glow).setScale(0.9).setAlpha(0.5), alpha: 0.25, duration: 1600, yoyo: true, repeat: -1 });
+        glow = this.add.image(x, y - 10, 'glow').setBlendMode(Phaser.BlendModes.ADD).setDepth(9001).setTint(v.glow).setScale(0.9).setAlpha(0.5);
+        this.tweens.add({ targets: glow, alpha: 0.25, duration: 1600, yoyo: true, repeat: -1 });
         this.tweens.add({ targets: spr, y: y - 2, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       }
-      this.npcs[vid] = { spr: spr, tx: home.x, ty: home.y, o: o, here: null };
+      this.npcs[vid] = { spr: spr, glow: glow, tx: home.x, ty: home.y, o: o, here: null, ghost: !!v.glow };
     },
     npcAction: function (o) {
       var self = this, v = LC.VILLAGERS[o.vid];
@@ -6951,9 +7384,9 @@ window.LC = window.LC || {};
 
     // ================================================================ per-frame
     updateFolk: function (time, dt) {
-      var self = this, S = this.S, here = present(S), p = this.player;
+      var self = this, S = this.S, awake = present(S), p = this.player;
       Object.keys(this.npcs).forEach(function (vid) {
-        var n = self.npcs[vid];
+        var n = self.npcs[vid], here = n.ghost || awake;   // ghosts keep their watch all night
         if (n.here !== here) {
           n.here = here; n.spr.setVisible(here);
           self.solid[n.ty][n.tx] = here; self.objAt[n.ty][n.tx] = here ? n.o : null;
@@ -7223,49 +7656,93 @@ window.LC = window.LC || {};
 
 </script>
   <script>/* src/scenes/WorldCombat.js */
-/* World, part 4 (v1.5): combat in Lombong Puaka, the haunted gold mine. Shadows, ghost bats, giant centipedes and the
- * stone guardian hunt you in the dark; hold a weapon and press USE to swing. If your health runs out you faint and
- * wake up at home, a little poorer. Enemies are simulated on each player's own device (co-op friends each fight
- * their own shadows). Mixed into LC.WorldScene. */
+/* World, part 4: combat. v1.5 brought the shadows of Lombong Puaka; v1.6 lets wild creatures roam the forest, the
+ * island, the mountain, the dunes, the reef and the sunken junk (some only at night), and adds:
+ *  - telegraphed attacks: an enemy shivers and flashes before it lunges, so you can step away or strike first
+ *  - battle animations: your weapon sweeps through the air, sparks and damage numbers fly, foes flash and recoil
+ *  - battle music that rises when something hunts you and fades when the fight is over
+ *  - Sumpahan Batu (V): Si Tanggang's stone curse freezes nearby enemies for a few seconds
+ *  - Restu Ibu: once a day, Mak Deruma's prayer saves you from fainting
+ * Hold a weapon (or, in a pinch, the cangkul) and press USE to swing. If your health runs out you faint and wake up
+ * at home. Enemies are simulated on each player's own device (co-op friends each fight their own). */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
-  var T = 16;
   var DIRV = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
-  var LOOT = ['bijih_emas', 'emas', 'kristal'];   // what you drop (half of it) when you faint down there
+  var ANG = { right: 0, down: 90, left: 180, up: -90 };
+  var LOOT = ['bijih_emas', 'emas', 'kristal'];   // what you drop (half of it) when you faint
+  var HOE = { name: 'Cangkul', dmg: 1, reach: 17, cd: 0.55, icon: 'i_hoe', improvised: true };
+  function isNight(S) { return S.minutes >= 19 * 60 || S.minutes < 6 * 60; }
 
   Object.assign(LC.WorldScene.prototype, {
     createEnemies: function () {
       var self = this, S = this.S;
-      this.enemies = []; this.invuln = 0; this.swingCd = 0;
+      this.enemies = []; this.invuln = 0; this.swingCd = 0; this.battleT = 0; this.hitStop = 0; this.groupCheck = 0;
       (this.A.enemies || []).forEach(function (g) {
-        for (var i = 0; i < g.n; i++) {
-          if (g.kind === 'penunggu' && S.flags.penunggu === S.day) continue;   // you already beat the guardian today
-          self.spawnEnemy(g, true);
-        }
+        for (var i = 0; i < g.n; i++) self.spawnEnemy(g, true);
       });
+      this.events.once('shutdown', function () { LC.Audio.setBattle(false); });
+    },
+    groupOn: function (g) {
+      var S = this.S;
+      if (g.kind === 'penunggu' && S.flags.penunggu === S.day) return false;   // you already beat the guardian today
+      if (g.escort) return !!S.escort;
+      if (g.night) return isNight(S);
+      return true;
     },
     spawnEnemy: function (g, first, e) {
-      var D = LC.ENEMIES[g.kind], p = this.randomFree(g.zone);
+      var D = LC.ENEMIES[g.kind], p = this.randomFree(g.zone), pl = this.player;
+      for (var k = 0; k < 8 && !first && Math.hypot(p.x - pl.x, p.y - pl.y) < 110; k++) p = this.randomFree(g.zone);
       if (!e) {
         e = { kind: g.kind, def: D, zone: g.zone, g: g };
         e.spr = this.add.sprite(p.x, p.y, g.kind + '_0').setOrigin(0.5, 1);
         e.spr.play(g.kind + '_walk');
-        e.light = this.addLight(p.x, p.y - 8, D.boss ? 0xff7040 : 0xff3050, D.boss ? 0.9 : 0.35, true);
+        e.light = this.addLight(p.x, p.y - 8, D.boss ? 0xff7040 : g.kind === 'obor' ? 0xff9050 : 0xff3050, D.boss ? 0.9 : 0.35, true);
         this.enemies.push(e);
       }
-      e.spr.setPosition(p.x, p.y).setVisible(true).setAlpha(first ? 1 : 0).clearTint();
-      if (!first) this.tweens.add({ targets: e.spr, alpha: 1, duration: 600 });
-      e.hp = D.hp; e.dead = false; e.respawn = 0; e.kx = 0; e.ky = 0; e.hurtT = 0; e.tx = p.x; e.ty = p.y; e.wait = Math.random() * 2; e.ph = Math.random() * 6;
-      e.light.base = D.boss ? 0.9 : 0.6;
+      var on = this.groupOn(g);
+      e.spr.setPosition(p.x, p.y).setVisible(on).setAlpha(first ? 1 : 0).clearTint().setScale(1);
+      if (e.spr.anims.isPaused) e.spr.anims.resume();
+      if (!first && on) this.tweens.add({ targets: e.spr, alpha: 1, duration: 600 });
+      e.hp = D.hp; e.dead = false; e.away = !on; e.respawn = 0; e.kx = 0; e.ky = 0; e.hurtT = 0; e.tx = p.x; e.ty = p.y; e.wait = Math.random() * 2; e.ph = Math.random() * 6;
+      e.windT = 0; e.strikeT = 0; e.restT = 0; e.stoneT = 0; e.atkCd = 0.6 + Math.random();
+      e.light.base = on ? (D.boss ? 0.9 : 0.6) : 0;
       return e;
+    },
+    // the creatures of the night melt away at dawn (and come back after dark); escort shadows only chase Si Tanggang
+    checkGroups: function () {
+      var self = this;
+      this.enemies.forEach(function (e) {
+        if (e.dead) return;
+        var on = self.groupOn(e.g);
+        if (on && e.away) self.spawnEnemy(e.g, false, e);
+        else if (!on && !e.away) {
+          e.away = true; e.light.base = 0; e.stoneT = 0;
+          self.fx.smoke.explode(6, e.spr.x, e.spr.y - e.spr.height / 2);
+          self.tweens.add({ targets: e.spr, alpha: 0, duration: 700, onComplete: function () { if (e.away) e.spr.setVisible(false); } });
+        }
+      });
+    },
+    hasEnemies: function () { return !!(this.enemies && this.enemies.some(function (e) { return !e.dead && !e.away; })); },
+    enemyNear: function (r) {
+      var p = this.player;
+      return !!(this.enemies && this.enemies.some(function (e) { return !e.dead && !e.away && Math.hypot(e.spr.x - p.x, e.spr.y - p.y) < r; }));
+    },
+    weaponOf: function (sl) {
+      if (!sl) return null;
+      var it = LC.ITEMS[sl.id];
+      if (it && it.kind === 'weapon') return it;
+      return sl.id === 'hoe' ? HOE : null;
     },
 
     updateEnemies: function (time, dt, blocked) {
-      if (!this.enemies || !this.enemies.length) { if (this.invuln > 0) this.invuln -= dt; return; }
       var self = this, p = this.player, S = this.S;
-      this.swingCd = Math.max(0, this.swingCd - dt);
       if (this.invuln > 0) { this.invuln -= dt; p.setAlpha(Math.floor(time / 80) % 2 ? 0.45 : 1); if (this.invuln <= 0) { p.setAlpha(1); p.clearTint(); } }
+      if (!this.enemies || !this.enemies.length) return;
+      this.swingCd = Math.max(0, this.swingCd - dt);
+      if ((this.groupCheck -= dt) <= 0) { this.groupCheck = 1; this.checkGroups(); }
+      if (this.hitStop > 0) { this.hitStop -= dt; return; }   // a tiny freeze when a blow lands
+      var fighting = false, boss = false;
       this.enemies.forEach(function (e) {
         var D = e.def, s = e.spr;
         if (e.dead) {
@@ -7274,73 +7751,123 @@ window.LC = window.LC || {};
           if (e.respawn <= 0 && Math.hypot(p.x - s.x, p.y - s.y) > 150) self.spawnEnemy(e.g, false, e);
           return;
         }
+        if (e.away) return;
+        var dx = p.x - s.x, dy = (p.y - 4) - (s.y - 4), d = Math.max(0.5, Math.hypot(dx, dy));
+        if (d < D.sight + 10) { fighting = true; if (D.boss) boss = true; }
+        if (e.hurtT > 0) { e.hurtT -= dt; if (e.hurtT <= 0) { if (e.stoneT > 0) s.setTint(0x9a96a0); else s.clearTint(); } }
         if (blocked || self.leaving || self.sleeping) { e.light.img.setPosition(s.x, s.y - 8); return; }
-        var dx = p.x - s.x, dy = (p.y - 4) - (s.y - 4), d = Math.max(0.5, Math.hypot(dx, dy)), vx = 0, vy = 0, sp = D.speed;
-        if (d < D.sight) {   // hunt
+        if (e.stoneT > 0) {   // turned to stone: still as a statue
+          e.stoneT -= dt;
+          if (e.stoneT <= 0) self.unstone(e);
+          return;
+        }
+        var vx = 0, vy = 0, sp = D.speed, mv = true;
+        e.atkCd -= dt;
+        if (e.windT > 0) {            // the wind-up: shiver and flash, then lunge
+          e.windT -= dt; mv = false;
+          s.x += Math.sin(time / 22) * 0.6;
+          if (Math.floor(time / 70) % 2) s.setTintFill(0xffe0e0); else if (e.hurtT <= 0) s.clearTint();
+          if (e.windT <= 0) {
+            if (e.hurtT <= 0) s.clearTint();
+            e.strikeT = D.charge ? 0.5 : D.boss ? 0.32 : 0.2; e.sdx = dx / d; e.sdy = dy / d;
+          }
+        } else if (e.strikeT > 0) {   // the lunge
+          e.strikeT -= dt; vx = e.sdx; vy = e.sdy; sp = D.speed * (D.charge ? 5.2 : D.boss ? 3 : 3.6);
+          if (d < D.w + 7 && self.invuln <= 0) { self.playerHurt(D.dmg, e); e.strikeT = 0; }
+          if (e.strikeT <= 0) { e.restT = 0.7 + Math.random() * 0.5; e.atkCd = D.boss ? 1.6 : 1 + Math.random() * 0.6; }
+        } else if (e.restT > 0) {     // catch its breath, backing off a little
+          e.restT -= dt; vx = -dx / d * 0.5; vy = -dy / d * 0.5; sp = D.speed * 0.6;
+        } else if (d < D.sight) {     // hunt
           vx = dx / d; vy = dy / d;
           if (D.erratic) { vx += Math.sin(time / 180 + e.ph) * 0.9; vy += Math.cos(time / 230 + e.ph) * 0.9; }
-        } else {             // drift about
+          if (D.side) vy *= 0.45;
+          var range = D.charge ? 72 : D.w + (D.boss ? 22 : 16);
+          if (d < range && e.atkCd <= 0 && (!D.charge || d > 20)) {
+            e.windT = D.charge ? 0.55 : D.boss ? 0.6 : 0.32; mv = false;
+            if (d < 120) LC.Audio.sfx('lunge');
+          }
+        } else {                      // drift about
+          sp *= 0.5;
           if (e.wait > 0) e.wait -= dt;
           else {
             var ex = e.tx - s.x, ey = e.ty - s.y, ed = Math.hypot(ex, ey);
             if (ed < 2) { e.wait = 1 + Math.random() * 3; var q = self.randomFree(e.zone); e.tx = q.x; e.ty = q.y; }
-            else { vx = ex / ed; vy = ey / ed; sp *= 0.5; }
+            else { vx = ex / ed; vy = ey / ed; }
           }
         }
-        var len = Math.hypot(vx, vy) || 1, nx = s.x + (vx / len * sp + e.kx) * dt, ny = s.y + (vy / len * sp + e.ky) * dt;
+        if (!mv) { vx = 0; vy = 0; }
+        var len = Math.hypot(vx, vy) || 1, nx = s.x + (vx / len * sp * (vx || vy ? 1 : 0) + e.kx) * dt, ny = s.y + (vy / len * sp * (vx || vy ? 1 : 0) + e.ky) * dt;
         e.kx *= Math.pow(0.02, dt); e.ky *= Math.pow(0.02, dt);
         if (!self.solidPx(nx - D.w, s.y - 2) && !self.solidPx(nx + D.w, s.y - 2)) s.x = nx;
         if (!self.solidPx(s.x - D.w, ny - 2) && !self.solidPx(s.x + D.w, ny - 2)) s.y = ny;
-        if (Math.abs(vx) > 0.1) s.setFlipX(vx < 0);
-        var bob = e.kind === 'bayang' || e.kind === 'kelawar' ? Math.round(Math.sin(time / 260 + e.ph) * 2) : 0;
-        s.setDepth(s.y).setY(s.y);
+        if (Math.abs(vx) > 0.1 && e.windT <= 0) s.setFlipX(vx < 0);
+        else if (e.windT > 0) s.setFlipX(dx < 0);
+        var bob = D.floaty || e.kind === 'bayang' || e.kind === 'kelawar' ? Math.round(Math.sin(time / 260 + e.ph) * 2) : 0;
+        s.setDepth(s.y);
         s.displayOriginY = s.height - bob;
         e.light.img.setPosition(s.x, s.y - s.height / 2);
-        if (e.hurtT > 0) { e.hurtT -= dt; if (e.hurtT <= 0) s.clearTint(); }
-        if (d < D.w + 7 && self.invuln <= 0) self.playerHurt(D.dmg, e);
       });
+      // battle music: on while something is hunting you, and for a few seconds after
+      if (fighting) this.battleT = 4; else this.battleT -= dt;
+      LC.Audio.setBattle(this.battleT > 0 && !this.sleeping, boss);
     },
 
     // ---------------------------------------------------------------- your swing
     attack: function () {
-      var self = this, S = this.S, sl = LC.State.selItem(), it = sl && LC.ITEMS[sl.id];
-      if (!it || it.kind !== 'weapon' || this.swingCd > 0) return;
-      this.swingCd = it.cd;
-      var p = this.player, d = DIRV[this.dir], cx = p.x + d[0] * 12, cy = p.y - 8 + d[1] * 12;
+      var self = this, S = this.S, sl = LC.State.selItem(), wp = this.weaponOf(sl);
+      if (!wp || this.swingCd > 0) return;
+      this.swingCd = wp.cd;
+      var p = this.player, d = DIRV[this.dir], cx = p.x + d[0] * 12, cy = p.y - 8 + d[1] * 12, keris = sl.id === 'keris';
       LC.Audio.sfx('swing');
+      // the weapon itself sweeps through an arc in front of you...
+      var ang = ANG[this.dir], from = this.dir === 'left' || this.dir === 'up' ? ang + 70 : ang - 70, to = this.dir === 'left' || this.dir === 'up' ? ang - 70 : ang + 70, off = keris ? 90 : 45;
+      var wImg = this.add.image(p.x + d[0] * 3, p.y - 9, wp.icon || LC.ITEMS[sl.id].icon).setOrigin(keris ? 0.5 : 0.15, keris ? 0.92 : 0.85).setScale(0.85)
+        .setDepth(this.dir === 'up' ? p.y - 1 : p.y + 1).setAngle(from + off).setFlipX(false);
+      this.tweens.add({ targets: wImg, angle: to + off, duration: 130, ease: 'Quad.easeOut', onComplete: function () {
+        self.tweens.add({ targets: wImg, alpha: 0, duration: 90, onComplete: function () { wImg.destroy(); } });
+      } });
+      // ...trailing a bright arc
       var key = this.dir === 'left' || this.dir === 'right' ? 'slash_right' : 'slash_' + this.dir;
-      var sl2 = this.add.image(cx, cy, key).setDepth(p.y + 2).setFlipX(this.dir === 'left').setAlpha(0.95);
-      if (sl.id === 'keris' || sl.id === 'trisula') sl2.setTint(sl.id === 'keris' ? 0xffe8a0 : 0x8fe8ff).setBlendMode(Phaser.BlendModes.ADD);
-      this.tweens.add({ targets: sl2, alpha: 0, scale: 1.25, duration: 180, onComplete: function () { sl2.destroy(); } });
-      this.tweens.add({ targets: p, x: p.x + d[0] * 2, duration: 60, yoyo: true });
-      var dmg = it.dmg + Math.floor((S.str || 0) / 25), hit = false;
+      var arc = this.add.image(cx, cy, key).setDepth(p.y + 2).setFlipX(this.dir === 'left').setAlpha(0.95);
+      if (keris || sl.id === 'trisula') arc.setTint(keris ? 0xffe8a0 : 0x8fe8ff).setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({ targets: arc, alpha: 0, scale: 1.25, duration: 180, onComplete: function () { arc.destroy(); } });
+      this.tweens.add({ targets: p, x: p.x + d[0] * 2, y: p.y + d[1] * 2, scaleY: 0.92, duration: 60, yoyo: true });
+      var dmg = wp.dmg + Math.floor((S.str || 0) / 25), hit = false;
       this.enemies.forEach(function (e) {
-        if (e.dead) return;
+        if (e.dead || e.away) return;
         var ex = e.spr.x - p.x, ey = (e.spr.y - e.spr.height / 2) - (p.y - 8), dist = Math.hypot(ex, ey);
-        if (dist > it.reach + e.def.w + 4) return;
+        if (dist > wp.reach + e.def.w + 4) return;
         if (dist > 10 && (ex * d[0] + ey * d[1]) / dist < 0.15) return;   // only what is in front of you
         hit = true;
-        e.hp -= dmg; e.hurtT = 0.15; e.spr.setTint(0xff8080);
-        var k = e.def.boss ? 60 : 170; e.kx = (ex / (dist || 1)) * k; e.ky = (ey / (dist || 1)) * k;
-        self.fx.sparkle.explode(5, e.spr.x, e.spr.y - e.spr.height / 2);
+        var stone = e.stoneT > 0, n = stone ? dmg * 2 : dmg;
+        e.hp -= n; e.hurtT = 0.1; e.spr.setTintFill(0xffffff);
+        if (!stone) { var k = e.def.boss ? 60 : 170; e.kx = (ex / (dist || 1)) * k; e.ky = (ey / (dist || 1)) * k; e.windT = 0; }
+        var hx = e.spr.x - ex / (dist || 1) * 4, hy = e.spr.y - e.spr.height / 2;
+        var spark = self.add.image(hx, hy, 'hitfx').setDepth(9600).setBlendMode(Phaser.BlendModes.ADD).setScale(0.4).setAngle(Math.random() * 90);
+        self.tweens.add({ targets: spark, scale: 1.1, alpha: 0, duration: 170, onComplete: function () { spark.destroy(); } });
+        self.fx.sparkle.explode(stone ? 3 : 5, hx, hy);
+        if (stone) self.fx.pebble.explode(6, hx, hy);
+        self.ui.floatText(e.spr.x, e.spr.y - e.spr.height - 2, (stone ? 'CRACK! ' : '') + n, stone ? '#cfd8ff' : '#fff2b0');
         if (e.hp <= 0) self.enemyDie(e);
       });
-      if (hit) { LC.Audio.sfx('hit'); this.cameras.main.shake(70, 0.002); }
+      if (hit) { LC.Audio.sfx('hit'); this.cameras.main.shake(70, 0.002); this.hitStop = 0.05; }
     },
     enemyDie: function (e) {
-      var self = this, S = this.S, D = e.def, s = e.spr, got = [];
-      e.dead = true; e.respawn = 25 + Math.random() * 15;
+      var self = this, S = this.S, D = e.def, s = e.spr, got = [], icon = null;
+      e.dead = true; e.respawn = 25 + Math.random() * 15; e.stoneT = 0;
+      if (s.anims.isPaused) s.anims.resume();
       LC.Audio.sfx('poof');
       this.fx.smoke.explode(D.boss ? 24 : 10, s.x, s.y - s.height / 2);
       this.fx.sparkle.explode(D.boss ? 30 : 6, s.x, s.y - s.height / 2);
-      this.tweens.add({ targets: s, alpha: 0, scaleY: 0.2, duration: 300, onComplete: function () { s.setVisible(false).setScale(1); } });
+      s.setTintFill(0xffffff);
+      this.tweens.add({ targets: s, alpha: 0, scaleY: 0.2, scaleX: 1.3, duration: 300, onComplete: function () { s.setVisible(false).setScale(1).clearTint(); } });
       e.light.base = 0;
       S.stats.kills = (S.stats.kills || 0) + 1;
       D.drop.forEach(function (dr) {
         if (Math.random() > dr[1]) return;
         var n = dr[2] + Math.floor(Math.random() * (dr[3] - dr[2] + 1));
-        if (dr[0] === 'kepeng') { S.kepeng += n; got.push(n + ' kepeng'); }
-        else if (LC.State.add(dr[0], n)) got.push(n + ' ' + LC.ITEMS[dr[0]].name);
+        if (dr[0] === 'kepeng') { S.kepeng += n; got.push(n + ' kepeng'); icon = icon || 'i_kepeng'; }
+        else if (LC.State.add(dr[0], n)) { got.push(n + ' ' + LC.ITEMS[dr[0]].name); icon = icon || LC.ITEMS[dr[0]].icon; }
       });
       if (D.boss) {
         S.flags.penunggu = S.day;
@@ -7350,32 +7877,211 @@ window.LC = window.LC || {};
           { name: 'Pelita', portrait: 'ghost', expr: 'happy', text: '(Pelita glows proudly. You were very brave.)' + (got.length ? ' You found ' + got.join(' and ') + '!' : '') }]);
         return;
       }
-      this.toast('The ' + D.name + ' fades away into the dark.' + (got.length ? ' You found ' + got.join(' and ') + '.' : ''), got.length ? 'i_bijih_emas' : 'ic_moon');
+      var sky = this.A.cave || this.A.underwater ? 'dark' : 'wild';
+      this.toast('The ' + D.name + (sky === 'dark' || e.kind === 'bayang' ? ' fades away into the dark.' : ' flees into the ' + (this.A.underwater ? 'deep.' : 'wild.')) + (got.length ? ' You found ' + got.join(' and ') + '.' : ''), icon || 'ic_moon');
+    },
+
+    // ---------------------------------------------------------------- Sumpahan Batu: the stone curse (V)
+    stoneLeft: function () { return Math.max(0, ((LC.stoneReadyAt || 0) - Date.now()) / 1000); },
+    castStone: function () {
+      var self = this, p = this.player;
+      if (!LC.hasStone() || this.sleeping || this.leaving) return;
+      var restu = LC.hasRestu(), C = restu ? LC.RESTU : LC.STONE, left = this.stoneLeft();
+      if (left > 0) { this.toast('The stone curse is still gathering... (' + Math.ceil(left) + 's)', 'ic_batu'); LC.Audio.sfx('error'); return; }
+      var hits = (this.enemies || []).filter(function (e) { return !e.dead && !e.away && Math.hypot(e.spr.x - p.x, e.spr.y - p.y) < C.r; });
+      if (!hits.length) { this.toast('Sumpahan Batu needs an enemy close by.', 'ic_batu'); LC.Audio.sfx('error'); return; }
+      LC.stoneReadyAt = Date.now() + C.cd * 1000;
+      LC.Audio.sfx('stone');
+      this.shockwave(p.x, p.y - 8, C.r, 0x9ad8ff);
+      this.cameras.main.shake(160, 0.003);
+      this.ui.floatText(p.x, p.y - 26, 'Sumpahan Batu!', '#bfe6ff');
+      hits.forEach(function (e, i) { self.time.delayedCall(40 + i * 50, function () { if (!e.dead) self.stoneEnemy(e, e.def.boss ? LC.STONE.bossDur * (restu ? 1.6 : 1) : C.dur); }); });
+    },
+    shockwave: function (x, y, r, tint) {   // a crisp ring rippling outwards
+      var g = this.add.graphics().setDepth(9600).setBlendMode(Phaser.BlendModes.ADD), o = { t: 0 };
+      this.tweens.add({ targets: o, t: 1, duration: 520, ease: 'Quad.easeOut',
+        onUpdate: function () { g.clear(); g.lineStyle(2, tint, 0.9 * (1 - o.t)); g.strokeCircle(x, y, 6 + (r - 6) * o.t); g.lineStyle(1, 0xffffff, 0.6 * (1 - o.t)); g.strokeCircle(x, y, Math.max(2, (r - 6) * o.t - 6)); },
+        onComplete: function () { g.destroy(); } });
+    },
+    stoneEnemy: function (e, dur) {
+      var s = e.spr;
+      e.stoneT = dur; e.windT = 0; e.strikeT = 0; e.kx = 0; e.ky = 0;
+      s.anims.pause(); s.setTintFill(0xffffff);
+      e.hurtT = 0.08;   // a white flash, then stone grey
+      this.fx.pebble.explode(8, s.x, s.y - s.height / 2);
+      this.tweens.add({ targets: s, scaleX: 1.08, scaleY: 0.94, duration: 90, yoyo: true });
+      e.light.base = 0.15;
+    },
+    unstone: function (e) {
+      var s = e.spr;
+      e.stoneT = 0; s.anims.resume(); s.clearTint();
+      e.light.base = e.def.boss ? 0.9 : 0.6; e.atkCd = 0.8;
+      this.fx.pebble.explode(10, s.x, s.y - s.height / 2);
+      if (Math.hypot(s.x - this.player.x, s.y - this.player.y) < 160) LC.Audio.sfx('crumble');
     },
 
     // ---------------------------------------------------------------- getting hurt
     playerHurt: function (dmg, e) {
       var S = this.S, p = this.player;
+      if (this.invuln > 0 || this.leaving || this.sleeping) return;
       S.hp = Math.max(0, S.hp - dmg);
       this.invuln = 0.9;
       LC.Audio.sfx('hurt');
       p.setTint(0xff7070);
       this.cameras.main.shake(140, 0.005);
+      this.ui.hurtFlash();
+      this.ui.floatText(p.x, p.y - 22, '-' + dmg, '#ff8a8a');
       var dx = p.x - e.spr.x, dy = p.y - e.spr.y, d = Math.hypot(dx, dy) || 1;
       for (var k = 0; k < 4; k++) { var nx = p.x + dx / d * 4, ny = p.y + dy / d * 4; if (!this.blockedAt(nx, p.y)) p.x = nx; if (!this.blockedAt(p.x, ny)) p.y = ny; }
-      if (S.hp <= 0) this.faint();
-      else if (S.hp < S.maxHp * 0.3 && !this.lowHpWarned) { this.lowHpWarned = true; this.toast('You are badly hurt! Eat something (X) to heal, or get out of the mine.', 'ic_hp'); }
+      if (S.hp <= 0) {
+        if (LC.hasRestu() && S.restuDay !== S.day) this.restuSave();
+        else this.faint();
+      } else if (S.hp < S.maxHp * 0.3 && !this.lowHpWarned) { this.lowHpWarned = true; this.toast('You are badly hurt! Eat something (X) to heal, or get away to safety.', 'ic_hp'); }
+    },
+    // Restu Ibu: once a day, a mother's prayer lifts you up again
+    restuSave: function () {
+      var self = this, S = this.S, p = this.player;
+      S.restuDay = S.day; S.hp = S.maxHp; this.invuln = 2.5;
+      LC.Audio.sfx('restu');
+      p.clearTint();
+      var col = this.add.image(p.x, p.y - 20, 'glow').setDepth(9601).setTint(0xffd166).setBlendMode(Phaser.BlendModes.ADD).setScale(0.6, 3).setAlpha(0);
+      this.tweens.add({ targets: col, alpha: 0.9, duration: 220, yoyo: true, hold: 500, onComplete: function () { col.destroy(); } });
+      this.fx.sparkle.explode(30, p.x, p.y - 10); this.fx.heart.explode(5, p.x, p.y - 14);
+      this.shockwave(p.x, p.y - 8, LC.RESTU.r, 0xffd166);
+      this.cameras.main.flash(350, 255, 230, 170);
+      (this.enemies || []).forEach(function (e) { if (!e.dead && !e.away && Math.hypot(e.spr.x - p.x, e.spr.y - p.y) < LC.RESTU.r) self.stoneEnemy(e, LC.RESTU.dur); });
+      this.ui.floatText(p.x, p.y - 28, 'Restu Ibu!', '#ffe08a');
+      this.toast('Restu Ibu! Mak Deruma\'s prayer lifts you up, fully healed. (Once a day.)', 'ic_restu');
     },
     faint: function () {
       if (this.leaving) return;
-      var S = this.S, lost = [];
+      var S = this.S, lost = [], escort = !!S.escort;
       LOOT.forEach(function (id) { var n = Math.floor(LC.State.count(id) / 2); if (n > 0) { LC.State.remove(id, n); lost.push(n + ' ' + LC.ITEMS[id].name); } });
       S.hp = Math.ceil(S.maxHp * 0.5);
       S.energy = Math.max(10, Math.round(S.energy * 0.6));
+      S.escort = null;
       if (!LC.Net.active()) S.minutes = Math.min(LC.DAY_END - 30, S.minutes + 60);
       this.player.clearTint().setAlpha(1);
       LC.Audio.sfx('sad');
-      this.goArea('farm', this.homeSpot(LC.Net.isGuest() ? this.pc : 0), 'down', { knocked: lost.length ? 'You dropped ' + lost.join(' and ') + ' in the dark.' : 'Luckily you did not drop anything.' });
+      LC.Audio.setBattle(false);
+      var msg = lost.length ? 'You dropped ' + lost.join(' and ') + ' in the struggle.' : 'Luckily you did not drop anything.';
+      this.goArea('farm', this.homeSpot(LC.Net.isGuest() ? this.pc : 0), 'down', { knocked: msg + (escort ? ' ' + LC.TANGGANG.lost : '') });
+    }
+  });
+})(window.LC);
+
+</script>
+  <script>/* src/scenes/WorldTanggang.js */
+/* World, part 5 (v1.6): guiding Si Tanggang home. Once the captain's ghost is at peace, he asks you to take him to
+ * his mother, whose ghost waits on the beach of Pulau Mutiara. He follows you out of the sunken junk, through
+ * Kampung Karang (where shadows of the old curse try to drag him back) and up to the island. When mother and son
+ * meet, the curse breaks: both live again, move to Kampung Tepian, and Mak Deruma gives you Restu Ibu.
+ * If you faint, or the night ends, he is pulled back to his ship and you can try again. Mixed into LC.WorldScene. */
+window.LC = window.LC || {};
+(function (LC) {
+  'use strict';
+  var DIRV = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
+  var WHO = {
+    tanggang: ['Si Tanggang', 'npc_tanggang_0'], deruma: ['Mak Deruma', 'npc_deruma_0'],
+    tanggangH: ['Si Tanggang', 'npc_tanggangH_0'], derumaH: ['Mak Deruma', 'npc_derumaH_0']
+  };
+  // story lines written as { who, text } become dialogue lines with a name and portrait
+  LC.storyLines = function (arr) {
+    return arr.map(function (l) { var w = l.who && WHO[l.who]; return w ? { name: w[0], portrait: w[1], text: l.text } : { text: l.text }; });
+  };
+
+  Object.assign(LC.WorldScene.prototype, {
+    createTanggang: function () {
+      this.escortSpr = null; this.reuniting = false;
+      if (this.S.escort) this.makeEscort();
+    },
+    makeEscort: function () {
+      var p = this.player;
+      this.epos = { x: p.x + 16, y: p.y + 4 };
+      this.escortGlow = this.add.image(this.epos.x, this.epos.y - 10, 'glow').setBlendMode(Phaser.BlendModes.ADD).setDepth(9001).setTint(0x8fd3ff).setScale(0.8).setAlpha(0.45);
+      this.escortSpr = this.add.sprite(this.epos.x, this.epos.y, 'npc_tanggang_0').setOrigin(0.5, 1).setDepth(9002).setAlpha(0.88);
+      this.escortSpr.play('npc_tanggang_idle');
+    },
+    // the player agreed (from Si Tanggang's Talk menu)
+    startEscort: function () {
+      var S = this.S, n = this.npcs.tanggang;
+      S.escort = 'tanggang'; S.quests.tanggang = 3;
+      if (n) {
+        if (n.here) { this.solid[n.ty][n.tx] = false; this.objAt[n.ty][n.tx] = null; }
+        this.fx.sparkle.explode(10, n.spr.x, n.spr.y - 10);
+        n.spr.destroy(); if (n.glow) n.glow.destroy();
+        delete this.npcs.tanggang;
+      }
+      this.makeEscort();
+      if (this.checkGroups) this.checkGroups();
+      LC.Audio.sfx('chime');
+      this.toast('Si Tanggang follows you. Take him to Mak Deruma on the beach of Pulau Mutiara (swim up from Kampung Karang).', 'ic_glow');
+    },
+    updateTanggang: function (time, dt, blocked) {
+      if (!this.escortSpr) return;
+      var p = this.player, d = DIRV[this.dir] || DIRV.down, tx = p.x - d[0] * 20 + (d[0] === 0 ? 16 : 0), ty = p.y - d[1] * 16 + 4, k = Math.min(1, dt * 2.4);
+      if (this.reuniting) return;
+      this.epos.x += (tx - this.epos.x) * k; this.epos.y += (ty - this.epos.y) * k;
+      var y = Math.round(this.epos.y + Math.sin(time / 380) * 2), tug = this.enemyNear && this.enemyNear(60);
+      this.escortSpr.setPosition(Math.round(this.epos.x + (tug ? Math.sin(time / 30) : 0)), y).setFlipX(this.epos.x > p.x).setAlpha(tug ? 0.55 + 0.3 * Math.abs(Math.sin(time / 90)) : 0.88);
+      this.escortGlow.setPosition(this.escortSpr.x, y - 10).setAlpha(0.25 + (this.nightF || 0) * 0.35);
+      if (!blocked && this.area === 'island') {
+        var m = this.npcs.deruma;
+        if (m && Math.hypot(p.x - m.spr.x, p.y - m.spr.y) < 44) this.reunion();
+      }
+    },
+
+    // ---------------------------------------------------------------- mother and son
+    reunion: function () {
+      var self = this, S = this.S, m = this.npcs.deruma, t = this.escortSpr, L = LC.TANGGANG.reunion;
+      if (this.reuniting || !m || !t) return;
+      this.reuniting = true;
+      this.ui.closeModal();
+      LC.Audio.setBattle(false);
+      (this.enemies || []).forEach(function (e) { if (!e.dead && !e.away) self.stoneEnemy(e, 30); });   // the world holds its breath
+      LC.Audio.sfx('reunion');
+      this.tweens.add({ targets: t, x: m.spr.x - 14, y: m.spr.y, duration: 1400, ease: 'Sine.easeInOut' });
+      this.tweens.add({ targets: this.escortGlow, x: m.spr.x - 14, y: m.spr.y - 10, duration: 1400, ease: 'Sine.easeInOut' });
+      t.setFlipX(false); m.spr.setFlipX(true);
+      this.time.delayedCall(1500, function () {
+        self.ui.say(LC.storyLines(L.slice(0, 5)), { onDone: function () { self.breakCurse(m, t, L); } });
+      });
+    },
+    breakCurse: function (m, t, L) {
+      var self = this, x = (m.spr.x + t.x) / 2, y = m.spr.y;
+      LC.Audio.sfx('restu');
+      this.cameras.main.flash(900, 255, 240, 200);
+      var col = this.add.image(x, y - 24, 'glow').setDepth(9600).setTint(0xffe8b0).setBlendMode(Phaser.BlendModes.ADD).setScale(1, 4).setAlpha(0);
+      this.tweens.add({ targets: col, alpha: 1, duration: 700, yoyo: true, hold: 600, onComplete: function () { col.destroy(); } });
+      this.fx.sparkle.explode(40, x, y - 12); this.fx.heart.explode(8, x, y - 18); this.fx.petal.explode(12, x, y - 30);
+      this.time.delayedCall(800, function () {
+        [m.spr, t].forEach(function (s) { self.tweens.killTweensOf(s); s.anims.stop(); s.setAlpha(1).setDepth(y); });
+        m.spr.setTexture('npc_derumaH_0').play('npc_derumaH_idle'); t.setTexture('npc_tanggangH_0').play('npc_tanggangH_idle');
+        m.spr.y = y; t.y = y;
+        if (m.glow) m.glow.destroy();
+        self.escortGlow.destroy();
+      });
+      this.time.delayedCall(1900, function () {
+        self.ui.say(LC.storyLines(L.slice(5)), { onDone: function () { self.finishReunion(m, t); } });
+      });
+    },
+    finishReunion: function (m, t) {
+      var self = this, S = this.S;
+      S.quests.tanggang = 4; S.escort = null; S.restuDay = 0;
+      LC.State.folk('deruma').met = true;
+      LC.State.recalc();
+      this.doShared('kind', { n: 15 }, function (res) { if (res && res.ok) self.toast('Pelita glows with joy for them. (+' + res.b + ' bond)', 'ic_bond'); });
+      this.toast('Si Tanggang and Mak Deruma now live in Kampung Tepian, by the river. Visit them!', 'ic_restu');
+      // they push the old sampan into the waves and row away home together
+      this.time.delayedCall(600, function () {
+        [m.spr, t].forEach(function (s) { self.fx.sparkle.explode(8, s.x, s.y - 10); });
+        self.tweens.add({ targets: [m.spr, t], alpha: 0, y: '+=6', duration: 1600, onComplete: function () {
+          m.spr.destroy(); t.destroy();
+          if (self.npcs.deruma) { var n = self.npcs.deruma; if (n.here) { self.solid[n.ty][n.tx] = false; self.objAt[n.ty][n.tx] = null; } delete self.npcs.deruma; }
+          self.escortSpr = null; self.reuniting = false;
+          (self.enemies || []).forEach(function (e) { if (e.stoneT > 0) e.stoneT = 1.5; });
+        } });
+      });
     }
   });
 })(window.LC);
@@ -7402,6 +8108,7 @@ window.LC = window.LC || {};
       this.buildHUD();
       this.buildHotbar();
       this.buildTouch();
+      this.buildSkills();   // v1.6: Sumpahan Batu and Restu Ibu beside the hotbar (UISettings.js)
       this.layout();
       this.scale.on('resize', this.layout, this);
       this.game.events.on('lc-safearea', this.layout, this);
@@ -7761,6 +8468,8 @@ window.LC = window.LC || {};
 
       this.drawHotbar();
       this.drawTouch();
+      this.drawSkills();
+      this.updateFloats();
       this.updateCoopUI();
 
       // toasts (lifted above the thumb-stick in touch mode)
@@ -7847,6 +8556,7 @@ window.LC = window.LC || {};
         case 'KeyF': if (LC.canFullscreen()) LC.toggleFullscreen(); break;
         case 'KeyJ': this.openJournal(); break;
         case 'KeyR': this.world.toggleRide(); break;
+        case 'KeyV': this.world.castStone(); break;
         case 'Escape': this.openPause(); break;
       }
     }
@@ -8184,12 +8894,14 @@ window.LC = window.LC || {};
             { icon: 'ic_bond', label: 'Journal', sub: 'Villager requests, places, spirits, fish and Pelita\'s levels. Press J anytime.', action: function () { self.openJournal(); } },
             { icon: 'ic_map', label: 'Map', sub: 'This place, and the whole land. Press M anytime' + (self.touchOn ? ' (or tap MAP).' : '.'), action: function () { self.openMap(); } }
           ].concat(coop, [
-            { icon: 'ic_bond', label: 'Save game', sub: 'Save your farm, bag and Pelita right now.', action: function () { self.toast(LC.State.save() ? 'Game saved.' : 'Could not save: browser storage is blocked.', 'ic_bond'); return 'close'; } },
-            { icon: 'ic_glow', label: 'Music: ' + (LC.Audio.musicOn ? 'On' : 'Off'), sub: 'Chill gamelan-style music, generated live. Press N anytime.', action: function () { LC.Audio.toggleMusic(); } },
-            { icon: 'ic_moon', label: 'Nature sounds: ' + (LC.Audio.ambienceOn ? 'On' : 'Off'), sub: 'River, birdsong by day, crickets and frogs at night.', action: function () { LC.Audio.toggleAmbience(); } },
+            N.isGuest() ? { icon: 'ic_bond', label: 'Save my bag', sub: 'Your bag, kepeng, strength and quests are kept on this device. ' + N.hostName + ' saves the farm itself.', action: function () { self.toast(LC.State.save() ? 'Your bag is saved.' : 'Could not save: browser storage is blocked.', 'ic_bond'); return 'close'; } }
+              : { icon: 'ic_bond', label: 'Save game', sub: 'Choose a slot (1-' + LC.SAVE_SLOTS + '). You are playing slot ' + LC.State.slot + '.', action: function () { self.openSaves('save'); } },
+            N.isGuest() ? null : { icon: 'ic_sun', label: 'Load game', sub: N.isHost() ? 'Load a saved farm. Your friends come along to the loaded farm.' : 'Go back to a farm saved in another slot (or this one).', action: function () { self.openSaves('load'); } },
+            { icon: 'ic_glow', label: 'Sound & music', sub: 'Volume for the music, the battle music, sound effects and nature sounds.', action: function () { self.openSound(); } },
+            { icon: 'ic_glow', label: 'Music: ' + (LC.Audio.musicOn ? 'On' : 'Off'), sub: 'Chill gamelan-style music (and battle drums), generated live. Press N anytime.', action: function () { LC.Audio.toggleMusic(); } },
             { icon: 'ic_joy', label: 'Touch controls: ' + (self.touchOn ? 'On' : 'Off'), sub: 'On-screen joystick and USE / EAT / BAG buttons for phones and tablets.', action: function () { self.setTouch(!self.touchOn); } },
             LC.canFullscreen() ? { icon: 'ic_sun', label: 'Fullscreen: ' + (LC.isFullscreen() ? 'On' : 'Off'), sub: 'Fill the whole screen with the kampung' + (self.touchOn ? '.' : '. Press F anytime.'), action: function () { LC.toggleFullscreen(); } } : null,
-            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact (and swing a weapon) · tap the hotbar to select · MAP · II pauses' : 'WASD/Arrows move · E use/swing · 1-9/wheel select · Q tool · X eat · R ride · G glasses · Tab bag · J journal · M map · N music · F fullscreen' },
+            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact (and swing a weapon) · tap the stone by the hotbar for the stone curse · MAP · II pauses' : 'WASD/Arrows move · E use/swing · V stone curse · 1-9/wheel select · Q tool · X eat · R ride · G glasses · Tab bag · J journal · M map · N music · F fullscreen' },
             { icon: 'ic_moon', label: 'Quit to title', sub: LC.Net.role ? 'Also ends the co-op session.' : 'Anything since your last sleep (or save) is lost.', action: function () { self.quitToTitle(); } }
           ]).filter(Boolean);
         } }]
@@ -8389,7 +9101,7 @@ window.LC = window.LC || {};
 
     // ================================================================ villagers
     openVillager: function (vid) {
-      var self = this, S = this.S, W = this.world, v = LC.VILLAGERS[vid], f = LC.State.folk(vid), por = 'npc_' + vid + '_0';
+      var self = this, S = this.S, W = this.world, v = LC.villager(vid), f = LC.State.folk(vid), por = 'npc_' + LC.villagerKey(vid) + '_0';
       if (!f.met) {
         f.met = true;
         this.say(v.intro.map(function (t) { return { name: v.name, portrait: por, text: t }; }), { onDone: function () {
@@ -8404,6 +9116,11 @@ window.LC = window.LC || {};
           if (vid === 'tanggang' && !S.quests.tanggang) S.quests.tanggang = 1;
           self.openVillager(vid);
         } });
+        return;
+      }
+      if (vid === 'tanggang' && LC.hasStone() && !S.quests.stoneTold) {   // v1.6: a friend's gift, the stone curse
+        S.quests.stoneTold = 1; LC.Audio.sfx('stage');
+        this.say(LC.storyLines(LC.TEXT.stoneGift), { onDone: function () { self.openVillager(vid); } });
         return;
       }
       var quote = v.chat[Math.floor(Math.random() * v.chat.length)];
@@ -9106,14 +9823,33 @@ window.LC = window.LC || {};
             if (S.inv.filter(function (sl) { return !sl; }).length < 2) { self.toast('Make room in your bag first (2 free slots)!'); LC.Audio.sfx('error'); return; }
             LC.State.remove('selendang', 1); S.quests.tanggang = 2; S.kepeng += 500; LC.State.add('pinggan_lama', 2); LC.State.add('emas', 1);
             LC.Audio.sfx('stage'); W.doShared('kind', { n: 10 }, function () {});
+            var gift = S.quests.stoneTold ? [] : LC.storyLines(LC.TEXT.stoneGift); S.quests.stoneTold = 1;
             self.say([{ name: 'Si Tanggang', portrait: 'npc_tanggang_0', text: '...Mak\'s selendang. It still smells of pandan, like her kitchen.' },
               { name: 'Si Tanggang', portrait: 'npc_tanggang_0', text: 'Mak, I am sorry. I was proud and foolish, and you loved me anyway. Maafkan aku.' },
               { text: 'The ghost holds the shawl to his face. For the first time in centuries, he smiles. The water around him glows softly, like morning.' },
               { name: 'Si Tanggang', portrait: 'npc_tanggang_0', text: 'Thank you, child. Take my captain\'s treasure: it is only gold, after all. Go home and hug your Nenek\'s memory for me.' },
-              { text: '✦ Si Tanggang is at peace. (+500 kepeng, 2 Pinggan Lama, 1 Emas) ✦' }]);
+              { text: '✦ Si Tanggang is at peace. (+500 kepeng, 2 Pinggan Lama, 1 Emas) ✦' }].concat(gift));
             return 'close';
           } });
-        else if (tq === 2) rows.push({ icon: 'ic_glow', label: 'At peace', sub: 'Si Tanggang has said sorry at last. He likes to sit by the mirror now, and he does not mind what he sees.' });
+        else if (tq === 2 || tq === 3) {   // v1.6: he longs to see his mother
+          rows.push({ icon: 'ic_restu', label: tq === 2 ? 'What still troubles him?' : 'Guide him to his mother (again)', sub: tq === 2 ? 'Something weighs on the old captain, even now.' : 'The shadows pulled him back last time. Mak Deruma waits on the beach of Pulau Mutiara.',
+            action: function () {
+              var lines = tq === 2 ? LC.TANGGANG.ask.map(function (t) { return { name: 'Si Tanggang', portrait: 'npc_tanggang_0', text: t }; }) : [{ name: 'Si Tanggang', portrait: 'npc_tanggang_0', text: 'Will you try again, child? I am ready. Mak is waiting.' }];
+              self.say(lines, { choices: [
+                { label: 'Guide him to his mother', fn: function () { self.say([{ name: 'Si Tanggang', portrait: 'npc_tanggang_0', text: LC.TANGGANG.go }], { onDone: function () { W.startEscort(); } }); } },
+                { label: 'Not yet' }
+              ] });
+              return 'close';
+            } });
+        }
+        if (tq >= 2) rows.push({ icon: 'ic_batu', label: 'Sumpahan Batu', sub: 'His gift: press V (or tap the stone beside your hotbar) to turn nearby enemies to stone for ' + (LC.hasRestu() ? LC.RESTU.dur : LC.STONE.dur) + ' seconds.' });
+        if (tq >= 4) rows.push({ icon: 'ic_restu', label: 'Home at last', sub: 'Si Tanggang mends nets by the river and cooks (badly) for his mother. He has never been happier.' });
+      }
+      if (vid === 'deruma') {
+        var dq = S.quests.tanggang || 0;
+        if (dq >= 4) rows.push({ icon: 'ic_restu', label: 'Restu Ibu', sub: S.restuDay === S.day ? 'Her prayer already saved you today. It will be with you again tomorrow.' : 'Her blessing is with you: once a day, when your health runs out, it heals you and turns the enemies around you to stone.' });
+        else if (S.escort) rows.push({ icon: 'ic_restu', label: 'Bring Si Tanggang to her', sub: 'He is right behind you.', action: function () { self.closeModal(); W.reunion(); return 'close'; } });
+        else rows.push({ icon: 'ic_moon', label: 'Her son, Si Tanggang', sub: dq >= 1 ? 'His ghost waits in the sunken junk in Kampung Karang. Once he is at peace, perhaps he could be brought to her...' : 'She says his ship sank somewhere off this coast. Kampung Karang, the village beneath the waves, is just below.' });
       }
       if (vid === 'duyung' && S.quests.tanggang === 1 && !S.flags.gotSelendang) rows.push({ icon: 'i_selendang', label: 'Ask about a lost shawl', sub: 'Si Tanggang\'s mother wore an old selendang...', action: function () {
         if (!LC.State.canAdd('selendang')) { self.toast('Make room in your bag first!'); LC.Audio.sfx('error'); return; }
@@ -9158,9 +9894,209 @@ window.LC = window.LC || {};
         { icon: 'i_wau', label: d === 0 ? 'Today is Pesta day!' : 'Next Pesta: Sabtu, in ' + d + ' day' + (d > 1 ? 's' : ''), sub: 'Kite fighting, top spinning and the Serama show at the pavilion in Kampung Tepian, 8 AM to 6 PM. Champion: wau ' + (tro.wau || 0) + 'x, gasing ' + (tro.gasing || 0) + 'x, Serama ' + (tro.serama || 0) + 'x.' },
         { icon: 'chicken_0', iconScale: 2, label: 'Farm animals: ' + S.animals.length, sub: 'Feed them every day at the reban. Eggs in the nest hatch after three nights.' }
       ];
-      if (S.stats.kills || S.stats.gold) rows.push({ icon: 'i_bijih_emas', label: 'Lombong Puaka', sub: (S.stats.kills || 0) + ' shadows sent back into the dark, ' + (S.stats.gold || 0) + ' pieces of ore and crystal dug out.' + (S.flags.penunggu ? ' You have beaten the stone guardian!' : '') });
+      if (LC.hasStone()) rows.push({ icon: 'ic_batu', label: 'Sumpahan Batu (V)', sub: "Si Tanggang's stone curse: nearby enemies turn to stone for " + (LC.hasRestu() ? LC.RESTU.dur : LC.STONE.dur) + ' seconds (bosses less). Stone cracks: your blows do double damage. Ready again after ' + (LC.hasRestu() ? LC.RESTU.cd : LC.STONE.cd) + ' seconds.' });
+      if (LC.hasRestu()) rows.push({ icon: 'ic_restu', label: 'Restu Ibu' + (S.restuDay === S.day ? ' (used today)' : ' (ready)'), sub: "Mak Deruma's blessing: once a day, when your health runs out, you are healed fully and every enemy around you turns to stone." });
+      else if ((S.quests.tanggang || 0) >= 2) rows.push({ icon: 'ic_moon', label: "Si Tanggang's last wish", sub: 'He longs to see his mother, whose ghost waits on the beach of Pulau Mutiara. Talk to him in the sunken junk.' });
+      if (S.stats.kills || S.stats.gold) rows.push({ icon: 'i_bijih_emas', label: 'Battles', sub: (S.stats.kills || 0) + ' creatures and shadows beaten, ' + (S.stats.gold || 0) + ' pieces of ore and crystal dug out of Lombong Puaka.' + (S.flags.penunggu ? ' You have beaten the stone guardian!' : '') });
       ['cermin_mata', 'keris', 'trisula'].forEach(function (id) { if (LC.State.count(id)) rows.push({ icon: 'i_' + id, label: LC.ITEMS[id].name, sub: LC.ITEMS[id].desc }); });
       return rows;
+    }
+  });
+})(window.LC);
+
+</script>
+  <script>/* src/scenes/UISettings.js */
+/* UI, part 4 (v1.6): sound & music volumes, save and load slots, the ability slots beside the hotbar
+ * (Sumpahan Batu and Restu Ibu), floating damage numbers and the red flash when you are hurt.
+ * Mixed into LC.UIScene. */
+window.LC = window.LC || {};
+(function (LC) {
+  'use strict';
+  var ACCEPT = { KeyE: 1, Space: 1, Enter: 1 };
+  var SOUND_ROWS = [
+    { k: 'music', label: 'Music', sub: 'The calm gamelan soundtrack.' },
+    { k: 'battle', label: 'Battle music', sub: 'Drums and gongs in a fight.' },
+    { k: 'sfx', label: 'Sound effects', sub: 'Tools, coins, swings, chimes.' },
+    { k: 'amb', label: 'Nature & rain', sub: 'River, birds, waves, wind, rain.' }
+  ];
+
+  Object.assign(LC.UIScene.prototype, {
+    // ================================================================ ability slots beside the hotbar
+    buildSkills: function () {
+      var self = this;
+      this.skillG = this.add.graphics();
+      this.skIcon = this.add.image(200, 604, 'ic_batu').setScale(2.6);
+      this.skKey = this.txt(180, 582, 'V', 11, '#a08a6a');
+      this.skCd = this.txt(200, 604, '', 18, '#fffdf2', { ox: 0.5, oy: 0.5, stroke: 4 });
+      this.rsIcon = this.add.image(152, 615, 'ic_restu').setScale(2);
+      var z = this.add.zone(176, 580, 48, 48).setOrigin(0).setInteractive({ useHandCursor: true });
+      z.isTouchBtn = true;
+      z.on('pointerdown', function () { if (!self.modal) self.pressKey('KeyV'); });
+      var rz = this.add.zone(136, 598, 32, 32).setOrigin(0).setInteractive({ useHandCursor: true });
+      rz.isTouchBtn = true;
+      rz.on('pointerdown', function () { if (!self.modal) self.toast(LC.State.s.restuDay === LC.State.s.day ? 'Restu Ibu has already saved you today. It returns tomorrow.' : 'Restu Ibu is with you: if your health runs out today, Mak Deruma\'s prayer will lift you up.', 'ic_restu'); });
+      this.skZones = [z, rz];
+      this.pin('bc', [this.skillG, this.skIcon, this.skKey, this.skCd, this.rsIcon, z, rz]);
+    },
+    drawSkills: function () {
+      var g = this.skillG, W = this.world, S = this.S, stone = LC.hasStone(), restu = LC.hasRestu();
+      g.clear();
+      this.skIcon.setVisible(stone); this.skKey.setVisible(stone && !this.touchOn); this.skCd.setVisible(stone); this.rsIcon.setVisible(restu);
+      this.skZones[0].setVisible(stone); this.skZones[1].setVisible(restu);
+      if (stone) {
+        var C = restu ? LC.RESTU : LC.STONE, left = W && W.stoneLeft ? W.stoneLeft() : 0, live = W && W.hasEnemies && W.hasEnemies(), x = 176, y = 580;
+        g.fillStyle(0x1e1510, 0.85); g.fillRoundedRect(x - 6, y - 8, 60, 64, 10);
+        g.lineStyle(2, 0x8a6a3a, 1); g.strokeRoundedRect(x - 6, y - 8, 60, 64, 10);
+        g.fillStyle(live && !left ? 0x2a3a4a : 0x2e2219, 1); g.fillRoundedRect(x, y, 48, 48, 6);
+        g.lineStyle(live && !left ? 3 : 1, live && !left ? 0x8fd3ff : 0x6a5034, 1); g.strokeRoundedRect(x, y, 48, 48, 6);
+        if (left > 0) { g.fillStyle(0x000000, 0.6); g.fillRect(x + 2, y + 2, 44, 44 * Math.min(1, left / C.cd)); }
+        this.skIcon.setAlpha(live || left ? 1 : 0.55);
+        var t = left > 0 ? String(Math.ceil(left)) : '';
+        if (this.skCd.text !== t) this.skCd.setText(t);
+      }
+      if (restu) {
+        var used = S.restuDay === S.day, rx = 136, ry = 598;
+        g.fillStyle(0x1e1510, 0.85); g.fillRoundedRect(rx, ry, 32, 32, 7);
+        g.lineStyle(2, used ? 0x6a5034 : 0xffd166, 1); g.strokeRoundedRect(rx, ry, 32, 32, 7);
+        this.rsIcon.setAlpha(used ? 0.35 : 1);
+      }
+    },
+
+    // ================================================================ battle feedback
+    floatText: function (wx, wy, s, color) {
+      if (!this.ready) return;
+      var t = this.txt(0, 0, s, 16, color || '#fffdf2', { ox: 0.5, oy: 1, stroke: 4 }).setDepth(-0.5);
+      this.floats = this.floats || [];
+      this.floats.push({ t: t, wx: wx, wy: wy, born: this.time.now });
+      this.updateFloats();
+    },
+    updateFloats: function () {
+      var W = this.world, cam = W && W.cameras && W.cameras.main, now = this.time.now;
+      this.floats = (this.floats || []).filter(function (f) {
+        var age = (now - f.born) / 850;
+        if (age >= 1 || !cam) { f.t.destroy(); return false; }
+        var sx = (f.wx - cam.worldView.x) * cam.zoom, sy = (f.wy - cam.worldView.y) * cam.zoom - age * 40;
+        f.t.setPosition(Math.round(sx), Math.round(sy)).setAlpha(age < 0.6 ? 1 : 1 - (age - 0.6) / 0.4).setScale(age < 0.15 ? 1.4 - age * 2.6 : 1);
+        return true;
+      });
+    },
+    hurtFlash: function () {
+      if (!this.hurtR) this.hurtR = this.add.rectangle(-2000, -2000, 6000, 6000, 0xff2020, 1).setOrigin(0).setDepth(-0.4).setAlpha(0);
+      this.tweens.killTweensOf(this.hurtR);
+      this.hurtR.setAlpha(0.2);
+      this.tweens.add({ targets: this.hurtR, alpha: 0, duration: 280 });
+    },
+
+    // ================================================================ sound & music volumes
+    openSound: function () {
+      this.closeModal();
+      var self = this, A = LC.Audio, sel = 0, m;
+      var c = this.modalC(95, 0x000000, 0.45);
+      var X = 190, Y = 140, Wd = 580, Hd = 360, RH = 62, barX = X + 240, barW = 200;
+      var bg = this.add.graphics(); this.panel(bg, X, Y, Wd, Hd); c.add(bg);
+      c.add(this.txt(480, Y + 14, 'Sound & Music', 26, '#ffd166', { ox: 0.5 }));
+      var rg = this.add.graphics(); c.add(rg);
+      var rows = SOUND_ROWS.map(function (r, i) {
+        var y = Y + 60 + i * RH;
+        var lb = self.txt(X + 30, y + 6, r.label, 19, '#fbecc8'), sb = self.txt(X + 30, y + 32, '', 12, '#a08a6a', { wrap: 190 });
+        var pc = self.txt(barX + barW + 60, y + 20, '', 16, '#f7dd8a', { ox: 0.5, oy: 0.5 });
+        var mi = self.txt(barX - 18, y + 20, '−', 24, '#ffd166', { ox: 0.5, oy: 0.5 }), pl = self.txt(barX + barW + 18, y + 19, '+', 22, '#ffd166', { ox: 0.5, oy: 0.5 });
+        var zm = self.add.zone(barX - 34, y + 2, 32, 36).setOrigin(0).setInteractive({ useHandCursor: true });
+        var zp = self.add.zone(barX + barW + 2, y + 2, 32, 36).setOrigin(0).setInteractive({ useHandCursor: true });
+        var zb = self.add.zone(barX, y + 6, barW, 28).setOrigin(0).setInteractive({ useHandCursor: true });
+        var zr = self.add.zone(X + 20, y, 190, RH - 6).setOrigin(0).setInteractive({ useHandCursor: true });
+        zm.on('pointerdown', function () { sel = i; change(-0.1); });
+        zp.on('pointerdown', function () { sel = i; change(0.1); });
+        zb.on('pointerdown', function (p) { sel = i; A.setVolume(r.k, (p.x - (zb.getBounds().x)) / barW); LC.Audio.sfx('click'); render(); });
+        zr.on('pointerdown', function () { sel = i; render(); });
+        c.add([lb, sb, pc, mi, pl, zm, zp, zb, zr]);
+        return { y: y, lb: lb, sb: sb, pc: pc };
+      });
+      var foot = this.txt(480, Y + Hd - 52, '', 13, '#cdb8a0', { ox: 0.5, wrap: Wd - 60, align: 'center' });
+      var keys = this.txt(480, Y + Hd - 22, this.touchOn ? 'Tap − / + or the bar  ·  X (top) to close' : 'W/S choose  ·  A/D or ←/→ change  ·  N music on/off  ·  Esc close', 12, '#8a7a6a', { ox: 0.5 });
+      c.add([foot, keys]);
+      function change(dv) { var r = SOUND_ROWS[sel]; A.setVolume(r.k, A.vol[r.k] + dv); LC.Audio.sfx('click'); render(); }
+      function render() {
+        rg.clear();
+        rows.forEach(function (o, i) {
+          var r = SOUND_ROWS[i], v = A.vol[r.k], on = i === sel;
+          rg.fillStyle(on ? 0x4a3520 : 0x2b1f17, 1); rg.fillRoundedRect(X + 20, o.y, Wd - 40, RH - 6, 6);
+          if (on) { rg.lineStyle(2, 0xffd166, 1); rg.strokeRoundedRect(X + 20, o.y, Wd - 40, RH - 6, 6); }
+          self.bar(rg, barX, o.y + 12, barW, 16, v, r.k === 'battle' ? 0xff8a5a : r.k === 'amb' ? 0x9be15d : r.k === 'sfx' ? 0x8fd3ff : 0xffd166);
+          o.pc.setText(Math.round(v * 100) + '%');
+          o.sb.setText(on ? r.sub : '');
+        });
+        A.setPreview(SOUND_ROWS[sel].k === 'battle' && A.musicOn);
+        foot.setText(!A.musicOn ? 'Music is switched off (press N, or use Music: Off in the pause menu, to turn it back on).'
+          : SOUND_ROWS[sel].k === 'battle' ? (A.vol.battle > 0 ? 'Previewing the battle song...' : 'Battle music is off: the calm music keeps playing during fights.') : 'Changes are saved on this device.');
+      }
+      function close() { A.setPreview(false); c.destroy(); if (self.modal === m) self.modal = null; }
+      m = {
+        type: 'sound', close: close, render: render,
+        key: function (code) {
+          if (code === 'Escape' || code === 'Tab') { close(); return; }
+          if (code === 'ArrowUp' || code === 'KeyW') sel = (sel + 3) % 4;
+          else if (code === 'ArrowDown' || code === 'KeyS') sel = (sel + 1) % 4;
+          else if (code === 'ArrowLeft' || code === 'KeyA') { change(-0.1); return; }
+          else if (code === 'ArrowRight' || code === 'KeyD') { change(0.1); return; }
+          else if (code === 'KeyN') { self.toast('Music ' + (LC.Audio.toggleMusic() ? 'on' : 'off'), 'ic_glow'); }
+          else if (ACCEPT[code]) { change(A.vol[SOUND_ROWS[sel].k] >= 1 ? -1 : 0.1); return; }
+          LC.Audio.sfx('click');
+          render();
+        },
+        wheel: function (dy) { change(dy > 0 ? -0.1 : 0.1); }
+      };
+      this.modal = m;
+      render();
+    },
+
+    // ================================================================ save and load
+    openSaves: function (mode) {
+      var self = this, armed = 0, saving = mode === 'save';
+      this.openMenu({
+        title: saving ? 'Save Game' : 'Load Game',
+        footer: function () {
+          return saving ? 'Your farm also saves itself every night, and whenever you leave the game (into the slot you are playing).'
+            : LC.Net.isHost() ? 'Loading sends everyone back to the loaded farm. Your friends keep their own bags.' : 'Anything since your last save is lost when you load.';
+        },
+        tabs: [{ label: saving ? 'Save' : 'Load', rows: function () {
+          var rows = [];
+          for (var n = 1; n <= LC.SAVE_SLOTS; n++) (function (n) {
+            var info = LC.State.slotInfo(n), cur = n === LC.State.slot, txt = info ? LC.State.slotText(info) : 'Empty slot';
+            if (saving) rows.push({ icon: cur ? 'ic_sun' : info ? 'ic_bond' : 'ic_moon', label: armed === n ? 'Overwrite slot ' + n + '? Press again to confirm.' : 'Slot ' + n + (cur ? '  (this farm)' : ''), sub: txt, right: 'Save',
+              action: function () {
+                if (info && !cur && armed !== n) { armed = n; LC.Audio.sfx('click'); return; }
+                var ok = LC.State.saveTo(n);
+                if (ok && LC.Net.isHost()) LC.Net.broadcast({ t: 'saved', by: LC.Net.myName });
+                self.toast(ok ? 'Saved to slot ' + n + '.' : 'Could not save: browser storage is blocked.', 'ic_bond');
+                return 'close';
+              } });
+            else rows.push({ icon: cur ? 'ic_sun' : info ? 'ic_bond' : 'ic_moon', label: armed === n ? 'Load slot ' + n + '? Press again to confirm.' : 'Slot ' + n + (cur ? '  (this farm)' : ''), sub: txt, right: info ? 'Load' : '',
+              enabled: !!info, why: 'This slot is empty.',
+              action: function () {
+                if (armed !== n) { armed = n; LC.Audio.sfx('click'); return; }
+                self.loadSlot(n);
+                return 'close';
+              } });
+          })(n);
+          return rows;
+        } }]
+      });
+    },
+    loadSlot: function (n) {
+      var self = this, N = LC.Net, W = this.world;
+      if (N.isGuest()) return;
+      this.closeModal();
+      if (!LC.State.load(n)) { this.toast('Could not load that save.', 'ic_moon'); LC.Audio.sfx('error'); return; }
+      this.S = LC.State.s;
+      LC.followPid = 'me';
+      LC.Audio.sfx('chime');
+      W.leaving = true;
+      W.cameras.main.fadeOut(450, 0, 0, 0);
+      W.cameras.main.once('camerafadeoutcomplete', function () {
+        if (N.isHost()) N.broadcast({ t: 'reload', world: LC.State.snapshot(), by: N.myName });
+        W.scene.restart({ loaded: n });
+      });
     }
   });
 })(window.LC);
@@ -9169,7 +10105,8 @@ window.LC = window.LC || {};
   <script>/* src/cheats.js */
 /* Little Creature — TESTING build only (dist/LittleCreature_full.html). Everything is unlocked, with its own save
  * (so it never touches your real farm), and a few test keys:
- *   ]  sleep now (next day)      [  skip to the next season      \  skip to the next Pesta (Sabtu)      H  full health and energy */
+ *   ]  sleep now (next day)      [  skip to the next season      \  skip to the next Pesta (Sabtu)      H  full health and energy
+ *   T  replay Si Tanggang's story (switch between "before he meets his mother" and "reunited") */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -9193,6 +10130,7 @@ window.LC = window.LC || {};
       f.pts = 40; Object.keys(gifts).forEach(function (h) { f.gifts[h] = true; });
     });
     S.quests.bunian = 2; S.wear.glasses = true; S.str = LC.STR_MAX;
+    S.quests.tanggang = 4; S.quests.stoneTold = 1;   // v1.6: Sumpahan Batu and Restu Ibu
     var inv = ['hoe', 'can', 'joran', 'keris', 'trisula', 'basikal', 'kereta', 'cermin_mata', 'peti_ukir',
       'wau_bulan', 'gasing_uri', 'sikat', 'dedak', 'baja', 'nasi_lemak', 'pulut_mangga', 'jamu_kuat', 'canang'];
     var many = { dedak: 99, baja: 99, nasi_lemak: 99, pulut_mangga: 99, jamu_kuat: 20, canang: 20 };
@@ -9215,7 +10153,14 @@ window.LC = window.LC || {};
       case 'BracketRight': sleepTo(S.day + 1); return;
       case 'BracketLeft': { var d = S.day + 1; while (LC.seasonOf(d) === State.season()) d++; this.toast('Skipping to ' + LC.seasonOf(d).name + '...', 'ic_glow'); sleepTo(d); return; }
       case 'Backslash': { var p = S.day + 1; while (p % 7 !== 6) p++; this.toast('Skipping to the next Pesta (Sabtu)...', 'i_wau'); sleepTo(p); return; }
-      case 'KeyH': S.hp = S.maxHp; S.energy = S.maxEnergy; S.water = S.maxWater; this.toast('Full health, energy and water.', 'ic_hp'); return;
+      case 'KeyH': S.hp = S.maxHp; S.energy = S.maxEnergy; S.water = S.maxWater; this.toast('Full health, energy and water (and abilities ready).', 'ic_hp'); S.restuDay = 0; LC.stoneReadyAt = 0; return;
+      case 'KeyT': {
+        var re = (S.quests.tanggang || 0) >= 4;
+        S.quests.tanggang = re ? 2 : 4; S.escort = null; S.restuDay = 0;
+        if (re) delete S.folk.deruma;
+        this.toast(re ? 'Tanggang story reset: talk to Si Tanggang in the sunken junk (Kampung Karang) to guide him to his mother.' : 'Si Tanggang and Mak Deruma reunited: Restu Ibu unlocked.', 'ic_restu');
+        return;
+      }
     }
     return onKey.call(this, ev);
   };
@@ -9223,7 +10168,7 @@ window.LC = window.LC || {};
   LC.UIScene.prototype.create = function () {
     create.apply(this, arguments);
     var self = this;
-    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal.', 'ic_glow'); });
+    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story.', 'ic_glow'); });
   };
 })(window.LC);
 

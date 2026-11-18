@@ -68,7 +68,8 @@ window.LC = window.LC || {};
       this.refreshOfferings();
       this.createFolk();   // villagers, folk spirits, your companion, kites (WorldLife.js)
       this.createFarmLife();   // v1.5: animals, chests, hidden things, seasons (WorldFarm.js)
-      this.createEnemies();    // v1.5: the shadows of the mine (WorldCombat.js)
+      this.createEnemies();    // v1.5: the shadows of the mine, v1.6: the wild places too (WorldCombat.js)
+      this.createTanggang();   // v1.6: guiding Si Tanggang home to his mother (WorldTanggang.js)
 
       var cam = this.cameras.main;
       cam.setBounds(0, 0, this.W * T, this.H * T);
@@ -101,7 +102,10 @@ window.LC = window.LC || {};
         });
       } else if (data.area && this.ui.ready) this.ui.areaBanner(this.A.name, this.A.sub);
       if (data.knocked) this.time.delayedCall(700, function () {
-        self.ui.say([{ text: 'Everything went dark... You wake up at home with a sore head. Pelita must have guided you out of the mine.' }, { text: data.knocked + ' (Eat good food to heal, and come back stronger!)' }]);
+        self.ui.say([{ text: 'Everything went dark... You wake up at home with a sore head. Pelita must have guided you home.' }, { text: data.knocked + ' (Eat good food to heal, and come back stronger!)' }]);
+      });
+      if (data.loaded) this.time.delayedCall(500, function () {
+        self.ui.toast(data.loaded > 0 ? 'Loaded slot ' + data.loaded + ': Day ' + S.day + ', ' + LC.State.weekday() + '.' : (data.by || 'Your friend') + ' loaded a saved farm. Day ' + S.day + '!', 'ic_bond');
       });
       if (parked) this.time.delayedCall(500, function () { self.toast(parked === 'car' ? 'The car can\'t go here. You park it at the edge and walk on.' : 'You leave the basikal by the path.', parked === 'car' ? 'i_kereta' : 'i_basikal'); });
     }
@@ -246,7 +250,7 @@ window.LC = window.LC || {};
       var keep = {}, g = this.grid;
       function mark(x, y, r) { for (var dy = -r; dy <= r; dy++) for (var dx = -r; dx <= r; dx++) keep[(x + dx) + ',' + (y + dy)] = 1; }
       LC.SPIRIT_ORDER.forEach(function (sid) { var sp = LC.SPIRITS[sid]; if (sp.area === self.area) mark(sp.x, sp.y, 2); });
-      Object.keys(LC.VILLAGERS).forEach(function (vid) { var p = LC.VILLAGERS[vid].post; if (p && self.area === 'kampung') mark(p.x, p.y, 2); });
+      LC.villagerPosts(this.area).forEach(function (p) { mark(p.x, p.y, 2); });
       Object.keys(LC.PLOT_POSTS).forEach(function (k) { if (self.area === 'kampung') mark(LC.PLOT_POSTS[k].x, LC.PLOT_POSTS[k].y, 2); });
       mark(Math.floor(this.A.home.x), Math.floor(this.A.home.y), 3);
       this.objects.forEach(function (o) {   // never hide a building or a house plot behind a tree
@@ -616,6 +620,14 @@ window.LC = window.LC || {};
         N.on.event = function (m) { if (m.ev === 'level') self.levelUp(m.lv); };
         N.on.sleepStart = function (m) { self.guestSleep(m); };
         N.on.dayStart = function (m) { self.guestDayStart(m); };
+        // v1.6: the host loaded a saved farm: everyone goes to it (guests keep their own bags)
+        N.on.reload = function (m) {
+          LC.State.applySnapshot(m.world); LC.State.save();
+          self.ui.closeModal(); self.leaving = true;
+          self.cameras.main.fadeOut(400, 0, 0, 0);
+          self.cameras.main.once('camerafadeoutcomplete', function () { self.scene.restart({ loaded: -1, by: m.by }); });
+        };
+        N.on.saved = function (m) { if (LC.State.save()) self.ui.toast((m.by || 'Your friend') + ' saved the farm. Your bag is saved too.', 'ic_bond'); };
         N.on.closed = function (why) {
           LC.State.save();
           self.ui.say([{ text: why + ' You keep everything in your bag.' }], { onDone: function () { self.ui.quitToTitle(); } });
@@ -831,7 +843,8 @@ window.LC = window.LC || {};
         drop: mk('drop', { speed: { min: 15, max: 35 }, angle: { min: 200, max: 340 }, gravityY: 130, lifespan: 500, alpha: { start: 1, end: 0.2 } }),
         dirt: mk('dirt', { speed: { min: 15, max: 35 }, angle: { min: 200, max: 340 }, gravityY: 130, lifespan: 450 }),
         smoke: mk('smoke', { speedY: { min: -16, max: -8 }, speedX: { min: -4, max: 4 }, lifespan: 1400, alpha: { start: 0.7, end: 0 }, scale: { start: 0.5, end: 1.5 } }),
-        petal: mk('petal', { speed: { min: 6, max: 18 }, angle: { min: 60, max: 120 }, gravityY: 10, lifespan: 2200, alpha: { start: 1, end: 0 } })
+        petal: mk('petal', { speed: { min: 6, max: 18 }, angle: { min: 60, max: 120 }, gravityY: 10, lifespan: 2200, alpha: { start: 1, end: 0 } }),
+        pebble: mk('pebble', { speed: { min: 20, max: 60 }, angle: { min: 200, max: 340 }, gravityY: 170, lifespan: 600, alpha: { start: 1, end: 0 }, scale: { start: 1, end: 0.5 } })
       };
       if (this.spiritPos) {
         this.incense = this.add.particles(this.spiritPos.x - 8, this.spiritPos.y - 31, 'smoke', {
@@ -861,7 +874,7 @@ window.LC = window.LC || {};
     update(time, delta) {
       if (!this.ui || !this.ui.ready) return;
       var dt = Math.min(delta, 50) / 1000, S = this.S, g = S.ghost;
-      var blocked = this.ui.isBlocking() || this.sleeping || this.leaving;
+      var blocked = this.ui.isBlocking() || this.sleeping || this.leaving || this.reuniting;   // (v1.6: hold still while mother and son meet)
 
       this.updatePlayer(dt, blocked);
       this.checkExits();
@@ -899,6 +912,7 @@ window.LC = window.LC || {};
       this.updateCritters(dt);
       this.updateFarmLife(time, dt);
       this.updateEnemies(time, dt, blocked);
+      this.updateTanggang(time, dt, blocked);
       this.updateLighting(time, dt);
 
       var act = blocked ? null : this.getAction();
@@ -921,7 +935,8 @@ window.LC = window.LC || {};
         var oa = this.objectAction(o, sl, it, isFood);
         if (oa) return oa;
       }
-      if (it && it.kind === 'weapon' && this.A.enemies) return { label: 'Swing the ' + it.name, swing: true, fn: function () { self.attack(); } };
+      var wp = this.weaponOf(sl);   // swing a weapon wherever enemies roam (or the cangkul, when one comes close)
+      if (wp && this.hasEnemies() && (!wp.improvised || this.enemyNear(70))) return { label: 'Swing the ' + wp.name, swing: true, fn: function () { self.attack(); } };
       var cr = this.critterAt(f.fx, f.fy);
       if (cr && cr.aid) { var aa = this.animalAction(cr, sl, it); if (aa) return aa; }
       else if (cr) return { label: 'Pet the ' + cr.kind, fn: function () { self.petCritter(cr); } };

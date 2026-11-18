@@ -12,8 +12,8 @@ As Pelita levels up, its light opens the way to the wider land: a riverside vill
 - **Easiest:** download [`dist/LittleCreature.html`](dist/LittleCreature.html). It is **one file** containing the whole game. Copy it anywhere (a USB stick, another PC) and double-click it to open it in any browser. No install and no internet needed.
 - **Or:** download this whole repository (**Code → Download ZIP**), unzip it, and double-click **`index.html`**. (`index.html` needs the folders next to it, so to copy just one file, use `dist/LittleCreature.html`.)
 - The game fills the whole browser window at any size. Press **F** (or use the pause menu) to go fullscreen.
-- Saves are kept by the browser on that PC. A different PC or browser starts its own farm.
-- **Testing build:** [`dist/LittleCreature_full.html`](dist/LittleCreature_full.html) starts with everything unlocked (Pelita Lv 20, every place, spirit, weapon and vehicle, 99,999 kepeng, max strength). It uses its own save, so your real farm is never touched. Test keys: **]** next day, **[** next season, **\** next Pesta, **H** full health.
+- Saves are kept by the browser on that PC. A different PC or browser starts its own farm. There are **three save slots**: see [Saving and loading](#saving-and-loading).
+- **Testing build:** [`dist/LittleCreature_full.html`](dist/LittleCreature_full.html) starts with everything unlocked (Pelita Lv 20, every place, spirit, weapon and vehicle, 99,999 kepeng, max strength, Sumpahan Batu and Restu Ibu). It uses its own saves, so your real farm is never touched. Test keys: **]** next day, **[** next season, **\** next Pesta, **H** full health (and abilities ready), **T** replay Si Tanggang's story (switch between "before the reunion" and "reunited").
 - If double-clicking opens the file in something other than a browser, right-click it and choose **Open with → Microsoft Edge** (or Chrome or Firefox).
 
 ### On an Android phone
@@ -27,14 +27,14 @@ As Pelita levels up, its light opens the way to the wider land: a riverside vill
 ### With friends (co-op, up to 4 players)
 PC browsers and Android phones can all play together.
 
-1. **One player hosts.** On the title screen choose **Play with Friends**, type your name, and press **Open my farm**. You can also pick **Invite friends** in the pause menu while you're playing. You get a **5-letter code**. It's also shown at the top of the screen and in the pause menu.
+1. **One player hosts.** On the title screen choose **Play with Friends**, type your name, **pick which of your saved farms to open** (slot 1, 2 or 3, or a new farm), and press **Open my farm**. You can also pick **Invite friends** in the pause menu while you're playing. You get a **5-letter code**. It's also shown at the top of the screen and in the pause menu.
 2. **Friends join.** Each friend chooses **Play with Friends**, types their name and **your code**, and presses **Join farm**.
 3. Everyone walks around the same farm in a different-coloured outfit, with name tags.
 
 | Shared by everyone | Your own (kept on your device) |
 |---|---|
 | Fields, crops, trees, forage spots, the clock and the day | Bag, hotbar and kepeng |
-| Farm animals, eggs in the nest, storage chests and what is in them | Strength, health, the Bunian glasses, Pesta trophies |
+| Farm animals, eggs in the nest, storage chests and what is in them | Strength, health, the Bunian glasses, Pesta trophies, Si Tanggang's story and your abilities |
 | Pelita (feeding, petting, offerings, bond, levels, growth) | Energy and watering can |
 | Houses built in the kampung, spirits befriended | Villager friendship and requests, your fish log, your bike and car |
 | | Cooking, crafting, fishing, and buying or selling |
@@ -42,7 +42,8 @@ PC browsers and Android phones can all play together.
 - Friends can explore different places at the same time. You see each other when you are in the same place.
 - Pelita follows whoever fed or petted it last, even into another place. Your spirit companion is visible to friends too.
 - **Only the host ends the day.** When the host sleeps, everyone sleeps (wherever they are, they wake up at the farm) and sees the day summary. A friend can use the house to tell the host they're sleepy.
-- The host's farm is saved on the host's device. A friend's bag goes home with them, so they can bring it to the next session.
+- The host's farm is saved on the host's device, in the slot it was opened from. A friend's bag (with kepeng, strength and quests) goes home with them, so they can bring it to the next session and carry on.
+- **Saving and loading together.** When the host saves (pause menu → **Save game**), every friend's bag is saved too. When the host loads a farm (pause menu → **Load game**), everyone is taken to the loaded farm and keeps their own bag. Friends can also save their bag any time (pause menu → **Save my bag**).
 - Co-op needs internet. Friends connect directly to each other (WebRTC, via [PeerJS](https://peerjs.com)). Solo play stays fully offline.
 
 ## Controls
@@ -57,13 +58,16 @@ PC browsers and Android phones can all play together.
 | Pause menu | Esc | **II** button (top), or Android **Back** |
 | Map (this place, and the whole land) | M | **MAP** button (top) |
 | Music on/off | N | Pause menu |
+| Volume of the music, battle music, sound effects and nature | Pause menu → **Sound & music** | Same |
+| Save / load (3 slots) | Pause menu → **Save game** / **Load game** | Same |
 | Fullscreen | F | Automatic (Android app, and phone browsers on the first tap) |
 | Journal | J | Pause menu → Journal |
 | Ride / get off (bicycle, car) | R | Select it in the hotbar and press **USE** |
 | Put on / take off the Bunian glasses | G | Select them and press **USE** |
-| Swing a weapon (in the haunted mine) | E | **USE** |
+| Swing a weapon (wherever enemies roam) | E | **USE** |
+| Stone curse (Sumpahan Batu, once you have it) | V | Tap the stone beside the hotbar |
 
-Touch controls switch on automatically on touch screens. You can toggle them, the music and the nature sounds in the pause menu.
+Touch controls switch on automatically on touch screens. You can toggle them in the pause menu, where **Sound & music** also sets the volume of the music, the battle music, the sound effects and the nature sounds.
 
 ## How to play
 
@@ -124,17 +128,30 @@ Locked paths are blocked by vines, rockfall or sand until Pelita is strong enoug
 - **Strength.** Lift the **batu angkat** (training stone) in the kampung once a day, train silat with Kesuma in the hidden village once a day, and eat home-cooked dishes (twice a day). Strength raises your health.
 - **The Bunian's secret.** After you befriend the Orang Bunian in the forest, it asks for 3 *madu tualang* (wild honey from the bees' nests by the giant tualang trees), a *pengat durian* and 4 *melati*. Its gift is the **Bunian glasses**. Wear them by the oldest tualang in the west of the forest and a golden gate appears, leading to **Kampung Bunian**, a hidden village with more people: Tok Batin the elder, Dang Melur's rare goods (golden fruit, oil-less lamps, strength tonic) and Kesuma the silat master. In the middle of the village, a **keris** is stuck in a stone. With 60 strength you can draw it out.
 - **Lombong Puaka, the haunted gold mine (Pelita Lv 9).** A cursed mine shaft in Gunung Kabus. It is dark (Pelita's glow helps), and shadows, ghost bats and giant centipedes attack you. A stone guardian waits in the deepest hall. Hold a weapon and press USE to swing: a rattan staff (make it from 4 rotan, or buy it from Pak Wan), a *parang* (Tukang Leong), the keris, or the sea king's trident. Mine gold seams and crystals and fish the underground pool. Your health shows in the top-left panel, and food heals you. If it runs out you faint, wake up at home and drop half of your gold.
+- **Battles in the wild.** Fighting is not just in the mine any more. **Wild boars** (*babi hutan*) roam the east of Hutan Rimba, **giant rock crabs** scuttle on Pulau Mutiara's beaches, **giant scorpions** hunt in the red dunes, **fire jellyfish** drift at the reef's edge in Kampung Karang, the drowned crew's **shadows** haunt the sunken junk, and a giant centipede lurks on the mountain. After dark, **shadows** come out in the forest and on the island, and **ghost bats** over the mountain; they melt away at dawn. The farm, the kampungs and the sea palaces are always safe.
+  - Enemies **shiver and flash before they attack** (boars lower their heads and charge), so you can step aside or strike first.
+  - Your weapon sweeps through the air, sparks fly, damage numbers pop up, and the screen flashes red when you are hit. **Battle music** (drums, gongs and a saron tune) rises when something hunts you and fades when the fight is over. Turn it down, or off, in **Sound & music**.
+  - No weapon yet? The **cangkul** works as a weak one when something comes close.
+- **Si Tanggang's last wish.** Once Si Tanggang is your friend (give him his mother's *selendang*, or reach 3 ♥), he gives you **Sumpahan Batu**, the stone curse: press **V** (or tap the stone beside your hotbar) and every enemy near you turns to stone for 4 seconds (bosses less). Stone cracks easily: your blows do **double damage**. It recharges in 15 seconds.
+  - Then he tells you his last wish: to see his mother, whose ghost, **Mak Deruma**, still waits on the beach of Pulau Mutiara, watching the sea for his ship. Agree to guide him and he follows you out of the junk. Shadows of the old curse rise in Kampung Karang to drag him back: protect him, and swim up to the island. If you faint, or the night ends, he is pulled back to his ship and you can try again.
+  - When mother and son meet, the curse breaks. Both of them **live again** and move to Kampung Tepian, by the river. Mak Deruma gives you **Restu Ibu**, a mother's blessing: **once a day, when your health runs out, you are healed fully and every enemy around you turns to stone.** Sumpahan Batu gets stronger too (6 seconds, wider, every 10 seconds).
 - **Deeper under the sea.**
-  - **Kapal Karam:** swim into the sunken junk to meet the ghost of **Si Tanggang**, the proud son of the Malay legend, who wants to say sorry to his mother. Help him find her lost *selendang* (ask Tok Duyung) and he finds peace.
+  - **Kapal Karam:** swim into the sunken junk to meet the ghost of **Si Tanggang**, the proud son of the Malay legend, who wants to say sorry to his mother. Help him find her lost *selendang* (ask Tok Duyung) and he finds peace (then see above).
   - **Istana Laut Selatan (Pelita Lv 12):** the jade Palace of the Southern Sea, home of **Kanjeng Ratu Kidul**, the Queen of the Southern Sea from the Javanese legend of Nyi Roro Kidul. Bring her a royal gift of jasmine, and every sea forage gives you one extra.
   - **Kota Atlantis (Pelita Lv 15):** the sunken city of the old Greek tales, where **Poseidon** still sits on his throne. Bring him pearls, cave crystals and an *ikan emas* and he gives you his trident and +20 health.
 - **Krathong.** Craft a krathong (banana, marigold and colok) at the spirit house, or buy one from Mbak Dewi. Float it on any water after dark for a big boost to Pelita's glow and bond.
 
-The game saves every night when you sleep, and whenever you leave the game (switch apps, close the tab).
+### Saving and loading
+- There are **three save slots**. On the title screen, **Continue** opens the farm you played last, **Load Game** lets you pick a slot, and **New Game** asks which slot to start in (a slot that already has a farm asks twice before it is overwritten).
+- While playing, pause (Esc or **II**) and choose **Save game** to save into any slot, or **Load game** to go back to a saved farm.
+- The game also saves by itself every night when you sleep, and whenever you leave the game (switch apps, close the tab), into the slot you are playing.
+- Playing with friends: the host picks which farm to open, and friends keep their own bags (see [With friends](#with-friends-co-op-up-to-4-players)).
 
 ## Sound
 
 The soundtrack is a slow, chill, gamelan-inspired lo-fi piece: warm pads, soft metallophone bells, a distant gong and a hall reverb. It has a gentler, slower night version. Underneath it plays a nature layer: the river, koels and bulbuls by day, and crickets and frogs at night. Everything is synthesised live with the Web Audio API, so there are no audio files and nothing to license.
+
+In a fight, a **battle song** crossfades in: a kendang drum groove, a gong every two bars, a low ostinato and a pelog-flavoured saron tune. It is made of tuned tones rather than noise, so it never turns into hiss, and it fades back to the calm music a few seconds after the fight. **Pause → Sound & music** has a volume slider for each part (music, battle music, sound effects, nature and rain); the battle-music row plays a preview while you adjust it. Setting battle music to 0% keeps the calm music playing during fights.
 
 ## Building it yourself
 
@@ -161,8 +178,9 @@ Icons are generated by `node tools/make-icons.mjs`.
 index.html            the game (open this to play from the folder)
 dist/                 ready-to-play builds: LittleCreature.html (single file) and LittleCreature.apk
 src/                  game code: data, areas (maps of every place), folk (villagers and spirits), state, sim (shared-world rules),
-                      net (co-op), lobby, procedural art (art.js ... art4.js) + audio, data2/areas2/undersea (v1.5 content),
-                      scenes (World + WorldLife, WorldFarm, WorldCombat; UI + UIMenus, UIGames)
+                      net (co-op), lobby, procedural art (art.js ... art5.js) + audio, data2/areas2/undersea (v1.5 content),
+                      battle.js (v1.6: wild enemies, abilities, Mak Deruma), cheats.js (test build only),
+                      scenes (World + WorldLife, WorldFarm, WorldCombat, WorldTanggang; UI + UIMenus, UIGames, UISettings)
 lib/                  Phaser 3.80.1 (MIT), PeerJS 1.5.4 (MIT) and the Pixelify Sans font (SIL OFL 1.1), vendored
 icons/                app icons
 android/              Android wrapper app (WebView). It packages the web game from the root at build time.

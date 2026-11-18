@@ -19,6 +19,7 @@ LC.Lobby = (function () {
       '    <div class="col" id="lb-hostcol">' +
       '      <h3>Host my farm</h3>' +
       '      <p id="lb-hostinfo">Opens your saved farm (or a new one) and gives you a code to share.</p>' +
+      '      <select id="lb-slot" aria-label="Which farm to open"></select>' +
       '      <button id="lb-host">Open my farm</button>' +
       '    </div>' +
       '    <div class="col" id="lb-joincol">' +
@@ -41,7 +42,16 @@ LC.Lobby = (function () {
     el.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); e.stopPropagation(); });
   }
   function status(msg, err) { var s = $('lb-status'); s.textContent = msg || ''; s.className = 'status' + (err ? ' err' : ''); }
-  function setBusy(b) { busy = b; $('lb-host').disabled = b; $('lb-join').disabled = b; }
+  function setBusy(b) { busy = b; $('lb-host').disabled = b; $('lb-join').disabled = b; $('lb-slot').disabled = b; }
+  // v1.6: the host chooses which saved farm (slot) to open; friends continue it with their own saved bags
+  function fillSlots() {
+    var sel = $('lb-slot'), last = LC.State.lastSlot(), html = '';
+    for (var n = 1; n <= LC.SAVE_SLOTS; n++) {
+      var i = LC.State.slotInfo(n);
+      html += '<option value="' + n + '"' + (n === last ? ' selected' : '') + '>Slot ' + n + ': ' + (i ? 'Day ' + i.day + ' · Pelita Lv ' + i.level + ' · ' + i.kepeng + ' kepeng' : 'new farm') + '</option>';
+    }
+    sel.innerHTML = html;
+  }
   function getName() {
     var n = LC.Net.cleanName($('lb-name').value);
     if (!n) { status('Please type your name first.', true); $('lb-name').focus(); return null; }
@@ -52,7 +62,8 @@ LC.Lobby = (function () {
     if (busy) return;
     var n = getName(); if (!n) return;
     setBusy(true); status('Opening your farm gate...');
-    LC.Net.host(n, function (code) { setBusy(false); hide(); if (opts.onHosted) opts.onHosted(code); },
+    var slot = opts.hostOnly ? 0 : parseInt($('lb-slot').value, 10) || 1;
+    LC.Net.host(n, function (code) { setBusy(false); hide(); if (opts.onHosted) opts.onHosted(code, slot); },
       function (err) { setBusy(false); status(err, true); });
   }
   function doJoin() {
@@ -81,7 +92,9 @@ LC.Lobby = (function () {
       if (!el) build();
       $('lb-joincol').style.display = opts.hostOnly ? 'none' : '';
       $('lb-title').textContent = opts.hostOnly ? 'Invite Friends' : 'Play with Friends';
-      $('lb-hostinfo').textContent = opts.hostOnly ? 'Open this farm to friends. You\'ll get a 5-letter code to share.' : 'Opens your saved farm (or a new one) and gives you a code to share.';
+      $('lb-hostinfo').textContent = opts.hostOnly ? 'Open this farm to friends. You\'ll get a 5-letter code to share.' : 'Choose which of your farms to open (or start a new one), then share the code. Friends keep their own bags.';
+      $('lb-slot').style.display = opts.hostOnly ? 'none' : '';
+      if (!opts.hostOnly) fillSlots();
       $('lb-name').value = LC.Net.savedName();
       status(''); setBusy(false);
       el.classList.add('open');

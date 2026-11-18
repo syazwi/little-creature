@@ -1,6 +1,7 @@
 /* Little Creature — TESTING build only (dist/LittleCreature_full.html). Everything is unlocked, with its own save
  * (so it never touches your real farm), and a few test keys:
- *   ]  sleep now (next day)      [  skip to the next season      \  skip to the next Pesta (Sabtu)      H  full health and energy */
+ *   ]  sleep now (next day)      [  skip to the next season      \  skip to the next Pesta (Sabtu)      H  full health and energy
+ *   T  replay Si Tanggang's story (switch between "before he meets his mother" and "reunited") */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -24,6 +25,7 @@ window.LC = window.LC || {};
       f.pts = 40; Object.keys(gifts).forEach(function (h) { f.gifts[h] = true; });
     });
     S.quests.bunian = 2; S.wear.glasses = true; S.str = LC.STR_MAX;
+    S.quests.tanggang = 4; S.quests.stoneTold = 1;   // v1.6: Sumpahan Batu and Restu Ibu
     var inv = ['hoe', 'can', 'joran', 'keris', 'trisula', 'basikal', 'kereta', 'cermin_mata', 'peti_ukir',
       'wau_bulan', 'gasing_uri', 'sikat', 'dedak', 'baja', 'nasi_lemak', 'pulut_mangga', 'jamu_kuat', 'canang'];
     var many = { dedak: 99, baja: 99, nasi_lemak: 99, pulut_mangga: 99, jamu_kuat: 20, canang: 20 };
@@ -46,7 +48,14 @@ window.LC = window.LC || {};
       case 'BracketRight': sleepTo(S.day + 1); return;
       case 'BracketLeft': { var d = S.day + 1; while (LC.seasonOf(d) === State.season()) d++; this.toast('Skipping to ' + LC.seasonOf(d).name + '...', 'ic_glow'); sleepTo(d); return; }
       case 'Backslash': { var p = S.day + 1; while (p % 7 !== 6) p++; this.toast('Skipping to the next Pesta (Sabtu)...', 'i_wau'); sleepTo(p); return; }
-      case 'KeyH': S.hp = S.maxHp; S.energy = S.maxEnergy; S.water = S.maxWater; this.toast('Full health, energy and water.', 'ic_hp'); return;
+      case 'KeyH': S.hp = S.maxHp; S.energy = S.maxEnergy; S.water = S.maxWater; this.toast('Full health, energy and water (and abilities ready).', 'ic_hp'); S.restuDay = 0; LC.stoneReadyAt = 0; return;
+      case 'KeyT': {
+        var re = (S.quests.tanggang || 0) >= 4;
+        S.quests.tanggang = re ? 2 : 4; S.escort = null; S.restuDay = 0;
+        if (re) delete S.folk.deruma;
+        this.toast(re ? 'Tanggang story reset: talk to Si Tanggang in the sunken junk (Kampung Karang) to guide him to his mother.' : 'Si Tanggang and Mak Deruma reunited: Restu Ibu unlocked.', 'ic_restu');
+        return;
+      }
     }
     return onKey.call(this, ev);
   };
@@ -54,6 +63,6 @@ window.LC = window.LC || {};
   LC.UIScene.prototype.create = function () {
     create.apply(this, arguments);
     var self = this;
-    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal.', 'ic_glow'); });
+    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story.', 'ic_glow'); });
   };
 })(window.LC);

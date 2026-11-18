@@ -518,14 +518,33 @@ window.LC = window.LC || {};
             if (S.inv.filter(function (sl) { return !sl; }).length < 2) { self.toast('Make room in your bag first (2 free slots)!'); LC.Audio.sfx('error'); return; }
             LC.State.remove('selendang', 1); S.quests.tanggang = 2; S.kepeng += 500; LC.State.add('pinggan_lama', 2); LC.State.add('emas', 1);
             LC.Audio.sfx('stage'); W.doShared('kind', { n: 10 }, function () {});
+            var gift = S.quests.stoneTold ? [] : LC.storyLines(LC.TEXT.stoneGift); S.quests.stoneTold = 1;
             self.say([{ name: 'Si Tanggang', portrait: 'npc_tanggang_0', text: '...Mak\'s selendang. It still smells of pandan, like her kitchen.' },
               { name: 'Si Tanggang', portrait: 'npc_tanggang_0', text: 'Mak, I am sorry. I was proud and foolish, and you loved me anyway. Maafkan aku.' },
               { text: 'The ghost holds the shawl to his face. For the first time in centuries, he smiles. The water around him glows softly, like morning.' },
               { name: 'Si Tanggang', portrait: 'npc_tanggang_0', text: 'Thank you, child. Take my captain\'s treasure: it is only gold, after all. Go home and hug your Nenek\'s memory for me.' },
-              { text: '✦ Si Tanggang is at peace. (+500 kepeng, 2 Pinggan Lama, 1 Emas) ✦' }]);
+              { text: '✦ Si Tanggang is at peace. (+500 kepeng, 2 Pinggan Lama, 1 Emas) ✦' }].concat(gift));
             return 'close';
           } });
-        else if (tq === 2) rows.push({ icon: 'ic_glow', label: 'At peace', sub: 'Si Tanggang has said sorry at last. He likes to sit by the mirror now, and he does not mind what he sees.' });
+        else if (tq === 2 || tq === 3) {   // v1.6: he longs to see his mother
+          rows.push({ icon: 'ic_restu', label: tq === 2 ? 'What still troubles him?' : 'Guide him to his mother (again)', sub: tq === 2 ? 'Something weighs on the old captain, even now.' : 'The shadows pulled him back last time. Mak Deruma waits on the beach of Pulau Mutiara.',
+            action: function () {
+              var lines = tq === 2 ? LC.TANGGANG.ask.map(function (t) { return { name: 'Si Tanggang', portrait: 'npc_tanggang_0', text: t }; }) : [{ name: 'Si Tanggang', portrait: 'npc_tanggang_0', text: 'Will you try again, child? I am ready. Mak is waiting.' }];
+              self.say(lines, { choices: [
+                { label: 'Guide him to his mother', fn: function () { self.say([{ name: 'Si Tanggang', portrait: 'npc_tanggang_0', text: LC.TANGGANG.go }], { onDone: function () { W.startEscort(); } }); } },
+                { label: 'Not yet' }
+              ] });
+              return 'close';
+            } });
+        }
+        if (tq >= 2) rows.push({ icon: 'ic_batu', label: 'Sumpahan Batu', sub: 'His gift: press V (or tap the stone beside your hotbar) to turn nearby enemies to stone for ' + (LC.hasRestu() ? LC.RESTU.dur : LC.STONE.dur) + ' seconds.' });
+        if (tq >= 4) rows.push({ icon: 'ic_restu', label: 'Home at last', sub: 'Si Tanggang mends nets by the river and cooks (badly) for his mother. He has never been happier.' });
+      }
+      if (vid === 'deruma') {
+        var dq = S.quests.tanggang || 0;
+        if (dq >= 4) rows.push({ icon: 'ic_restu', label: 'Restu Ibu', sub: S.restuDay === S.day ? 'Her prayer already saved you today. It will be with you again tomorrow.' : 'Her blessing is with you: once a day, when your health runs out, it heals you and turns the enemies around you to stone.' });
+        else if (S.escort) rows.push({ icon: 'ic_restu', label: 'Bring Si Tanggang to her', sub: 'He is right behind you.', action: function () { self.closeModal(); W.reunion(); return 'close'; } });
+        else rows.push({ icon: 'ic_moon', label: 'Her son, Si Tanggang', sub: dq >= 1 ? 'His ghost waits in the sunken junk in Kampung Karang. Once he is at peace, perhaps he could be brought to her...' : 'She says his ship sank somewhere off this coast. Kampung Karang, the village beneath the waves, is just below.' });
       }
       if (vid === 'duyung' && S.quests.tanggang === 1 && !S.flags.gotSelendang) rows.push({ icon: 'i_selendang', label: 'Ask about a lost shawl', sub: 'Si Tanggang\'s mother wore an old selendang...', action: function () {
         if (!LC.State.canAdd('selendang')) { self.toast('Make room in your bag first!'); LC.Audio.sfx('error'); return; }
@@ -570,7 +589,10 @@ window.LC = window.LC || {};
         { icon: 'i_wau', label: d === 0 ? 'Today is Pesta day!' : 'Next Pesta: Sabtu, in ' + d + ' day' + (d > 1 ? 's' : ''), sub: 'Kite fighting, top spinning and the Serama show at the pavilion in Kampung Tepian, 8 AM to 6 PM. Champion: wau ' + (tro.wau || 0) + 'x, gasing ' + (tro.gasing || 0) + 'x, Serama ' + (tro.serama || 0) + 'x.' },
         { icon: 'chicken_0', iconScale: 2, label: 'Farm animals: ' + S.animals.length, sub: 'Feed them every day at the reban. Eggs in the nest hatch after three nights.' }
       ];
-      if (S.stats.kills || S.stats.gold) rows.push({ icon: 'i_bijih_emas', label: 'Lombong Puaka', sub: (S.stats.kills || 0) + ' shadows sent back into the dark, ' + (S.stats.gold || 0) + ' pieces of ore and crystal dug out.' + (S.flags.penunggu ? ' You have beaten the stone guardian!' : '') });
+      if (LC.hasStone()) rows.push({ icon: 'ic_batu', label: 'Sumpahan Batu (V)', sub: "Si Tanggang's stone curse: nearby enemies turn to stone for " + (LC.hasRestu() ? LC.RESTU.dur : LC.STONE.dur) + ' seconds (bosses less). Stone cracks: your blows do double damage. Ready again after ' + (LC.hasRestu() ? LC.RESTU.cd : LC.STONE.cd) + ' seconds.' });
+      if (LC.hasRestu()) rows.push({ icon: 'ic_restu', label: 'Restu Ibu' + (S.restuDay === S.day ? ' (used today)' : ' (ready)'), sub: "Mak Deruma's blessing: once a day, when your health runs out, you are healed fully and every enemy around you turns to stone." });
+      else if ((S.quests.tanggang || 0) >= 2) rows.push({ icon: 'ic_moon', label: "Si Tanggang's last wish", sub: 'He longs to see his mother, whose ghost waits on the beach of Pulau Mutiara. Talk to him in the sunken junk.' });
+      if (S.stats.kills || S.stats.gold) rows.push({ icon: 'i_bijih_emas', label: 'Battles', sub: (S.stats.kills || 0) + ' creatures and shadows beaten, ' + (S.stats.gold || 0) + ' pieces of ore and crystal dug out of Lombong Puaka.' + (S.flags.penunggu ? ' You have beaten the stone guardian!' : '') });
       ['cermin_mata', 'keris', 'trisula'].forEach(function (id) { if (LC.State.count(id)) rows.push({ icon: 'i_' + id, label: LC.ITEMS[id].name, sub: LC.ITEMS[id].desc }); });
       return rows;
     }

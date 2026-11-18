@@ -50,19 +50,49 @@ window.LC = window.LC || {};
       animals: [], animalSeq: 0, coop: { telur: 0, telur_itik: 0, susu: 0 }, nest: [],
       // v1.5 personal: strength and health, worn things, quests, the Pesta
       str: 10, hp: 55, maxHp: 55, strFoodDay: 0, strFood: 0, liftDay: 0, silatDay: 0, jamuDay: 0,
-      wear: {}, quests: {}, contest: {}, trophies: {}
+      wear: {}, quests: {}, contest: {}, trophies: {},
+      // v1.6 personal: guiding Si Tanggang home, and the day Restu Ibu last saved you
+      escort: null, restuDay: 0
     };
   }
   var BAG_EXTRA = ['str', 'wear', 'trophies', 'contest', 'quests'];   // a co-op guest's own progress travels in their bag
 
+  LC.SAVE_SLOTS = 3;
   var State = LC.State = {
     s: null,
+    slot: 1,   // v1.6: which save slot this farm lives in (1-3). Slot 1 is the original save.
 
-    newGame: function () { this.s = newState(); return this.s; },
+    newGame: function (slot) { this.s = newState(); if (slot) this.rememberSlot(slot); return this.s; },
 
-    hasSave: function () {
-      try { return !!localStorage.getItem(LC.SAVE_KEY); } catch (e) { return false; }
+    // -------------------------------------------------------------- save slots
+    slotKey: function (n) { return n > 1 ? LC.SAVE_KEY + '.' + n : LC.SAVE_KEY; },
+    lastSlot: function () {
+      var n = 1;
+      try { n = parseInt(localStorage.getItem(LC.SAVE_KEY + '.last'), 10) || 1; } catch (e) { /* ignore */ }
+      if (n < 1 || n > LC.SAVE_SLOTS) n = 1;
+      if (!this.slotExists(n)) for (var k = 1; k <= LC.SAVE_SLOTS; k++) if (this.slotExists(k)) return k;
+      return n;
     },
+    rememberSlot: function (n) { this.slot = n; try { localStorage.setItem(LC.SAVE_KEY + '.last', String(n)); } catch (e) { /* ignore */ } },
+    slotExists: function (n) { try { return !!localStorage.getItem(this.slotKey(n)); } catch (e) { return false; } },
+    slotInfo: function (n) {
+      try {
+        var d = JSON.parse(localStorage.getItem(this.slotKey(n)) || 'null');
+        if (!d || !d.ghost) return null;
+        return { day: d.day, kepeng: d.kepeng, level: LC.levelFor(d.ghost.bond || 0), savedAt: d.savedAt || 0, places: Object.keys(d.visited || {}).length,
+          houses: Object.keys(d.buildings || {}).length, animals: (d.animals || []).length };
+      } catch (e) { return null; }
+    },
+    slotText: function (i) {
+      var sea = LC.seasonOf ? LC.seasonOf(i.day).name : '', when = '';
+      if (i.savedAt) { var t = new Date(i.savedAt); when = '  ·  saved ' + t.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + ', ' + t.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); }
+      return 'Day ' + i.day + (sea ? ' (' + sea + ')' : '') + '  ·  Pelita Lv ' + i.level + '  ·  ' + i.kepeng + ' kepeng  ·  ' + i.places + ' places' + when;
+    },
+    hasSave: function () {
+      for (var n = 1; n <= LC.SAVE_SLOTS; n++) if (this.slotExists(n)) return true;
+      return false;
+    },
+    saveTo: function (n) { if (this.s && !this.s.guest) this.slot = n; return this.save(); },
     save: function () {
       try {
         if (this.s && this.s.guest) {   // co-op guest: only the personal bag is ours to keep
@@ -72,7 +102,9 @@ window.LC = window.LC || {};
           localStorage.setItem(BAG_KEY, JSON.stringify(bag));
           return true;
         }
-        localStorage.setItem(LC.SAVE_KEY, JSON.stringify(this.s));
+        this.s.savedAt = Date.now();
+        localStorage.setItem(this.slotKey(this.slot), JSON.stringify(this.s));
+        this.rememberSlot(this.slot);
         return true;
       } catch (e) { return false; }
     },
@@ -113,9 +145,10 @@ window.LC = window.LC || {};
       this.recalc();
       return s;
     },
-    load: function () {
+    load: function (n) {
+      n = n || this.lastSlot();
       try {
-        var raw = localStorage.getItem(LC.SAVE_KEY);
+        var raw = localStorage.getItem(this.slotKey(n));
         if (!raw) return false;
         var data = JSON.parse(raw), base = newState();
         Object.keys(base).forEach(function (k) { if (data[k] === undefined) data[k] = base[k]; });
@@ -133,6 +166,7 @@ window.LC = window.LC || {};
         // saves happen at bedtime and whenever the app is backgrounded, so keep the clock
         if (!(data.minutes >= LC.DAY_START && data.minutes < LC.DAY_END - 10)) data.minutes = LC.DAY_START;
         this.s = data;
+        this.rememberSlot(n);
         this.recalc();
         return true;
       } catch (e) { return false; }
@@ -319,7 +353,8 @@ window.LC = window.LC || {};
     // which villager lives on each built plot, and who is in the kampung right now
     villagerAtPlot: function (plot) { var b = this.s.buildings[plot]; return b && b.done ? b.vid : null; },
     villagerHome: function (vid) {
-      if (!LC.VILLAGERS[vid].movesIn) return LC.VILLAGERS[vid].post;
+      var v = LC.villager ? LC.villager(vid) : LC.VILLAGERS[vid];
+      if (!v.movesIn) return v.post;
       var B = this.s.buildings;
       for (var p in B) if (B[p].done && B[p].vid === vid) return LC.PLOT_POSTS[p];
       return null;
@@ -335,6 +370,7 @@ window.LC = window.LC || {};
       }
       this.recalc();
       s.hp = s.maxHp;   // a night's sleep heals every bruise
+      if (s.escort) { s.escort = null; lines.push('Before dawn, Si Tanggang drifted back to his sunken ship. He is waiting for you to try again.'); }
       return lines;
     },
 

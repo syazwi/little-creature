@@ -8,13 +8,18 @@ window.LC = window.LC || {};
 (function (LC) {
   'use strict';
   var A = LC.Audio = { ctx: null, musicOn: true, ambienceOn: true, night: false, step: 0 };
+  // v1.6: a volume level (0 to 1) for each part of the sound, set in Pause > Sound & music
+  var VOL_KEY = 'littleCreature.vol';
+  A.vol = { music: 1, battle: 0.7, sfx: 1, amb: 1 };
   try {
     A.musicOn = localStorage.getItem('littleCreature.music') !== 'off';
     A.ambienceOn = localStorage.getItem('littleCreature.ambience') !== 'off';
+    var sv = JSON.parse(localStorage.getItem(VOL_KEY) || 'null');
+    if (sv) Object.keys(A.vol).forEach(function (k) { if (typeof sv[k] === 'number') A.vol[k] = Math.max(0, Math.min(1, sv[k])); });
   } catch (e) { /* ignore */ }
 
   var BASE = 220;
-  var MUSIC_VOL = 0.34, AMB_VOL = 0.22;
+  var MUSIC_VOL = 0.34, AMB_VOL = 0.22, SFX_VOL = 0.5, BATTLE_VOL = 0.3;
   A.freq = function (deg) { return BASE * Math.pow(2, deg / 5); };
   function rnd(a, b) { return a + Math.random() * (b - a); }
 
@@ -44,14 +49,20 @@ window.LC = window.LC || {};
     A.verbIn = c.createGain(); A.verbIn.gain.value = 1;
     A.verbIn.connect(A.verb); A.verb.connect(A.master);
     // buses
-    A.music = c.createGain(); A.music.gain.value = A.musicOn ? MUSIC_VOL : 0;
+    A.music = c.createGain(); A.music.gain.value = A.musicOn ? MUSIC_VOL * A.vol.music : 0;
     A.musicLP = c.createBiquadFilter(); A.musicLP.type = 'lowpass'; A.musicLP.frequency.value = 20000; A.music.connect(A.musicLP);
     var mDry = c.createGain(); mDry.gain.value = 0.62; A.musicLP.connect(mDry); mDry.connect(A.master);
     var mWet = c.createGain(); mWet.gain.value = 0.55; A.musicLP.connect(mWet); mWet.connect(A.verbIn);
-    A.amb = c.createGain(); A.amb.gain.value = A.ambienceOn ? AMB_VOL : 0;
+    A.amb = c.createGain(); A.amb.gain.value = A.ambienceOn ? AMB_VOL * A.vol.amb : 0;
     A.amb.connect(A.master);
     var aWet = c.createGain(); aWet.gain.value = 0.25; A.amb.connect(aWet); aWet.connect(A.verbIn);
-    A.sfxBus = c.createGain(); A.sfxBus.gain.value = 0.5; A.sfxBus.connect(A.master);
+    A.sfxBus = c.createGain(); A.sfxBus.gain.value = SFX_VOL * A.vol.sfx; A.sfxBus.connect(A.master);
+    // v1.6: the battle song has its own bus (and volume), with a gentle top end so it never turns harsh
+    A.battleBus = c.createGain(); A.battleBus.gain.value = 0;
+    var bLP = c.createBiquadFilter(); bLP.type = 'lowpass'; bLP.frequency.value = 5200; A.battleBus.connect(bLP);
+    bLP.connect(A.master);
+    var bWet = c.createGain(); bWet.gain.value = 0.22; bLP.connect(bWet); bWet.connect(A.verbIn);
+    A.battleOut = bLP;
     var sWet = c.createGain(); sWet.gain.value = 0.12; A.sfxBus.connect(sWet); sWet.connect(A.verbIn);
     var len = c.sampleRate * 2, buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
     for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
@@ -232,10 +243,18 @@ window.LC = window.LC || {};
     var c = A.ctx; if (!c || c.state !== 'running') return;
     var now = c.currentTime;
     if (A.next < now - 0.5) A.next = now + 0.05;     // tab was asleep
-    var song = A.night ? NIGHT : DAY, spb = 60 / song.bpm;
+    var song = A.night ? NIGHT : DAY, spb = 60 / song.bpm, ducked = A.battleDucks();
     while (A.next < now + 0.35) {
-      if (A.musicOn) A.playStep(song, A.step, A.next, spb);
+      if (A.musicOn && !ducked) A.playStep(song, A.step, A.next, spb);
       A.next += spb; A.step++;
+    }
+    // v1.6: the battle song (it plays on for a few seconds after a fight, while it fades out)
+    var bPlay = A.musicOn && A.vol.battle > 0 && (A.battleOn || A.preview || now < (A.battleUntil || 0));
+    if (!bPlay) A.bNext = now + 0.05;
+    else {
+      if (A.bNext < now - 0.5) A.bNext = now + 0.05;
+      var bs = 60 / BATTLE.bpm / 2;
+      while (A.bNext < now + 0.3) { A.battleStep(A.bStep, A.bNext, bs); A.bNext += bs; A.bStep++; }
     }
     if (A.ambienceOn) {
       if (!A.night && now >= A.nextBird) { A.bird(now + 0.05); A.nextBird = now + rnd(2.5, 7) / A.areaSound.birds; }
@@ -262,16 +281,78 @@ window.LC = window.LC || {};
   };
   A.setNight = function (b) { if (b !== A.night) { A.night = b; A.step = 0; } };
 
+  // ------------------------------------------------------------- v1.6: the battle song
+  // A driving kendang (two-headed drum) groove, a gong every two bars, a low ostinato and a pelog-flavoured
+  // saron melody. Built from tuned tones (only the tiniest touch of noise in the drum slap), so it stays
+  // musical rather than hissy. It crossfades with the calm music and has its own volume.
+  var BATTLE = {
+    bpm: 112,
+    mel: [5, null, 6, 7, 8, null, 7, 6, 5, null, 3, null, 2, 3, 5, null,
+          5, null, 6, 7, 8, null, 10, null, 9, 8, 7, null, 6, null, 5, null,
+          3, null, 5, 6, 7, null, 6, 5, 3, null, 2, null, 0, 2, 3, null,
+          5, 7, 8, null, 10, null, 9, 8, 7, null, 6, null, 5, null, null, null],
+    drum: 'D.p.t.DpD.p.t.pp',            // D: the deep "dung" · t: the bright "tak" · p: a soft ghost tap
+    bass: [[0, 0], [3, 0], [6, 3], [8, 0], [11, 0], [14, 2]],
+    roots: [0, 0, -2, 1]
+  };
+  var PELOG = [0, 1, 3, 7, 8];
+  function pel(d) { var o = Math.floor(d / 5), i = ((d % 5) + 5) % 5; return 196 * Math.pow(2, (o * 12 + PELOG[i]) / 12); }
+  A.battleStep = function (step, t, s) {
+    var B = A.battleBus, i = step % 16, bar = Math.floor(step / 16), root = BATTLE.roots[bar % 4], ch = BATTLE.drum[i];
+    if (ch === 'D') { A.tone(t, 'sine', 150, 58, 0.24, 0.42, B); A.tone(t, 'triangle', 90, 50, 0.12, 0.12, B); }
+    else if (ch === 't') { A.tone(t, 'triangle', 820, 460, 0.06, 0.16, B); A.noise(t, 0.025, 0.06, 'bandpass', 2600, null, B); }
+    else if (ch === 'p') A.tone(t, 'sine', 330, 220, 0.07, 0.1, B);
+    BATTLE.bass.forEach(function (b) { if (b[0] === i) A.tone(t, 'triangle', pel(root + b[1] - 10), pel(root + b[1] - 10) * 0.99, s * 2.2, 0.2, B); });
+    var m = BATTLE.mel[step % BATTLE.mel.length];
+    if (m !== null) A.bell(pel(m), t, s * 2.6, 0.075, B);
+    if (A.battleBoss && m !== null && i % 4 === 0) A.bell(pel(m - 5), t, s * 3, 0.05, B);
+    if (i === 0 && bar % 2 === 0) A.gong(pel(root - 10), t, 4.5, 0.2, B);
+    if (i === 8 && bar % 2 === 1) A.gong(pel(root - 7), t, 2.2, 0.1, B);
+    if (A.battleBoss && i === 0) [-10, -7].forEach(function (d) { A.tone(t, 'sine', pel(root + d), pel(root + d), s * 14, 0.05, B); });   // a dark drone for the guardian
+  };
+  A.battleDucks = function () { return (A.battleOn || A.preview) && A.vol.battle > 0; };
+  A.setBattle = function (on, boss) {
+    on = !!on; A.battleBoss = !!boss;
+    if (on === !!A.battleOn) return;
+    A.battleOn = on;
+    var now = A.ctx ? A.ctx.currentTime : 0;
+    if (on) { A.bStep = 0; A.bNext = now + 0.05; A.battleUntil = 0; } else A.battleUntil = now + 3.5;
+    A.applyVolumes();
+  };
+  A.setPreview = function (on) {   // hear the battle song while choosing its volume
+    if (!!on === !!A.preview) return;
+    A.preview = !!on;
+    var now = A.ctx ? A.ctx.currentTime : 0;
+    if (on) { A.bStep = 0; A.bNext = now + 0.05; } else if (!A.battleOn) A.battleUntil = now + 2;
+    A.applyVolumes();
+  };
+
+  // ------------------------------------------------------------- volumes
+  A.applyVolumes = function () {
+    if (!A.ctx || !A.music) return;
+    var t = A.ctx.currentTime, v = A.vol, duck = A.battleDucks(), fight = (A.battleOn || A.preview) && A.musicOn;
+    A.music.gain.setTargetAtTime(A.musicOn && !duck ? MUSIC_VOL * v.music : 0, t, duck ? 0.25 : 0.9);
+    A.battleBus.gain.setTargetAtTime(fight ? BATTLE_VOL * v.battle : 0, t, fight ? 0.15 : 1.1);
+    A.amb.gain.setTargetAtTime(A.ambienceOn ? AMB_VOL * v.amb : 0, t, 0.3);
+    A.sfxBus.gain.setTargetAtTime(SFX_VOL * v.sfx, t, 0.05);
+  };
+  A.setVolume = function (kind, val) {
+    A.vol[kind] = Math.round(Math.max(0, Math.min(1, val)) * 20) / 20;
+    try { localStorage.setItem(VOL_KEY, JSON.stringify(A.vol)); } catch (e) { /* ignore */ }
+    A.applyVolumes();
+    return A.vol[kind];
+  };
+
   A.toggleMusic = function () {
     A.musicOn = !A.musicOn;
     try { localStorage.setItem('littleCreature.music', A.musicOn ? 'on' : 'off'); } catch (e) { /* ignore */ }
-    if (A.music) A.music.gain.setTargetAtTime(A.musicOn ? MUSIC_VOL : 0, A.ctx.currentTime, 0.3);
+    A.applyVolumes();
     return A.musicOn;
   };
   A.toggleAmbience = function () {
     A.ambienceOn = !A.ambienceOn;
     try { localStorage.setItem('littleCreature.ambience', A.ambienceOn ? 'on' : 'off'); } catch (e) { /* ignore */ }
-    if (A.amb) A.amb.gain.setTargetAtTime(A.ambienceOn ? AMB_VOL : 0, A.ctx.currentTime, 0.3);
+    A.applyVolumes();
     return A.ambienceOn;
   };
   A.suspend = function () { if (A.ctx && A.ctx.state === 'running') A.ctx.suspend(); };
@@ -326,6 +407,12 @@ window.LC = window.LC || {};
       case 'gate': for (i = 0; i < 7; i++) A.bell(A.freq(i * 2), t + i * 0.06, 1.4, 0.07); break;
       case 'drum': A.tone(t, 'sine', 140, 60, 0.25, 0.3); A.noise(t, 0.05, 0.15, 'lowpass', 500); break;
       case 'strain': A.tone(t, 'sawtooth', 120, 100, 0.2, 0.05); break;
+      // v1.6
+      case 'stone': A.tone(t, 'sine', 90, 40, 0.7, 0.35); for (i = 0; i < 5; i++) A.tone(t + 0.05 + i * 0.07, 'triangle', 1400 - i * 150, 700 - i * 60, 0.05, 0.05); A.bell(A.freq(-3), t + 0.1, 1.4, 0.08); break;
+      case 'crumble': for (i = 0; i < 4; i++) A.tone(t + i * 0.06, 'triangle', 500 - i * 60, 200, 0.06, 0.05); break;
+      case 'lunge': A.tone(t, 'sine', 260, 520, 0.12, 0.05); break;
+      case 'restu': [0, 2, 4, 7, 9].forEach(function (d, k) { A.bell(A.freq(d + 5), t + k * 0.12, 2, 0.1); }); A.gong(A.freq(-5), t, 5, 0.22); break;
+      case 'reunion': [4, 2, 0, 2, 4, 5, 7].forEach(function (d, k) { A.bell(A.freq(d + 5), t + k * 0.32, 2.4, 0.09); }); A.gong(A.freq(-10), t + 2.2, 6, 0.2); break;
     }
   };
 })(window.LC);
