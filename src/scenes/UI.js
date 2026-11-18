@@ -386,6 +386,7 @@ window.LC = window.LC || {};
       var s = '', bright = false;
       if (this.modal) s = '';
       else if (label) { s = (this.touchOn ? '' : '[E] ') + label; bright = true; }
+      else if (this.S.riding) s = (this.S.riding === 'car' ? 'Driving the kereta' : 'Riding the basikal') + (this.touchOn ? '  (select it and press USE to get off)' : '   ·   R to get off');
       else {
         var sl = LC.State.selItem();
         if (sl) {
@@ -444,6 +445,7 @@ window.LC = window.LC || {};
         case 'KeyX': this.world.eat(); break;
         case 'KeyF': if (LC.canFullscreen()) LC.toggleFullscreen(); break;
         case 'KeyJ': this.openJournal(); break;
+        case 'KeyR': this.world.toggleRide(); break;
         case 'Escape': this.openPause(); break;
       }
     }
@@ -773,7 +775,7 @@ window.LC = window.LC || {};
             { icon: 'ic_moon', label: 'Nature sounds: ' + (LC.Audio.ambienceOn ? 'On' : 'Off'), sub: 'River, birdsong by day, crickets and frogs at night.', action: function () { LC.Audio.toggleAmbience(); } },
             { icon: 'ic_joy', label: 'Touch controls: ' + (self.touchOn ? 'On' : 'Off'), sub: 'On-screen joystick and USE / EAT / BAG buttons for phones and tablets.', action: function () { self.setTouch(!self.touchOn); } },
             LC.canFullscreen() ? { icon: 'ic_sun', label: 'Fullscreen: ' + (LC.isFullscreen() ? 'On' : 'Off'), sub: 'Fill the whole screen with the kampung' + (self.touchOn ? '.' : '. Press F anytime.'), action: function () { LC.toggleFullscreen(); } } : null,
-            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact · tap the hotbar to select · II pauses' : 'WASD/Arrows move · E use · 1-9/wheel select · Q tool · X eat · Tab bag · J journal · M music · F fullscreen' },
+            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact · tap the hotbar to select · II pauses' : 'WASD/Arrows move · E use · 1-9/wheel select · Q tool · X eat · R ride · Tab bag · J journal · M music · F fullscreen' },
             { icon: 'ic_moon', label: 'Quit to title', sub: LC.Net.role ? 'Also ends the co-op session.' : 'Anything since your last sleep (or save) is lost.', action: function () { self.quitToTitle(); } }
           ]).filter(Boolean);
         } }]

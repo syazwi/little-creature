@@ -33,7 +33,7 @@ window.LC = window.LC || {};
       offerings: [],      // offerings placed today
       ghost: { full: 20, joy: 20, glow: 8, bond: 0, stage: 0, level: 1, craving: 'nasi', cravingDone: false, petAt: -999 },
       flags: {},
-      stats: { earned: 0, totalDays: 0, fish: 0 },
+      stats: { earned: 0, totalDays: 0, fish: 0, cleaned: 0 },
       pendingStage: [],
       pendingLevel: [],
       // v1.3
@@ -43,7 +43,8 @@ window.LC = window.LC || {};
       spirits: {},        // shared: spiritId -> { friend, playDay }
       folk: {},           // personal: villagerId -> { met, pts, chatDay, task: { item, n, reward }, taskDay, done, gifts }
       fishLog: {},        // personal: itemId -> count
-      companion: null     // personal: a befriended spirit following you
+      companion: null,    // personal: a befriended spirit following you
+      riding: null        // personal (v1.4): 'bike' | 'car' while riding
     };
   }
 
@@ -111,7 +112,7 @@ window.LC = window.LC || {};
         // v1.3: Pelita's level comes from its bond (no celebrations for levels earned before the update)
         data.ghost.level = LC.levelFor(data.ghost.bond);
         data.pendingStage = []; data.pendingLevel = [];
-        data.area = 'farm';
+        data.area = 'farm'; data.riding = null;
         if (data.flags.metAni) data.visited.kampung = data.visited.kampung || false;
         while (data.inv.length < LC.INV_SIZE) data.inv.push(null);
         // saves happen at bedtime and whenever the app is backgrounded, so keep the clock
@@ -204,7 +205,7 @@ window.LC = window.LC || {};
     },
     level: function () { return this.s.ghost.level || 1; },
     nextLevelBond: function () { var l = this.level(); return l < LC.MAX_LEVEL ? LC.LEVELS[l] : null; },
-    isOpen: function (area) { return LC.areaOpen(area, this.level()); },
+    isOpen: function (area) { var A = LC.AREAS[area]; return LC.areaOpen(area, this.level()) && (!A.needs || this.friend(A.needs)); },
     friend: function (sid) { var sp = this.s.spirits[sid]; return !!(sp && sp.friend); },
 
     // personal limits that grow with Pelita's level and spirit blessings

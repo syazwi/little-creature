@@ -181,12 +181,22 @@ window.LC = window.LC || {};
     sup_cendawan:  { name: 'Sup Cendawan', kind: 'dish', sell: 90, food: { full: 40, joy: 12 }, desc: 'Warm mushroom and sweet-potato soup.' },
     pengat_durian: { name: 'Pengat Durian', kind: 'dish', sell: 160, food: { full: 45, joy: 30 }, desc: 'Durian simmered in coconut milk and palm sugar.' },
     teh_o:         { name: 'Teh O', kind: 'drink', price: 20, sell: 30, food: { full: 5, joy: 20 }, desc: 'Hot sweet highland tea, no milk.' },
-    jamu:          { name: 'Jamu', kind: 'drink', price: 35, sell: 20, energy: 70, food: { full: 4, joy: -2 }, desc: 'Bitter herbal tonic from Java. Eat it (X) for +70 energy.' }
+    jamu:          { name: 'Jamu', kind: 'drink', price: 35, sell: 20, energy: 70, food: { full: 4, joy: -2 }, desc: 'Bitter herbal tonic from Java. Eat it (X) for +70 energy.' },
+
+    // ---- v1.4: getting around, and the village beneath the waves
+    basikal: { name: 'Basikal', kind: 'vehicle', ride: 'bike', price: 250, speed: 1.75, desc: 'A sturdy kampung bicycle with a basket and a bell. Hold it and press USE (or R) to ride.' },
+    kereta:  { name: 'Kereta', kind: 'vehicle', ride: 'car', price: 1200, speed: 2.4, desc: 'Abang Zul\'s old car, lovingly restored. Drive it (R) on the farm, in the kampung and across the dunes.' },
+    rumpai_laut:  { name: 'Rumpai Laut', kind: 'forage', price: 12, sell: 14, food: { full: 4, joy: 2 }, desc: 'Seaweed from the reef. Crunchy, salty, good for you.' },
+    gamat:        { name: 'Gamat', kind: 'forage', sell: 45, desc: 'A sea cucumber. Langkawi folk make a famous healing oil from it.' },
+    pinggan_lama: { name: 'Pinggan Lama', kind: 'treasure', sell: 180, desc: 'Blue-and-white porcelain from a trading junk that sank centuries ago.' },
+    sampah:       { name: 'Sampah', kind: 'junk', desc: 'A tangle of plastic and old fishing net. It does not belong in the sea! Tok Duyung will take it.' },
+    kerabu_rumpai: { name: 'Kerabu Rumpai', kind: 'dish', price: 60, sell: 80, food: { full: 30, joy: 12 }, desc: 'Fresh seaweed salad with chilli and lime, Sabah style.' },
+    agar_agar:     { name: 'Agar-agar', kind: 'dish', price: 70, sell: 90, food: { full: 25, joy: 28 }, desc: 'Wobbly coconut jelly made from seaweed. Pelita adores it.' }
   };
   Object.keys(LC.ITEMS).forEach(function (id) { LC.ITEMS[id].id = id; LC.ITEMS[id].icon = 'i_' + id; });
   LC.CATS = { fish: 'any fish' };   // recipe inputs like '@fish' accept any item of that category
 
-  LC.LOVES = ['pulut_mangga', 'kuih_pandan', 'air_merah', 'pisang_goreng', 'pengat_durian', 'teh_o'];
+  LC.LOVES = ['pulut_mangga', 'kuih_pandan', 'air_merah', 'pisang_goreng', 'pengat_durian', 'teh_o', 'agar_agar'];
   LC.DISLIKES = ['cili', 'durian'];
 
   // ---------------------------------------------------------------- crops
@@ -220,7 +230,9 @@ window.LC = window.LC || {};
     { out: 'sotong_goreng', inp: { sotong: 1, padi: 1 } },
     { out: 'sup_cendawan', inp: { cendawan: 2, ubi: 1 } },
     { out: 'pengat_durian', inp: { durian: 1, kelapa: 1 } },
-    { out: 'teh_o', inp: { daun_teh: 2 } }
+    { out: 'teh_o', inp: { daun_teh: 2 } },
+    { out: 'kerabu_rumpai', inp: { rumpai_laut: 2, cili: 1 } },
+    { out: 'agar_agar', inp: { rumpai_laut: 1, kelapa: 1 } }
   ];
   LC.CRAFTS = [
     { out: 'malai', inp: { melati: 2 } },
@@ -301,7 +313,12 @@ window.LC = window.LC || {};
     boulder:    { name: 'Boulder', verb: 'Break off stone', item: 'batu', count: 2, regrow: 2, energy: 3 },
     dragon:     { name: 'Dragon fruit cactus', verb: 'Pick dragon fruit', item: 'buah_naga', count: 2, regrow: 3, energy: 0 },
     clay:       { name: 'Clay pit', verb: 'Dig clay', item: 'tanah_liat', count: 2, regrow: 2, energy: 3 },
-    glint:      { name: 'Something glinting', verb: 'Dig it up', item: 'duit_lama', count: 1, regrow: 3, energy: 2, rare: ['mutiara', 0.12] }
+    glint:      { name: 'Something glinting', verb: 'Dig it up', item: 'duit_lama', count: 1, regrow: 3, energy: 2, rare: ['mutiara', 0.12] },
+    seaweed:    { name: 'Seaweed', verb: 'Gather seaweed', item: 'rumpai_laut', count: 2, regrow: 1, energy: 0 },
+    seacuke:    { name: 'Sea cucumber', verb: 'Pick up the gamat', item: 'gamat', count: 1, regrow: 2, energy: 0 },
+    clam:       { name: 'Giant clam', verb: 'Peek inside the clam', item: 'kerang', count: 2, regrow: 2, energy: 0, rare: ['mutiara', 0.2] },
+    rubbish:    { name: 'Rubbish', verb: 'Clean up the rubbish', item: 'sampah', count: 1, regrow: 1, energy: 1 },
+    wreck:      { name: 'Shipwreck chest', verb: 'Open the old chest', item: 'duit_lama', count: 2, regrow: 3, energy: 1, rare: ['pinggan_lama', 0.4] }
   };
 
   // Fishing: what bites in each kind of water. [item, weight]. Night fish bite twice as often after dark.
@@ -422,7 +439,9 @@ window.LC = window.LC || {};
     kancil: 'Sang Kancil, the clever mouse deer from the old tales! It twitches its nose and darts away.',
     ketam: 'A little ketam (crab) waves its claws at you. Snip snip!',
     penyu: 'A sea turtle (penyu) rests on the warm sand. Its eggs may be buried nearby. Best to let it be.',
-    biawak: 'A biawak (monitor lizard) flicks its tongue and suns itself. It seems quite unbothered.'
+    biawak: 'A biawak (monitor lizard) flicks its tongue and suns itself. It seems quite unbothered.',
+    ikan_kecil: 'A shimmering school of little fish swirls around you, then darts away.',
+    ubur: 'An ubur-ubur (jellyfish) pulses gently past. Better not touch it!'
   };
 })(window.LC);
 
@@ -435,12 +454,13 @@ window.LC = window.LC || {};
  *   w  river (solid) S  river shore    s  sand           j  jetty           J  jungle wall (solid)
  *   g  forest floor  q  pond (solid)   o  deep sea       h  shallow sea     m  mountain rock   M  cliff (solid)
  *   k  stone path    G  highland grass d  dune sand      R  red rock (solid)
+ *   u  sea floor     v  pale sand lane C  coral (solid)   (Kampung Karang, under the sea)
  * Exits are walk-off zones at a map edge. A locked exit shows a gate until Pelita reaches the place's level. */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
 
-  LC.SOLID_TILES = { J: 1, w: 1, S: 1, F: 1, q: 1, o: 1, h: 1, M: 1, R: 1 };
+  LC.SOLID_TILES = { J: 1, w: 1, S: 1, F: 1, q: 1, o: 1, h: 1, M: 1, R: 1, C: 1 };
   LC.WATER_TILES = { w: 'river', S: 'river', q: 'pond', o: 'sea', h: 'sea' };
 
   function blank(W, H, ch) { var g = []; for (var y = 0; y < H; y++) { g.push([]); for (var x = 0; x < W; x++) g[y].push(ch); } return g; }
@@ -483,6 +503,7 @@ window.LC = window.LC || {};
     { id: 'k_pondok', type: 'bldg', x: 27, y: 21, w: 4, h: 3, tex: 'pondok', text: 'Pak Mat\'s fishing hut. Nets hang drying in the sun.' },
     { id: 'k_well', type: 'well', x: 19, y: 15, w: 1, h: 1, tex: 'well' },
     { id: 'k_shrine', type: 'shrine', x: 40, y: 6, w: 1, h: 1, tex: 'shrine' },
+    { id: 'k_kedai', type: 'bldg', x: 39, y: 14, w: 4, h: 2, tex: 'kedai_basikal', text: 'Abang Zul\'s bicycle and motor shop. Spanners hang on the wall and the radio plays old P. Ramlee songs.' },
     { id: 'k_sign', type: 'signpost', x: 41, y: 9, w: 1, h: 1, tex: 'sign', text: 'BUKIT PASIR (the red dunes) >>  Sand has buried the road. Pelita at Lv 11 could light the way.' },
     { id: 'k_banana1', type: 'tree', kind: 'banana', x: 2, y: 20, w: 1, h: 1 },
     { id: 'k_mango', type: 'tree', kind: 'mango', x: 34, y: 16, w: 1, h: 1 },
@@ -542,7 +563,8 @@ window.LC = window.LC || {};
     { id: 'i_shell5', type: 'forage', kind: 'shells', x: 5, y: 21 },
     { id: 'i_hut', type: 'bldg', x: 16, y: 15, w: 3, h: 2, tex: 'beach_hut', text: 'An old fishermen\'s rest hut. Someone left a woven mat and a kettle.' },
     { id: 'i_lighthouse', type: 'bldg', x: 28, y: 15, w: 2, h: 1, tex: 'rumah_api', text: 'A little rumah api (lighthouse). Its lamp guides the night fishing boats home.' },
-    { id: 'i_shrine', type: 'shrine', x: 25, y: 9, w: 1, h: 1, tex: 'shrine' }
+    { id: 'i_shrine', type: 'shrine', x: 25, y: 9, w: 1, h: 1, tex: 'shrine' },
+    { id: 'i_dive', type: 'dive', x: 30, y: 8, w: 1, h: 1, to: 'laut' }
   ];
 
   // ------------------------------------------------------------------ Gunung Kabus (misty mountain)
@@ -596,6 +618,36 @@ window.LC = window.LC || {};
     { id: 'd_shrine', type: 'shrine', x: 5, y: 7, w: 1, h: 1, tex: 'shrine' }
   ];
 
+  // ------------------------------------------------------------------ Kampung Karang (the village beneath the waves)
+  function buildLaut() {
+    var W = 44, H = 32, g = blank(W, H, 'u'), f = filler(g);
+    f.fill(0, 0, W - 1, 1, 'C'); f.fill(0, H - 2, W - 1, H - 1, 'C'); f.fill(0, 0, 1, H - 1, 'C'); f.fill(W - 2, 0, W - 1, H - 1, 'C');
+    f.fill(19, 1, 24, 2, 'u');
+    f.ell(6, 20, 2.5, 3, 'C'); f.ell(38, 25, 3, 2.5, 'C'); f.ell(16, 28, 2.4, 1.2, 'C'); f.ell(36, 4, 2.6, 1.6, 'C'); f.ell(4, 7, 1.6, 2.4, 'C');
+    f.fill(20, 4, 21, 26, 'v'); f.fill(8, 11, 36, 11, 'v'); f.fill(8, 12, 9, 14, 'v'); f.fill(13, 7, 13, 10, 'v'); f.fill(32, 10, 32, 18, 'v');
+    return g;
+  }
+  var LAUT_OBJECTS = [
+    { id: 'l_surface', type: 'surface', x: 21, y: 3, w: 2, h: 1, to: 'island' },
+    { id: 'l_shrine', type: 'bldg', x: 23, y: 7, w: 2, h: 2, tex: 'naga_shrine', text: 'A stone pillar wrapped by a carved naga. The sea folk say the Naga Mother sleeps beneath it, keeping the reef alive.' },
+    { id: 'l_kima', type: 'bldg', x: 12, y: 5, w: 3, h: 2, tex: 'rumah_kima', text: 'Nila\'s house: a giant clam shell, propped open with driftwood. Pearls glimmer on the windowsill.' },
+    { id: 'l_rumah1', type: 'bldg', x: 7, y: 8, w: 3, h: 2, tex: 'rumah_karang', text: 'Pak Ketam\'s coral house. A sign reads: KEDAI LAUT, buka setiap hari (sea shop, open every day).' },
+    { id: 'l_rumah2', type: 'bldg', x: 30, y: 7, w: 3, h: 2, tex: 'rumah_karang', text: 'A coral house. A family of clownfish lives in the window box.' },
+    { id: 'l_wreck', type: 'bldg', x: 31, y: 20, w: 6, h: 2, tex: 'kapal_karam', text: 'A sunken trading junk, its sails long gone. It sailed the old spice route centuries ago, loaded with porcelain.' },
+    { id: 'l_turtle', type: 'turtle', x: 9, y: 25, w: 1, h: 1 },
+    { id: 'l_chest', type: 'forage', kind: 'wreck', x: 30, y: 21 },
+    { id: 'l_weed1', type: 'forage', kind: 'seaweed', x: 5, y: 14 }, { id: 'l_weed2', type: 'forage', kind: 'seaweed', x: 14, y: 24 },
+    { id: 'l_weed3', type: 'forage', kind: 'seaweed', x: 26, y: 26 }, { id: 'l_weed4', type: 'forage', kind: 'seaweed', x: 37, y: 14 },
+    { id: 'l_weed5', type: 'forage', kind: 'seaweed', x: 9, y: 4 },
+    { id: 'l_cuke1', type: 'forage', kind: 'seacuke', x: 17, y: 18 }, { id: 'l_cuke2', type: 'forage', kind: 'seacuke', x: 33, y: 27 },
+    { id: 'l_cuke3', type: 'forage', kind: 'seacuke', x: 4, y: 26 },
+    { id: 'l_clam1', type: 'forage', kind: 'clam', x: 25, y: 19 }, { id: 'l_clam2', type: 'forage', kind: 'clam', x: 14, y: 15 },
+    { id: 'l_clam3', type: 'forage', kind: 'clam', x: 39, y: 10 },
+    { id: 'l_trash1', type: 'forage', kind: 'rubbish', x: 9, y: 21 }, { id: 'l_trash2', type: 'forage', kind: 'rubbish', x: 19, y: 27 },
+    { id: 'l_trash3', type: 'forage', kind: 'rubbish', x: 27, y: 15 }, { id: 'l_trash4', type: 'forage', kind: 'rubbish', x: 40, y: 18 },
+    { id: 'l_trash5', type: 'forage', kind: 'rubbish', x: 4, y: 12 }, { id: 'l_trash6', type: 'forage', kind: 'rubbish', x: 27, y: 4 }
+  ];
+
   // ------------------------------------------------------------------ the atlas
   LC.AREAS = {
     farm: {
@@ -607,7 +659,7 @@ window.LC = window.LC || {};
         { x0: 29, y0: 0, x1: 30, y1: 0, to: 'forest', sx: 21.5, sy: 31.5, dir: 'up', gate: { x: 29, y: 3, w: 2, h: 1, tex: 'gate_vines' } },
         { x0: 47, y0: 10, x1: 47, y1: 11, to: 'kampung', sx: 1.5, sy: 10.5, dir: 'right', gate: { x: 46, y: 10, w: 1, h: 2, tex: 'barrier' } }
       ],
-      home: { x: 4.5, y: 8 }
+      home: { x: 4.5, y: 8 }, ride: { bike: 1, car: 1 }
     },
     kampung: {
       name: 'Kampung Tepian', sub: 'the riverside village', lvl: 2, build: buildKampung, objects: KAMPUNG_OBJECTS,
@@ -617,7 +669,7 @@ window.LC = window.LC || {};
         { x0: 0, y0: 10, x1: 0, y1: 11, to: 'farm', sx: 44.5, sy: 10.5, dir: 'left' },
         { x0: 45, y0: 10, x1: 45, y1: 11, to: 'desert', sx: 1.5, sy: 10.5, dir: 'right', gate: { x: 43, y: 10, w: 1, h: 2, tex: 'gate_dune' } }
       ],
-      kites: true, home: { x: 2.5, y: 10.5 },
+      kites: true, home: { x: 2.5, y: 10.5 }, ride: { bike: 1, car: 1 },
       trees: { n: 6, on: '.', tex: ['jtree'], text: 'A shady tree. Children climb it after school.' }
     },
     forest: {
@@ -628,21 +680,27 @@ window.LC = window.LC || {};
         { x0: 21, y0: 33, x1: 22, y1: 33, to: 'farm', sx: 29.5, sy: 1.5, dir: 'down' },
         { x0: 29, y0: 0, x1: 30, y1: 0, to: 'mountain', sx: 29.5, sy: 31.5, dir: 'up', gate: { x: 29, y: 3, w: 2, h: 1, tex: 'gate_rocks' } }
       ],
-      dim: 0.12, home: { x: 21.5, y: 31.5 },
+      dim: 0.12, home: { x: 21.5, y: 31.5 }, ride: { bike: 1 },
       trees: { n: 34, on: 'g', tex: ['jtree', 'jtree2'], text: 'A rainforest tree, wrapped in vines and humming with insects.' }
     },
     island: {
       name: 'Pulau Mutiara', sub: 'pearl island', lvl: 5, build: buildIsland, objects: ISLAND_OBJECTS,
       pond: 'sea', amb: 'sea', decor: { n: 26, types: ['rock', 'lalang', 'bush', 'coral'], on: 's' },
       critters: [{ kind: 'ketam', n: 3, zone: { x0: 8, y0: 9, x1: 36, y1: 26 } }, { kind: 'penyu', n: 1, zone: { x0: 12, y0: 24, x1: 32, y1: 26 } }],
-      exits: [], home: { x: 21.5, y: 4.5 }
+      exits: [], home: { x: 21.5, y: 4.5 }, ride: { bike: 1 }
+    },
+    laut: {
+      name: 'Kampung Karang', sub: 'the village beneath the waves', lvl: 5, needs: 'naga', build: buildLaut, objects: LAUT_OBJECTS,
+      pond: null, amb: 'deep', decor: { n: 55, types: ['kelp', 'kelp', 'seagrass', 'seagrass', 'anemone', 'shellrock'], on: 'u' },
+      critters: [{ kind: 'ikan_kecil', n: 5, zone: { x0: 3, y0: 3, x1: 40, y1: 28 } }, { kind: 'ubur', n: 3, zone: { x0: 3, y0: 3, x1: 40, y1: 28 } }, { kind: 'penyu', n: 1, zone: { x0: 24, y0: 12, x1: 40, y1: 18 } }],
+      exits: [], underwater: true, home: { x: 21.5, y: 3.5 }, ride: {}
     },
     mountain: {
       name: 'Gunung Kabus', sub: 'the misty mountain', lvl: 8, build: buildMountain, objects: MOUNTAIN_OBJECTS,
       pond: 'lake', amb: 'wind', decor: { n: 45, types: ['rock', 'rock', 'lalang', 'fern', 'pebbles'], on: 'm' },
       critters: [],
       exits: [{ x0: 29, y0: 33, x1: 30, y1: 33, to: 'forest', sx: 29.5, sy: 1.5, dir: 'down' }],
-      fog: true, home: { x: 29.5, y: 31.5 },
+      fog: true, home: { x: 29.5, y: 31.5 }, ride: { bike: 1 },
       trees: { n: 14, on: 'm', tex: ['pine'], text: 'A highland pine, beaded with mist.' }
     },
     desert: {
@@ -650,15 +708,16 @@ window.LC = window.LC || {};
       pond: 'oasis', amb: 'wind', decor: { n: 45, types: ['dunegrass', 'dunegrass', 'pebbles', 'rock', 'deadbush'], on: 'd' },
       critters: [{ kind: 'biawak', n: 2, zone: { x0: 4, y0: 4, x1: 42, y1: 28 } }],
       exits: [{ x0: 0, y0: 10, x1: 0, y1: 11, to: 'kampung', sx: 43.5, sy: 10.5, dir: 'left' }],
-      warm: true, home: { x: 1.5, y: 10.5 }
+      warm: true, home: { x: 1.5, y: 10.5 }, ride: { bike: 1, car: 1 }
     }
   };
-  LC.AREA_ORDER = ['farm', 'kampung', 'forest', 'island', 'mountain', 'desert'];
+  LC.AREA_ORDER = ['farm', 'kampung', 'forest', 'island', 'laut', 'mountain', 'desert'];
   LC.AREA_HOWTO = {
     farm: 'Home. Sleep in the stilt house.',
     kampung: 'Follow the road east from the farm.',
     forest: 'Take the trail north of the farm.',
     island: 'Row Nenek\'s sampan from the farm jetty.',
+    laut: 'Befriend the Naga, then dive at the bubbles off Pulau Mutiara.',
     mountain: 'Follow the trail north through Hutan Rimba.',
     desert: 'Follow the road east through the kampung.'
   };
@@ -751,8 +810,8 @@ window.LC = window.LC || {};
         'My jamu is bitter, but one cup gives you the energy of a kerbau. Truly!'
       ],
       chat: ['Kunyit (turmeric) for the skin, serai (lemongrass) for the tummy.', 'Never pick the last mushroom. Leave some for the forest.', 'The Orang Bunian love fresh flowers. So I hear...', 'Jamu recipes are passed from grandmother to granddaughter.'],
-      tasks: [['herba', 2, 3], ['cendawan', 2, 4], ['pandan', 2, 3], ['rotan', 1, 2]],
-      taskText: 'for her remedies', shop: ['jamu'], buys: { items: ['herba', 'cendawan', 'pandan', 'rotan'], mult: 1.25 },
+      tasks: [['herba', 2, 3], ['cendawan', 2, 4], ['pandan', 2, 3], ['rotan', 1, 2], ['gamat', 1, 1]],
+      taskText: 'for her remedies', shop: ['jamu'], buys: { items: ['herba', 'cendawan', 'pandan', 'rotan', 'gamat'], mult: 1.25 },
       gifts: { 3: ['jamu', 2], 6: ['sup_cendawan', 2], 10: ['mutiara', 1] }
     },
     lai: {
@@ -793,9 +852,64 @@ window.LC = window.LC || {};
       tasks: [['buah_naga', 2, 3], ['kelapa', 2, 4], ['durian', 1, 2], ['mangga', 2, 3], ['pisang', 3, 5]],
       taskText: 'for her fruit stall', shop: ['durian', 'buah_naga'], buys: { items: ['pisang', 'kelapa', 'mangga', 'durian', 'buah_naga', 'strawberi'], mult: 1.25 },
       gifts: { 3: ['buah_naga', 3], 6: ['pengat_durian', 2], 10: ['kepeng', 600] }
+    },
+
+    // ---- v1.4: getting around
+    zul: {
+      name: 'Abang Zul', role: 'Mechanic', post: { x: 40, y: 13 },
+      look: { skin: '#a8714a', shirt: '#3a6a9a', shirt2: '#2a4e74', bottom: '#3a6a9a', bottom2: '#2a4e74', hair: '#1a1210', hat: 'cap' },
+      intro: [
+        'Yo! Abang Zul. I fix bicycles, motorbikes, water pumps... anything with a spanner-shaped problem.',
+        'A farmer who travels this much needs a basikal! Ride it on the road, in the forest, even on the beach. Kring kring!',
+        'And see that old car under the tarp? My late father\'s. I restored it myself. I only sell it to a friend, okay?'
+      ],
+      chat: ['Oil the chain once a week and a basikal lasts forever.', 'My father drove this car to every kenduri in the district.', 'The dune road is bumpy, but the car can take it. Slowly, slowly!', 'Bicycles are the best way to feel the kampung breeze.'],
+      tasks: [['kelapa', 2, 3], ['teh_o', 1, 2], ['nasi_lemak', 1, 1], ['batu', 3, 5], ['kayu', 4, 6]],
+      taskText: 'for the workshop', shop: ['basikal', 'kereta'], shopNeeds: { kereta: 3 },
+      gifts: { 3: ['kepeng', 150], 6: ['jamu', 3], 10: ['kepeng', 500] }
+    },
+
+    // ---- v1.4: Kampung Karang, the village beneath the waves
+    duyung: {
+      name: 'Tok Duyung', role: 'Elder of the sea', area: 'laut', post: { x: 25, y: 10 }, sprite: true,
+      intro: [
+        'Mmmm... a land walker, breathing with the Naga\'s blessing. Welcome to Kampung Karang, child.',
+        'I am Tok Duyung. My kind gave the sailors their mermaid stories. We are only dugongs who like sea grass and long naps. Hohoho.',
+        'Our reef is tired. Nets and plastic drift down from the world above and tangle the coral. Will you help us clean it?',
+        'Bring me any rubbish you find. And mind the sea turtle by the coral to the south-west. I fear she is caught.'
+      ],
+      chat: ['A dugong eats forty kilos of sea grass a day. I am trying to cut down.', 'When the reef is healthy, it sings. Listen.', 'The Naga Mother has slept beneath the pillar for a thousand years.', 'Every net you pull out saves a hundred little lives.'],
+      tasks: [['sampah', 2, 4], ['rumpai_laut', 3, 5], ['kerang', 3, 5], ['agar_agar', 1, 1]],
+      taskText: 'for the reef', clean: true,
+      gifts: { 3: ['agar_agar', 2], 6: ['mutiara', 1], 10: ['kepeng', 600] }
+    },
+    nila: {
+      name: 'Nila', role: 'Pearl diver', area: 'laut', post: { x: 13, y: 7 }, sprite: true,
+      intro: [
+        'Oh! A visitor from the surface? How exciting! I am Nila. I dive for pearls and old treasures from the wrecks.',
+        'The old junk to the east was full of porcelain plates from across the sea. Some are still in the chest!',
+        'I pay well for pearls, porcelain and old coins. Better than anyone up there, I promise.'
+      ],
+      chat: ['A pearl starts as a grain of sand the clam could not ignore.', 'The Bajau people up above can hold their breath for minutes! I am so impressed.', 'Moonlight makes the clams open wider. True story.', 'Blue and white porcelain... someone ate rice from these plates, long ago.'],
+      tasks: [['kerang', 3, 6], ['rumpai_laut', 2, 4], ['gamat', 1, 2], ['pinggan_lama', 1, 1]],
+      taskText: 'for her jewellery', buys: { items: ['mutiara', 'pinggan_lama', 'duit_lama', 'kerang'], mult: 1.3 },
+      gifts: { 3: ['kerang', 6], 6: ['pinggan_lama', 1], 10: ['mutiara', 2] }
+    },
+    ketam: {
+      name: 'Pak Ketam', role: 'Sea merchant', area: 'laut', post: { x: 8, y: 10 }, sprite: true,
+      intro: [
+        'Snip snap! Customer, customer! Pak Ketam\'s Kedai Laut has everything a sea creature needs!',
+        'Seaweed salad, agar-agar, and I buy seaweed, gamat and fish at excellent prices. Excellent!',
+        'I walk sideways, but my prices are straight. Hahaha!'
+      ],
+      chat: ['Business is good when the tide is high.', 'I traded with a sea turtle once. Very slow negotiator.', 'Kerabu rumpai with extra lime. Perfect.', 'My shell is new! I moulted last week. Very handsome, no?'],
+      tasks: [['ikan_kembung', 2, 3], ['sotong', 1, 2], ['ikan_bakar', 1, 2], ['cili', 2, 3], ['kelapa', 2, 3]],
+      taskText: 'for his shop', shop: ['kerabu_rumpai', 'agar_agar', 'rumpai_laut'], buys: { items: ['rumpai_laut', 'gamat', 'ikan_kembung', 'sotong', 'ikan_kerapu', 'udang'], mult: 1.3 },
+      gifts: { 3: ['kerabu_rumpai', 2], 6: ['kepeng', 300], 10: ['ikan_kerapu', 2] }
     }
   };
   LC.MOVE_IN = ['siti', 'lai', 'dewi', 'mai'];
+  LC.CLEAN_GIFTS = { 10: ['mutiara', 1], 25: ['kepeng', 400], 50: ['pinggan_lama', 2] };   // Tok Duyung, for rubbish handed in
   // where each plot's villager stands (in front of the house)
   LC.PLOT_POSTS = { plotA: { x: 29, y: 7 }, plotB: { x: 36, y: 7 }, plotC: { x: 6, y: 13 }, plotD: { x: 13, y: 13 } };
 
@@ -822,8 +936,8 @@ window.LC = window.LC || {};
       lore: 'Along the Mekong, the naga are serpent spirits of the water who guard rivers, rain and hidden pearls.',
       meet: 'Something blue and gold coils in the shallows. A young naga lifts its crested head and blinks at you.',
       wish: { ikan_kembung: 2, sotong: 1, kerang: 3 }, wishText: 'It sniffs your fishing rod and shell basket... it wishes for 2 ikan kembung, 1 sotong and 3 kerang.',
-      thanks: 'The naga swirls the water into rainbows. Fish now bite faster, the reeling zone is wider, and rare fish come more often.',
-      blessing: 'Faster bites, easier reeling, more rare fish', color: 0x6fd6e8
+      thanks: 'The naga swirls the water into rainbows. Fish now bite faster, the reeling zone is wider, and rare fish come more often. And with its blessing you can breathe underwater: dive at the bubbles off the north-east shore to visit Kampung Karang, the village beneath the waves!',
+      blessing: 'Breathe underwater, faster bites, easier reeling, more rare fish', color: 0x6fd6e8
     },
     kenyalang: {
       name: 'Kenyalang', title: 'the hornbill messenger', area: 'mountain', x: 36, y: 15,
@@ -882,7 +996,7 @@ window.LC = window.LC || {};
       offerings: [],      // offerings placed today
       ghost: { full: 20, joy: 20, glow: 8, bond: 0, stage: 0, level: 1, craving: 'nasi', cravingDone: false, petAt: -999 },
       flags: {},
-      stats: { earned: 0, totalDays: 0, fish: 0 },
+      stats: { earned: 0, totalDays: 0, fish: 0, cleaned: 0 },
       pendingStage: [],
       pendingLevel: [],
       // v1.3
@@ -892,7 +1006,8 @@ window.LC = window.LC || {};
       spirits: {},        // shared: spiritId -> { friend, playDay }
       folk: {},           // personal: villagerId -> { met, pts, chatDay, task: { item, n, reward }, taskDay, done, gifts }
       fishLog: {},        // personal: itemId -> count
-      companion: null     // personal: a befriended spirit following you
+      companion: null,    // personal: a befriended spirit following you
+      riding: null        // personal (v1.4): 'bike' | 'car' while riding
     };
   }
 
@@ -960,7 +1075,7 @@ window.LC = window.LC || {};
         // v1.3: Pelita's level comes from its bond (no celebrations for levels earned before the update)
         data.ghost.level = LC.levelFor(data.ghost.bond);
         data.pendingStage = []; data.pendingLevel = [];
-        data.area = 'farm';
+        data.area = 'farm'; data.riding = null;
         if (data.flags.metAni) data.visited.kampung = data.visited.kampung || false;
         while (data.inv.length < LC.INV_SIZE) data.inv.push(null);
         // saves happen at bedtime and whenever the app is backgrounded, so keep the clock
@@ -1053,7 +1168,7 @@ window.LC = window.LC || {};
     },
     level: function () { return this.s.ghost.level || 1; },
     nextLevelBond: function () { var l = this.level(); return l < LC.MAX_LEVEL ? LC.LEVELS[l] : null; },
-    isOpen: function (area) { return LC.areaOpen(area, this.level()); },
+    isOpen: function (area) { var A = LC.AREAS[area]; return LC.areaOpen(area, this.level()) && (!A.needs || this.friend(A.needs)); },
     friend: function (sid) { var sp = this.s.spirits[sid]; return !!(sp && sp.friend); },
 
     // personal limits that grow with Pelita's level and spirit blessings
@@ -1347,7 +1462,7 @@ window.LC = window.LC || {};
       return { ok: true, b: LC.State.addBond(3) };
     },
     // helping villagers makes Pelita proud
-    kind: function () { return { ok: true, b: LC.State.addBond(4) }; },
+    kind: function (a) { return { ok: true, b: LC.State.addBond(Math.max(1, Math.min(10, (a && a.n) || 4))) }; },
     // float a krathong at night: Pelita's light swells
     krathong: function () {
       var g = LC.State.s.ghost;
@@ -1411,14 +1526,14 @@ window.LC = window.LC || {};
  * Matchmaking uses the free public PeerJS server; game traffic goes peer-to-peer
  * (PeerJS's public TURN relay is used when a direct connection is impossible).
  *
- *   guest -> host : hello{name,v} · pos{x,y,dir,mv,ar,cp} · op{rid,op,a} · sleepy      (ar = area, cp = companion spirit)
+ *   guest -> host : hello{name,v} · pos{x,y,dir,mv,ar,cp,rd} · op{rid,op,a} · sleepy      (ar = area, cp = companion spirit, rd = riding)
  *   host -> guest : welcome{id,color,hostName,code,world} · reject{why} · tick{m,d,g,gs,p} · res{rid,res}
  *                   sync{op,a,by,parts} · toast{msg,icon} · event{ev,st} · sleepStart · dayStart{sum,world} · bye{why}
  */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
-  var PROTO = 2, MAX_PLAYERS = 4, PREFIX = 'littlecreature-';
+  var PROTO = 3, MAX_PLAYERS = 4, PREFIX = 'littlecreature-';
   var ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   var NAME_KEY = 'littleCreature.name';
 
@@ -1504,7 +1619,7 @@ window.LC = window.LC || {};
     }
     if (!g) return;
     switch (m.t) {
-      case 'pos': g.x = m.x; g.y = m.y; g.dir = m.dir; g.mv = !!m.mv; g.ar = m.ar || 'farm'; g.cp = m.cp || null; break;
+      case 'pos': g.x = m.x; g.y = m.y; g.dir = m.dir; g.mv = !!m.mv; g.ar = m.ar || 'farm'; g.cp = m.cp || null; g.rd = m.rd || null; break;
       case 'op':
         var res = null;
         try { res = N.on.op ? N.on.op(m.op, m.a || {}, id) : null; } catch (e) { console.error(e); }
@@ -1529,8 +1644,8 @@ window.LC = window.LC || {};
     var now = Date.now();
     if (now - (N.lastTick || 0) < 100) return;
     N.lastTick = now;
-    var p = [{ id: 'host', n: N.myName, c: 0, x: st.me.x, y: st.me.y, dir: st.me.dir, mv: st.me.mv, ar: st.me.ar, cp: st.me.cp }];
-    Object.keys(N.guests).forEach(function (id) { var g = N.guests[id]; p.push({ id: id, n: g.name, c: g.color, x: g.x, y: g.y, dir: g.dir, mv: g.mv, ar: g.ar, cp: g.cp }); });
+    var p = [{ id: 'host', n: N.myName, c: 0, x: st.me.x, y: st.me.y, dir: st.me.dir, mv: st.me.mv, ar: st.me.ar, cp: st.me.cp, rd: st.me.rd }];
+    Object.keys(N.guests).forEach(function (id) { var g = N.guests[id]; p.push({ id: id, n: g.name, c: g.color, x: g.x, y: g.y, dir: g.dir, mv: g.mv, ar: g.ar, cp: g.cp, rd: g.rd }); });
     N.broadcast({ t: 'tick', m: st.m, d: st.d, g: st.g, gs: st.gs, p: p });
   };
 
@@ -1573,7 +1688,7 @@ window.LC = window.LC || {};
     switch (m.t) {
       case 'tick':
         var o = {};
-        (m.p || []).forEach(function (q) { if (q.id !== N.myId) o[q.id] = { name: q.n, color: q.c, x: q.x, y: q.y, dir: q.dir, mv: q.mv, ar: q.ar || 'farm', cp: q.cp || null }; });
+        (m.p || []).forEach(function (q) { if (q.id !== N.myId) o[q.id] = { name: q.n, color: q.c, x: q.x, y: q.y, dir: q.dir, mv: q.mv, ar: q.ar || 'farm', cp: q.cp || null, rd: q.rd || null }; });
         N.others = o;
         N.emit('tick', m);
         break;
@@ -1594,12 +1709,12 @@ window.LC = window.LC || {};
     setTimeout(function () { if (N.reqs[id]) { delete N.reqs[id]; cb(null); } }, 8000);
   };
   N.send = function (msg) { safeSend(N.hostConn, msg); };
-  N.sendPos = function (x, y, dir, mv, ar, cp, force) {
+  N.sendPos = function (x, y, dir, mv, ar, cp, force, rd) {
     if (N.role !== 'guest') return;
-    var now = Date.now(), k = Math.round(x) + ',' + Math.round(y) + ',' + dir + ',' + (mv ? 1 : 0) + ',' + ar + ',' + cp;
+    var now = Date.now(), k = Math.round(x) + ',' + Math.round(y) + ',' + dir + ',' + (mv ? 1 : 0) + ',' + ar + ',' + cp + ',' + rd;
     if (!force && (now - (N.lastPos || 0) < 90 || (k === N.lastPosKey && now - N.lastPos < 1000))) return;
     N.lastPos = now; N.lastPosKey = k;
-    safeSend(N.hostConn, { t: 'pos', x: Math.round(x), y: Math.round(y), dir: dir, mv: !!mv, ar: ar || 'farm', cp: cp || null });
+    safeSend(N.hostConn, { t: 'pos', x: Math.round(x), y: Math.round(y), dir: dir, mv: !!mv, ar: ar || 'farm', cp: cp || null, rd: rd || null });
   };
 
   // ================================================================ leave
@@ -2382,6 +2497,7 @@ window.LC = window.LC || {};
     make(scene, 'i_kepeng', 16, 16, ICON.kepeng, true);
     Object.keys(HUD).forEach(function (k) { make(scene, k, 12, 12, HUD[k], true); });
     if (Art.generate2) Art.generate2(scene);
+    if (Art.generate3) Art.generate3(scene);
   };
 })(window.LC);
 
@@ -2662,6 +2778,7 @@ window.LC = window.LC || {};
       case 'songkok': p.rect(5, 1, 6, 2, '#1a1a1e'); p.rect(5, 1, 6, 1, '#34343c'); p.px(5, 3, HR); p.px(10, 3, HR); break;
       case 'terendak': [[6, 9, 0], [4, 11, 1], [2, 13, 2], [1, 14, 3]].forEach(function (r) { p.rect(r[0], r[2], r[1] - r[0] + 1, 1, r[2] === 3 ? '#a88a44' : '#ecd28a'); }); break;
       case 'nonla': [[7, 8, 0], [5, 10, 1], [3, 12, 2], [1, 14, 3]].forEach(function (r) { p.rect(r[0], r[2], r[1] - r[0] + 1, 1, r[2] === 3 ? '#c9b070' : '#f2e6b8'); }); break;
+      case 'cap': p.rect(5, 2, 6, 2, '#c8323a'); p.rect(4, 3, 8, 1, '#a81e24'); p.px(10, 1, '#f5f0e1'); break;
       case 'headband': p.rect(5, 2, 6, 2, HR); p.rect(5, 3, 6, 1, '#c8323a'); p.px(11, 3, '#c8323a'); break;
       case 'tudung': p.rect(4, 2, 8, 2, L.hatColor); p.rect(4, 3, 1, 6, L.hatColor); p.rect(11, 3, 1, 6, L.hatColor); p.rect(4, 8, 8, 2, L.hatColor); p.rect(5, 2, 6, 1, '#fff0f6'); break;
       case 'bun': p.rect(5, 2, 6, 2, HR); p.disc(8, 1, 1.6, HR); p.px(4, 4, HR); p.px(11, 4, HR); p.px(10, 1, '#e9b949'); break;
@@ -2862,6 +2979,7 @@ window.LC = window.LC || {};
     });
     // villagers
     Object.keys(LC.VILLAGERS).forEach(function (vid) {
+      if (LC.VILLAGERS[vid].sprite) return;   // the sea folk have their own sprites (art3.js)
       var L = LC.VILLAGERS[vid].look;
       make(scene, 'npc_' + vid + '_0', 16, 20, function (p) { drawVillager(p, L, false); });
       make(scene, 'npc_' + vid + '_1', 16, 20, function (p) { drawVillager(p, L, true); });
@@ -2898,6 +3016,268 @@ window.LC = window.LC || {};
     if (scene.textures.exists('fog')) scene.textures.remove('fog');
     scene.textures.addCanvas('fog', fc); scene.textures.get('fog').setFilter(Phaser.Textures.FilterMode.LINEAR);
     // item icons
+    Object.keys(IC).forEach(function (id) { make(scene, 'i_' + id, 16, 16, IC[id], true); });
+  };
+})(window.LC);
+
+</script>
+  <script>/* src/art3.js */
+/* Little Creature — procedural pixel art for v1.4: bicycles and cars, and Kampung Karang under the sea
+ * (sea-floor tiles, coral, shell houses, the shipwreck, sea folk, fish schools, jellyfish, bubbles, light rays). */
+window.LC = window.LC || {};
+(function (LC) {
+  'use strict';
+  var Art = LC.Art, OUT = '#2a1d18';
+
+  // ================================================================== TILES (after art2's)
+  function seafloor(p, v) {
+    p.rect(0, 0, 16, 16, v ? '#c9b98c' : '#c2b183'); p.speck(0, 0, 16, 16, '#b09e70', 16); p.speck(0, 0, 16, 16, '#d8caa0', 10);
+    for (var i = 0; i < 2; i++) { var y = 3 + i * 7 + p.ri(2); for (var x = 0; x < 16; x++) if ((x + i * 4) % 6 < 3) p.px(x, y, '#b3a274'); }
+    if (v) { p.px(3 + p.ri(10), 3 + p.ri(10), '#f0e0e8'); p.px(2 + p.ri(12), 2 + p.ri(12), '#e88a9a'); }
+  }
+  function lane(p) { p.rect(0, 0, 16, 16, '#e2d6b0'); p.speck(0, 0, 16, 16, '#d2c49a', 14); p.speck(0, 0, 16, 16, '#f0e8cc', 10); }
+  function coral(p) {
+    p.rect(0, 0, 16, 16, '#5a4a6a'); p.speck(0, 0, 16, 16, '#4a3c5a', 14);
+    var cols = ['#e8607a', '#f0a050', '#c070d0', '#60c0b0', '#f0d060'];
+    for (var i = 0; i < 7; i++) p.disc(p.ri(16), p.ri(16), 1.6 + p.r() * 1.8, cols[i % cols.length]);
+    p.speck(0, 0, 16, 16, '#ffffff', 3);
+  }
+  Art.extraTiles = (Art.extraTiles || []).concat([
+    { fn: function (p) { seafloor(p, 0); } }, { fn: function (p) { seafloor(p, 1); } }, { fn: lane }, { fn: coral }
+  ]);
+  Object.assign(Art.TI, { SEAF0: 40, SEAF1: 41, SEALANE: 42, CORAL: 43 });
+
+  // ================================================================== VEHICLES
+  var BIKE = '#c8323a', BIKE2 = '#8a1e24', TYRE = '#26222a', SPOKE = '#b8b8c0';
+  function wheel(p, cx, cy, r, f) {
+    p.disc(cx, cy, r, TYRE);
+    p.ctx.globalCompositeOperation = 'destination-out'; p.disc(cx, cy, r - 1.3, '#000'); p.ctx.globalCompositeOperation = 'source-over';
+    if (f) { p.line(cx - r + 1.5, cy, cx + r - 1.5, cy, SPOKE); p.line(cx, cy - r + 1.5, cx, cy + r - 1.5, SPOKE); }
+    else { p.line(cx - r + 2, cy - r + 2, cx + r - 2, cy + r - 2, SPOKE); p.line(cx - r + 2, cy + r - 2, cx + r - 2, cy - r + 2, SPOKE); }
+    p.px(cx, cy, '#e8e8f0');
+  }
+  function bikeSide(p, f) {      // 24x14, facing right
+    wheel(p, 5, 9, 4.5, f); wheel(p, 19, 9, 4.5, f);
+    p.line(5, 9, 10, 5, BIKE, 2); p.line(10, 5, 17, 5, BIKE, 2); p.line(10, 5, 12, 9, BIKE); p.line(12, 9, 5, 9, BIKE2); p.line(17, 5, 19, 9, BIKE, 2);
+    p.rect(8, 3, 4, 1, '#3a2a20'); p.line(17, 5, 18, 2, '#9aa0a8'); p.rect(17, 1, 4, 1, '#9aa0a8');
+    p.rect(19, 2, 4, 3, '#c9a46a'); p.rect(19, 2, 4, 1, '#e0c08a');   // front basket
+    p.disc(12, 9, 1.4, '#9aa0a8');
+  }
+  function bikeFront(p, f, back) {   // 12x14
+    p.ell(6, 9, 1.6, 4.4, TYRE); p.px(6, f ? 7 : 11, SPOKE);
+    p.rect(1, 3, 10, 1, '#9aa0a8'); p.rect(5, 4, 2, 4, BIKE);
+    if (!back) { p.rect(3, 4, 6, 3, '#c9a46a'); p.rect(3, 4, 6, 1, '#e0c08a'); p.px(6, 8, '#fff3b0'); }
+    else { p.rect(4, 5, 4, 1, '#3a2a20'); p.px(6, 9, '#e83a3a'); }
+    p.px(0, 3, '#3a3a40'); p.px(11, 3, '#3a3a40');
+  }
+  function carSide(p, col, col2, f) {   // 34x22, facing right
+    var b = f ? 1 : 0;
+    p.rect(2, 9 + b, 30, 7, col); p.rect(2, 15 + b, 30, 1, col2);
+    p.poly([[8, 9 + b], [12, 2 + b], [24, 2 + b], [28, 9 + b]], col);
+    p.poly([[11, 9 + b], [13, 4 + b], [17, 4 + b], [17, 9 + b]], '#a8d8f0'); p.poly([[19, 9 + b], [19, 4 + b], [23, 4 + b], [26, 9 + b]], '#a8d8f0');
+    p.rect(18, 3 + b, 1, 6, col2);
+    [[20, 4], [19, 5], [21, 5], [18, 6], [22, 6]].forEach(function (c) { p.px(c[0], c[1] + b, '#ecd28a'); });   // the driver's conical hat
+    p.rect(31, 10 + b, 2, 2, '#fff3b0'); p.rect(1, 10 + b, 2, 2, '#e83a3a'); p.rect(2, 13 + b, 30, 1, '#e8e8f0');
+    p.disc(9, 17, 3.4, TYRE); p.disc(9, 17, 1.6, '#b8b8c0'); p.disc(26, 17, 3.4, TYRE); p.disc(26, 17, 1.6, '#b8b8c0');
+  }
+  function carFront(p, col, col2, f, back) {   // 24x24
+    var b = f ? 1 : 0;
+    p.rect(2, 11 + b, 20, 8, col); p.rect(2, 18 + b, 20, 1, col2);
+    p.poly([[5, 11 + b], [7, 3 + b], [17, 3 + b], [19, 11 + b]], col);
+    p.poly([[7, 10 + b], [8, 5 + b], [16, 5 + b], [17, 10 + b]], back ? '#88b8d0' : '#a8d8f0');
+    [[12, 6], [11, 7], [13, 7], [10, 8], [14, 8], [9, 9], [15, 9]].forEach(function (c) { p.px(c[0], c[1] + b, '#ecd28a'); });
+    if (!back) { p.disc(5, 14 + b, 1.6, '#fff3b0'); p.disc(19, 14 + b, 1.6, '#fff3b0'); p.rect(8, 15 + b, 8, 2, '#3a3a40'); for (var x = 9; x < 16; x += 2) p.px(x, 15 + b, '#9aa0a8'); }
+    else { p.rect(4, 13 + b, 3, 2, '#e83a3a'); p.rect(17, 13 + b, 3, 2, '#e83a3a'); p.rect(9, 15 + b, 6, 2, '#f5f0e1'); }
+    p.rect(1, 19, 4, 4, TYRE); p.rect(19, 19, 4, 4, TYRE); p.rect(2, 19 + b, 20, 1, '#e8e8f0');
+  }
+
+  // ================================================================== UNDERWATER BUILDINGS
+  function drawKedai(p) {   // Abang Zul's bicycle shop, 64x48
+    p.rect(2, 40, 60, 6, 'rgba(30,20,12,0.35)');
+    p.rect(4, 18, 56, 26, '#e8dcc0'); p.rect(4, 18, 56, 2, '#3a6a9a');
+    p.rect(10, 26, 26, 18, '#4a4a52'); for (var y = 27; y < 44; y += 2) p.rect(10, y, 26, 1, '#5a5a62');   // rolling shutter, half up
+    p.rect(10, 26, 26, 6, '#2a2a30');
+    p.rect(40, 24, 14, 10, '#7ab8d8'); p.rect(46, 24, 1, 10, '#e8dcc0'); p.rect(40, 29, 14, 1, '#e8dcc0');
+    [[16, 36], [26, 36]].forEach(function (w) { p.disc(w[0], w[1], 4, '#26222a'); p.disc(w[0], w[1], 2.6, '#e8dcc0'); });   // a bike in the doorway
+    p.line(16, 36, 21, 32, '#c8323a', 2); p.line(21, 32, 26, 36, '#c8323a', 2);
+    p.poly([[0, 20], [6, 6], [58, 6], [64, 20]], '#3a6a9a'); for (var x = 0; x < 64; x += 4) p.line(x, 20, x + (32 - x) * 0.18, 6, '#2a4e74');
+    p.rect(14, 8, 36, 9, '#f5f0e1'); p.rect(14, 8, 36, 1, '#c8323a'); p.rect(14, 16, 36, 1, '#c8323a');
+    p.disc(20, 12, 2.4, '#3a3a40'); p.disc(20, 12, 1, '#f5f0e1'); p.rect(25, 11, 20, 1, '#3a3a40'); p.rect(25, 13, 14, 1, '#3a3a40');
+  }
+  function drawNagaShrine(p) {   // 36x60
+    var H = p.h;
+    p.rect(4, H - 8, 28, 8, '#8a8a92'); p.rect(4, H - 8, 28, 1, '#a8a8b0');
+    p.rect(11, 14, 14, H - 22, '#9a9aa2'); p.rect(22, 14, 3, H - 22, '#7a7a82'); p.rect(11, 14, 14, 2, '#b8b8c0');
+    for (var t = 0; t < 4; t++) { var y = 20 + t * 9; p.ell(18, y, 10, 2.6, '#2f9a7a'); p.ell(18, y - 0.6, 9, 1.4, '#4fc0a0'); for (var k = 0; k < 4; k++) p.px(10 + k * 5, y, '#f2c94c'); }
+    p.ell(18, 9, 6, 5, '#2f9a7a'); p.ell(18, 8, 4.6, 3.6, '#4fc0a0'); p.px(16, 8, '#ffd166'); p.px(20, 8, '#ffd166');
+    [[13, 3], [15, 1], [18, 0], [21, 1], [23, 3]].forEach(function (c) { p.rect(c[0], c[1], 1, 4, '#f2c94c'); });
+    p.speck(4, 14, 28, H - 22, '#e88a9a', 6); p.speck(4, 14, 28, H - 22, '#60c0b0', 6);
+  }
+  function drawKimaHouse(p) {   // giant clam house, 52x40
+    p.ell(26, 30, 24, 9, '#7a8aa8'); p.ell(26, 29, 22, 7.6, '#a8b8d0');
+    for (var x = 6; x < 48; x += 5) p.line(26, 34, x, 24, '#8898b8');
+    p.ell(26, 15, 21, 13, '#a8b8d0'); p.ell(26, 15, 19, 11, '#c8d4e8');
+    for (x = 8; x < 46; x += 5) p.line(26, 3, x, 26, '#a8b8d0');
+    p.ell(26, 26, 16, 4, '#ffe0f0'); p.disc(26, 24, 3.4, '#fffaff'); p.px(25, 23, '#ffffff');   // the pearl doorway glow
+    p.rect(22, 25, 8, 9, '#4a3a5a'); p.ell(26, 25, 4, 3, '#4a3a5a');
+    p.line(6, 30, 10, 18, '#8a6a45', 2); p.line(46, 30, 42, 18, '#8a6a45', 2);
+  }
+  function drawCoralHouse(p) {   // 48x44
+    p.ell(24, 26, 22, 17, '#e8607a'); p.ell(22, 24, 18, 13, '#f07890');
+    p.speck(4, 10, 40, 30, '#c84a64', 30); p.speck(4, 10, 40, 30, '#ffb0c0', 14);
+    [[8, 10, 3], [40, 12, 3.4], [24, 6, 4], [14, 7, 2.4], [34, 7, 2.6]].forEach(function (b) { p.disc(b[0], b[1], b[2], ['#f0a050', '#c070d0', '#60c0b0'][Math.round(b[0]) % 3]); });
+    p.rect(18, 28, 12, 15, '#5a3a4a'); p.ell(24, 28, 6, 4, '#5a3a4a'); p.rect(19, 29, 10, 1, '#f2c94c');
+    p.disc(10, 25, 3.4, '#ffe8a0'); p.disc(10, 25, 2.2, '#5a8ac8'); p.disc(38, 25, 3.4, '#ffe8a0'); p.disc(38, 25, 2.2, '#5a8ac8');
+    p.rect(34, 30, 8, 3, '#8a6a45'); p.px(36, 29, '#f08020'); p.px(37, 29, '#ffffff'); p.px(38, 29, '#f08020');   // clownfish window box
+  }
+  function drawWreck(p) {   // shipwreck, 100x56
+    var H = p.h;
+    p.poly([[6, 30], [96, 24], [90, 50], [14, 54]], '#5a4030');
+    p.poly([[10, 32], [92, 27], [88, 46], [16, 50]], '#6e5038');
+    for (var x = 14; x < 90; x += 8) p.line(x, 32 - (x - 10) * 0.06, x + 2, 50 - (x - 14) * 0.05, '#4a3424');
+    p.poly([[40, 38], [52, 36], [50, 46], [42, 47]], '#1a1418');   // the hole in the hull
+    p.line(52, 28, 46, 2, '#5a4030', 3); p.line(46, 6, 30, 12, '#4a3424', 2);
+    p.poly([[47, 6], [64, 10], [60, 24], [50, 22]], '#a89878'); p.line(50, 12, 60, 16, '#8a7a5a'); p.line(49, 17, 60, 20, '#8a7a5a');   // a tattered junk sail
+    p.speck(8, 26, 88, 28, '#3a7a5a', 30); p.speck(8, 26, 88, 28, '#e88a9a', 8);
+    p.rect(70, 44, 8, 4, '#d8e0f0'); p.rect(71, 44, 6, 1, '#3a6ab8'); p.ell(28, 50, 4, 1.6, '#d8e0f0'); p.px(28, 50, '#3a6ab8');   // spilled porcelain
+  }
+  function drawSurface(p) {   // a column of light and bubbles to swim up (32x40)
+    for (var y = 0; y < 40; y++) { var a = 0.5 - y / 80; p.rect(4 + y / 10, y, 24 - y / 5, 1, 'rgba(220,245,255,' + a.toFixed(2) + ')'); }
+    [[10, 30, 2], [20, 24, 1.6], [14, 16, 1.4], [22, 10, 2], [12, 6, 1.2], [18, 36, 1.4]].forEach(function (b) { p.disc(b[0], b[1], b[2], '#e8f8ff'); p.px(b[0] - 1, b[1] - 1, '#ffffff'); });
+  }
+  function drawDiveRing(p) {   // bubbles on the island's surface (16x12)
+    p.ell(8, 7, 7, 3.6, '#bff2f2'); p.ell(8, 7, 5.4, 2.4, '#3fb5c4');
+    [[4, 6], [10, 4], [12, 8], [7, 9]].forEach(function (b) { p.disc(b[0], b[1], 1.2, '#ffffff'); });
+  }
+  function drawTurtleNet(p, free) {   // 26x18
+    p.ell(13, 10, 9, 5.6, '#5a7a3a'); p.ell(13, 9.4, 7, 4.2, '#7a9a4a');
+    [[10, 8], [14, 7], [16, 10], [11, 11]].forEach(function (c) { p.px(c[0], c[1], '#4a6a2a'); });
+    p.ell(23, 9, 3, 2.4, '#a8b878'); p.px(24, 8, '#2a1a10');
+    p.ell(6, 4, 3, 1.4, '#98a868'); p.ell(6, 16, 3, 1.4, '#98a868'); p.ell(19, 16, 2.6, 1.3, '#98a868');
+    if (!free) { for (var i = 0; i < 26; i += 3) { p.line(i, 0, i + 6, 18, '#e8e0c8'); p.line(i + 6, 0, i, 18, '#e8e0c8'); } p.disc(3, 3, 1.4, '#3a8ac8'); }
+  }
+
+  // ================================================================== SEA FOLK (portrait-friendly sizes)
+  function drawDugong(p, blink) {   // Tok Duyung, 26x20
+    p.ell(14, 12, 11, 7, '#9a8a92'); p.ell(13, 11, 9.6, 5.6, '#b8a8b0');
+    p.ell(14, 15, 8, 2.4, '#d8c8cc');
+    p.poly([[2, 10], [0, 6], [0, 15]], '#8a7a82');
+    p.ell(9, 17, 3, 1.6, '#8a7a82'); p.ell(19, 17, 3, 1.6, '#8a7a82');
+    p.ell(22, 10, 4, 3.6, '#b8a8b0'); p.ell(24, 12, 2.6, 2, '#d8c8cc');
+    if (blink) p.rect(21, 8, 2, 1, '#2a1a20'); else { p.px(21, 8, '#2a1a20'); p.px(22, 8, '#2a1a20'); }
+    p.px(25, 13, '#f5f5f0'); p.px(24, 14, '#f5f5f0'); p.px(23, 14, '#f5f5f0');   // white whiskers
+    p.rect(18, 4, 7, 2, '#3f8a3a'); p.px(19, 3, '#5aa83e'); p.px(23, 3, '#5aa83e');   // a sea-grass crown
+    p.outline('#4a3a42');
+  }
+  function drawMermaid(p, blink) {   // Nila, 18x24
+    p.poly([[5, 13], [13, 13], [12, 19], [9, 22], [6, 19]], '#2fa8a0'); p.poly([[9, 21], [4, 24], [14, 24]], '#3fc8b8');
+    p.speck(5, 13, 8, 8, '#7fe8d8', 6);
+    p.rect(5, 8, 8, 5, '#c9905e'); p.rect(5, 9, 8, 3, '#e86a8a'); p.rect(4, 9, 1, 4, '#c9905e'); p.rect(13, 9, 1, 4, '#c9905e');
+    p.rect(5, 2, 8, 6, '#c9905e');
+    p.rect(4, 1, 10, 3, '#1e140e'); p.rect(3, 3, 2, 10, '#1e140e'); p.rect(13, 3, 2, 10, '#1e140e');
+    if (blink) { p.rect(6, 5, 2, 1, '#2a1a10'); p.rect(10, 5, 2, 1, '#2a1a10'); } else { p.px(7, 5, '#2a1a10'); p.px(10, 5, '#2a1a10'); }
+    p.px(8, 7, '#a84a4a'); p.px(9, 7, '#a84a4a');
+    p.disc(13, 2, 1.4, '#ffe0f0'); p.px(13, 2, '#ffffff');   // a pearl hair clip
+    p.outline('#1a3a3a');
+  }
+  function drawCrab(p, blink) {   // Pak Ketam, 22x18
+    p.ell(11, 11, 8, 5, '#d6502a'); p.ell(11, 10, 6.6, 3.6, '#ee7040');
+    p.disc(2, 7, 2.6, '#d6502a'); p.disc(20, 7, 2.6, '#d6502a'); p.px(1, 5, '#a83a1e'); p.px(21, 5, '#a83a1e');
+    for (var i = 0; i < 3; i++) { p.line(5 - i, 13 + i, 2 - i, 17, '#a83a1e'); p.line(17 + i, 13 + i, 20 + i, 17, '#a83a1e'); }
+    p.rect(7, 3, 1, 4, '#d6502a'); p.rect(14, 3, 1, 4, '#d6502a');
+    if (blink) { p.rect(6, 3, 3, 1, '#1a1a1a'); p.rect(13, 3, 3, 1, '#1a1a1a'); } else { p.disc(7, 3, 1.4, '#f5f5f0'); p.disc(14, 3, 1.4, '#f5f5f0'); p.px(7, 3, '#1a1a1a'); p.px(14, 3, '#1a1a1a'); }
+    p.rect(8, 0, 6, 2, '#f5f0e1'); p.rect(8, 1, 6, 1, '#d8d0c0');   // a little white kopiah
+    p.rect(9, 11, 4, 1, '#a83a1e');
+    p.outline('#5a1a0a');
+  }
+
+  // ================================================================== FORAGE (ready / picked)
+  var FG = {
+    seaweed: function (p, ok) { for (var i = 0; i < (ok ? 5 : 2); i++) { var x = 3 + i * 2.5; p.line(x, 15, x + Math.sin(i) * 2, ok ? 2 + (i % 2) * 3 : 10, i % 2 ? '#3f8a5a' : '#5aa86a', 2); } },
+    seacuke: function (p, ok) { if (!ok) { p.px(6, 6, '#a89870'); return; } p.ell(7, 5, 6, 2.6, '#6a3a2a'); p.ell(7, 4.4, 5, 1.6, '#8a5a3a'); p.speck(2, 3, 10, 4, '#e8c060', 6); },
+    clam: function (p, ok) { p.ell(9, 8, 8, 4.4, '#7a8aa8'); p.ell(9, 7, 7, 3.4, '#a8b8d0'); for (var x = 3; x < 16; x += 3) p.line(9, 11, x, 4, '#8898b8'); if (ok) { p.ell(9, 8, 5, 1.2, '#2a6ab8'); p.disc(9, 8, 1.4, '#fffaff'); } else p.ell(9, 8, 5, 0.8, '#4a5a78'); },
+    rubbish: function (p, ok) { if (!ok) { p.px(6, 6, '#c2b183'); return; } p.rect(2, 4, 4, 7, '#a8d8e8'); p.rect(2, 4, 4, 1, '#3a8ac8'); for (var i = 0; i < 12; i += 3) { p.line(6 + i * 0.5, 2, 14, 4 + i * 0.6, '#e8e0c8'); p.line(7, 10 - i * 0.5, 14, 2 + i * 0.5, '#d8d0b8'); } },
+    wreck: function (p, ok) { p.rect(1, 5, 16, 9, '#5a3a20'); p.rect(1, 5, 16, 2, '#7a5030'); p.rect(1, 9, 16, 1, '#c9a040'); p.rect(8, 8, 2, 3, '#c9a040'); if (ok) { p.px(4, 4, '#ffe060'); p.px(12, 3, '#fff8c0'); p.px(13, 4, '#d8e0f0'); } else p.rect(1, 2, 16, 3, '#3a2414'); }
+  };
+  var FG_SIZE = { seaweed: [16, 16], seacuke: [14, 9], clam: [18, 12], rubbish: [16, 13], wreck: [18, 15] };
+
+  // ================================================================== ICONS
+  var IC = {};
+  IC.basikal = function (p) { p.disc(4, 11, 3.4, '#26222a'); p.disc(4, 11, 2, '#00000000'); p.disc(12, 11, 3.4, '#26222a'); p.line(4, 11, 7, 6, '#c8323a', 2); p.line(7, 6, 11, 6, '#c8323a', 2); p.line(11, 6, 12, 11, '#c8323a'); p.line(7, 6, 8, 11, '#c8323a'); p.rect(6, 4, 3, 1, '#3a2a20'); p.rect(11, 3, 3, 1, '#9aa0a8'); p.rect(12, 4, 3, 2, '#c9a46a'); p.disc(4, 11, 1.2, '#b8b8c0'); p.disc(12, 11, 1.2, '#b8b8c0'); };
+  IC.kereta = function (p) { p.rect(1, 7, 14, 5, '#c8323a'); p.poly([[4, 7], [6, 3], [11, 3], [13, 7]], '#c8323a'); p.rect(6, 4, 2, 3, '#a8d8f0'); p.rect(9, 4, 2, 3, '#a8d8f0'); p.disc(4, 12, 2, '#26222a'); p.disc(12, 12, 2, '#26222a'); p.rect(14, 8, 1, 1, '#fff3b0'); p.rect(1, 10, 14, 1, '#8a1e24'); };
+  IC.rumpai_laut = function (p) { for (var i = 0; i < 5; i++) p.line(3 + i * 2.5, 15, 4 + i * 2.5 + Math.sin(i * 2) * 2, 2 + (i % 2) * 3, i % 2 ? '#3f8a5a' : '#5aa86a', 2); };
+  IC.gamat = function (p) { p.ell(8, 9, 7, 3.4, '#6a3a2a'); p.ell(8, 8, 6, 2.2, '#8a5a3a'); p.speck(2, 6, 12, 6, '#e8c060', 8); p.px(14, 9, '#4a2414'); };
+  IC.pinggan_lama = function (p) { p.ell(8, 9, 7, 5, '#e8eef5'); p.ell(8, 9, 5.6, 3.8, '#f5f8fc'); p.ell(8, 9, 3, 2, '#3a6ab8'); p.px(8, 9, '#f5f8fc'); for (var i = 0; i < 8; i++) { var a = i / 8 * Math.PI * 2; p.px(8 + Math.cos(a) * 6, 9 + Math.sin(a) * 4.3, '#3a6ab8'); } };
+  IC.sampah = function (p) { p.rect(3, 4, 5, 9, '#a8d8e8'); p.rect(3, 4, 5, 2, '#3a8ac8'); for (var i = 0; i < 10; i += 3) { p.line(7, 3 + i, 15, 6 + i * 0.4, '#e8e0c8'); p.line(8, 14 - i, 15, 3 + i, '#d8d0b8'); } };
+  IC.kerabu_rumpai = function (p) { p.ell(8, 11, 7, 3.4, '#e9e4d8'); p.ell(8, 11, 5.6, 2.4, '#f5f0e8'); for (var i = 0; i < 6; i++) p.line(4 + i * 1.5, 11, 5 + i * 1.4, 7, i % 2 ? '#3f8a5a' : '#5aa86a'); p.px(6, 9, '#d62828'); p.px(10, 8, '#d62828'); p.disc(12, 8, 1.4, '#9be15d'); };
+  IC.agar_agar = function (p) { p.ell(8, 13, 7, 2, '#e9e4d8'); p.rect(3, 4, 10, 9, '#f5f0e1'); p.rect(3, 4, 10, 3, '#e86a8a'); p.rect(3, 7, 10, 3, '#f5f0e1'); p.rect(3, 10, 10, 3, '#5aa86a'); p.rect(3, 4, 10, 1, '#ff9ab0'); p.rect(12, 4, 1, 9, '#d8d0c0'); };
+
+  // ================================================================== GENERATE
+  Art.generate3 = function (scene) {
+    var make = Art.make;
+    // vehicles: one bicycle, and a car in each player's outfit colour
+    ['', '_1'].forEach(function (s, f) {
+      make(scene, 'bike_side_' + f, 24, 14, function (p) { bikeSide(p, f); });
+      make(scene, 'bike_down_' + f, 12, 14, function (p) { bikeFront(p, f, false); });
+      make(scene, 'bike_up_' + f, 12, 14, function (p) { bikeFront(p, f, true); });
+    });
+    var CAR = [['#c8323a', '#8a1e24'], ['#2a9d8f', '#1f7a70'], ['#e9b949', '#c4922f'], ['#8e5cc4', '#6c4398']];
+    CAR.forEach(function (c, i) {
+      for (var f = 0; f < 2; f++) {
+        (function (f) {
+          make(scene, 'car' + i + '_side_' + f, 34, 22, function (p) { carSide(p, c[0], c[1], f); }, true);
+          make(scene, 'car' + i + '_down_' + f, 24, 24, function (p) { carFront(p, c[0], c[1], f, false); }, true);
+          make(scene, 'car' + i + '_up_' + f, 24, 24, function (p) { carFront(p, c[0], c[1], f, true); }, true);
+        })(f);
+      }
+    });
+    // buildings and things under the sea
+    make(scene, 'kedai_basikal', 64, 48, drawKedai, true);
+    make(scene, 'naga_shrine', 36, 60, drawNagaShrine, true);
+    make(scene, 'rumah_kima', 52, 40, drawKimaHouse, true);
+    make(scene, 'rumah_karang', 48, 44, drawCoralHouse, true);
+    make(scene, 'kapal_karam', 100, 56, drawWreck, true);
+    make(scene, 'surface', 32, 40, drawSurface);
+    make(scene, 'dive_ring', 16, 12, drawDiveRing);
+    make(scene, 'turtle_net', 26, 18, function (p) { drawTurtleNet(p, false); }, true);
+    make(scene, 'turtle_free', 26, 18, function (p) { drawTurtleNet(p, true); }, true);
+    // decor
+    make(scene, 'kelp', 12, 30, function (p) { for (var y = 29; y > 1; y--) { var x = 6 + Math.sin(y / 4) * 2.4; p.rect(x - 1, y, 2, 1, y % 5 ? '#2f7a4a' : '#4a9a5a'); if (y % 6 === 0) p.px(x + 2, y, '#5aa86a'); } }, true);
+    make(scene, 'seagrass', 14, 12, function (p) { for (var i = 0; i < 6; i++) p.line(2 + i * 2, 11, 1 + i * 2.2 + (i % 2), 2 + (i % 3), i % 2 ? '#4a9a5a' : '#3a8a4a'); }, true);
+    make(scene, 'anemone', 14, 10, function (p) { p.ell(7, 8, 5, 2, '#c84a8a'); for (var i = 0; i < 7; i++) p.line(7, 8, 1 + i * 2, 1 + (i % 2) * 2, '#f08ac0'); p.px(9, 5, '#f08020'); p.px(10, 5, '#ffffff'); }, true);
+    make(scene, 'shellrock', 14, 9, function (p) { p.ell(7, 6, 6, 3, '#8a8a92'); p.ell(6, 5, 4, 2, '#a8a8b0'); p.disc(10, 4, 1.4, '#f0d0b8'); p.px(4, 4, '#e88a9a'); }, true);
+    // forage
+    Object.keys(FG).forEach(function (k) {
+      var sz = FG_SIZE[k];
+      make(scene, 'fg_' + k, sz[0], sz[1], function (p) { FG[k](p, true); }, true);
+      make(scene, 'fg_' + k + '_e', sz[0], sz[1], function (p) { FG[k](p, false); }, true);
+    });
+    // sea folk
+    [['duyung', 26, 20, drawDugong], ['nila', 18, 24, drawMermaid], ['ketam', 22, 18, drawCrab]].forEach(function (n) {
+      make(scene, 'npc_' + n[0] + '_0', n[1], n[2], function (p) { n[3](p, false); });
+      make(scene, 'npc_' + n[0] + '_1', n[1], n[2], function (p) { n[3](p, true); });
+    });
+    // sea critters
+    for (var f = 0; f < 2; f++) {
+      (function (f) {
+        make(scene, 'ikan_kecil_' + f, 16, 10, function (p) {
+          [[4, 3], [10, 2], [7, 7]].forEach(function (c, k) { var dx = f && k === 1 ? 1 : 0; p.ell(c[0] + dx, c[1], 2.6, 1.3, k % 2 ? '#f0a020' : '#5ab8e8'); p.px(c[0] - 3 + dx, c[1], k % 2 ? '#c87a10' : '#3a8ac8'); p.px(c[0] + 1 + dx, c[1] - 1, '#ffffff'); });
+        });
+        make(scene, 'ubur_' + f, 12, 14, function (p) {
+          p.ell(6, 4, 5, 3.6 - f * 0.6, 'rgba(240,170,220,0.85)'); p.ell(6, 3.4, 3.4, 2, 'rgba(255,220,240,0.9)');
+          for (var i = 0; i < 4; i++) p.line(2 + i * 2.6, 6, 2 + i * 2.6 + (f ? 1 : -1), 13, 'rgba(240,170,220,0.7)');
+        });
+      })(f);
+    }
+    // fx
+    make(scene, 'bubble', 5, 5, function (p) { p.disc(2.5, 2.5, 2.4, 'rgba(220,245,255,0.5)'); p.px(1, 1, '#ffffff'); }, '#bfe8ff');
+    make(scene, 'mask', 9, 4, function (p) { p.rect(0, 1, 9, 2, '#26222a'); p.rect(1, 0, 3, 3, '#7fd8f0'); p.rect(5, 0, 3, 3, '#7fd8f0'); p.px(1, 0, '#ffffff'); p.px(5, 0, '#ffffff'); });
+    var rc = document.createElement('canvas'); rc.width = 32; rc.height = 128;
+    var rx = rc.getContext('2d'), gr = rx.createLinearGradient(0, 0, 0, 128);
+    gr.addColorStop(0, 'rgba(230,250,255,0.55)'); gr.addColorStop(1, 'rgba(230,250,255,0)');
+    rx.fillStyle = gr; rx.beginPath(); rx.moveTo(10, 0); rx.lineTo(22, 0); rx.lineTo(32, 128); rx.lineTo(0, 128); rx.closePath(); rx.fill();
+    if (scene.textures.exists('ray')) scene.textures.remove('ray');
+    scene.textures.addCanvas('ray', rc); scene.textures.get('ray').setFilter(Phaser.Textures.FilterMode.LINEAR);
     Object.keys(IC).forEach(function (id) { make(scene, 'i_' + id, 16, 16, IC[id], true); });
   };
 })(window.LC);
@@ -2951,8 +3331,9 @@ window.LC = window.LC || {};
     A.verbIn.connect(A.verb); A.verb.connect(A.master);
     // buses
     A.music = c.createGain(); A.music.gain.value = A.musicOn ? MUSIC_VOL : 0;
-    var mDry = c.createGain(); mDry.gain.value = 0.62; A.music.connect(mDry); mDry.connect(A.master);
-    var mWet = c.createGain(); mWet.gain.value = 0.55; A.music.connect(mWet); mWet.connect(A.verbIn);
+    A.musicLP = c.createBiquadFilter(); A.musicLP.type = 'lowpass'; A.musicLP.frequency.value = 20000; A.music.connect(A.musicLP);
+    var mDry = c.createGain(); mDry.gain.value = 0.62; A.musicLP.connect(mDry); mDry.connect(A.master);
+    var mWet = c.createGain(); mWet.gain.value = 0.55; A.musicLP.connect(mWet); mWet.connect(A.verbIn);
     A.amb = c.createGain(); A.amb.gain.value = A.ambienceOn ? AMB_VOL : 0;
     A.amb.connect(A.master);
     var aWet = c.createGain(); aWet.gain.value = 0.25; A.amb.connect(aWet); aWet.connect(A.verbIn);
@@ -3057,7 +3438,8 @@ window.LC = window.LC || {};
     river: { g: 0.32, bp: 520, lp: 1400, lfo: 0.13, depth: 0.1, birds: 1 },
     forest: { g: 0.12, bp: 700, lp: 1800, lfo: 0.2, depth: 0.05, birds: 2.4 },
     sea: { g: 0.5, bp: 360, lp: 900, lfo: 0.09, depth: 0.32, birds: 0.5 },
-    wind: { g: 0.26, bp: 900, lp: 2400, lfo: 0.05, depth: 0.2, birds: 0.35 }
+    wind: { g: 0.26, bp: 900, lp: 2400, lfo: 0.05, depth: 0.2, birds: 0.35 },
+    deep: { g: 0.42, bp: 220, lp: 480, lfo: 0.06, depth: 0.25, birds: 0.001, muffle: true }
   };
   A.areaSound = AREA_SOUND.river;
   A.setArea = function (area) {
@@ -3070,6 +3452,7 @@ window.LC = window.LC || {};
     var t = A.ctx.currentTime, q = A.areaSound, r = A.riv;
     r.g.gain.setTargetAtTime(q.g, t, 0.8); r.bp.frequency.setTargetAtTime(q.bp, t, 0.8); r.lp.frequency.setTargetAtTime(q.lp, t, 0.8);
     r.lfo.frequency.setTargetAtTime(q.lfo, t, 0.8); r.lfoG.gain.setTargetAtTime(q.depth, t, 0.8);
+    if (A.musicLP) A.musicLP.frequency.setTargetAtTime(q.muffle ? 700 : 20000, t, 0.6);   // the music sounds far away under the sea
   };
   A.bird = function (t) {
     var d = pan(A.amb, rnd(-0.8, 0.8)), kind = Math.random();
@@ -3185,6 +3568,9 @@ window.LC = window.LC || {};
       case 'catch': A.noise(t, 0.3, 0.2, 'bandpass', 1600, 600); [0, 2, 4, 7].forEach(function (d, k) { A.bell(A.freq(d + 5), t + 0.15 + k * 0.08, 0.9, 0.1); }); break;
       case 'reel': A.tone(t, 'square', 1200, 1100, 0.025, 0.03); break;
       case 'build': [0, 0.18, 0.36, 0.6].forEach(function (d) { A.tone(t + d, 'triangle', 180, 120, 0.09, 0.22); A.noise(t + d, 0.05, 0.12, 'lowpass', 900); }); break;
+      case 'bell': A.bell(2100, t, 0.5, 0.07); A.bell(2100, t + 0.16, 0.6, 0.07); break;   // kring kring!
+      case 'honk': A.tone(t, 'square', 330, 320, 0.16, 0.05); A.tone(t + 0.2, 'square', 330, 320, 0.22, 0.05); break;
+      case 'dive': A.noise(t, 0.5, 0.25, 'lowpass', 900); for (i = 0; i < 6; i++) A.tone(t + 0.2 + i * 0.08, 'sine', 300 + i * 90, 700 + i * 90, 0.06, 0.05); break;
       case 'buy': A.bell(A.freq(8), t, 0.3, 0.08); A.bell(A.freq(10), t + 0.05, 0.4, 0.08); break;
     }
   };
@@ -3323,6 +3709,9 @@ LC.BootScene = class extends Phaser.Scene {
     if (!a.exists('kerbau_walk')) a.create({ key: 'kerbau_walk', frames: [{ key: 'kerbau_0' }, { key: 'kerbau_1' }], frameRate: 3, repeat: -1 });
     if (!a.exists('chicken_walk')) a.create({ key: 'chicken_walk', frames: [{ key: 'chicken_0' }, { key: 'chicken_2' }], frameRate: 6, repeat: -1 });
     if (!a.exists('chicken_peck')) a.create({ key: 'chicken_peck', frames: [{ key: 'chicken_0' }, { key: 'chicken_1' }, { key: 'chicken_0' }, { key: 'chicken_0' }], frameRate: 4, repeat: -1 });
+    ['ikan_kecil', 'ubur'].forEach(function (k) {
+      if (!a.exists(k + '_swim')) a.create({ key: k + '_swim', frames: [{ key: k + '_0' }, { key: k + '_1' }], frameRate: k === 'ubur' ? 2 : 5, repeat: -1 });
+    });
     ['kancil', 'ketam', 'penyu', 'biawak'].forEach(function (k) {
       if (!a.exists(k + '_walk')) a.create({ key: k + '_walk', frames: [{ key: k + '_0' }, { key: k + '_1' }], frameRate: k === 'penyu' ? 2 : 6, repeat: -1 });
     });
@@ -3504,9 +3893,12 @@ window.LC = window.LC || {};
     kancil: { walk: 'kancil_walk', speed: 24, w: 6, near: 18, r: 12, sfx: 'pet', hop: true },
     ketam: { walk: 'ketam_walk', speed: 12, w: 4, near: 6, r: 9, sfx: 'click', hop: true },
     penyu: { walk: 'penyu_walk', speed: 3, w: 8, near: 12, r: 14, sfx: 'pet' },
-    biawak: { walk: 'biawak_walk', speed: 9, w: 10, near: 12, r: 14, sfx: 'pet' }
+    biawak: { walk: 'biawak_walk', speed: 9, w: 10, near: 12, r: 14, sfx: 'pet' },
+    ikan_kecil: { walk: 'ikan_kecil_swim', speed: 22, w: 4, near: 16, r: 11, sfx: 'pet', hop: true },
+    ubur: { walk: 'ubur_swim', speed: 5, w: 3, near: 8, r: 9, sfx: 'pet' }
   };
-  var TILE_PATHY = { p: 1, f: 1, F: 1, b: 1, j: 1, k: 1 };
+  var TILE_PATHY = { p: 1, f: 1, F: 1, b: 1, j: 1, k: 1, v: 1 };
+  var RIDE_ITEM = { bike: 'basikal', car: 'kereta' };
 
   LC.WorldScene = class extends Phaser.Scene {
     constructor() { super('World'); }
@@ -3534,6 +3926,10 @@ window.LC = window.LC || {};
       this.buildDecor();
       this.refreshAllTiles();
       this.createPlayer(data.spawn, data.dir);
+      this.veh = this.add.image(0, 0, 'bike_side_0').setOrigin(0.5, 1).setVisible(false);
+      this.mask = this.add.image(0, 0, 'mask').setOrigin(0.5, 0.5).setVisible(false);
+      var parked = S.riding && !this.canRide(S.riding) ? S.riding : null;
+      if (parked) S.riding = null;
       this.createGhost();
       this.createCritters();
       this.createLighting();
@@ -3571,6 +3967,7 @@ window.LC = window.LC || {};
           self.ui.showSummary(data.summary, function () { self.cameras.main.fadeIn(800); self.sleeping = false; self.morning(); });
         });
       } else if (data.area && this.ui.ready) this.ui.areaBanner(this.A.name, this.A.sub);
+      if (parked) this.time.delayedCall(500, function () { self.toast(parked === 'car' ? 'The car can\'t go here. You park it at the edge and walk on.' : 'You leave the basikal by the path.', parked === 'car' ? 'i_kereta' : 'i_basikal'); });
     }
 
     tilePx(t) { return { x: (t.x + 0.5) * T, y: (t.y + 0.8) * T }; }
@@ -3605,6 +4002,9 @@ window.LC = window.LC || {};
             case 'G': idx = TI.HGRASS; break;
             case 'd': idx = rnd.frac() < 0.7 ? TI.DUNE0 : TI.DUNE1; break;
             case 'R': idx = TI.REDROCK; break;
+            case 'u': idx = rnd.frac() < 0.8 ? TI.SEAF0 : TI.SEAF1; break;
+            case 'v': idx = TI.SEALANE; break;
+            case 'C': idx = TI.CORAL; break;
           }
           if (LC.SOLID_TILES[ch]) this.solid[y][x] = true;
           row.push(idx);
@@ -3665,6 +4065,15 @@ window.LC = window.LC || {};
           self.torches.push({ o: o, spr: tr, x: bx, y: by - 28 });
         } else if (o.type === 'plot') {
           self.plots[o.id] = { o: o, spr: self.add.image(bx, by + 2, 'plot').setOrigin(0.5, 1).setDepth(by) };
+        } else if (o.type === 'dive') {
+          var ring = self.add.image(bx, by - 2, 'dive_ring').setOrigin(0.5, 1).setDepth(by - 8);
+          self.tweens.add({ targets: ring, scale: 1.15, alpha: 0.7, duration: 900, yoyo: true, repeat: -1 });
+        } else if (o.type === 'surface') {
+          var col = self.add.image(bx, by, 'surface').setOrigin(0.5, 1).setDepth(by).setBlendMode(Phaser.BlendModes.ADD);
+          self.tweens.add({ targets: col, alpha: 0.6, duration: 1400, yoyo: true, repeat: -1 });
+        } else if (o.type === 'turtle') {
+          self.turtleSpr = self.add.image(bx, by, S.flags.turtleFreed ? 'turtle_free' : 'turtle_net').setOrigin(0.5, 1).setDepth(by);
+          if (S.flags.turtleFreed) { self.turtleSpr.setVisible(false); return; }
         } else if (o.type === 'sampan') {
           var bt = self.add.image(bx, by - 2, 'sampan').setOrigin(0.5, 1).setDepth(by - 8);
           self.boats.push({ spr: bt, y0: by - 2 });
@@ -3812,7 +4221,8 @@ window.LC = window.LC || {};
         }
       }
       if (vx || vy) {
-        var len = Math.hypot(vx, vy), sp = (this.S.energy <= 0 ? 48 : 74) * dt * analog;
+        var ride = this.S.riding, mult = ride ? LC.ITEMS[RIDE_ITEM[ride]].speed : this.A.underwater ? 0.8 : 1;
+        var len = Math.hypot(vx, vy), sp = (this.S.energy <= 0 && !ride ? 48 : 74) * mult * dt * analog;
         var nx = p.x + vx / len * sp, ny = p.y + vy / len * sp;
         if (!this.blockedAt(nx, p.y)) p.x = nx;
         if (!this.blockedAt(p.x, ny)) p.y = ny;
@@ -3831,6 +4241,42 @@ window.LC = window.LC || {};
       p.setFlipX(this.dir === 'left');
       p.setDepth(p.y);
       this.pShadow.setPosition(Math.round(p.x), Math.round(p.y - 1));
+      this.drawRider(p, this.S.riding, this.dir, this.moving, this.veh, this.pc);
+      if (this.A.underwater) this.mask.setVisible(this.dir !== 'up').setPosition(Math.round(p.x + (this.dir === 'left' ? -1 : this.dir === 'right' ? 1 : 0)), Math.round(p.y - 9)).setFlipX(this.dir === 'left').setDepth(p.y + 0.2);
+    }
+    // a bicycle under the rider, or a car instead of them. Used for you and for co-op friends.
+    drawRider(spr, ride, dir, moving, veh, color) {
+      var side = dir === 'left' || dir === 'right', key = side ? 'side' : dir, f = moving && Math.floor(this.time.now / 140) % 2 ? 1 : 0;
+      if (!ride) { if (veh.visible) { veh.setVisible(false); spr.setVisible(true).setOrigin(0.5, 1); } return; }
+      if (ride === 'car') {
+        spr.setVisible(false);
+        veh.setVisible(true).setTexture('car' + (color || 0) + '_' + key + '_' + f).setPosition(Math.round(spr.x), Math.round(spr.y + 3)).setFlipX(dir === 'left').setDepth(spr.y + 0.5);
+      } else {
+        spr.setVisible(true).setOrigin(0.5, 1.3);
+        if (spr.anims && spr.anims.isPlaying) spr.stop();
+        spr.setTexture(LC.Art.plKey(color || 0) + '_' + key + '_0');
+        veh.setVisible(true).setTexture('bike_' + key + '_' + f).setPosition(Math.round(spr.x), Math.round(spr.y + 2)).setFlipX(dir === 'left').setDepth(spr.y + (dir === 'up' ? -0.5 : 0.5));
+      }
+    }
+    canRide(kind) { return !!(this.A.ride && this.A.ride[kind]); }
+    toggleRide(kind) {
+      var S = this.S;
+      if (S.riding) { this.setRide(null); return; }
+      if (this.sleeping || this.leaving || this.fishing) return;
+      if (!kind) kind = LC.State.count('kereta') && this.canRide('car') ? 'car' : LC.State.count('basikal') && this.canRide('bike') ? 'bike' : null;
+      if (!kind) {
+        var has = LC.State.count('kereta') || LC.State.count('basikal');
+        this.toast(!has ? 'You have nothing to ride yet. Abang Zul sells bicycles in the kampung.' : this.A.underwater ? 'Not under the sea!' : 'You can\'t ride here.'); LC.Audio.sfx('error'); return;
+      }
+      if (!this.canRide(kind)) { this.toast(kind === 'car' ? 'The car can\'t go here: the farm, the kampung and the dunes only.' : 'You can\'t ride here.'); LC.Audio.sfx('error'); return; }
+      this.setRide(kind);
+    }
+    setRide(kind) {
+      var S = this.S, was = S.riding;
+      S.riding = kind || null;
+      if (kind) { LC.Audio.sfx(kind === 'car' ? 'honk' : 'bell'); this.fx.dirt.explode(4, this.player.x, this.player.y); }
+      else if (was) LC.Audio.sfx('click');
+      this.drawRider(this.player, S.riding, this.dir, false, this.veh, this.pc);
     }
 
     facing() {
@@ -3859,7 +4305,7 @@ window.LC = window.LC || {};
       var self = this;
       this.leaving = true;
       this.ui.closeModal();
-      if (LC.Net.isGuest()) LC.Net.sendPos(this.player.x, this.player.y, this.dir, false, to, this.S.companion, true);
+      if (LC.Net.isGuest()) LC.Net.sendPos(this.player.x, this.player.y, this.dir, false, to, this.S.companion, true, this.S.riding);
       LC.followPid = this.followPid;
       this.cameras.main.fadeOut(350, 0, 0, 0);
       this.cameras.main.once('camerafadeoutcomplete', function () {
@@ -3971,6 +4417,8 @@ window.LC = window.LC || {};
         s.setFlipX(o.dir === 'left').setDepth(s.y);
         r.sh.setPosition(Math.round(s.x), Math.round(s.y - 1));
         r.name = o.name; r.color = o.color;
+        if (o.rd && !r.veh) r.veh = self.add.image(s.x, s.y, 'bike_side_0').setOrigin(0.5, 1).setVisible(false);
+        if (r.veh) self.drawRider(s, o.rd, o.dir || 'down', o.mv, r.veh, o.color);
         self.updateRemoteCompanion(id, r, o, dt);
       });
       Object.keys(this.remote).forEach(function (id) { if (!others[id]) self.dropRemote(id); });
@@ -3978,7 +4426,7 @@ window.LC = window.LC || {};
     dropRemote(id) {
       var r = this.remote[id];
       if (!r) return;
-      r.spr.destroy(); r.sh.destroy(); if (r.comp) r.comp.destroy();
+      r.spr.destroy(); r.sh.destroy(); if (r.comp) r.comp.destroy(); if (r.veh) r.veh.destroy();
       delete this.remote[id];
     }
 
@@ -4147,6 +4595,11 @@ window.LC = window.LC || {};
         var img = this.add.image(fx, fy, 'firefly').setBlendMode(Phaser.BlendModes.ADD).setDepth(9003).setAlpha(0);
         this.flies.push({ img: img, bx: fx, by: fy, ph: Math.random() * 10, sp: 0.4 + Math.random() });
       }
+      this.rays = [];
+      if (A.underwater) {
+        for (i = 0; i < 9; i++) { var rx = 40 + i * (this.W * T - 80) / 8 + Math.random() * 30; this.rays.push({ img: this.add.image(rx, -10, 'ray').setOrigin(0.5, 0).setDepth(8998).setBlendMode(Phaser.BlendModes.ADD).setScale(1.2 + Math.random(), 3.4).setAngle(-12), bx: rx, ph: Math.random() * 6 }); }
+        this.add.particles(0, 0, 'bubble', { x: { min: 16, max: this.W * T - 16 }, y: { min: 40, max: this.H * T - 16 }, speedY: { min: -30, max: -16 }, speedX: { min: -4, max: 4 }, lifespan: 4200, alpha: { start: 0.8, end: 0 }, scale: { start: 0.6, end: 1.1 }, frequency: 160 }).setDepth(9004);
+      }
       this.fogs = [];
       if (A.fog) for (i = 0; i < 9; i++) {
         var fg = this.add.image(Math.random() * this.W * T, Math.random() * this.H * T, 'fog').setDepth(8999).setScale(1.5 + Math.random() * 1.5).setAlpha(0.3 + Math.random() * 0.2);
@@ -4173,6 +4626,7 @@ window.LC = window.LC || {};
       if (A.dim) tint = mulColor(tint, 0xd2e2d0);        // shade under the rainforest canopy
       if (A.warm) tint = mulColor(tint, 0xfff0dc);       // the dunes glow warm
       if (A.fog) tint = mulColor(tint, 0xe8eef2);
+      if (A.underwater) tint = mulColor(tint, 0x8cc8e8);
       this.dark.setVisible(tint !== 0xffffff).setTint(tint);
       var hgn = LC.State.isHGN(), shopOpen = this.shopOpen();
       if (this.warungLight) this.warungLight.base = shopOpen ? 0.8 : 0;
@@ -4194,6 +4648,8 @@ window.LC = window.LC || {};
       });
       var mapW = this.W * T;
       this.fogs.forEach(function (f) { f.img.x += f.v * dt; if (f.img.x > mapW + 120) f.img.x = -120; });
+      (this.rays || []).forEach(function (r) { r.img.x = r.bx + Math.sin(time / 5000 + r.ph) * 30; r.img.setAlpha((0.16 + 0.06 * Math.sin(time / 1300 + r.ph)) * (1 - n)); });
+      if (A.underwater && time > (this.nextBreath || 0)) { this.nextBreath = time + 1400 + Math.random() * 900; this.fx.bubble.explode(2, this.player.x + (this.dir === 'left' ? -3 : 3), this.player.y - 12); }
       this.boats.forEach(function (b) { b.spr.y = b.y0 + Math.round(Math.sin(time / 600)); });
       if (this.ani) this.ani.setVisible(shopOpen);
       LC.Audio.setNight(S.minutes >= 19 * 60);
@@ -4206,6 +4662,7 @@ window.LC = window.LC || {};
       function mk(key, cfg) { var e = self.add.particles(0, 0, key, Object.assign({ emitting: false }, cfg)); e.setDepth(9500); return e; }
       this.fx = {
         heart: mk('heart', { speed: { min: 12, max: 30 }, angle: { min: 235, max: 305 }, lifespan: 1000, alpha: { start: 1, end: 0 }, gravityY: -15 }),
+        bubble: mk('bubble', { speedY: { min: -40, max: -22 }, speedX: { min: -6, max: 6 }, lifespan: 1600, alpha: { start: 0.9, end: 0 } }),
         sparkle: mk('sparkle', { speed: { min: 20, max: 55 }, lifespan: 800, alpha: { start: 1, end: 0 }, scale: { start: 1, end: 0.3 }, blendMode: 'ADD' }),
         leaf: mk('leaf', { speed: { min: 20, max: 45 }, angle: { min: 200, max: 340 }, gravityY: 90, lifespan: 750, alpha: { start: 1, end: 0 } }),
         drop: mk('drop', { speed: { min: 15, max: 35 }, angle: { min: 200, max: 340 }, gravityY: 130, lifespan: 500, alpha: { start: 1, end: 0.2 } }),
@@ -4273,9 +4730,9 @@ window.LC = window.LC || {};
           m: S.minutes, d: S.day,
           g: { x: Math.round(this.gpos.x), y: Math.round(this.gpos.y), e: this.curExpr, a: this.ghostArea || 'farm' },
           gs: { full: g.full, joy: g.joy, glow: g.glow, bond: g.bond, stage: g.stage, level: g.level, craving: g.craving, cravingDone: g.cravingDone, petAt: g.petAt },
-          me: { x: Math.round(this.player.x), y: Math.round(this.player.y), dir: this.dir, mv: this.moving, ar: this.area, cp: S.companion }
+          me: { x: Math.round(this.player.x), y: Math.round(this.player.y), dir: this.dir, mv: this.moving, ar: this.area, cp: S.companion, rd: S.riding }
         });
-      } else if (guest) N.sendPos(this.player.x, this.player.y, this.dir, this.moving, this.area, S.companion);
+      } else if (guest) N.sendPos(this.player.x, this.player.y, this.dir, this.moving, this.area, S.companion, false, S.riding);
       this.updateCritters(dt);
       this.updateLighting(time, dt);
 
@@ -4329,11 +4786,11 @@ window.LC = window.LC || {};
         case 'warung': return { label: this.shopOpen() ? 'Shop at the warung' : 'Warung (closed)', fn: function () { self.ui.openShop(); } };
         case 'tree': {
           var tr = LC.TREES[o.kind], ready = S.trees[o.id] === 0;
-          return { label: ready ? 'Pick ' + LC.ITEMS[tr.fruit].name : tr.name, fn: function () { self.shakeTree(o); } };
+          return { label: ready ? 'Pick ' + LC.ITEMS[tr.fruit].name : tr.name, work: ready, fn: function () { self.shakeTree(o); } };
         }
         case 'forage': {
           var fg = LC.FORAGE[o.kind];
-          if (S.trees[o.id] === 0) return { label: fg.verb, fn: function () { self.forage(o); } };
+          if (S.trees[o.id] === 0) return { label: fg.verb, work: true, fn: function () { self.forage(o); } };
           return { label: '', fn: function () { var d = S.trees[o.id]; self.toast(fg.name + ': picked clean. More in ' + d + ' day' + (d > 1 ? 's' : '') + '.'); } };
         }
         case 'torch': return { label: '', fn: function () { self.toast('A bamboo pelita torch. Nenek kept them burning every night.'); } };
@@ -4343,6 +4800,9 @@ window.LC = window.LC || {};
         case 'signpost': return { label: 'Read the sign', fn: function () { self.ui.say([{ text: o.text }]); } };
         case 'bldg': return { label: 'Look', fn: function () { self.ui.say([{ text: o.text }]); } };
         case 'plot': return this.plotAction(o);
+        case 'dive': return this.diveAction(o);
+        case 'surface': return { label: 'Swim up to Pulau Mutiara', fn: function () { LC.Audio.sfx('water'); self.goArea('island', self.tilePx({ x: 29, y: 8 }), 'left'); } };
+        case 'turtle': return S.flags.turtleFreed ? null : { label: 'Free the sea turtle', work: true, fn: function () { self.freeTurtle(); } };
         case 'npc': return this.npcAction(o);
         case 'folk': return this.folkAction(o, sl, it);
         default: return LC.TEXT[o.type] ? { label: 'Look', fn: function () { self.ui.say([{ text: LC.TEXT[o.type] }]); } } : null;
@@ -4352,9 +4812,15 @@ window.LC = window.LC || {};
     toolAction(sl, it, ch, t, tx, ty) {
       var self = this, S = this.S, water = this.waterKind(ch);
       function hint(m) { return { label: '', tile: true, fn: function () { self.toast(m); LC.Audio.sfx('error'); } }; }
+      if (it.kind === 'vehicle') {
+        var rk = it.ride;
+        if (S.riding) return { label: S.riding === 'car' ? 'Get out of the car' : 'Hop off the basikal', ride: true, fn: function () { self.setRide(null); } };
+        if (!this.canRide(rk)) return hint(this.A.underwater ? 'Not under the sea!' : rk === 'car' ? 'The car can\'t go here: the farm, the kampung and the dunes only.' : 'You can\'t ride here.');
+        return { label: rk === 'car' ? 'Drive the kereta' : 'Ride the basikal', ride: true, fn: function () { self.setRide(rk); } };
+      }
       if (sl.id === 'joran') {
         if (water) return { label: 'Cast your line', tile: true, fn: function () { self.startFishing(tx, ty, water); } };
-        return hint('Face the water to fish: a river, pool, lake or the sea.');
+        return hint(this.A.underwater ? 'You are already under the sea! Fish from the land.' : 'Face the water to fish: a river, pool, lake or the sea.');
       }
       if (it.kind === 'float') {
         if (!water) return hint('Set the krathong on water: a river, pool or the sea.');
@@ -4395,7 +4861,13 @@ window.LC = window.LC || {};
       return null;
     }
 
-    doAction() { if (this.sleeping || this.leaving) return; var a = this.getAction(); if (a) a.fn(); }
+    doAction() {
+      if (this.sleeping || this.leaving) return;
+      var a = this.getAction();
+      if (!a) return;
+      if (this.S.riding && (a.tile || a.work) && !a.ride) { this.setRide(null); this.toast('You hop off to get to work.'); }
+      a.fn();
+    }
 
     useEnergy(n) {
       if (this.S.energy < n) { this.toast('You are exhausted... Eat something (X) or go to sleep.'); LC.Audio.sfx('error'); return false; }
@@ -4567,6 +5039,7 @@ window.LC = window.LC || {};
       if (this.sleeping) return;
       var self = this;
       this.sleeping = true;
+      this.S.riding = null;
       this.ui.closeModal();
       LC.Audio.sfx('sleep');
       if (LC.Net.isHost()) LC.Net.broadcast({ t: 'sleepStart', fainted: fainted });
@@ -4592,6 +5065,7 @@ window.LC = window.LC || {};
     guestSleep() {
       if (this.sleeping) return;
       this.sleeping = true;
+      this.S.riding = null;
       this.ui.closeModal();
       LC.Audio.sfx('sleep');
       this.cameras.main.fadeOut(900, 8, 6, 18);
@@ -4699,7 +5173,7 @@ window.LC = window.LC || {};
     createFolk: function () {
       var self = this;
       this.folkSpr = {}; this.kites = []; this.fishing = null; this.bobber = null; this.fishLine = null;
-      if (this.area === 'kampung') Object.keys(LC.VILLAGERS).forEach(function (vid) { self.placeVillager(vid); });
+      Object.keys(LC.VILLAGERS).forEach(function (vid) { if ((LC.VILLAGERS[vid].area || 'kampung') === self.area) self.placeVillager(vid); });
       this.refreshFolkSpirits();
       this.refreshCompanion();
       if (this.A.kites) {
@@ -4863,6 +5337,37 @@ window.LC = window.LC || {};
       if (!r.comp || r.compKey !== o.cp) { if (r.comp) r.comp.destroy(); r.comp = this.add.image(r.spr.x, r.spr.y, 'sp_' + o.cp).setOrigin(0.5, 1).setDepth(9002).setAlpha(0.9); r.compKey = o.cp; }
       var tx = r.spr.x - 16, ty = r.spr.y - 2, k = Math.min(1, dt * 3);
       r.comp.x += (tx - r.comp.x) * k; r.comp.y += (ty - r.comp.y) * k;
+    },
+
+    // ================================================================ under the sea (v1.4)
+    diveAction: function (o) {
+      var self = this;
+      if (!LC.State.isOpen('laut')) return { label: 'Bubbles', fn: function () {
+        self.toast(LC.State.friend('naga') ? 'The bubbles call to you... come back when Pelita reaches Lv ' + LC.AREAS.laut.lvl + '.' : 'Bubbles rise from somewhere deep below. Only a friend of the Naga could breathe down there.', 'ic_glow');
+      } };
+      return { label: 'Dive to Kampung Karang', fn: function () {
+        self.ui.say([{ text: 'The Naga\'s blessing tingles in your chest. Take a deep breath and dive down to Kampung Karang, the village beneath the waves?' }], { choices: [
+          { label: 'Dive!', fn: function () { LC.Audio.sfx('dive'); self.goArea('laut', null, 'down'); } },
+          { label: 'Not now' }
+        ] });
+      } };
+    },
+    freeTurtle: function () {
+      var self = this, S = this.S, t = this.turtleSpr;
+      if (S.flags.turtleFreed || !t) return;
+      if (!this.useEnergy(3)) return;
+      S.flags.turtleFreed = true;
+      LC.State.add('sampah', 1);
+      LC.Audio.sfx('chime');
+      this.objects.forEach(function (o) { if (o.type === 'turtle') { self.solid[o.y][o.x] = false; self.objAt[o.y][o.x] = null; } });
+      t.setTexture('turtle_free');
+      this.fx.heart.explode(6, t.x, t.y - 8); this.fx.bubble.explode(12, t.x, t.y - 6);
+      this.tweens.add({ targets: t, x: t.x + 140, y: t.y - 70, alpha: 0, delay: 900, duration: 3200, ease: 'Sine.easeIn' });
+      this.doShared('kind', { n: 10 }, function (res) {
+        self.ui.say([{ text: 'You carefully cut the ghost net away. The sea turtle wriggles free, circles you twice... and glides off into the blue.' },
+          { name: 'Tok Duyung', portrait: 'npc_duyung_0', text: 'Hohoho! You saved her! Bring that horrible net to me, child. I will make sure it never hurts anyone again.' },
+          { text: 'Pelita glows with pride.' + (res && res.ok ? ' (+' + res.b + ' bond)' : '') }]);
+      });
     },
 
     // ================================================================ boats and shrines
@@ -5394,6 +5899,7 @@ window.LC = window.LC || {};
       var s = '', bright = false;
       if (this.modal) s = '';
       else if (label) { s = (this.touchOn ? '' : '[E] ') + label; bright = true; }
+      else if (this.S.riding) s = (this.S.riding === 'car' ? 'Driving the kereta' : 'Riding the basikal') + (this.touchOn ? '  (select it and press USE to get off)' : '   ·   R to get off');
       else {
         var sl = LC.State.selItem();
         if (sl) {
@@ -5452,6 +5958,7 @@ window.LC = window.LC || {};
         case 'KeyX': this.world.eat(); break;
         case 'KeyF': if (LC.canFullscreen()) LC.toggleFullscreen(); break;
         case 'KeyJ': this.openJournal(); break;
+        case 'KeyR': this.world.toggleRide(); break;
         case 'Escape': this.openPause(); break;
       }
     }
@@ -5781,7 +6288,7 @@ window.LC = window.LC || {};
             { icon: 'ic_moon', label: 'Nature sounds: ' + (LC.Audio.ambienceOn ? 'On' : 'Off'), sub: 'River, birdsong by day, crickets and frogs at night.', action: function () { LC.Audio.toggleAmbience(); } },
             { icon: 'ic_joy', label: 'Touch controls: ' + (self.touchOn ? 'On' : 'Off'), sub: 'On-screen joystick and USE / EAT / BAG buttons for phones and tablets.', action: function () { self.setTouch(!self.touchOn); } },
             LC.canFullscreen() ? { icon: 'ic_sun', label: 'Fullscreen: ' + (LC.isFullscreen() ? 'On' : 'Off'), sub: 'Fill the whole screen with the kampung' + (self.touchOn ? '.' : '. Press F anytime.'), action: function () { LC.toggleFullscreen(); } } : null,
-            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact · tap the hotbar to select · II pauses' : 'WASD/Arrows move · E use · 1-9/wheel select · Q tool · X eat · Tab bag · J journal · M music · F fullscreen' },
+            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact · tap the hotbar to select · II pauses' : 'WASD/Arrows move · E use · 1-9/wheel select · Q tool · X eat · R ride · Tab bag · J journal · M music · F fullscreen' },
             { icon: 'ic_moon', label: 'Quit to title', sub: LC.Net.role ? 'Also ends the co-op session.' : 'Anything since your last sleep (or save) is lost.', action: function () { self.quitToTitle(); } }
           ]).filter(Boolean);
         } }]
@@ -6021,6 +6528,21 @@ window.LC = window.LC || {};
         rows.push(f.done ? { icon: 'ic_bond', label: 'Today\'s request: done!', sub: 'Thank you! Come back tomorrow for a new one.' }
           : { icon: it.icon, label: 'Request: ' + t.n + ' ' + it.name, sub: 'Needed ' + v.taskText + '. You have ' + have + '. Reward: ' + t.reward + ' kepeng + friendship.',
             right: have >= t.n ? 'Give' : have + '/' + t.n, enabled: have >= t.n, why: 'You need ' + t.n + ' ' + it.name + ' (you have ' + have + ').', action: deliver });
+        if (v.clean) {   // Tok Duyung takes all the rubbish you collected around the reef
+          var n = LC.State.count('sampah'), done = S.stats.cleaned || 0, nextGift = Object.keys(LC.CLEAN_GIFTS).map(Number).filter(function (k) { return k > done; })[0];
+          rows.push({ icon: 'i_sampah', label: 'Hand in rubbish (' + n + ')', sub: '8 kepeng a piece, and the reef grows healthier. Cleaned so far: ' + done + (nextGift ? '. A gift at ' + nextGift + '.' : '. The reef sings again!'),
+            right: n ? 'Give' : '', enabled: n > 0, why: 'Clean up rubbish around the reef first.', action: function () {
+              var k = LC.State.count('sampah'); if (!k) return;
+              LC.State.remove('sampah', k); S.kepeng += k * 8; S.stats.earned += k * 8; S.stats.cleaned = done + k;
+              LC.Audio.sfx('coin');
+              self.toast('Tok Duyung: "The reef thanks you!" (+' + (k * 8) + ' kepeng)', 'i_kepeng');
+              Object.keys(LC.CLEAN_GIFTS).forEach(function (t) {
+                if (S.stats.cleaned >= +t && done < +t) { var g = LC.CLEAN_GIFTS[t]; if (g[0] === 'kepeng') S.kepeng += g[1]; else LC.State.add(g[0], g[1]);
+                  self.time.delayedCall(700, function () { LC.Audio.sfx('chime'); self.toast('Tok Duyung gives you a gift for cleaning ' + t + ' pieces: ' + (g[0] === 'kepeng' ? g[1] + ' kepeng' : g[1] + ' ' + LC.ITEMS[g[0]].name) + '!', g[0] === 'kepeng' ? 'i_kepeng' : 'i_' + g[0]); }); }
+              });
+              W.doShared('kind', { n: Math.min(10, 2 + k) }, function (res) { if (res && res.ok) self.toast('Pelita sparkles like the clean sea. (+' + res.b + ' bond)', 'ic_bond'); });
+            } });
+        }
         rows.push({ icon: 'ic_joy', label: 'Chat', sub: f.chatDay === S.day ? 'You already chatted today.' : 'Pass the time of day. (+friendship, once a day)', action: chat });
         var h = LC.State.hearts(vid), next = [3, 6, 10].filter(function (k) { return k > h; })[0];
         rows.push({ icon: 'ic_joy', label: 'Friendship: ' + heartStr(h), sub: next ? 'At ' + next + ' ♥ ' + v.name + ' will give you a gift.' : 'Best friends! Every gift has been given.' });
@@ -6034,8 +6556,13 @@ window.LC = window.LC || {};
       if (v.shop) tabs.push({ label: 'Buy', rows: function () {
         return v.shop.map(function (id) {
           var it = LC.ITEMS[id], afford = S.kepeng >= it.price, room = LC.State.canAdd(id);
-          return { icon: it.icon, label: it.name, sub: it.desc, right: it.price + ' k', enabled: afford && room, why: afford ? 'Your bag is full!' : 'Not enough kepeng.',
-            action: function () { S.kepeng -= it.price; LC.State.add(id, 1); LC.Audio.sfx('buy'); } };
+          var need = v.shopNeeds && v.shopNeeds[id], friendOk = !need || LC.State.hearts(vid) >= need, owned = it.kind === 'vehicle' && LC.State.count(id) > 0;
+          return { icon: it.icon, label: it.name + (owned ? '  (yours)' : ''), sub: it.desc + (need && !friendOk ? ' Only for friends: ' + need + ' ♥.' : ''), right: it.price + ' k',
+            enabled: afford && room && friendOk && !owned, why: owned ? 'You already have one!' : !friendOk ? v.name + ' only sells it to a friend (' + need + ' ♥).' : afford ? 'Your bag is full!' : 'Not enough kepeng.',
+            action: function () {
+              S.kepeng -= it.price; LC.State.add(id, 1); LC.Audio.sfx('buy');
+              if (it.kind === 'vehicle') self.toast('The ' + it.name + ' is yours! Press R (or select it and press USE) to ' + (it.ride === 'car' ? 'drive.' : 'ride.'), it.icon);
+            } };
         });
       } });
       if (v.buys) tabs.push({ label: 'Sell', empty: 'Nothing they want right now.', rows: function () {
@@ -6114,8 +6641,9 @@ window.LC = window.LC || {};
           } },
           { label: 'Places', rows: function () {
             return LC.AREA_ORDER.map(function (a) {
-              var A = LC.AREAS[a], open = LC.State.isOpen(a);
-              return { icon: open ? 'ic_sun' : 'ic_moon', label: A.name + (open ? '' : '  (Pelita Lv ' + A.lvl + ')'), sub: A.sub.charAt(0).toUpperCase() + A.sub.slice(1) + '. ' + (open ? LC.AREA_HOWTO[a] : 'Locked until Pelita reaches Lv ' + A.lvl + '.'),
+              var A = LC.AREAS[a], open = LC.State.isOpen(a), lvOk = LC.State.level() >= A.lvl;
+              var why = !lvOk ? 'Locked until Pelita reaches Lv ' + A.lvl + '.' : 'Befriend the ' + LC.SPIRITS[A.needs].name + ' first: ' + LC.AREA_HOWTO[a];
+              return { icon: open ? 'ic_sun' : 'ic_moon', label: A.name + (lvOk ? '' : '  (Pelita Lv ' + A.lvl + ')'), sub: A.sub.charAt(0).toUpperCase() + A.sub.slice(1) + '. ' + (open ? LC.AREA_HOWTO[a] : why),
                 right: S.visited[a] ? 'Visited' : open ? 'New!' : 'Locked' };
             });
           } },

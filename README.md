@@ -4,7 +4,7 @@
 
 Nenek has left you her stilt house by the river and a tiny spirit named **Pelita** living in the spirit house beside the stairs.
 You farm by day, cook at the clay stove, and leave offerings so Pelita's light grows from a weak flicker into the **Guardian of the Kampung**.
-As Pelita levels up, its light opens the way to the wider land: a riverside village to rebuild, a rainforest, a pearl island, a misty mountain and red dunes. There you fish, build houses with the villagers, and befriend spirits from Southeast Asian folklore.
+As Pelita levels up, its light opens the way to the wider land: a riverside village to rebuild, a rainforest, a pearl island, a village beneath the waves, a misty mountain and red dunes. There you fish, build houses with the villagers, ride a bicycle or drive a car, and befriend spirits from Southeast Asian folklore.
 
 ## Play it
 
@@ -34,7 +34,7 @@ PC browsers and Android phones can all play together.
 |---|---|
 | Fields, crops, trees, forage spots, the clock and the day | Bag, hotbar and kepeng |
 | Pelita (feeding, petting, offerings, bond, levels, growth) | Energy and watering can |
-| Houses built in the kampung, spirits befriended | Villager friendship and requests, your fish log |
+| Houses built in the kampung, spirits befriended | Villager friendship and requests, your fish log, your bike and car |
 | | Cooking, crafting, fishing, and buying or selling |
 
 - Friends can explore different places at the same time. You see each other when you are in the same place.
@@ -56,6 +56,7 @@ PC browsers and Android phones can all play together.
 | Music on/off | M | Pause menu |
 | Fullscreen | F | Automatic (Android app, and phone browsers on the first tap) |
 | Journal | J | Pause menu → Journal |
+| Ride / get off (bicycle, car) | R | Select it in the hotbar and press **USE** |
 
 Touch controls switch on automatically on touch screens. You can toggle them, the music and the nature sounds in the pause menu.
 
@@ -77,6 +78,7 @@ Touch controls switch on automatically on touch screens. You can toggle them, th
 | **Kampung Tepian**, the village | Lv 2 | Road east from the farm | Villagers, house plots, Pak Mat's jetty |
 | **Hutan Rimba**, the rainforest | Lv 3 | Trail north of the farm | Wood, rattan, mushrooms, herbs, durian, kancil, a forest pool |
 | **Pulau Mutiara**, pearl island | Lv 5 | Row Nenek's sampan from the farm jetty | Nipa thatch, seashells (and pearls), coconuts, sea fishing, turtles |
+| **Kampung Karang**, the village beneath the waves | Lv 5 + the Naga's friendship | Dive at the bubbles off the island's north-east shore | Sea folk, seaweed, sea cucumbers, giant clams, a shipwreck, a turtle to rescue, rubbish to clean up |
 | **Gunung Kabus**, the misty mountain | Lv 8 | Trail north through the rainforest | Tea terraces, strawberries, stone, a lake with golden carp |
 | **Bukit Pasir**, the red dunes | Lv 11 | Road east through the kampung | Dragon fruit, clay, buried old coins, an oasis, a Cham tower |
 
@@ -86,6 +88,14 @@ Locked paths are blocked by vines, rockfall or sand until Pelita is strong enoug
 - **Villagers.** Tok Penghulu (village head), Pak Mat (fisherman) and Tukang Leong (carpenter) live in the kampung. Each one has a request every day: fulfil it for kepeng and friendship, and Pelita gains bond too. Chat once a day for friendship. At 3, 6 and 10 hearts they give you a gift. Several also run a shop and buy goods for more than the warung pays.
 - **Building houses (gotong-royong).** Bring materials and kepeng to one of the four empty plots in the kampung: *kayu* (wood, forest), *atap* (thatch, island), *batu* (stone, mountain) and *tanah liat* (clay, dunes). Tukang Leong sells them too. Choose a Pondok Buluh, Rumah Kayu or Rumah Batu. The whole village raises it overnight, and a family moves home: Cik Siti the herbalist, Auntie Lai the tea planter, Mbak Dewi the batik artist and Kak Mai the fruit trader. Each brings new requests and a shop.
 - **Spirits of the land.** Five folk spirits wait to be befriended, one in each region: the Semangat Padi (rice soul, in the farm's sawah), the Orang Bunian (hidden forest folk), a young Naga (island shallows), the Kenyalang (hornbill messenger, mountain) and the Nuno sa Punso (mound spirit, dunes; mind your manners and say *tabi-tabi po*!). Grant a spirit's wish and it blesses you: more rice, forest gifts every morning, better fishing, +30 energy, or soil that grows crops even unwatered. Play with each one once a day, and choose one to travel with you as your companion.
+- **Getting around.** **Abang Zul**, the kampung mechanic, sells a **basikal** (bicycle, 250 kepeng, about 1.75× walking speed). He also sells his restored **kereta** (car, 1,200 kepeng, about 2.4× speed), but only to a friend (3 ♥). Press **R** to get on or off, or select it and press USE. The bicycle goes almost anywhere on land. The car keeps to the farm, the kampung and the dunes, and is parked automatically where it can't go. You hop off by yourself to farm, fish or gather. Friends in co-op see your bike or car, in your colour.
+- **Kampung Karang (under the sea).** Once you have befriended the young Naga on Pulau Mutiara, its blessing lets you breathe underwater. Dive at the ring of bubbles off the island. Down there:
+  - **Tok Duyung**, the dugong elder, asks you to clean the reef. Collect rubbish and ghost nets, and he pays for every piece, with gifts at 10, 25 and 50.
+  - **Nila**, the pearl diver, buys pearls, porcelain and old coins for more than anyone on land.
+  - **Pak Ketam**, the crab merchant, runs the sea shop.
+  - Gather seaweed, sea cucumbers (*gamat*) and giant clams (pearls!). Open the chest in the old trading-junk shipwreck for coins and antique porcelain. Free the sea turtle tangled in a net.
+  - Cook *kerabu rumpai* (seaweed salad) and *agar-agar* (Pelita's new favourite).
+  - Swim back up through the column of light.
 - **Krathong.** Craft a krathong (banana, marigold and colok) at the spirit house, or buy one from Mbak Dewi. Float it on any water after dark for a big boost to Pelita's glow and bond.
 
 The game saves every night when you sleep, and whenever you leave the game (switch apps, close the tab).
@@ -119,7 +129,7 @@ Icons are generated by `node tools/make-icons.mjs`.
 index.html            the game (open this to play from the folder)
 dist/                 ready-to-play builds: LittleCreature.html (single file) and LittleCreature.apk
 src/                  game code: data, areas (maps of every place), folk (villagers and spirits), state, sim (shared-world rules),
-                      net (co-op), lobby, procedural art (art.js, art2.js) + audio, scenes (World + WorldLife, UI + UIMenus)
+                      net (co-op), lobby, procedural art (art.js, art2.js, art3.js) + audio, scenes (World + WorldLife, UI + UIMenus)
 lib/                  Phaser 3.80.1 (MIT), PeerJS 1.5.4 (MIT) and the Pixelify Sans font (SIL OFL 1.1), vendored
 icons/                app icons
 android/              Android wrapper app (WebView). It packages the web game from the root at build time.
@@ -137,4 +147,4 @@ plan.md               design document
 - **Multiplayer:** [PeerJS](https://peerjs.com), MIT licence. It uses the free public PeerJS server for matchmaking.
 - **Font:** [Pixelify Sans](https://fonts.google.com/specimen/Pixelify+Sans) by Stefie Justprince, SIL Open Font License 1.1.
 - **Art, music and sound:** original. Every sprite, note and sound is generated in code (`src/art.js`, `src/audio.js`, `tools/make-icons.mjs`).
-- **Cultural inspirations:** Thai/Lao/Khmer spirit houses, Malay *rumah panggung* and *kampung* life, *gotong-royong* and the *kenduri*, Balinese *canang sari*, Thai *phuang malai*, Hungry Ghost Festival traditions, Loy Krathong / Yi Peng lanterns, Malay *wau* kites, Javanese batik and *jamu*, Malaysian highland tea, Vietnam's red dunes, dragon fruit and Cham towers, Sang Kancil the mouse deer, and folk spirits: the Malay *semangat padi* and *orang bunian*, the Mekong *naga*, the Iban *kenyalang* and the Filipino *nuno sa punso*. All are drawn with affection and respect.
+- **Cultural inspirations:** Thai/Lao/Khmer spirit houses, Malay *rumah panggung* and *kampung* life, *gotong-royong* and the *kenduri*, Balinese *canang sari*, Thai *phuang malai*, Hungry Ghost Festival traditions, Loy Krathong / Yi Peng lanterns, Malay *wau* kites, Javanese batik and *jamu*, Sabah's seaweed salad, Langkawi *gamat*, the dugong (*duyung*) behind the mermaid legends, sunken trading junks of the old spice route, Malaysian highland tea, Vietnam's red dunes, dragon fruit and Cham towers, Sang Kancil the mouse deer, and folk spirits: the Malay *semangat padi* and *orang bunian*, the Mekong *naga*, the Iban *kenyalang* and the Filipino *nuno sa punso*. All are drawn with affection and respect.

@@ -6,14 +6,14 @@
  * Matchmaking uses the free public PeerJS server; game traffic goes peer-to-peer
  * (PeerJS's public TURN relay is used when a direct connection is impossible).
  *
- *   guest -> host : hello{name,v} · pos{x,y,dir,mv,ar,cp} · op{rid,op,a} · sleepy      (ar = area, cp = companion spirit)
+ *   guest -> host : hello{name,v} · pos{x,y,dir,mv,ar,cp,rd} · op{rid,op,a} · sleepy      (ar = area, cp = companion spirit, rd = riding)
  *   host -> guest : welcome{id,color,hostName,code,world} · reject{why} · tick{m,d,g,gs,p} · res{rid,res}
  *                   sync{op,a,by,parts} · toast{msg,icon} · event{ev,st} · sleepStart · dayStart{sum,world} · bye{why}
  */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
-  var PROTO = 2, MAX_PLAYERS = 4, PREFIX = 'littlecreature-';
+  var PROTO = 3, MAX_PLAYERS = 4, PREFIX = 'littlecreature-';
   var ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   var NAME_KEY = 'littleCreature.name';
 
@@ -99,7 +99,7 @@ window.LC = window.LC || {};
     }
     if (!g) return;
     switch (m.t) {
-      case 'pos': g.x = m.x; g.y = m.y; g.dir = m.dir; g.mv = !!m.mv; g.ar = m.ar || 'farm'; g.cp = m.cp || null; break;
+      case 'pos': g.x = m.x; g.y = m.y; g.dir = m.dir; g.mv = !!m.mv; g.ar = m.ar || 'farm'; g.cp = m.cp || null; g.rd = m.rd || null; break;
       case 'op':
         var res = null;
         try { res = N.on.op ? N.on.op(m.op, m.a || {}, id) : null; } catch (e) { console.error(e); }
@@ -124,8 +124,8 @@ window.LC = window.LC || {};
     var now = Date.now();
     if (now - (N.lastTick || 0) < 100) return;
     N.lastTick = now;
-    var p = [{ id: 'host', n: N.myName, c: 0, x: st.me.x, y: st.me.y, dir: st.me.dir, mv: st.me.mv, ar: st.me.ar, cp: st.me.cp }];
-    Object.keys(N.guests).forEach(function (id) { var g = N.guests[id]; p.push({ id: id, n: g.name, c: g.color, x: g.x, y: g.y, dir: g.dir, mv: g.mv, ar: g.ar, cp: g.cp }); });
+    var p = [{ id: 'host', n: N.myName, c: 0, x: st.me.x, y: st.me.y, dir: st.me.dir, mv: st.me.mv, ar: st.me.ar, cp: st.me.cp, rd: st.me.rd }];
+    Object.keys(N.guests).forEach(function (id) { var g = N.guests[id]; p.push({ id: id, n: g.name, c: g.color, x: g.x, y: g.y, dir: g.dir, mv: g.mv, ar: g.ar, cp: g.cp, rd: g.rd }); });
     N.broadcast({ t: 'tick', m: st.m, d: st.d, g: st.g, gs: st.gs, p: p });
   };
 
@@ -168,7 +168,7 @@ window.LC = window.LC || {};
     switch (m.t) {
       case 'tick':
         var o = {};
-        (m.p || []).forEach(function (q) { if (q.id !== N.myId) o[q.id] = { name: q.n, color: q.c, x: q.x, y: q.y, dir: q.dir, mv: q.mv, ar: q.ar || 'farm', cp: q.cp || null }; });
+        (m.p || []).forEach(function (q) { if (q.id !== N.myId) o[q.id] = { name: q.n, color: q.c, x: q.x, y: q.y, dir: q.dir, mv: q.mv, ar: q.ar || 'farm', cp: q.cp || null, rd: q.rd || null }; });
         N.others = o;
         N.emit('tick', m);
         break;
@@ -189,12 +189,12 @@ window.LC = window.LC || {};
     setTimeout(function () { if (N.reqs[id]) { delete N.reqs[id]; cb(null); } }, 8000);
   };
   N.send = function (msg) { safeSend(N.hostConn, msg); };
-  N.sendPos = function (x, y, dir, mv, ar, cp, force) {
+  N.sendPos = function (x, y, dir, mv, ar, cp, force, rd) {
     if (N.role !== 'guest') return;
-    var now = Date.now(), k = Math.round(x) + ',' + Math.round(y) + ',' + dir + ',' + (mv ? 1 : 0) + ',' + ar + ',' + cp;
+    var now = Date.now(), k = Math.round(x) + ',' + Math.round(y) + ',' + dir + ',' + (mv ? 1 : 0) + ',' + ar + ',' + cp + ',' + rd;
     if (!force && (now - (N.lastPos || 0) < 90 || (k === N.lastPosKey && now - N.lastPos < 1000))) return;
     N.lastPos = now; N.lastPosKey = k;
-    safeSend(N.hostConn, { t: 'pos', x: Math.round(x), y: Math.round(y), dir: dir, mv: !!mv, ar: ar || 'farm', cp: cp || null });
+    safeSend(N.hostConn, { t: 'pos', x: Math.round(x), y: Math.round(y), dir: dir, mv: !!mv, ar: ar || 'farm', cp: cp || null, rd: rd || null });
   };
 
   // ================================================================ leave

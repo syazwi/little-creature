@@ -31,6 +31,9 @@ LC.BootScene = class extends Phaser.Scene {
     if (!a.exists('kerbau_walk')) a.create({ key: 'kerbau_walk', frames: [{ key: 'kerbau_0' }, { key: 'kerbau_1' }], frameRate: 3, repeat: -1 });
     if (!a.exists('chicken_walk')) a.create({ key: 'chicken_walk', frames: [{ key: 'chicken_0' }, { key: 'chicken_2' }], frameRate: 6, repeat: -1 });
     if (!a.exists('chicken_peck')) a.create({ key: 'chicken_peck', frames: [{ key: 'chicken_0' }, { key: 'chicken_1' }, { key: 'chicken_0' }, { key: 'chicken_0' }], frameRate: 4, repeat: -1 });
+    ['ikan_kecil', 'ubur'].forEach(function (k) {
+      if (!a.exists(k + '_swim')) a.create({ key: k + '_swim', frames: [{ key: k + '_0' }, { key: k + '_1' }], frameRate: k === 'ubur' ? 2 : 5, repeat: -1 });
+    });
     ['kancil', 'ketam', 'penyu', 'biawak'].forEach(function (k) {
       if (!a.exists(k + '_walk')) a.create({ key: k + '_walk', frames: [{ key: k + '_0' }, { key: k + '_1' }], frameRate: k === 'penyu' ? 2 : 6, repeat: -1 });
     });

@@ -146,6 +146,7 @@ Stilt house (bed), spirit house + frangipani, dapur (stove), well (perigi), fenc
 | M | Toggle music |
 | Esc | Close menu |
 | J | Journal (requests, places, spirits, fish, levels) |
+| R | Ride / get off the bicycle or car |
 | F | Fullscreen |
 
 Mouse clicks also work on all menus.
@@ -176,6 +177,7 @@ src/
   areas.js          every place: tile maps, objects, exits/gates, critters, ambience (v1.3)
   folk.js           villagers (roles, shops, requests, gifts) and folk spirits (wishes, blessings) (v1.3)
   art2.js           v1.3 textures: new tiles, buildings, villagers, critters, spirits, forage, icons
+  art3.js           v1.4 textures: bicycles, cars (one per outfit colour), sea-floor tiles, coral, underwater buildings, sea folk
   art.js            procedural pixel-art texture generation
   audio.js          procedural music and sound effects
   state.js          game state model, save/load, day simulation
@@ -241,6 +243,11 @@ Slow pads, sparse bells, a soft bass pulse and a distant gong through a generate
 **Co-op with places** (protocol 2): `pos` and `tick` carry each player's area (`ar`) and companion (`cp`). Players only draw friends in the same place. The host streams Pelita's area (`g.a`): Pelita follows whoever cared for it last, even into another place, and is only drawn where it is. At night the host must be home to sleep; guests anywhere are carried to the farm for the summary. Every new shared action must go through `LC.Sim` and `LC.Sim.part`.
 
 **Culture, drawn with respect:** gotong-royong and the kenduri, wau kites, batik and jamu, tea terraces, Mũi Né-style red dunes with dragon fruit and a Cham tower, rafflesia and tualang trees, Sang Kancil, sea turtles, and the five folk spirits, each with a short lore line in the game.
+
+### Getting around, and the village beneath the waves (v1.4)
+**Vehicles.** `basikal` (×1.75) and `kereta` (×2.4) are `vehicle` items sold by Abang Zul, the kampung mechanic. The car needs 3 ♥ with him (`shopNeeds`). `S.riding` is personal. Press R, or use the item, to toggle. `A.ride` lists the vehicles each place allows; on arrival anywhere else you dismount automatically, as you do when sleeping. Actions marked `tile`/`work` (farming, fishing, gathering) make you hop off first. `World.drawRider` draws a bicycle under the rider, or a car (in the player's outfit colour) instead of them, for you and for co-op friends (protocol 3 adds `rd` to `pos`/`tick`).
+
+**Kampung Karang** (`laut`) needs Lv 5 and the Naga's friendship (`A.needs`, checked by `State.isOpen`). It is entered from the dive ring on Pulau Mutiara and left through the light column. Underwater: a permanent blue multiply tint, light rays, rising bubbles, a diving mask on the player, 0.8× swimming speed, a muffled music low-pass and a deep-water ambience. Sea folk: Tok Duyung (reef clean-up: rubbish hand-in at 8 kepeng a piece, gifts at 10/25/50 in `LC.CLEAN_GIFTS`), Nila (buys treasures ×1.3) and Pak Ketam (sea shop, buys sea produce ×1.3). Villagers now have an `area` (default kampung), and sea folk use their own sprites (`sprite: true`, drawn in art3.js). Forage: seaweed, sea cucumber, giant clam (20% pearl), rubbish, and the shipwreck chest (40% porcelain). A one-time turtle rescue runs `Sim.kind {n: 10}`. New dishes: kerabu rumpai and agar-agar (loved).
 
 ## 8. Milestones
 

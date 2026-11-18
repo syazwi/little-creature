@@ -119,6 +119,21 @@ window.LC = window.LC || {};
         rows.push(f.done ? { icon: 'ic_bond', label: 'Today\'s request: done!', sub: 'Thank you! Come back tomorrow for a new one.' }
           : { icon: it.icon, label: 'Request: ' + t.n + ' ' + it.name, sub: 'Needed ' + v.taskText + '. You have ' + have + '. Reward: ' + t.reward + ' kepeng + friendship.',
             right: have >= t.n ? 'Give' : have + '/' + t.n, enabled: have >= t.n, why: 'You need ' + t.n + ' ' + it.name + ' (you have ' + have + ').', action: deliver });
+        if (v.clean) {   // Tok Duyung takes all the rubbish you collected around the reef
+          var n = LC.State.count('sampah'), done = S.stats.cleaned || 0, nextGift = Object.keys(LC.CLEAN_GIFTS).map(Number).filter(function (k) { return k > done; })[0];
+          rows.push({ icon: 'i_sampah', label: 'Hand in rubbish (' + n + ')', sub: '8 kepeng a piece, and the reef grows healthier. Cleaned so far: ' + done + (nextGift ? '. A gift at ' + nextGift + '.' : '. The reef sings again!'),
+            right: n ? 'Give' : '', enabled: n > 0, why: 'Clean up rubbish around the reef first.', action: function () {
+              var k = LC.State.count('sampah'); if (!k) return;
+              LC.State.remove('sampah', k); S.kepeng += k * 8; S.stats.earned += k * 8; S.stats.cleaned = done + k;
+              LC.Audio.sfx('coin');
+              self.toast('Tok Duyung: "The reef thanks you!" (+' + (k * 8) + ' kepeng)', 'i_kepeng');
+              Object.keys(LC.CLEAN_GIFTS).forEach(function (t) {
+                if (S.stats.cleaned >= +t && done < +t) { var g = LC.CLEAN_GIFTS[t]; if (g[0] === 'kepeng') S.kepeng += g[1]; else LC.State.add(g[0], g[1]);
+                  self.time.delayedCall(700, function () { LC.Audio.sfx('chime'); self.toast('Tok Duyung gives you a gift for cleaning ' + t + ' pieces: ' + (g[0] === 'kepeng' ? g[1] + ' kepeng' : g[1] + ' ' + LC.ITEMS[g[0]].name) + '!', g[0] === 'kepeng' ? 'i_kepeng' : 'i_' + g[0]); }); }
+              });
+              W.doShared('kind', { n: Math.min(10, 2 + k) }, function (res) { if (res && res.ok) self.toast('Pelita sparkles like the clean sea. (+' + res.b + ' bond)', 'ic_bond'); });
+            } });
+        }
         rows.push({ icon: 'ic_joy', label: 'Chat', sub: f.chatDay === S.day ? 'You already chatted today.' : 'Pass the time of day. (+friendship, once a day)', action: chat });
         var h = LC.State.hearts(vid), next = [3, 6, 10].filter(function (k) { return k > h; })[0];
         rows.push({ icon: 'ic_joy', label: 'Friendship: ' + heartStr(h), sub: next ? 'At ' + next + ' ♥ ' + v.name + ' will give you a gift.' : 'Best friends! Every gift has been given.' });
@@ -132,8 +147,13 @@ window.LC = window.LC || {};
       if (v.shop) tabs.push({ label: 'Buy', rows: function () {
         return v.shop.map(function (id) {
           var it = LC.ITEMS[id], afford = S.kepeng >= it.price, room = LC.State.canAdd(id);
-          return { icon: it.icon, label: it.name, sub: it.desc, right: it.price + ' k', enabled: afford && room, why: afford ? 'Your bag is full!' : 'Not enough kepeng.',
-            action: function () { S.kepeng -= it.price; LC.State.add(id, 1); LC.Audio.sfx('buy'); } };
+          var need = v.shopNeeds && v.shopNeeds[id], friendOk = !need || LC.State.hearts(vid) >= need, owned = it.kind === 'vehicle' && LC.State.count(id) > 0;
+          return { icon: it.icon, label: it.name + (owned ? '  (yours)' : ''), sub: it.desc + (need && !friendOk ? ' Only for friends: ' + need + ' ♥.' : ''), right: it.price + ' k',
+            enabled: afford && room && friendOk && !owned, why: owned ? 'You already have one!' : !friendOk ? v.name + ' only sells it to a friend (' + need + ' ♥).' : afford ? 'Your bag is full!' : 'Not enough kepeng.',
+            action: function () {
+              S.kepeng -= it.price; LC.State.add(id, 1); LC.Audio.sfx('buy');
+              if (it.kind === 'vehicle') self.toast('The ' + it.name + ' is yours! Press R (or select it and press USE) to ' + (it.ride === 'car' ? 'drive.' : 'ride.'), it.icon);
+            } };
         });
       } });
       if (v.buys) tabs.push({ label: 'Sell', empty: 'Nothing they want right now.', rows: function () {
@@ -212,8 +232,9 @@ window.LC = window.LC || {};
           } },
           { label: 'Places', rows: function () {
             return LC.AREA_ORDER.map(function (a) {
-              var A = LC.AREAS[a], open = LC.State.isOpen(a);
-              return { icon: open ? 'ic_sun' : 'ic_moon', label: A.name + (open ? '' : '  (Pelita Lv ' + A.lvl + ')'), sub: A.sub.charAt(0).toUpperCase() + A.sub.slice(1) + '. ' + (open ? LC.AREA_HOWTO[a] : 'Locked until Pelita reaches Lv ' + A.lvl + '.'),
+              var A = LC.AREAS[a], open = LC.State.isOpen(a), lvOk = LC.State.level() >= A.lvl;
+              var why = !lvOk ? 'Locked until Pelita reaches Lv ' + A.lvl + '.' : 'Befriend the ' + LC.SPIRITS[A.needs].name + ' first: ' + LC.AREA_HOWTO[a];
+              return { icon: open ? 'ic_sun' : 'ic_moon', label: A.name + (lvOk ? '' : '  (Pelita Lv ' + A.lvl + ')'), sub: A.sub.charAt(0).toUpperCase() + A.sub.slice(1) + '. ' + (open ? LC.AREA_HOWTO[a] : why),
                 right: S.visited[a] ? 'Visited' : open ? 'New!' : 'Locked' };
             });
           } },

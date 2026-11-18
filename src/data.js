@@ -92,12 +92,22 @@ window.LC = window.LC || {};
     sup_cendawan:  { name: 'Sup Cendawan', kind: 'dish', sell: 90, food: { full: 40, joy: 12 }, desc: 'Warm mushroom and sweet-potato soup.' },
     pengat_durian: { name: 'Pengat Durian', kind: 'dish', sell: 160, food: { full: 45, joy: 30 }, desc: 'Durian simmered in coconut milk and palm sugar.' },
     teh_o:         { name: 'Teh O', kind: 'drink', price: 20, sell: 30, food: { full: 5, joy: 20 }, desc: 'Hot sweet highland tea, no milk.' },
-    jamu:          { name: 'Jamu', kind: 'drink', price: 35, sell: 20, energy: 70, food: { full: 4, joy: -2 }, desc: 'Bitter herbal tonic from Java. Eat it (X) for +70 energy.' }
+    jamu:          { name: 'Jamu', kind: 'drink', price: 35, sell: 20, energy: 70, food: { full: 4, joy: -2 }, desc: 'Bitter herbal tonic from Java. Eat it (X) for +70 energy.' },
+
+    // ---- v1.4: getting around, and the village beneath the waves
+    basikal: { name: 'Basikal', kind: 'vehicle', ride: 'bike', price: 250, speed: 1.75, desc: 'A sturdy kampung bicycle with a basket and a bell. Hold it and press USE (or R) to ride.' },
+    kereta:  { name: 'Kereta', kind: 'vehicle', ride: 'car', price: 1200, speed: 2.4, desc: 'Abang Zul\'s old car, lovingly restored. Drive it (R) on the farm, in the kampung and across the dunes.' },
+    rumpai_laut:  { name: 'Rumpai Laut', kind: 'forage', price: 12, sell: 14, food: { full: 4, joy: 2 }, desc: 'Seaweed from the reef. Crunchy, salty, good for you.' },
+    gamat:        { name: 'Gamat', kind: 'forage', sell: 45, desc: 'A sea cucumber. Langkawi folk make a famous healing oil from it.' },
+    pinggan_lama: { name: 'Pinggan Lama', kind: 'treasure', sell: 180, desc: 'Blue-and-white porcelain from a trading junk that sank centuries ago.' },
+    sampah:       { name: 'Sampah', kind: 'junk', desc: 'A tangle of plastic and old fishing net. It does not belong in the sea! Tok Duyung will take it.' },
+    kerabu_rumpai: { name: 'Kerabu Rumpai', kind: 'dish', price: 60, sell: 80, food: { full: 30, joy: 12 }, desc: 'Fresh seaweed salad with chilli and lime, Sabah style.' },
+    agar_agar:     { name: 'Agar-agar', kind: 'dish', price: 70, sell: 90, food: { full: 25, joy: 28 }, desc: 'Wobbly coconut jelly made from seaweed. Pelita adores it.' }
   };
   Object.keys(LC.ITEMS).forEach(function (id) { LC.ITEMS[id].id = id; LC.ITEMS[id].icon = 'i_' + id; });
   LC.CATS = { fish: 'any fish' };   // recipe inputs like '@fish' accept any item of that category
 
-  LC.LOVES = ['pulut_mangga', 'kuih_pandan', 'air_merah', 'pisang_goreng', 'pengat_durian', 'teh_o'];
+  LC.LOVES = ['pulut_mangga', 'kuih_pandan', 'air_merah', 'pisang_goreng', 'pengat_durian', 'teh_o', 'agar_agar'];
   LC.DISLIKES = ['cili', 'durian'];
 
   // ---------------------------------------------------------------- crops
@@ -131,7 +141,9 @@ window.LC = window.LC || {};
     { out: 'sotong_goreng', inp: { sotong: 1, padi: 1 } },
     { out: 'sup_cendawan', inp: { cendawan: 2, ubi: 1 } },
     { out: 'pengat_durian', inp: { durian: 1, kelapa: 1 } },
-    { out: 'teh_o', inp: { daun_teh: 2 } }
+    { out: 'teh_o', inp: { daun_teh: 2 } },
+    { out: 'kerabu_rumpai', inp: { rumpai_laut: 2, cili: 1 } },
+    { out: 'agar_agar', inp: { rumpai_laut: 1, kelapa: 1 } }
   ];
   LC.CRAFTS = [
     { out: 'malai', inp: { melati: 2 } },
@@ -212,7 +224,12 @@ window.LC = window.LC || {};
     boulder:    { name: 'Boulder', verb: 'Break off stone', item: 'batu', count: 2, regrow: 2, energy: 3 },
     dragon:     { name: 'Dragon fruit cactus', verb: 'Pick dragon fruit', item: 'buah_naga', count: 2, regrow: 3, energy: 0 },
     clay:       { name: 'Clay pit', verb: 'Dig clay', item: 'tanah_liat', count: 2, regrow: 2, energy: 3 },
-    glint:      { name: 'Something glinting', verb: 'Dig it up', item: 'duit_lama', count: 1, regrow: 3, energy: 2, rare: ['mutiara', 0.12] }
+    glint:      { name: 'Something glinting', verb: 'Dig it up', item: 'duit_lama', count: 1, regrow: 3, energy: 2, rare: ['mutiara', 0.12] },
+    seaweed:    { name: 'Seaweed', verb: 'Gather seaweed', item: 'rumpai_laut', count: 2, regrow: 1, energy: 0 },
+    seacuke:    { name: 'Sea cucumber', verb: 'Pick up the gamat', item: 'gamat', count: 1, regrow: 2, energy: 0 },
+    clam:       { name: 'Giant clam', verb: 'Peek inside the clam', item: 'kerang', count: 2, regrow: 2, energy: 0, rare: ['mutiara', 0.2] },
+    rubbish:    { name: 'Rubbish', verb: 'Clean up the rubbish', item: 'sampah', count: 1, regrow: 1, energy: 1 },
+    wreck:      { name: 'Shipwreck chest', verb: 'Open the old chest', item: 'duit_lama', count: 2, regrow: 3, energy: 1, rare: ['pinggan_lama', 0.4] }
   };
 
   // Fishing: what bites in each kind of water. [item, weight]. Night fish bite twice as often after dark.
@@ -333,6 +350,8 @@ window.LC = window.LC || {};
     kancil: 'Sang Kancil, the clever mouse deer from the old tales! It twitches its nose and darts away.',
     ketam: 'A little ketam (crab) waves its claws at you. Snip snip!',
     penyu: 'A sea turtle (penyu) rests on the warm sand. Its eggs may be buried nearby. Best to let it be.',
-    biawak: 'A biawak (monitor lizard) flicks its tongue and suns itself. It seems quite unbothered.'
+    biawak: 'A biawak (monitor lizard) flicks its tongue and suns itself. It seems quite unbothered.',
+    ikan_kecil: 'A shimmering school of little fish swirls around you, then darts away.',
+    ubur: 'An ubur-ubur (jellyfish) pulses gently past. Better not touch it!'
   };
 })(window.LC);

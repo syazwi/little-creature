@@ -45,8 +45,9 @@ window.LC = window.LC || {};
     A.verbIn.connect(A.verb); A.verb.connect(A.master);
     // buses
     A.music = c.createGain(); A.music.gain.value = A.musicOn ? MUSIC_VOL : 0;
-    var mDry = c.createGain(); mDry.gain.value = 0.62; A.music.connect(mDry); mDry.connect(A.master);
-    var mWet = c.createGain(); mWet.gain.value = 0.55; A.music.connect(mWet); mWet.connect(A.verbIn);
+    A.musicLP = c.createBiquadFilter(); A.musicLP.type = 'lowpass'; A.musicLP.frequency.value = 20000; A.music.connect(A.musicLP);
+    var mDry = c.createGain(); mDry.gain.value = 0.62; A.musicLP.connect(mDry); mDry.connect(A.master);
+    var mWet = c.createGain(); mWet.gain.value = 0.55; A.musicLP.connect(mWet); mWet.connect(A.verbIn);
     A.amb = c.createGain(); A.amb.gain.value = A.ambienceOn ? AMB_VOL : 0;
     A.amb.connect(A.master);
     var aWet = c.createGain(); aWet.gain.value = 0.25; A.amb.connect(aWet); aWet.connect(A.verbIn);
@@ -151,7 +152,8 @@ window.LC = window.LC || {};
     river: { g: 0.32, bp: 520, lp: 1400, lfo: 0.13, depth: 0.1, birds: 1 },
     forest: { g: 0.12, bp: 700, lp: 1800, lfo: 0.2, depth: 0.05, birds: 2.4 },
     sea: { g: 0.5, bp: 360, lp: 900, lfo: 0.09, depth: 0.32, birds: 0.5 },
-    wind: { g: 0.26, bp: 900, lp: 2400, lfo: 0.05, depth: 0.2, birds: 0.35 }
+    wind: { g: 0.26, bp: 900, lp: 2400, lfo: 0.05, depth: 0.2, birds: 0.35 },
+    deep: { g: 0.42, bp: 220, lp: 480, lfo: 0.06, depth: 0.25, birds: 0.001, muffle: true }
   };
   A.areaSound = AREA_SOUND.river;
   A.setArea = function (area) {
@@ -164,6 +166,7 @@ window.LC = window.LC || {};
     var t = A.ctx.currentTime, q = A.areaSound, r = A.riv;
     r.g.gain.setTargetAtTime(q.g, t, 0.8); r.bp.frequency.setTargetAtTime(q.bp, t, 0.8); r.lp.frequency.setTargetAtTime(q.lp, t, 0.8);
     r.lfo.frequency.setTargetAtTime(q.lfo, t, 0.8); r.lfoG.gain.setTargetAtTime(q.depth, t, 0.8);
+    if (A.musicLP) A.musicLP.frequency.setTargetAtTime(q.muffle ? 700 : 20000, t, 0.6);   // the music sounds far away under the sea
   };
   A.bird = function (t) {
     var d = pan(A.amb, rnd(-0.8, 0.8)), kind = Math.random();
@@ -279,6 +282,9 @@ window.LC = window.LC || {};
       case 'catch': A.noise(t, 0.3, 0.2, 'bandpass', 1600, 600); [0, 2, 4, 7].forEach(function (d, k) { A.bell(A.freq(d + 5), t + 0.15 + k * 0.08, 0.9, 0.1); }); break;
       case 'reel': A.tone(t, 'square', 1200, 1100, 0.025, 0.03); break;
       case 'build': [0, 0.18, 0.36, 0.6].forEach(function (d) { A.tone(t + d, 'triangle', 180, 120, 0.09, 0.22); A.noise(t + d, 0.05, 0.12, 'lowpass', 900); }); break;
+      case 'bell': A.bell(2100, t, 0.5, 0.07); A.bell(2100, t + 0.16, 0.6, 0.07); break;   // kring kring!
+      case 'honk': A.tone(t, 'square', 330, 320, 0.16, 0.05); A.tone(t + 0.2, 'square', 330, 320, 0.22, 0.05); break;
+      case 'dive': A.noise(t, 0.5, 0.25, 'lowpass', 900); for (i = 0; i < 6; i++) A.tone(t + 0.2 + i * 0.08, 'sine', 300 + i * 90, 700 + i * 90, 0.06, 0.05); break;
       case 'buy': A.bell(A.freq(8), t, 0.3, 0.08); A.bell(A.freq(10), t + 0.05, 0.4, 0.08); break;
     }
   };

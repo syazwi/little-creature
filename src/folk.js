@@ -63,8 +63,8 @@ window.LC = window.LC || {};
         'My jamu is bitter, but one cup gives you the energy of a kerbau. Truly!'
       ],
       chat: ['Kunyit (turmeric) for the skin, serai (lemongrass) for the tummy.', 'Never pick the last mushroom. Leave some for the forest.', 'The Orang Bunian love fresh flowers. So I hear...', 'Jamu recipes are passed from grandmother to granddaughter.'],
-      tasks: [['herba', 2, 3], ['cendawan', 2, 4], ['pandan', 2, 3], ['rotan', 1, 2]],
-      taskText: 'for her remedies', shop: ['jamu'], buys: { items: ['herba', 'cendawan', 'pandan', 'rotan'], mult: 1.25 },
+      tasks: [['herba', 2, 3], ['cendawan', 2, 4], ['pandan', 2, 3], ['rotan', 1, 2], ['gamat', 1, 1]],
+      taskText: 'for her remedies', shop: ['jamu'], buys: { items: ['herba', 'cendawan', 'pandan', 'rotan', 'gamat'], mult: 1.25 },
       gifts: { 3: ['jamu', 2], 6: ['sup_cendawan', 2], 10: ['mutiara', 1] }
     },
     lai: {
@@ -105,9 +105,64 @@ window.LC = window.LC || {};
       tasks: [['buah_naga', 2, 3], ['kelapa', 2, 4], ['durian', 1, 2], ['mangga', 2, 3], ['pisang', 3, 5]],
       taskText: 'for her fruit stall', shop: ['durian', 'buah_naga'], buys: { items: ['pisang', 'kelapa', 'mangga', 'durian', 'buah_naga', 'strawberi'], mult: 1.25 },
       gifts: { 3: ['buah_naga', 3], 6: ['pengat_durian', 2], 10: ['kepeng', 600] }
+    },
+
+    // ---- v1.4: getting around
+    zul: {
+      name: 'Abang Zul', role: 'Mechanic', post: { x: 40, y: 13 },
+      look: { skin: '#a8714a', shirt: '#3a6a9a', shirt2: '#2a4e74', bottom: '#3a6a9a', bottom2: '#2a4e74', hair: '#1a1210', hat: 'cap' },
+      intro: [
+        'Yo! Abang Zul. I fix bicycles, motorbikes, water pumps... anything with a spanner-shaped problem.',
+        'A farmer who travels this much needs a basikal! Ride it on the road, in the forest, even on the beach. Kring kring!',
+        'And see that old car under the tarp? My late father\'s. I restored it myself. I only sell it to a friend, okay?'
+      ],
+      chat: ['Oil the chain once a week and a basikal lasts forever.', 'My father drove this car to every kenduri in the district.', 'The dune road is bumpy, but the car can take it. Slowly, slowly!', 'Bicycles are the best way to feel the kampung breeze.'],
+      tasks: [['kelapa', 2, 3], ['teh_o', 1, 2], ['nasi_lemak', 1, 1], ['batu', 3, 5], ['kayu', 4, 6]],
+      taskText: 'for the workshop', shop: ['basikal', 'kereta'], shopNeeds: { kereta: 3 },
+      gifts: { 3: ['kepeng', 150], 6: ['jamu', 3], 10: ['kepeng', 500] }
+    },
+
+    // ---- v1.4: Kampung Karang, the village beneath the waves
+    duyung: {
+      name: 'Tok Duyung', role: 'Elder of the sea', area: 'laut', post: { x: 25, y: 10 }, sprite: true,
+      intro: [
+        'Mmmm... a land walker, breathing with the Naga\'s blessing. Welcome to Kampung Karang, child.',
+        'I am Tok Duyung. My kind gave the sailors their mermaid stories. We are only dugongs who like sea grass and long naps. Hohoho.',
+        'Our reef is tired. Nets and plastic drift down from the world above and tangle the coral. Will you help us clean it?',
+        'Bring me any rubbish you find. And mind the sea turtle by the coral to the south-west. I fear she is caught.'
+      ],
+      chat: ['A dugong eats forty kilos of sea grass a day. I am trying to cut down.', 'When the reef is healthy, it sings. Listen.', 'The Naga Mother has slept beneath the pillar for a thousand years.', 'Every net you pull out saves a hundred little lives.'],
+      tasks: [['sampah', 2, 4], ['rumpai_laut', 3, 5], ['kerang', 3, 5], ['agar_agar', 1, 1]],
+      taskText: 'for the reef', clean: true,
+      gifts: { 3: ['agar_agar', 2], 6: ['mutiara', 1], 10: ['kepeng', 600] }
+    },
+    nila: {
+      name: 'Nila', role: 'Pearl diver', area: 'laut', post: { x: 13, y: 7 }, sprite: true,
+      intro: [
+        'Oh! A visitor from the surface? How exciting! I am Nila. I dive for pearls and old treasures from the wrecks.',
+        'The old junk to the east was full of porcelain plates from across the sea. Some are still in the chest!',
+        'I pay well for pearls, porcelain and old coins. Better than anyone up there, I promise.'
+      ],
+      chat: ['A pearl starts as a grain of sand the clam could not ignore.', 'The Bajau people up above can hold their breath for minutes! I am so impressed.', 'Moonlight makes the clams open wider. True story.', 'Blue and white porcelain... someone ate rice from these plates, long ago.'],
+      tasks: [['kerang', 3, 6], ['rumpai_laut', 2, 4], ['gamat', 1, 2], ['pinggan_lama', 1, 1]],
+      taskText: 'for her jewellery', buys: { items: ['mutiara', 'pinggan_lama', 'duit_lama', 'kerang'], mult: 1.3 },
+      gifts: { 3: ['kerang', 6], 6: ['pinggan_lama', 1], 10: ['mutiara', 2] }
+    },
+    ketam: {
+      name: 'Pak Ketam', role: 'Sea merchant', area: 'laut', post: { x: 8, y: 10 }, sprite: true,
+      intro: [
+        'Snip snap! Customer, customer! Pak Ketam\'s Kedai Laut has everything a sea creature needs!',
+        'Seaweed salad, agar-agar, and I buy seaweed, gamat and fish at excellent prices. Excellent!',
+        'I walk sideways, but my prices are straight. Hahaha!'
+      ],
+      chat: ['Business is good when the tide is high.', 'I traded with a sea turtle once. Very slow negotiator.', 'Kerabu rumpai with extra lime. Perfect.', 'My shell is new! I moulted last week. Very handsome, no?'],
+      tasks: [['ikan_kembung', 2, 3], ['sotong', 1, 2], ['ikan_bakar', 1, 2], ['cili', 2, 3], ['kelapa', 2, 3]],
+      taskText: 'for his shop', shop: ['kerabu_rumpai', 'agar_agar', 'rumpai_laut'], buys: { items: ['rumpai_laut', 'gamat', 'ikan_kembung', 'sotong', 'ikan_kerapu', 'udang'], mult: 1.3 },
+      gifts: { 3: ['kerabu_rumpai', 2], 6: ['kepeng', 300], 10: ['ikan_kerapu', 2] }
     }
   };
   LC.MOVE_IN = ['siti', 'lai', 'dewi', 'mai'];
+  LC.CLEAN_GIFTS = { 10: ['mutiara', 1], 25: ['kepeng', 400], 50: ['pinggan_lama', 2] };   // Tok Duyung, for rubbish handed in
   // where each plot's villager stands (in front of the house)
   LC.PLOT_POSTS = { plotA: { x: 29, y: 7 }, plotB: { x: 36, y: 7 }, plotC: { x: 6, y: 13 }, plotD: { x: 13, y: 13 } };
 
@@ -134,8 +189,8 @@ window.LC = window.LC || {};
       lore: 'Along the Mekong, the naga are serpent spirits of the water who guard rivers, rain and hidden pearls.',
       meet: 'Something blue and gold coils in the shallows. A young naga lifts its crested head and blinks at you.',
       wish: { ikan_kembung: 2, sotong: 1, kerang: 3 }, wishText: 'It sniffs your fishing rod and shell basket... it wishes for 2 ikan kembung, 1 sotong and 3 kerang.',
-      thanks: 'The naga swirls the water into rainbows. Fish now bite faster, the reeling zone is wider, and rare fish come more often.',
-      blessing: 'Faster bites, easier reeling, more rare fish', color: 0x6fd6e8
+      thanks: 'The naga swirls the water into rainbows. Fish now bite faster, the reeling zone is wider, and rare fish come more often. And with its blessing you can breathe underwater: dive at the bubbles off the north-east shore to visit Kampung Karang, the village beneath the waves!',
+      blessing: 'Breathe underwater, faster bites, easier reeling, more rare fish', color: 0x6fd6e8
     },
     kenyalang: {
       name: 'Kenyalang', title: 'the hornbill messenger', area: 'mountain', x: 36, y: 15,

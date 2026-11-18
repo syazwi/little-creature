@@ -12,7 +12,7 @@ window.LC = window.LC || {};
     createFolk: function () {
       var self = this;
       this.folkSpr = {}; this.kites = []; this.fishing = null; this.bobber = null; this.fishLine = null;
-      if (this.area === 'kampung') Object.keys(LC.VILLAGERS).forEach(function (vid) { self.placeVillager(vid); });
+      Object.keys(LC.VILLAGERS).forEach(function (vid) { if ((LC.VILLAGERS[vid].area || 'kampung') === self.area) self.placeVillager(vid); });
       this.refreshFolkSpirits();
       this.refreshCompanion();
       if (this.A.kites) {
@@ -176,6 +176,37 @@ window.LC = window.LC || {};
       if (!r.comp || r.compKey !== o.cp) { if (r.comp) r.comp.destroy(); r.comp = this.add.image(r.spr.x, r.spr.y, 'sp_' + o.cp).setOrigin(0.5, 1).setDepth(9002).setAlpha(0.9); r.compKey = o.cp; }
       var tx = r.spr.x - 16, ty = r.spr.y - 2, k = Math.min(1, dt * 3);
       r.comp.x += (tx - r.comp.x) * k; r.comp.y += (ty - r.comp.y) * k;
+    },
+
+    // ================================================================ under the sea (v1.4)
+    diveAction: function (o) {
+      var self = this;
+      if (!LC.State.isOpen('laut')) return { label: 'Bubbles', fn: function () {
+        self.toast(LC.State.friend('naga') ? 'The bubbles call to you... come back when Pelita reaches Lv ' + LC.AREAS.laut.lvl + '.' : 'Bubbles rise from somewhere deep below. Only a friend of the Naga could breathe down there.', 'ic_glow');
+      } };
+      return { label: 'Dive to Kampung Karang', fn: function () {
+        self.ui.say([{ text: 'The Naga\'s blessing tingles in your chest. Take a deep breath and dive down to Kampung Karang, the village beneath the waves?' }], { choices: [
+          { label: 'Dive!', fn: function () { LC.Audio.sfx('dive'); self.goArea('laut', null, 'down'); } },
+          { label: 'Not now' }
+        ] });
+      } };
+    },
+    freeTurtle: function () {
+      var self = this, S = this.S, t = this.turtleSpr;
+      if (S.flags.turtleFreed || !t) return;
+      if (!this.useEnergy(3)) return;
+      S.flags.turtleFreed = true;
+      LC.State.add('sampah', 1);
+      LC.Audio.sfx('chime');
+      this.objects.forEach(function (o) { if (o.type === 'turtle') { self.solid[o.y][o.x] = false; self.objAt[o.y][o.x] = null; } });
+      t.setTexture('turtle_free');
+      this.fx.heart.explode(6, t.x, t.y - 8); this.fx.bubble.explode(12, t.x, t.y - 6);
+      this.tweens.add({ targets: t, x: t.x + 140, y: t.y - 70, alpha: 0, delay: 900, duration: 3200, ease: 'Sine.easeIn' });
+      this.doShared('kind', { n: 10 }, function (res) {
+        self.ui.say([{ text: 'You carefully cut the ghost net away. The sea turtle wriggles free, circles you twice... and glides off into the blue.' },
+          { name: 'Tok Duyung', portrait: 'npc_duyung_0', text: 'Hohoho! You saved her! Bring that horrible net to me, child. I will make sure it never hurts anyone again.' },
+          { text: 'Pelita glows with pride.' + (res && res.ok ? ' (+' + res.b + ' bond)' : '') }]);
+      });
     },
 
     // ================================================================ boats and shrines

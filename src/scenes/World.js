@@ -24,9 +24,12 @@ window.LC = window.LC || {};
     kancil: { walk: 'kancil_walk', speed: 24, w: 6, near: 18, r: 12, sfx: 'pet', hop: true },
     ketam: { walk: 'ketam_walk', speed: 12, w: 4, near: 6, r: 9, sfx: 'click', hop: true },
     penyu: { walk: 'penyu_walk', speed: 3, w: 8, near: 12, r: 14, sfx: 'pet' },
-    biawak: { walk: 'biawak_walk', speed: 9, w: 10, near: 12, r: 14, sfx: 'pet' }
+    biawak: { walk: 'biawak_walk', speed: 9, w: 10, near: 12, r: 14, sfx: 'pet' },
+    ikan_kecil: { walk: 'ikan_kecil_swim', speed: 22, w: 4, near: 16, r: 11, sfx: 'pet', hop: true },
+    ubur: { walk: 'ubur_swim', speed: 5, w: 3, near: 8, r: 9, sfx: 'pet' }
   };
-  var TILE_PATHY = { p: 1, f: 1, F: 1, b: 1, j: 1, k: 1 };
+  var TILE_PATHY = { p: 1, f: 1, F: 1, b: 1, j: 1, k: 1, v: 1 };
+  var RIDE_ITEM = { bike: 'basikal', car: 'kereta' };
 
   LC.WorldScene = class extends Phaser.Scene {
     constructor() { super('World'); }
@@ -54,6 +57,10 @@ window.LC = window.LC || {};
       this.buildDecor();
       this.refreshAllTiles();
       this.createPlayer(data.spawn, data.dir);
+      this.veh = this.add.image(0, 0, 'bike_side_0').setOrigin(0.5, 1).setVisible(false);
+      this.mask = this.add.image(0, 0, 'mask').setOrigin(0.5, 0.5).setVisible(false);
+      var parked = S.riding && !this.canRide(S.riding) ? S.riding : null;
+      if (parked) S.riding = null;
       this.createGhost();
       this.createCritters();
       this.createLighting();
@@ -91,6 +98,7 @@ window.LC = window.LC || {};
           self.ui.showSummary(data.summary, function () { self.cameras.main.fadeIn(800); self.sleeping = false; self.morning(); });
         });
       } else if (data.area && this.ui.ready) this.ui.areaBanner(this.A.name, this.A.sub);
+      if (parked) this.time.delayedCall(500, function () { self.toast(parked === 'car' ? 'The car can\'t go here. You park it at the edge and walk on.' : 'You leave the basikal by the path.', parked === 'car' ? 'i_kereta' : 'i_basikal'); });
     }
 
     tilePx(t) { return { x: (t.x + 0.5) * T, y: (t.y + 0.8) * T }; }
@@ -125,6 +133,9 @@ window.LC = window.LC || {};
             case 'G': idx = TI.HGRASS; break;
             case 'd': idx = rnd.frac() < 0.7 ? TI.DUNE0 : TI.DUNE1; break;
             case 'R': idx = TI.REDROCK; break;
+            case 'u': idx = rnd.frac() < 0.8 ? TI.SEAF0 : TI.SEAF1; break;
+            case 'v': idx = TI.SEALANE; break;
+            case 'C': idx = TI.CORAL; break;
           }
           if (LC.SOLID_TILES[ch]) this.solid[y][x] = true;
           row.push(idx);
@@ -185,6 +196,15 @@ window.LC = window.LC || {};
           self.torches.push({ o: o, spr: tr, x: bx, y: by - 28 });
         } else if (o.type === 'plot') {
           self.plots[o.id] = { o: o, spr: self.add.image(bx, by + 2, 'plot').setOrigin(0.5, 1).setDepth(by) };
+        } else if (o.type === 'dive') {
+          var ring = self.add.image(bx, by - 2, 'dive_ring').setOrigin(0.5, 1).setDepth(by - 8);
+          self.tweens.add({ targets: ring, scale: 1.15, alpha: 0.7, duration: 900, yoyo: true, repeat: -1 });
+        } else if (o.type === 'surface') {
+          var col = self.add.image(bx, by, 'surface').setOrigin(0.5, 1).setDepth(by).setBlendMode(Phaser.BlendModes.ADD);
+          self.tweens.add({ targets: col, alpha: 0.6, duration: 1400, yoyo: true, repeat: -1 });
+        } else if (o.type === 'turtle') {
+          self.turtleSpr = self.add.image(bx, by, S.flags.turtleFreed ? 'turtle_free' : 'turtle_net').setOrigin(0.5, 1).setDepth(by);
+          if (S.flags.turtleFreed) { self.turtleSpr.setVisible(false); return; }
         } else if (o.type === 'sampan') {
           var bt = self.add.image(bx, by - 2, 'sampan').setOrigin(0.5, 1).setDepth(by - 8);
           self.boats.push({ spr: bt, y0: by - 2 });
@@ -332,7 +352,8 @@ window.LC = window.LC || {};
         }
       }
       if (vx || vy) {
-        var len = Math.hypot(vx, vy), sp = (this.S.energy <= 0 ? 48 : 74) * dt * analog;
+        var ride = this.S.riding, mult = ride ? LC.ITEMS[RIDE_ITEM[ride]].speed : this.A.underwater ? 0.8 : 1;
+        var len = Math.hypot(vx, vy), sp = (this.S.energy <= 0 && !ride ? 48 : 74) * mult * dt * analog;
         var nx = p.x + vx / len * sp, ny = p.y + vy / len * sp;
         if (!this.blockedAt(nx, p.y)) p.x = nx;
         if (!this.blockedAt(p.x, ny)) p.y = ny;
@@ -351,6 +372,42 @@ window.LC = window.LC || {};
       p.setFlipX(this.dir === 'left');
       p.setDepth(p.y);
       this.pShadow.setPosition(Math.round(p.x), Math.round(p.y - 1));
+      this.drawRider(p, this.S.riding, this.dir, this.moving, this.veh, this.pc);
+      if (this.A.underwater) this.mask.setVisible(this.dir !== 'up').setPosition(Math.round(p.x + (this.dir === 'left' ? -1 : this.dir === 'right' ? 1 : 0)), Math.round(p.y - 9)).setFlipX(this.dir === 'left').setDepth(p.y + 0.2);
+    }
+    // a bicycle under the rider, or a car instead of them. Used for you and for co-op friends.
+    drawRider(spr, ride, dir, moving, veh, color) {
+      var side = dir === 'left' || dir === 'right', key = side ? 'side' : dir, f = moving && Math.floor(this.time.now / 140) % 2 ? 1 : 0;
+      if (!ride) { if (veh.visible) { veh.setVisible(false); spr.setVisible(true).setOrigin(0.5, 1); } return; }
+      if (ride === 'car') {
+        spr.setVisible(false);
+        veh.setVisible(true).setTexture('car' + (color || 0) + '_' + key + '_' + f).setPosition(Math.round(spr.x), Math.round(spr.y + 3)).setFlipX(dir === 'left').setDepth(spr.y + 0.5);
+      } else {
+        spr.setVisible(true).setOrigin(0.5, 1.3);
+        if (spr.anims && spr.anims.isPlaying) spr.stop();
+        spr.setTexture(LC.Art.plKey(color || 0) + '_' + key + '_0');
+        veh.setVisible(true).setTexture('bike_' + key + '_' + f).setPosition(Math.round(spr.x), Math.round(spr.y + 2)).setFlipX(dir === 'left').setDepth(spr.y + (dir === 'up' ? -0.5 : 0.5));
+      }
+    }
+    canRide(kind) { return !!(this.A.ride && this.A.ride[kind]); }
+    toggleRide(kind) {
+      var S = this.S;
+      if (S.riding) { this.setRide(null); return; }
+      if (this.sleeping || this.leaving || this.fishing) return;
+      if (!kind) kind = LC.State.count('kereta') && this.canRide('car') ? 'car' : LC.State.count('basikal') && this.canRide('bike') ? 'bike' : null;
+      if (!kind) {
+        var has = LC.State.count('kereta') || LC.State.count('basikal');
+        this.toast(!has ? 'You have nothing to ride yet. Abang Zul sells bicycles in the kampung.' : this.A.underwater ? 'Not under the sea!' : 'You can\'t ride here.'); LC.Audio.sfx('error'); return;
+      }
+      if (!this.canRide(kind)) { this.toast(kind === 'car' ? 'The car can\'t go here: the farm, the kampung and the dunes only.' : 'You can\'t ride here.'); LC.Audio.sfx('error'); return; }
+      this.setRide(kind);
+    }
+    setRide(kind) {
+      var S = this.S, was = S.riding;
+      S.riding = kind || null;
+      if (kind) { LC.Audio.sfx(kind === 'car' ? 'honk' : 'bell'); this.fx.dirt.explode(4, this.player.x, this.player.y); }
+      else if (was) LC.Audio.sfx('click');
+      this.drawRider(this.player, S.riding, this.dir, false, this.veh, this.pc);
     }
 
     facing() {
@@ -379,7 +436,7 @@ window.LC = window.LC || {};
       var self = this;
       this.leaving = true;
       this.ui.closeModal();
-      if (LC.Net.isGuest()) LC.Net.sendPos(this.player.x, this.player.y, this.dir, false, to, this.S.companion, true);
+      if (LC.Net.isGuest()) LC.Net.sendPos(this.player.x, this.player.y, this.dir, false, to, this.S.companion, true, this.S.riding);
       LC.followPid = this.followPid;
       this.cameras.main.fadeOut(350, 0, 0, 0);
       this.cameras.main.once('camerafadeoutcomplete', function () {
@@ -491,6 +548,8 @@ window.LC = window.LC || {};
         s.setFlipX(o.dir === 'left').setDepth(s.y);
         r.sh.setPosition(Math.round(s.x), Math.round(s.y - 1));
         r.name = o.name; r.color = o.color;
+        if (o.rd && !r.veh) r.veh = self.add.image(s.x, s.y, 'bike_side_0').setOrigin(0.5, 1).setVisible(false);
+        if (r.veh) self.drawRider(s, o.rd, o.dir || 'down', o.mv, r.veh, o.color);
         self.updateRemoteCompanion(id, r, o, dt);
       });
       Object.keys(this.remote).forEach(function (id) { if (!others[id]) self.dropRemote(id); });
@@ -498,7 +557,7 @@ window.LC = window.LC || {};
     dropRemote(id) {
       var r = this.remote[id];
       if (!r) return;
-      r.spr.destroy(); r.sh.destroy(); if (r.comp) r.comp.destroy();
+      r.spr.destroy(); r.sh.destroy(); if (r.comp) r.comp.destroy(); if (r.veh) r.veh.destroy();
       delete this.remote[id];
     }
 
@@ -667,6 +726,11 @@ window.LC = window.LC || {};
         var img = this.add.image(fx, fy, 'firefly').setBlendMode(Phaser.BlendModes.ADD).setDepth(9003).setAlpha(0);
         this.flies.push({ img: img, bx: fx, by: fy, ph: Math.random() * 10, sp: 0.4 + Math.random() });
       }
+      this.rays = [];
+      if (A.underwater) {
+        for (i = 0; i < 9; i++) { var rx = 40 + i * (this.W * T - 80) / 8 + Math.random() * 30; this.rays.push({ img: this.add.image(rx, -10, 'ray').setOrigin(0.5, 0).setDepth(8998).setBlendMode(Phaser.BlendModes.ADD).setScale(1.2 + Math.random(), 3.4).setAngle(-12), bx: rx, ph: Math.random() * 6 }); }
+        this.add.particles(0, 0, 'bubble', { x: { min: 16, max: this.W * T - 16 }, y: { min: 40, max: this.H * T - 16 }, speedY: { min: -30, max: -16 }, speedX: { min: -4, max: 4 }, lifespan: 4200, alpha: { start: 0.8, end: 0 }, scale: { start: 0.6, end: 1.1 }, frequency: 160 }).setDepth(9004);
+      }
       this.fogs = [];
       if (A.fog) for (i = 0; i < 9; i++) {
         var fg = this.add.image(Math.random() * this.W * T, Math.random() * this.H * T, 'fog').setDepth(8999).setScale(1.5 + Math.random() * 1.5).setAlpha(0.3 + Math.random() * 0.2);
@@ -693,6 +757,7 @@ window.LC = window.LC || {};
       if (A.dim) tint = mulColor(tint, 0xd2e2d0);        // shade under the rainforest canopy
       if (A.warm) tint = mulColor(tint, 0xfff0dc);       // the dunes glow warm
       if (A.fog) tint = mulColor(tint, 0xe8eef2);
+      if (A.underwater) tint = mulColor(tint, 0x8cc8e8);
       this.dark.setVisible(tint !== 0xffffff).setTint(tint);
       var hgn = LC.State.isHGN(), shopOpen = this.shopOpen();
       if (this.warungLight) this.warungLight.base = shopOpen ? 0.8 : 0;
@@ -714,6 +779,8 @@ window.LC = window.LC || {};
       });
       var mapW = this.W * T;
       this.fogs.forEach(function (f) { f.img.x += f.v * dt; if (f.img.x > mapW + 120) f.img.x = -120; });
+      (this.rays || []).forEach(function (r) { r.img.x = r.bx + Math.sin(time / 5000 + r.ph) * 30; r.img.setAlpha((0.16 + 0.06 * Math.sin(time / 1300 + r.ph)) * (1 - n)); });
+      if (A.underwater && time > (this.nextBreath || 0)) { this.nextBreath = time + 1400 + Math.random() * 900; this.fx.bubble.explode(2, this.player.x + (this.dir === 'left' ? -3 : 3), this.player.y - 12); }
       this.boats.forEach(function (b) { b.spr.y = b.y0 + Math.round(Math.sin(time / 600)); });
       if (this.ani) this.ani.setVisible(shopOpen);
       LC.Audio.setNight(S.minutes >= 19 * 60);
@@ -726,6 +793,7 @@ window.LC = window.LC || {};
       function mk(key, cfg) { var e = self.add.particles(0, 0, key, Object.assign({ emitting: false }, cfg)); e.setDepth(9500); return e; }
       this.fx = {
         heart: mk('heart', { speed: { min: 12, max: 30 }, angle: { min: 235, max: 305 }, lifespan: 1000, alpha: { start: 1, end: 0 }, gravityY: -15 }),
+        bubble: mk('bubble', { speedY: { min: -40, max: -22 }, speedX: { min: -6, max: 6 }, lifespan: 1600, alpha: { start: 0.9, end: 0 } }),
         sparkle: mk('sparkle', { speed: { min: 20, max: 55 }, lifespan: 800, alpha: { start: 1, end: 0 }, scale: { start: 1, end: 0.3 }, blendMode: 'ADD' }),
         leaf: mk('leaf', { speed: { min: 20, max: 45 }, angle: { min: 200, max: 340 }, gravityY: 90, lifespan: 750, alpha: { start: 1, end: 0 } }),
         drop: mk('drop', { speed: { min: 15, max: 35 }, angle: { min: 200, max: 340 }, gravityY: 130, lifespan: 500, alpha: { start: 1, end: 0.2 } }),
@@ -793,9 +861,9 @@ window.LC = window.LC || {};
           m: S.minutes, d: S.day,
           g: { x: Math.round(this.gpos.x), y: Math.round(this.gpos.y), e: this.curExpr, a: this.ghostArea || 'farm' },
           gs: { full: g.full, joy: g.joy, glow: g.glow, bond: g.bond, stage: g.stage, level: g.level, craving: g.craving, cravingDone: g.cravingDone, petAt: g.petAt },
-          me: { x: Math.round(this.player.x), y: Math.round(this.player.y), dir: this.dir, mv: this.moving, ar: this.area, cp: S.companion }
+          me: { x: Math.round(this.player.x), y: Math.round(this.player.y), dir: this.dir, mv: this.moving, ar: this.area, cp: S.companion, rd: S.riding }
         });
-      } else if (guest) N.sendPos(this.player.x, this.player.y, this.dir, this.moving, this.area, S.companion);
+      } else if (guest) N.sendPos(this.player.x, this.player.y, this.dir, this.moving, this.area, S.companion, false, S.riding);
       this.updateCritters(dt);
       this.updateLighting(time, dt);
 
@@ -849,11 +917,11 @@ window.LC = window.LC || {};
         case 'warung': return { label: this.shopOpen() ? 'Shop at the warung' : 'Warung (closed)', fn: function () { self.ui.openShop(); } };
         case 'tree': {
           var tr = LC.TREES[o.kind], ready = S.trees[o.id] === 0;
-          return { label: ready ? 'Pick ' + LC.ITEMS[tr.fruit].name : tr.name, fn: function () { self.shakeTree(o); } };
+          return { label: ready ? 'Pick ' + LC.ITEMS[tr.fruit].name : tr.name, work: ready, fn: function () { self.shakeTree(o); } };
         }
         case 'forage': {
           var fg = LC.FORAGE[o.kind];
-          if (S.trees[o.id] === 0) return { label: fg.verb, fn: function () { self.forage(o); } };
+          if (S.trees[o.id] === 0) return { label: fg.verb, work: true, fn: function () { self.forage(o); } };
           return { label: '', fn: function () { var d = S.trees[o.id]; self.toast(fg.name + ': picked clean. More in ' + d + ' day' + (d > 1 ? 's' : '') + '.'); } };
         }
         case 'torch': return { label: '', fn: function () { self.toast('A bamboo pelita torch. Nenek kept them burning every night.'); } };
@@ -863,6 +931,9 @@ window.LC = window.LC || {};
         case 'signpost': return { label: 'Read the sign', fn: function () { self.ui.say([{ text: o.text }]); } };
         case 'bldg': return { label: 'Look', fn: function () { self.ui.say([{ text: o.text }]); } };
         case 'plot': return this.plotAction(o);
+        case 'dive': return this.diveAction(o);
+        case 'surface': return { label: 'Swim up to Pulau Mutiara', fn: function () { LC.Audio.sfx('water'); self.goArea('island', self.tilePx({ x: 29, y: 8 }), 'left'); } };
+        case 'turtle': return S.flags.turtleFreed ? null : { label: 'Free the sea turtle', work: true, fn: function () { self.freeTurtle(); } };
         case 'npc': return this.npcAction(o);
         case 'folk': return this.folkAction(o, sl, it);
         default: return LC.TEXT[o.type] ? { label: 'Look', fn: function () { self.ui.say([{ text: LC.TEXT[o.type] }]); } } : null;
@@ -872,9 +943,15 @@ window.LC = window.LC || {};
     toolAction(sl, it, ch, t, tx, ty) {
       var self = this, S = this.S, water = this.waterKind(ch);
       function hint(m) { return { label: '', tile: true, fn: function () { self.toast(m); LC.Audio.sfx('error'); } }; }
+      if (it.kind === 'vehicle') {
+        var rk = it.ride;
+        if (S.riding) return { label: S.riding === 'car' ? 'Get out of the car' : 'Hop off the basikal', ride: true, fn: function () { self.setRide(null); } };
+        if (!this.canRide(rk)) return hint(this.A.underwater ? 'Not under the sea!' : rk === 'car' ? 'The car can\'t go here: the farm, the kampung and the dunes only.' : 'You can\'t ride here.');
+        return { label: rk === 'car' ? 'Drive the kereta' : 'Ride the basikal', ride: true, fn: function () { self.setRide(rk); } };
+      }
       if (sl.id === 'joran') {
         if (water) return { label: 'Cast your line', tile: true, fn: function () { self.startFishing(tx, ty, water); } };
-        return hint('Face the water to fish: a river, pool, lake or the sea.');
+        return hint(this.A.underwater ? 'You are already under the sea! Fish from the land.' : 'Face the water to fish: a river, pool, lake or the sea.');
       }
       if (it.kind === 'float') {
         if (!water) return hint('Set the krathong on water: a river, pool or the sea.');
@@ -915,7 +992,13 @@ window.LC = window.LC || {};
       return null;
     }
 
-    doAction() { if (this.sleeping || this.leaving) return; var a = this.getAction(); if (a) a.fn(); }
+    doAction() {
+      if (this.sleeping || this.leaving) return;
+      var a = this.getAction();
+      if (!a) return;
+      if (this.S.riding && (a.tile || a.work) && !a.ride) { this.setRide(null); this.toast('You hop off to get to work.'); }
+      a.fn();
+    }
 
     useEnergy(n) {
       if (this.S.energy < n) { this.toast('You are exhausted... Eat something (X) or go to sleep.'); LC.Audio.sfx('error'); return false; }
@@ -1087,6 +1170,7 @@ window.LC = window.LC || {};
       if (this.sleeping) return;
       var self = this;
       this.sleeping = true;
+      this.S.riding = null;
       this.ui.closeModal();
       LC.Audio.sfx('sleep');
       if (LC.Net.isHost()) LC.Net.broadcast({ t: 'sleepStart', fainted: fainted });
@@ -1112,6 +1196,7 @@ window.LC = window.LC || {};
     guestSleep() {
       if (this.sleeping) return;
       this.sleeping = true;
+      this.S.riding = null;
       this.ui.closeModal();
       LC.Audio.sfx('sleep');
       this.cameras.main.fadeOut(900, 8, 6, 18);

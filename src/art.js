@@ -764,5 +764,6 @@ window.LC = window.LC || {};
     make(scene, 'i_kepeng', 16, 16, ICON.kepeng, true);
     Object.keys(HUD).forEach(function (k) { make(scene, k, 12, 12, HUD[k], true); });
     if (Art.generate2) Art.generate2(scene);
+    if (Art.generate3) Art.generate3(scene);
   };
 })(window.LC);

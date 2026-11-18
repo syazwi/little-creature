@@ -5,12 +5,13 @@
  *   w  river (solid) S  river shore    s  sand           j  jetty           J  jungle wall (solid)
  *   g  forest floor  q  pond (solid)   o  deep sea       h  shallow sea     m  mountain rock   M  cliff (solid)
  *   k  stone path    G  highland grass d  dune sand      R  red rock (solid)
+ *   u  sea floor     v  pale sand lane C  coral (solid)   (Kampung Karang, under the sea)
  * Exits are walk-off zones at a map edge. A locked exit shows a gate until Pelita reaches the place's level. */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
 
-  LC.SOLID_TILES = { J: 1, w: 1, S: 1, F: 1, q: 1, o: 1, h: 1, M: 1, R: 1 };
+  LC.SOLID_TILES = { J: 1, w: 1, S: 1, F: 1, q: 1, o: 1, h: 1, M: 1, R: 1, C: 1 };
   LC.WATER_TILES = { w: 'river', S: 'river', q: 'pond', o: 'sea', h: 'sea' };
 
   function blank(W, H, ch) { var g = []; for (var y = 0; y < H; y++) { g.push([]); for (var x = 0; x < W; x++) g[y].push(ch); } return g; }
@@ -53,6 +54,7 @@ window.LC = window.LC || {};
     { id: 'k_pondok', type: 'bldg', x: 27, y: 21, w: 4, h: 3, tex: 'pondok', text: 'Pak Mat\'s fishing hut. Nets hang drying in the sun.' },
     { id: 'k_well', type: 'well', x: 19, y: 15, w: 1, h: 1, tex: 'well' },
     { id: 'k_shrine', type: 'shrine', x: 40, y: 6, w: 1, h: 1, tex: 'shrine' },
+    { id: 'k_kedai', type: 'bldg', x: 39, y: 14, w: 4, h: 2, tex: 'kedai_basikal', text: 'Abang Zul\'s bicycle and motor shop. Spanners hang on the wall and the radio plays old P. Ramlee songs.' },
     { id: 'k_sign', type: 'signpost', x: 41, y: 9, w: 1, h: 1, tex: 'sign', text: 'BUKIT PASIR (the red dunes) >>  Sand has buried the road. Pelita at Lv 11 could light the way.' },
     { id: 'k_banana1', type: 'tree', kind: 'banana', x: 2, y: 20, w: 1, h: 1 },
     { id: 'k_mango', type: 'tree', kind: 'mango', x: 34, y: 16, w: 1, h: 1 },
@@ -112,7 +114,8 @@ window.LC = window.LC || {};
     { id: 'i_shell5', type: 'forage', kind: 'shells', x: 5, y: 21 },
     { id: 'i_hut', type: 'bldg', x: 16, y: 15, w: 3, h: 2, tex: 'beach_hut', text: 'An old fishermen\'s rest hut. Someone left a woven mat and a kettle.' },
     { id: 'i_lighthouse', type: 'bldg', x: 28, y: 15, w: 2, h: 1, tex: 'rumah_api', text: 'A little rumah api (lighthouse). Its lamp guides the night fishing boats home.' },
-    { id: 'i_shrine', type: 'shrine', x: 25, y: 9, w: 1, h: 1, tex: 'shrine' }
+    { id: 'i_shrine', type: 'shrine', x: 25, y: 9, w: 1, h: 1, tex: 'shrine' },
+    { id: 'i_dive', type: 'dive', x: 30, y: 8, w: 1, h: 1, to: 'laut' }
   ];
 
   // ------------------------------------------------------------------ Gunung Kabus (misty mountain)
@@ -166,6 +169,36 @@ window.LC = window.LC || {};
     { id: 'd_shrine', type: 'shrine', x: 5, y: 7, w: 1, h: 1, tex: 'shrine' }
   ];
 
+  // ------------------------------------------------------------------ Kampung Karang (the village beneath the waves)
+  function buildLaut() {
+    var W = 44, H = 32, g = blank(W, H, 'u'), f = filler(g);
+    f.fill(0, 0, W - 1, 1, 'C'); f.fill(0, H - 2, W - 1, H - 1, 'C'); f.fill(0, 0, 1, H - 1, 'C'); f.fill(W - 2, 0, W - 1, H - 1, 'C');
+    f.fill(19, 1, 24, 2, 'u');
+    f.ell(6, 20, 2.5, 3, 'C'); f.ell(38, 25, 3, 2.5, 'C'); f.ell(16, 28, 2.4, 1.2, 'C'); f.ell(36, 4, 2.6, 1.6, 'C'); f.ell(4, 7, 1.6, 2.4, 'C');
+    f.fill(20, 4, 21, 26, 'v'); f.fill(8, 11, 36, 11, 'v'); f.fill(8, 12, 9, 14, 'v'); f.fill(13, 7, 13, 10, 'v'); f.fill(32, 10, 32, 18, 'v');
+    return g;
+  }
+  var LAUT_OBJECTS = [
+    { id: 'l_surface', type: 'surface', x: 21, y: 3, w: 2, h: 1, to: 'island' },
+    { id: 'l_shrine', type: 'bldg', x: 23, y: 7, w: 2, h: 2, tex: 'naga_shrine', text: 'A stone pillar wrapped by a carved naga. The sea folk say the Naga Mother sleeps beneath it, keeping the reef alive.' },
+    { id: 'l_kima', type: 'bldg', x: 12, y: 5, w: 3, h: 2, tex: 'rumah_kima', text: 'Nila\'s house: a giant clam shell, propped open with driftwood. Pearls glimmer on the windowsill.' },
+    { id: 'l_rumah1', type: 'bldg', x: 7, y: 8, w: 3, h: 2, tex: 'rumah_karang', text: 'Pak Ketam\'s coral house. A sign reads: KEDAI LAUT, buka setiap hari (sea shop, open every day).' },
+    { id: 'l_rumah2', type: 'bldg', x: 30, y: 7, w: 3, h: 2, tex: 'rumah_karang', text: 'A coral house. A family of clownfish lives in the window box.' },
+    { id: 'l_wreck', type: 'bldg', x: 31, y: 20, w: 6, h: 2, tex: 'kapal_karam', text: 'A sunken trading junk, its sails long gone. It sailed the old spice route centuries ago, loaded with porcelain.' },
+    { id: 'l_turtle', type: 'turtle', x: 9, y: 25, w: 1, h: 1 },
+    { id: 'l_chest', type: 'forage', kind: 'wreck', x: 30, y: 21 },
+    { id: 'l_weed1', type: 'forage', kind: 'seaweed', x: 5, y: 14 }, { id: 'l_weed2', type: 'forage', kind: 'seaweed', x: 14, y: 24 },
+    { id: 'l_weed3', type: 'forage', kind: 'seaweed', x: 26, y: 26 }, { id: 'l_weed4', type: 'forage', kind: 'seaweed', x: 37, y: 14 },
+    { id: 'l_weed5', type: 'forage', kind: 'seaweed', x: 9, y: 4 },
+    { id: 'l_cuke1', type: 'forage', kind: 'seacuke', x: 17, y: 18 }, { id: 'l_cuke2', type: 'forage', kind: 'seacuke', x: 33, y: 27 },
+    { id: 'l_cuke3', type: 'forage', kind: 'seacuke', x: 4, y: 26 },
+    { id: 'l_clam1', type: 'forage', kind: 'clam', x: 25, y: 19 }, { id: 'l_clam2', type: 'forage', kind: 'clam', x: 14, y: 15 },
+    { id: 'l_clam3', type: 'forage', kind: 'clam', x: 39, y: 10 },
+    { id: 'l_trash1', type: 'forage', kind: 'rubbish', x: 9, y: 21 }, { id: 'l_trash2', type: 'forage', kind: 'rubbish', x: 19, y: 27 },
+    { id: 'l_trash3', type: 'forage', kind: 'rubbish', x: 27, y: 15 }, { id: 'l_trash4', type: 'forage', kind: 'rubbish', x: 40, y: 18 },
+    { id: 'l_trash5', type: 'forage', kind: 'rubbish', x: 4, y: 12 }, { id: 'l_trash6', type: 'forage', kind: 'rubbish', x: 27, y: 4 }
+  ];
+
   // ------------------------------------------------------------------ the atlas
   LC.AREAS = {
     farm: {
@@ -177,7 +210,7 @@ window.LC = window.LC || {};
         { x0: 29, y0: 0, x1: 30, y1: 0, to: 'forest', sx: 21.5, sy: 31.5, dir: 'up', gate: { x: 29, y: 3, w: 2, h: 1, tex: 'gate_vines' } },
         { x0: 47, y0: 10, x1: 47, y1: 11, to: 'kampung', sx: 1.5, sy: 10.5, dir: 'right', gate: { x: 46, y: 10, w: 1, h: 2, tex: 'barrier' } }
       ],
-      home: { x: 4.5, y: 8 }
+      home: { x: 4.5, y: 8 }, ride: { bike: 1, car: 1 }
     },
     kampung: {
       name: 'Kampung Tepian', sub: 'the riverside village', lvl: 2, build: buildKampung, objects: KAMPUNG_OBJECTS,
@@ -187,7 +220,7 @@ window.LC = window.LC || {};
         { x0: 0, y0: 10, x1: 0, y1: 11, to: 'farm', sx: 44.5, sy: 10.5, dir: 'left' },
         { x0: 45, y0: 10, x1: 45, y1: 11, to: 'desert', sx: 1.5, sy: 10.5, dir: 'right', gate: { x: 43, y: 10, w: 1, h: 2, tex: 'gate_dune' } }
       ],
-      kites: true, home: { x: 2.5, y: 10.5 },
+      kites: true, home: { x: 2.5, y: 10.5 }, ride: { bike: 1, car: 1 },
       trees: { n: 6, on: '.', tex: ['jtree'], text: 'A shady tree. Children climb it after school.' }
     },
     forest: {
@@ -198,21 +231,27 @@ window.LC = window.LC || {};
         { x0: 21, y0: 33, x1: 22, y1: 33, to: 'farm', sx: 29.5, sy: 1.5, dir: 'down' },
         { x0: 29, y0: 0, x1: 30, y1: 0, to: 'mountain', sx: 29.5, sy: 31.5, dir: 'up', gate: { x: 29, y: 3, w: 2, h: 1, tex: 'gate_rocks' } }
       ],
-      dim: 0.12, home: { x: 21.5, y: 31.5 },
+      dim: 0.12, home: { x: 21.5, y: 31.5 }, ride: { bike: 1 },
       trees: { n: 34, on: 'g', tex: ['jtree', 'jtree2'], text: 'A rainforest tree, wrapped in vines and humming with insects.' }
     },
     island: {
       name: 'Pulau Mutiara', sub: 'pearl island', lvl: 5, build: buildIsland, objects: ISLAND_OBJECTS,
       pond: 'sea', amb: 'sea', decor: { n: 26, types: ['rock', 'lalang', 'bush', 'coral'], on: 's' },
       critters: [{ kind: 'ketam', n: 3, zone: { x0: 8, y0: 9, x1: 36, y1: 26 } }, { kind: 'penyu', n: 1, zone: { x0: 12, y0: 24, x1: 32, y1: 26 } }],
-      exits: [], home: { x: 21.5, y: 4.5 }
+      exits: [], home: { x: 21.5, y: 4.5 }, ride: { bike: 1 }
+    },
+    laut: {
+      name: 'Kampung Karang', sub: 'the village beneath the waves', lvl: 5, needs: 'naga', build: buildLaut, objects: LAUT_OBJECTS,
+      pond: null, amb: 'deep', decor: { n: 55, types: ['kelp', 'kelp', 'seagrass', 'seagrass', 'anemone', 'shellrock'], on: 'u' },
+      critters: [{ kind: 'ikan_kecil', n: 5, zone: { x0: 3, y0: 3, x1: 40, y1: 28 } }, { kind: 'ubur', n: 3, zone: { x0: 3, y0: 3, x1: 40, y1: 28 } }, { kind: 'penyu', n: 1, zone: { x0: 24, y0: 12, x1: 40, y1: 18 } }],
+      exits: [], underwater: true, home: { x: 21.5, y: 3.5 }, ride: {}
     },
     mountain: {
       name: 'Gunung Kabus', sub: 'the misty mountain', lvl: 8, build: buildMountain, objects: MOUNTAIN_OBJECTS,
       pond: 'lake', amb: 'wind', decor: { n: 45, types: ['rock', 'rock', 'lalang', 'fern', 'pebbles'], on: 'm' },
       critters: [],
       exits: [{ x0: 29, y0: 33, x1: 30, y1: 33, to: 'forest', sx: 29.5, sy: 1.5, dir: 'down' }],
-      fog: true, home: { x: 29.5, y: 31.5 },
+      fog: true, home: { x: 29.5, y: 31.5 }, ride: { bike: 1 },
       trees: { n: 14, on: 'm', tex: ['pine'], text: 'A highland pine, beaded with mist.' }
     },
     desert: {
@@ -220,15 +259,16 @@ window.LC = window.LC || {};
       pond: 'oasis', amb: 'wind', decor: { n: 45, types: ['dunegrass', 'dunegrass', 'pebbles', 'rock', 'deadbush'], on: 'd' },
       critters: [{ kind: 'biawak', n: 2, zone: { x0: 4, y0: 4, x1: 42, y1: 28 } }],
       exits: [{ x0: 0, y0: 10, x1: 0, y1: 11, to: 'kampung', sx: 43.5, sy: 10.5, dir: 'left' }],
-      warm: true, home: { x: 1.5, y: 10.5 }
+      warm: true, home: { x: 1.5, y: 10.5 }, ride: { bike: 1, car: 1 }
     }
   };
-  LC.AREA_ORDER = ['farm', 'kampung', 'forest', 'island', 'mountain', 'desert'];
+  LC.AREA_ORDER = ['farm', 'kampung', 'forest', 'island', 'laut', 'mountain', 'desert'];
   LC.AREA_HOWTO = {
     farm: 'Home. Sleep in the stilt house.',
     kampung: 'Follow the road east from the farm.',
     forest: 'Take the trail north of the farm.',
     island: 'Row Nenek\'s sampan from the farm jetty.',
+    laut: 'Befriend the Naga, then dive at the bubbles off Pulau Mutiara.',
     mountain: 'Follow the trail north through Hutan Rimba.',
     desert: 'Follow the road east through the kampung.'
   };

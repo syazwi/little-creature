@@ -80,7 +80,7 @@ window.LC = window.LC || {};
       return { ok: true, b: LC.State.addBond(3) };
     },
     // helping villagers makes Pelita proud
-    kind: function () { return { ok: true, b: LC.State.addBond(4) }; },
+    kind: function (a) { return { ok: true, b: LC.State.addBond(Math.max(1, Math.min(10, (a && a.n) || 4))) }; },
     // float a krathong at night: Pelita's light swells
     krathong: function () {
       var g = LC.State.s.ghost;

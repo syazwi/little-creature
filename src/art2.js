@@ -273,6 +273,7 @@ window.LC = window.LC || {};
       case 'songkok': p.rect(5, 1, 6, 2, '#1a1a1e'); p.rect(5, 1, 6, 1, '#34343c'); p.px(5, 3, HR); p.px(10, 3, HR); break;
       case 'terendak': [[6, 9, 0], [4, 11, 1], [2, 13, 2], [1, 14, 3]].forEach(function (r) { p.rect(r[0], r[2], r[1] - r[0] + 1, 1, r[2] === 3 ? '#a88a44' : '#ecd28a'); }); break;
       case 'nonla': [[7, 8, 0], [5, 10, 1], [3, 12, 2], [1, 14, 3]].forEach(function (r) { p.rect(r[0], r[2], r[1] - r[0] + 1, 1, r[2] === 3 ? '#c9b070' : '#f2e6b8'); }); break;
+      case 'cap': p.rect(5, 2, 6, 2, '#c8323a'); p.rect(4, 3, 8, 1, '#a81e24'); p.px(10, 1, '#f5f0e1'); break;
       case 'headband': p.rect(5, 2, 6, 2, HR); p.rect(5, 3, 6, 1, '#c8323a'); p.px(11, 3, '#c8323a'); break;
       case 'tudung': p.rect(4, 2, 8, 2, L.hatColor); p.rect(4, 3, 1, 6, L.hatColor); p.rect(11, 3, 1, 6, L.hatColor); p.rect(4, 8, 8, 2, L.hatColor); p.rect(5, 2, 6, 1, '#fff0f6'); break;
       case 'bun': p.rect(5, 2, 6, 2, HR); p.disc(8, 1, 1.6, HR); p.px(4, 4, HR); p.px(11, 4, HR); p.px(10, 1, '#e9b949'); break;
@@ -473,6 +474,7 @@ window.LC = window.LC || {};
     });
     // villagers
     Object.keys(LC.VILLAGERS).forEach(function (vid) {
+      if (LC.VILLAGERS[vid].sprite) return;   // the sea folk have their own sprites (art3.js)
       var L = LC.VILLAGERS[vid].look;
       make(scene, 'npc_' + vid + '_0', 16, 20, function (p) { drawVillager(p, L, false); });
       make(scene, 'npc_' + vid + '_1', 16, 20, function (p) { drawVillager(p, L, true); });
