@@ -13,6 +13,7 @@ As Pelita levels up, its light opens the way to the wider land: a riverside vill
 - **Or:** download this whole repository (**Code → Download ZIP**), unzip it, and double-click **`index.html`**. (`index.html` needs the folders next to it, so to copy just one file, use `dist/LittleCreature.html`.)
 - The game fills the whole browser window at any size. Press **F** (or use the pause menu) to go fullscreen.
 - Saves are kept by the browser on that PC. A different PC or browser starts its own farm.
+- **Testing build:** [`dist/LittleCreature_full.html`](dist/LittleCreature_full.html) starts with everything unlocked (Pelita Lv 20, every place, spirit, weapon and vehicle, 99,999 kepeng, max strength). It uses its own save, so your real farm is never touched. Test keys: **]** next day, **[** next season, **\** next Pesta, **H** full health.
 - If double-clicking opens the file in something other than a browser, right-click it and choose **Open with → Microsoft Edge** (or Chrome or Firefox).
 
 ### On an Android phone
