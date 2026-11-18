@@ -13,7 +13,7 @@
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
-  var PROTO = 3, MAX_PLAYERS = 4, PREFIX = 'littlecreature-';
+  var PROTO = 4, MAX_PLAYERS = 4, PREFIX = 'littlecreature-';
   var ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   var NAME_KEY = 'littleCreature.name';
 

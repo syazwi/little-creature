@@ -84,6 +84,14 @@ window.LC = window.LC || {};
         f.met = true;
         this.say(v.intro.map(function (t) { return { name: v.name, portrait: por, text: t }; }), { onDone: function () {
           if (vid === 'mat' && !LC.State.count('joran') && LC.State.add('joran', 1)) { LC.Audio.sfx('chime'); self.toast('Pak Mat gave you his old Joran (fishing rod)! Hold it and face the water.', 'i_joran'); }
+          if (vid === 'lah' && !S.flags.lahHen) {
+            S.flags.lahHen = true;
+            W.doShared('animal_add', { kind: 'ayam' }, function (res) {
+              if (res && res.ok) { LC.Audio.sfx('cluck'); self.toast('Pak Lah gave you a hen called ' + res.name + '! She is waiting at Nenek\'s reban on the farm.', 'chicken_0'); }
+            });
+            if (LC.State.add('dedak', 5)) self.toast('...and 5 dedak to feed her.', 'i_dedak');
+          }
+          if (vid === 'tanggang' && !S.quests.tanggang) S.quests.tanggang = 1;
           self.openVillager(vid);
         } });
         return;
@@ -134,6 +142,7 @@ window.LC = window.LC || {};
               W.doShared('kind', { n: Math.min(10, 2 + k) }, function (res) { if (res && res.ok) self.toast('Pelita sparkles like the clean sea. (+' + res.b + ' bond)', 'ic_bond'); });
             } });
         }
+        self.specialRows(vid, v, por).forEach(function (r) { rows.push(r); });   // v1.5: training and the deep quests
         rows.push({ icon: 'ic_joy', label: 'Chat', sub: f.chatDay === S.day ? 'You already chatted today.' : 'Pass the time of day. (+friendship, once a day)', action: chat });
         var h = LC.State.hearts(vid), next = [3, 6, 10].filter(function (k) { return k > h; })[0];
         rows.push({ icon: 'ic_joy', label: 'Friendship: ' + heartStr(h), sub: next ? 'At ' + next + ' ♥ ' + v.name + ' will give you a gift.' : 'Best friends! Every gift has been given.' });
@@ -145,7 +154,7 @@ window.LC = window.LC || {};
         return rows;
       } }];
       if (v.shop) tabs.push({ label: 'Buy', rows: function () {
-        return v.shop.map(function (id) {
+        return self.animalShopRows(v).concat(v.shop.map(function (id) {
           var it = LC.ITEMS[id], afford = S.kepeng >= it.price, room = LC.State.canAdd(id);
           var need = v.shopNeeds && v.shopNeeds[id], friendOk = !need || LC.State.hearts(vid) >= need, owned = it.kind === 'vehicle' && LC.State.count(id) > 0;
           return { icon: it.icon, label: it.name + (owned ? '  (yours)' : ''), sub: it.desc + (need && !friendOk ? ' Only for friends: ' + need + ' ♥.' : ''), right: it.price + ' k',
@@ -154,7 +163,7 @@ window.LC = window.LC || {};
               S.kepeng -= it.price; LC.State.add(id, 1); LC.Audio.sfx('buy');
               if (it.kind === 'vehicle') self.toast('The ' + it.name + ' is yours! Press R (or select it and press USE) to ' + (it.ride === 'car' ? 'drive.' : 'ride.'), it.icon);
             } };
-        });
+        }));
       } });
       if (v.buys) tabs.push({ label: 'Sell', empty: 'Nothing they want right now.', rows: function () {
         var seen = {}, rows = [];
@@ -207,11 +216,12 @@ window.LC = window.LC || {};
         title: sp.name, footer: sp.lore,
         tabs: [{ label: 'Visit', rows: function () {
           var played = (S.spirits[sid] || {}).playDay === S.day, comp = S.companion === sid;
-          return [
+          var extra = sid === 'bunian' ? [self.bunianQuestRow()] : [];
+          return extra.concat([
             { icon: 'ic_joy', label: 'Play together', sub: played ? 'You already played today. Come back tomorrow!' : 'Pelita loves its new friend. (+bond, once a day)', enabled: !played, why: 'Already played today.', action: function () { W.playSpirit(sid); return 'close'; } },
             { icon: 'sp_' + sid, iconScale: 1.4, label: comp ? 'Ask it to go home' : 'Ask it to come along', sub: comp ? 'It travels with you everywhere you go.' : 'It will follow you on your travels (one companion at a time).' + (S.companion && !comp ? ' The ' + LC.SPIRITS[S.companion].name + ' will go home.' : ''), action: function () { W.setCompanion(sid); } },
             { icon: 'ic_glow', label: 'Blessing', sub: sp.blessing + '. It works while the spirit is your friend.' }
-          ];
+          ]);
         } }]
       });
     },
@@ -233,7 +243,8 @@ window.LC = window.LC || {};
           { label: 'Places', rows: function () {
             return LC.AREA_ORDER.map(function (a) {
               var A = LC.AREAS[a], open = LC.State.isOpen(a), lvOk = LC.State.level() >= A.lvl;
-              var why = !lvOk ? 'Locked until Pelita reaches Lv ' + A.lvl + '.' : 'Befriend the ' + LC.SPIRITS[A.needs].name + ' first: ' + LC.AREA_HOWTO[a];
+              var why = !lvOk ? 'Locked until Pelita reaches Lv ' + A.lvl + '.' : A.needs && !LC.State.friend(A.needs) ? 'Befriend the ' + LC.SPIRITS[A.needs].name + ' first: ' + LC.AREA_HOWTO[a] : LC.AREA_HOWTO[a];
+              if (A.wear && !S.visited[a] && !open) return { icon: 'ic_moon', label: '???', sub: 'The Orang Bunian are said to live somewhere in Hutan Rimba... if only you could see them.', right: 'Hidden' };
               return { icon: open ? 'ic_sun' : 'ic_moon', label: A.name + (lvOk ? '' : '  (Pelita Lv ' + A.lvl + ')'), sub: A.sub.charAt(0).toUpperCase() + A.sub.slice(1) + '. ' + (open ? LC.AREA_HOWTO[a] : why),
                 right: S.visited[a] ? 'Visited' : open ? 'New!' : 'Locked' };
             });
@@ -245,6 +256,7 @@ window.LC = window.LC || {};
               return { icon: n ? it.icon : 'ic_moon', label: n ? it.name : '???', sub: (n ? it.desc + ' ' : '') + 'Found in the ' + where.join(', ') + (it.night ? ' (best at night)' : '') + '.', right: n ? 'x' + n : '' };
             });
           } },
+          { label: 'You', rows: function () { return self.youRows(); } },
           { label: 'Levels', rows: function () {
             var lv = LC.State.level(), rows = [];
             for (var l = 2; l <= LC.MAX_LEVEL; l++) {

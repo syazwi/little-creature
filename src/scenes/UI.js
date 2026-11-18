@@ -155,16 +155,21 @@ window.LC = window.LC || {};
     // ================================================================ HUD
     buildHUD() {
       var g = this.hudG = this.add.graphics();
-      this.panel(g, 12, 12, 262, 112);
+      this.panel(g, 12, 12, 262, 140);
       this.tDay = this.txt(28, 22, '', 20);
       this.icTime = this.add.image(42, 66, 'ic_sun').setScale(2);
       this.tTime = this.txt(62, 52, '', 24, '#ffd166');
       var icCoin = this.add.image(180, 66, 'ic_coin').setScale(2);
       this.tCoin = this.txt(198, 52, '', 24, '#f7dd8a');
       var icEnergy = this.add.image(42, 101, 'ic_energy').setScale(2);
-      this.tGoal = this.txt(16, 132, '', 15, '#fbecc8', { wrap: 330, stroke: 4 });
+      // v1.5: the season, and your strength (or your health, in dangerous places)
+      this.icSeason = this.add.image(42, 129, 'ic_s_menanam').setScale(2);
+      this.tSeason = this.txt(58, 119, '', 15, '#9be15d');
+      this.icStr = this.add.image(170, 129, 'ic_str').setScale(2);
+      this.tStr = this.txt(184, 119, '', 15, '#f7dd8a');
+      this.tGoal = this.txt(16, 160, '', 15, '#fbecc8', { wrap: 330, stroke: 4 });
       this.gfxL = this.add.graphics();
-      this.pin('tl', [g, this.tDay, this.icTime, this.tTime, icCoin, this.tCoin, icEnergy, this.tGoal, this.gfxL]);
+      this.pin('tl', [g, this.tDay, this.icTime, this.tTime, icCoin, this.tCoin, icEnergy, this.icSeason, this.tSeason, this.icStr, this.tStr, this.tGoal, this.gfxL]);
 
       var px = this.PX = 960 - 286, py = this.PY = 12;
       var pg = this.add.graphics();
@@ -232,6 +237,8 @@ window.LC = window.LC || {};
       this.btnEat = btn(786, 566, 28, 'EAT', 'KeyX');
       this.btnBag = btn(888, 594, 28, 'BAG', 'Tab');
       this.btnMenu = btn(480, 26, 18, 'II', 'Escape', true);
+      this.btnMap = btn(528, 26, 18, 'MAP', 'KeyM', true);
+      this.btnMap.touchOnly = true;
 
       this.input.on('pointerdown', function (p, over) {
         if (!self.touchOn || self.modal || self.world.sleeping || self.stick.id !== -1) return;
@@ -273,15 +280,15 @@ window.LC = window.LC || {};
         if (d > 56) { kx = bx + dx / d * 56; ky = by + dy / d * 56; }
         g.fillStyle(0xf2d06b, s.id === -1 ? 0.3 : 0.85); g.fillCircle(kx, ky, 24);
       }
-      var bright = this.lastBright, modal = !!this.modal;
+      var bright = this.lastBright, modal = !!this.modal, touch = this.touchOn;
       this.tBtns.forEach(function (b) {
-        var vis = b.always || show;
+        var vis = (b.always && !(b.touchOnly && (!touch || modal))) || show;
         b.g.clear(); b.t.setVisible(vis); b.hit.setVisible(vis);
         if (!vis) return;
         var hot = b.code === 'KeyE' && bright;
         b.g.fillStyle(hot ? 0x5a4024 : 0x1e1510, b.down ? 0.95 : 0.7); b.g.fillCircle(b.x, b.y, b.r);
         b.g.lineStyle(hot ? 3 : 2, hot ? 0xffd166 : 0xd9a94e, 0.95); b.g.strokeCircle(b.x, b.y, b.r);
-        if (b.always) b.t.setText(modal ? 'X' : 'II');
+        if (b.always && !b.touchOnly) b.t.setText(modal ? 'X' : 'II');
       });
     }
 
@@ -324,12 +331,14 @@ window.LC = window.LC || {};
       else if (!f.metAni) t = 'Visit Mak Ani\'s warung on the east road to sell and buy.';
       else if (LC.State.isOpen('kampung') && !S.visited.kampung) t = 'The road east is open! Visit Kampung Tepian and meet the villagers.';
       else if (S.visited.kampung && !LC.State.count('joran') && !f.fished) t = 'Visit Pak Mat at the kampung jetty to learn fishing.';
+      else if (S.visited.kampung && !f.lahHen) t = 'Meet Pak Lah in Kampung Tepian. He has a gift for Nenek\'s empty reban.';
       else if (S.visited.kampung && !Object.keys(S.buildings).length) t = 'Help rebuild the kampung: ask Tukang Leong, then build a house on an empty plot.';
       else {
         var lv = LC.State.level(), nl = LC.State.nextLevelBond(), r = LC.LEVEL_REWARDS[lv + 1] || {};
         var what = r.unlock ? ' to open ' + LC.AREAS[r.unlock].name : r.stage ? ' to evolve' : '';
         t = nl === null ? 'Pelita is a Legend of the Kampung! Befriend every spirit and help every neighbour.' : 'Pelita Lv ' + lv + ': ' + Math.floor(g.bond) + ' / ' + nl + ' bond for Lv ' + (lv + 1) + what + '. Care for Pelita and help the villagers.';
       }
+      if (LC.State.isPesta() && S.minutes < LC.PESTA_CLOSE) pre += 'Pesta day! Contests at the pavilion in Kampung Tepian.\n';
       return pre + 'Goal: ' + t;
     }
 
@@ -347,6 +356,12 @@ window.LC = window.LC || {};
 
       gf.clear(); this.gfxL.clear();
       this.bar(this.gfxL, 60, 95, 196, 12, S.energy / S.maxEnergy, S.energy < 20 ? 0xe76f51 : 0x9be15d);
+      var sea = LC.State.season(), danger = !!(this.world.A && this.world.A.enemies) || S.hp < S.maxHp;
+      if (sea !== this.lastSeason) { this.icSeason.setTexture(sea.icon); this.tSeason.setText(sea.name.replace('Musim ', '').replace('-buahan', '') + ' ' + LC.State.seasonDay() + '/7').setColor(sea.color); this.lastSeason = sea; this.lastSeasonDay = -1; }
+      if (LC.State.seasonDay() !== this.lastSeasonDay) { this.lastSeasonDay = LC.State.seasonDay(); this.tSeason.setText(sea.name.replace('Musim ', '').replace('-buahan', '') + ' ' + this.lastSeasonDay + '/7'); }
+      this.icStr.setTexture(danger ? 'ic_hp' : 'ic_str');
+      if (danger) { this.tStr.setText(''); this.bar(this.gfxL, 184, 123, 72, 12, S.hp / S.maxHp, S.hp < S.maxHp * 0.3 ? 0xe76f51 : 0xff5a6a); }
+      else this.tStr.setText('Str ' + Math.floor(S.str || 0));
       var px = this.PX, py = this.PY;
       this.bar(gf, px + 132, py + 68, 124, 12, g.full / 100, g.full < 25 ? 0xe76f51 : 0xf2d06b);
       this.bar(gf, px + 132, py + 93, 124, 12, g.joy / 100, g.joy < 20 ? 0xe76f51 : 0xff7aa8);
@@ -441,7 +456,9 @@ window.LC = window.LC || {};
       switch (code) {
         case 'KeyQ': this.nextTool(); break;
         case 'Tab': case 'KeyI': this.openInventory(); break;
-        case 'KeyM': this.toast('Music ' + (LC.Audio.toggleMusic() ? 'on' : 'off'), 'ic_glow'); break;
+        case 'KeyN': this.toast('Music ' + (LC.Audio.toggleMusic() ? 'on' : 'off'), 'ic_glow'); break;
+        case 'KeyM': this.openMap(); break;
+        case 'KeyG': if (LC.State.count('cermin_mata') || LC.State.wearing('glasses')) this.world.toggleGlasses(); break;
         case 'KeyX': this.world.eat(); break;
         case 'KeyF': if (LC.canFullscreen()) LC.toggleFullscreen(); break;
         case 'KeyJ': this.openJournal(); break;
@@ -613,7 +630,7 @@ window.LC = window.LC || {};
           o.rt.setText(it.right || '').setColor(dis ? '#7a6a5a' : '#f7dd8a');
         });
         up.setVisible(scroll > 0); dn.setVisible(scroll + VIS < list.length);
-        tabT.forEach(function (t, k) { t.setColor(k === tab ? '#ffd166' : '#8a7a6a').setText(k === tab ? '[ ' + tabs[k].label + ' ]' : tabs[k].label); });
+        tabT.forEach(function (t, k) { t.setColor(k === tab ? '#ffd166' : '#8a7a6a').setText(k === tab && tabs.length <= 5 ? '[ ' + tabs[k].label + ' ]' : tabs[k].label); });
         empty.setText(list.length ? '' : (tabs[tab].empty || 'Nothing here.'));
         if (coinT) coinT.setText(String(S.kepeng));
         foot.setText(typeof cfg.footer === 'function' ? cfg.footer() : (cfg.footer || ''));
@@ -657,14 +674,18 @@ window.LC = window.LC || {};
       if (!this.world.shopOpen()) { this.say([{ name: 'Warung', text: 'The shutters are down. A hand-painted sign reads: "BUKA 7 PAGI - 8 MALAM" (Open 7 AM to 8 PM).' }]); return; }
       if (!S.flags.metAni) { S.flags.metAni = true; this.say(LC.TEXT.makAniFirst, { onDone: function () { self.openShop(); } }); return; }
       var tip = LC.TEXT.makAniTips[Math.floor(Math.random() * LC.TEXT.makAniTips.length)];
+      var sea = LC.State.season(), big = LC.State.level() >= 10, seedOff = sea.id === 'menanam' ? 0.8 : 1;
+      var stock = LC.SHOP.concat(LC.SHOP_SEASON[sea.id] || [], big ? LC.SHOP_LV10 : []);
+      if (big && !S.flags.warungBig) { S.flags.warungBig = true; tip = 'Welcome to my new stall! Chests, compost, ais kacang... and I pay you 10% more now. Business is good, thanks to you!'; }
       this.openMenu({
-        title: 'Mak Ani\'s Warung', coins: true, footer: 'Mak Ani: "' + tip + '"',
+        title: big ? 'Mak Ani\'s Kedai Runcit' : 'Mak Ani\'s Warung', coins: true, footer: 'Mak Ani: "' + tip + '"  (' + sea.name + (seedOff < 1 ? ': seeds 20% off!' : '') + ')',
         tabs: [
           { label: 'Buy', rows: function () {
-            return LC.SHOP.map(function (id) {
-              var it = LC.ITEMS[id], afford = S.kepeng >= it.price, room = LC.State.canAdd(id);
-              return { icon: it.icon, label: it.name, sub: it.desc, right: it.price + ' k', enabled: afford && room, why: afford ? 'Your bag is full!' : 'Not enough kepeng.',
-                action: function () { S.kepeng -= it.price; LC.State.add(id, 1); LC.Audio.sfx('buy'); } };
+            return stock.map(function (id) {
+              var it = LC.ITEMS[id], price = Math.round(it.price * (it.kind === 'seed' ? seedOff : 1)), afford = S.kepeng >= price, room = LC.State.canAdd(id);
+              var tag = (LC.SHOP_SEASON[sea.id] || []).indexOf(id) >= 0 ? '  (in season)' : big && LC.SHOP_LV10.indexOf(id) >= 0 ? '  (new stall)' : '';
+              return { icon: it.icon, label: it.name + tag, sub: it.desc, right: price + ' k', enabled: afford && room, why: afford ? 'Your bag is full!' : 'Not enough kepeng.',
+                action: function () { S.kepeng -= price; LC.State.add(id, 1); LC.Audio.sfx('buy'); } };
             });
           } },
           { label: 'Sell', empty: 'Nothing to sell yet. Bring crops, fruit, flowers or cooking!', rows: function () {
@@ -673,8 +694,9 @@ window.LC = window.LC || {};
               if (!sl || seen[sl.id]) return;
               var it = LC.ITEMS[sl.id]; if (!it.sell) return;
               seen[sl.id] = 1;
-              rows.push({ icon: it.icon, label: it.name + '  x' + LC.State.count(sl.id), sub: it.desc, right: '+' + it.sell + ' k',
-                action: function () { LC.State.remove(sl.id, 1); S.kepeng += it.sell; S.stats.earned += it.sell; LC.Audio.sfx('coin'); } });
+              var price = big ? Math.round(it.sell * 1.1) : it.sell;
+              rows.push({ icon: it.icon, label: it.name + '  x' + LC.State.count(sl.id), sub: it.desc, right: '+' + price + ' k',
+                action: function () { LC.State.remove(sl.id, 1); S.kepeng += price; S.stats.earned += price; LC.Audio.sfx('coin'); } });
             });
             return rows;
           } }
@@ -685,8 +707,15 @@ window.LC = window.LC || {};
     openCook() {
       var self = this, S = this.S;
       this.openMenu({
-        title: 'Nenek\'s Dapur', footer: 'Cooked dishes fill Pelita far more than raw crops. Pelita\'s favourites are marked with a heart.',
-        tabs: [{ label: 'Recipes', rows: function () {
+        title: 'Nenek\'s Dapur', footer: 'Cooked dishes fill Pelita far more than raw crops (favourites have a heart). Eating home cooking yourself also makes you stronger.',
+        tabs: [{ label: 'Craft', rows: function () {
+          return LC.MAKES.map(function (r) {
+            var it = LC.ITEMS[r.out], ok = LC.State.has(r.inp), lvOk = !r.lvl || LC.State.level() >= r.lvl;
+            return { icon: it.icon, label: it.name + (lvOk ? '' : '  (Pelita Lv ' + r.lvl + ')'), sub: self.ingText(r.inp), right: 'x' + LC.State.count(r.out), enabled: ok && lvOk && LC.State.canAdd(r.out),
+              why: !lvOk ? 'Needs Pelita Lv ' + r.lvl + '.' : ok ? 'Your bag is full!' : 'Missing materials.',
+              action: function () { LC.State.takeAll(r.inp); LC.State.add(r.out, 1); LC.Audio.sfx('build'); self.toast('You made a ' + it.name + '!', it.icon); } };
+          });
+        } }, { label: 'Recipes', rows: function () {
           return LC.RECIPES.map(function (r) {
             var it = LC.ITEMS[r.out], ok = LC.State.has(r.inp), fav = LC.LOVES.indexOf(r.out) >= 0 ? '  ♥' : '';
             return { icon: it.icon, label: it.name + fav, sub: self.ingText(r.inp), right: 'x' + LC.State.count(r.out), enabled: ok && LC.State.canAdd(r.out), why: ok ? 'Your bag is full!' : 'Missing ingredients.',
@@ -731,7 +760,7 @@ window.LC = window.LC || {};
               { icon: 'ic_full', label: 'Kenyang (fullness): ' + Math.round(g.full), sub: 'Falls through the day, twice as fast on Hungry Ghost Night. Feed it!' },
               { icon: 'ic_joy', label: 'Gembira (joy): ' + Math.round(g.joy), sub: 'Pet it, feed its favourites and meet its craving. Below 12 it sulks at home.' },
               { icon: 'ic_glow', label: 'Cahaya (glow): ' + Math.round(g.glow), sub: 'Incense, garlands and canang. Fades every night.' },
-              { icon: 'i_pulut_mangga', label: 'Favourite foods', sub: 'Pulut Mangga, Kuih Pandan, Pisang Goreng, Pengat Durian, Teh O and Air Merah. Raw cili or durian? No thanks!' },
+              { icon: 'i_pulut_mangga', label: 'Favourite foods', sub: 'Pulut Mangga, Kuih Pandan, Pisang Goreng, Pengat Durian, Teh O, Air Merah, Kuih Bahulu, Teh Tarik, Ais Kacang... (hearts at the dapur). Raw cili or durian? No thanks!' },
               { icon: 'ic_bond', label: LC.STAGES[st].name, sub: 'Blessing: ' + bless[st] },
               { icon: 'ic_moon', label: 'Every night', sub: 'If all three needs are 50+, Pelita sleeps content (+bond). If any is below 20... expect pranks.' }
             ];
@@ -768,14 +797,15 @@ window.LC = window.LC || {};
           ];
           return [
             { icon: 'ic_sun', label: 'Resume', sub: 'Back to the kampung.', action: function () { return 'close'; } },
-            { icon: 'ic_bond', label: 'Journal', sub: 'Villager requests, places, spirits, fish and Pelita\'s levels. Press J anytime.', action: function () { self.openJournal(); } }
+            { icon: 'ic_bond', label: 'Journal', sub: 'Villager requests, places, spirits, fish and Pelita\'s levels. Press J anytime.', action: function () { self.openJournal(); } },
+            { icon: 'ic_map', label: 'Map', sub: 'This place, and the whole land. Press M anytime' + (self.touchOn ? ' (or tap MAP).' : '.'), action: function () { self.openMap(); } }
           ].concat(coop, [
             { icon: 'ic_bond', label: 'Save game', sub: 'Save your farm, bag and Pelita right now.', action: function () { self.toast(LC.State.save() ? 'Game saved.' : 'Could not save: browser storage is blocked.', 'ic_bond'); return 'close'; } },
-            { icon: 'ic_glow', label: 'Music: ' + (LC.Audio.musicOn ? 'On' : 'Off'), sub: 'Chill gamelan-style music, generated live. Press M anytime.', action: function () { LC.Audio.toggleMusic(); } },
+            { icon: 'ic_glow', label: 'Music: ' + (LC.Audio.musicOn ? 'On' : 'Off'), sub: 'Chill gamelan-style music, generated live. Press N anytime.', action: function () { LC.Audio.toggleMusic(); } },
             { icon: 'ic_moon', label: 'Nature sounds: ' + (LC.Audio.ambienceOn ? 'On' : 'Off'), sub: 'River, birdsong by day, crickets and frogs at night.', action: function () { LC.Audio.toggleAmbience(); } },
             { icon: 'ic_joy', label: 'Touch controls: ' + (self.touchOn ? 'On' : 'Off'), sub: 'On-screen joystick and USE / EAT / BAG buttons for phones and tablets.', action: function () { self.setTouch(!self.touchOn); } },
             LC.canFullscreen() ? { icon: 'ic_sun', label: 'Fullscreen: ' + (LC.isFullscreen() ? 'On' : 'Off'), sub: 'Fill the whole screen with the kampung' + (self.touchOn ? '.' : '. Press F anytime.'), action: function () { LC.toggleFullscreen(); } } : null,
-            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact · tap the hotbar to select · II pauses' : 'WASD/Arrows move · E use · 1-9/wheel select · Q tool · X eat · R ride · Tab bag · J journal · M music · F fullscreen' },
+            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact (and swing a weapon) · tap the hotbar to select · MAP · II pauses' : 'WASD/Arrows move · E use/swing · 1-9/wheel select · Q tool · X eat · R ride · G glasses · Tab bag · J journal · M map · N music · F fullscreen' },
             { icon: 'ic_moon', label: 'Quit to title', sub: LC.Net.role ? 'Also ends the co-op session.' : 'Anything since your last sleep (or save) is lost.', action: function () { self.quitToTitle(); } }
           ]).filter(Boolean);
         } }]

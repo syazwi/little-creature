@@ -31,6 +31,11 @@ window.LC = window.LC || {};
       var x = home.x * T + 8, y = (home.y + 1) * T, o = { type: 'npc', vid: vid };
       var spr = this.add.sprite(x, y, 'npc_' + vid + '_0').setOrigin(0.5, 1).setDepth(y);
       spr.play('npc_' + vid + '_idle');
+      if (LC.VILLAGERS[vid].glow) {   // a ghost glows in the dark, above the shadows
+        spr.setDepth(9002).setAlpha(0.9);
+        this.tweens.add({ targets: this.add.image(x, y - 10, 'glow').setBlendMode(Phaser.BlendModes.ADD).setDepth(9001).setTint(LC.VILLAGERS[vid].glow).setScale(0.9).setAlpha(0.5), alpha: 0.25, duration: 1600, yoyo: true, repeat: -1 });
+        this.tweens.add({ targets: spr, y: y - 2, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      }
       this.npcs[vid] = { spr: spr, tx: home.x, ty: home.y, o: o, here: null };
     },
     npcAction: function (o) {

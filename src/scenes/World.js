@@ -67,6 +67,8 @@ window.LC = window.LC || {};
       this.createFx();
       this.refreshOfferings();
       this.createFolk();   // villagers, folk spirits, your companion, kites (WorldLife.js)
+      this.createFarmLife();   // v1.5: animals, chests, hidden things, seasons (WorldFarm.js)
+      this.createEnemies();    // v1.5: the shadows of the mine (WorldCombat.js)
 
       var cam = this.cameras.main;
       cam.setBounds(0, 0, this.W * T, this.H * T);
@@ -98,6 +100,9 @@ window.LC = window.LC || {};
           self.ui.showSummary(data.summary, function () { self.cameras.main.fadeIn(800); self.sleeping = false; self.morning(); });
         });
       } else if (data.area && this.ui.ready) this.ui.areaBanner(this.A.name, this.A.sub);
+      if (data.knocked) this.time.delayedCall(700, function () {
+        self.ui.say([{ text: 'Everything went dark... You wake up at home with a sore head. Pelita must have guided you out of the mine.' }, { text: data.knocked + ' (Eat good food to heal, and come back stronger!)' }]);
+      });
       if (parked) this.time.delayedCall(500, function () { self.toast(parked === 'car' ? 'The car can\'t go here. You park it at the edge and walk on.' : 'You leave the basikal by the path.', parked === 'car' ? 'i_kereta' : 'i_basikal'); });
     }
 
@@ -136,6 +141,14 @@ window.LC = window.LC || {};
             case 'u': idx = rnd.frac() < 0.8 ? TI.SEAF0 : TI.SEAF1; break;
             case 'v': idx = TI.SEALANE; break;
             case 'C': idx = TI.CORAL; break;
+            case 'c': idx = rnd.frac() < 0.75 ? TI.CAVE0 : TI.CAVE1; break;
+            case 'X': idx = TI.CAVEW; break;
+            case 'l': idx = TI.RAIL; break;
+            case 'W': idx = TI.PLANK; break;
+            case 'H': idx = TI.HULL; break;
+            case 'n': idx = TI.JADE; break;
+            case 'a': idx = TI.MARBLE; break;
+            case 'A': idx = TI.MARBLE2; break;
           }
           if (LC.SOLID_TILES[ch]) this.solid[y][x] = true;
           row.push(idx);
@@ -171,21 +184,27 @@ window.LC = window.LC || {};
     }
 
     harvestTex(o) {
-      var ready = this.S.trees[o.id] === 0;
+      var ready = this.S.trees[o.id] === 0 && !(o.type === 'tree' && !LC.State.inSeason(LC.TREES[o.kind].season && [LC.TREES[o.kind].season]));
       return o.type === 'tree' ? o.kind + (ready ? '_f' : '') : 'fg_' + o.kind + (ready ? '' : '_e');
     }
     refreshHarvest(id) { var t = this.trees[id]; if (t) t.spr.setTexture(this.harvestTex(t.o)); }
 
     buildObjects() {
       var self = this, S = this.S;
-      this.trees = {}; this.torches = []; this.plots = {}; this.boats = [];
+      this.trees = {}; this.torches = []; this.plots = {}; this.boats = []; this.hiddenObjs = []; this.objLights = [];
       this.objects.forEach(function (o) {
         var w = o.w || 1, h = o.h || 1, bx = (o.x + w / 2) * T, by = (o.y + h) * T;
+        if (o.hidden) {   // only seen through the Bunian glasses (WorldFarm.refreshHidden)
+          self.hiddenObjs.push({ o: o, img: self.add.image(bx, by, o.tex).setOrigin(0.5, 1).setDepth(by).setVisible(false) });
+          return;
+        }
+        if (o.light) self.objLights.push({ x: bx, y: by - (h * T) / 2, c: o.light });
         if (o.type === 'warung') {
-          self.add.image(bx, by, 'warung_back').setOrigin(0.5, 1).setDepth(by - 2);
+          var wk = LC.State.level() >= 10 ? 'warung2_' : 'warung_';
+          self.warungImgs = [self.add.image(bx, by, wk + 'back').setOrigin(0.5, 1).setDepth(by - 2)];
           self.ani = self.add.sprite(bx, by - 12, 'npc_ani_0').setOrigin(0.5, 1).setDepth(by - 1);
           self.ani.play('ani_idle');
-          self.add.image(bx, by, 'warung_front').setOrigin(0.5, 1).setDepth(by);
+          self.warungImgs.push(self.add.image(bx, by, wk + 'front').setOrigin(0.5, 1).setDepth(by));
           self.warungPos = { x: bx, y: by };
           for (var ry = 5; ry < o.y; ry++) for (var rx = o.x; rx < o.x + w; rx++) self.solid[ry][rx] = true;  // behind the stall
         } else if (o.type === 'tree' || o.type === 'forage') {
@@ -209,7 +228,8 @@ window.LC = window.LC || {};
           var bt = self.add.image(bx, by - 2, 'sampan').setOrigin(0.5, 1).setDepth(by - 8);
           self.boats.push({ spr: bt, y0: by - 2 });
         } else {
-          var im = self.add.image(bx, by, o.tex).setOrigin(0.5, 1).setDepth(by);
+          var im = self.add.image(bx, by, o.type === 'portal' && !LC.State.isOpen(o.to) ? 'lombong_tutup' : o.tex).setOrigin(0.5, 1).setDepth(by);
+          if (o.type === 'portal') self.portalImg = im;
           if (o.type === 'spirit') self.spiritPos = { x: bx, y: by };
           if (o.type === 'dapur') self.dapurPos = { x: bx, y: by };
           if (o.type === 'house') self.houseImg = im;
@@ -230,7 +250,7 @@ window.LC = window.LC || {};
       Object.keys(LC.PLOT_POSTS).forEach(function (k) { if (self.area === 'kampung') mark(LC.PLOT_POSTS[k].x, LC.PLOT_POSTS[k].y, 2); });
       mark(Math.floor(this.A.home.x), Math.floor(this.A.home.y), 3);
       this.objects.forEach(function (o) {   // never hide a building or a house plot behind a tree
-        if (o.type !== 'plot' && o.type !== 'bldg') return;
+        if (o.type !== 'plot' && o.type !== 'bldg' && !o.keep) return;
         for (var y = o.y - 1; y <= o.y + (o.h || 1) + 3; y++) for (var x = o.x - 1; x <= o.x + (o.w || 1); x++) keep[x + ',' + y] = 1;
       });
       this.A.exits.forEach(function (e) { mark(e.x0, e.y0, 3); mark(e.x1, e.y1, 3); mark(Math.floor(e.sx), Math.floor(e.sy), 2); });
@@ -332,7 +352,7 @@ window.LC = window.LC || {};
 
     solidPx(px, py) {
       var tx = Math.floor(px / T), ty = Math.floor(py / T);
-      if (tx < 0 || ty < 0 || tx >= this.W || ty >= this.H) return true;
+      if (!(tx >= 0 && ty >= 0 && tx < this.W && ty < this.H)) return true;   // (also catches NaN)
       return this.solid[ty][tx];
     }
     blockedAt(x, y) {
@@ -373,6 +393,7 @@ window.LC = window.LC || {};
       p.setDepth(p.y);
       this.pShadow.setPosition(Math.round(p.x), Math.round(p.y - 1));
       this.drawRider(p, this.S.riding, this.dir, this.moving, this.veh, this.pc);
+      if (this.specs) this.specs.setVisible(LC.State.wearing('glasses') && this.dir !== 'up' && this.S.riding !== 'car' && !this.A.underwater).setPosition(Math.round(p.x + (this.dir === 'left' ? -1 : this.dir === 'right' ? 1 : 0)), Math.round(p.y - 9 - (this.S.riding === 'bike' ? 5 : 0))).setFlipX(this.dir === 'left').setDepth(p.y + 0.3);
       if (this.A.underwater) this.mask.setVisible(this.dir !== 'up').setPosition(Math.round(p.x + (this.dir === 'left' ? -1 : this.dir === 'right' ? 1 : 0)), Math.round(p.y - 9)).setFlipX(this.dir === 'left').setDepth(p.y + 0.2);
     }
     // a bicycle under the rider, or a car instead of them. Used for you and for co-op friends.
@@ -587,6 +608,9 @@ window.LC = window.LC || {};
           if (parts.offerings) { S.offerings = parts.offerings; self.refreshOfferings(); }
           if (parts.buildings) { S.buildings = parts.buildings; self.refreshPlots(); }
           if (parts.spirits) { S.spirits = parts.spirits; LC.State.recalc(); self.refreshFolkSpirits(); }
+          if (parts.chests) { S.chests = parts.chests; S.chestSeq = parts.chestSeq || S.chestSeq; self.refreshChests(); }
+          if (parts.animals) { S.animals = parts.animals; S.animalSeq = parts.animalSeq || S.animalSeq; S.coop = parts.coop || S.coop; S.nest = parts.nest || S.nest; self.refreshAnimals(); }
+          if (self.ui.modal && self.ui.modal.render && (parts.chests || parts.animals)) self.ui.modal.render();
           if (m.by !== N.myId) self.remoteFx(m.op, m.a || {});
         };
         N.on.event = function (m) { if (m.ev === 'level') self.levelUp(m.lv); };
@@ -607,7 +631,9 @@ window.LC = window.LC || {};
     }
     applyOp(op, a, pid) {
       var S = this.S, res = LC.Sim[op] ? LC.Sim[op](a) : null, ok = LC.Sim.succeeded(res);
-      if (op === 'till' || op === 'water' || op === 'plant' || op === 'harvest') this.refreshTile(a.x, a.y);
+      if (op === 'till' || op === 'water' || op === 'plant' || op === 'harvest' || op === 'fertilize') this.refreshTile(a.x, a.y);
+      else if (op.indexOf('chest_') === 0) this.refreshChests();
+      else if (op.indexOf('animal') === 0 || op.indexOf('coop_') === 0 || op === 'nest_add') this.refreshAnimals();
       else if (op === 'shake') this.refreshHarvest(a.id);
       else if (op === 'offer') this.refreshOfferings();
       else if (op === 'build') this.refreshPlots();
@@ -643,6 +669,7 @@ window.LC = window.LC || {};
         case 'feed': case 'pet': if (this.ghostHere) this.fx.heart.explode(4, gp.x, gp.y - 8); break;
         case 'offer': if (this.spiritPos) this.fx.sparkle.explode(10, this.spiritPos.x, this.spiritPos.y - 26); break;
         case 'build': t = this.plots[a.plot]; if (t) this.fx.smoke.explode(10, t.spr.x, t.spr.y - 20); break;
+        case 'fertilize': if (this.area === 'farm') this.fx.sparkle.explode(6, a.x * T + 8, a.y * T + 8); break;
       }
     }
 
@@ -716,8 +743,9 @@ window.LC = window.LC || {};
         else if (o.tex === 'rumah_api') self.addLight(cx, by - 54, 0xfff0b0, 2.2, false);
         else if (o.tex === 'pondok') self.addLight(cx, by - 20, 0xffb060, 0.6, true);
       });
-      this.playerLight = this.addLight(0, 0, 0xfff2d0, 1.3, false);
-      this.playerLight.base = 0.35;
+      (this.objLights || []).forEach(function (L) { self.addLight(L.x, L.y, L.c, 1.2, false); });
+      this.playerLight = this.addLight(0, 0, 0xfff2d0, A.cave ? 2.4 : 1.3, false);
+      this.playerLight.base = A.cave ? 0.75 : 0.35;
       this.flies = [];
       for (var i = 0; i < (this.area === 'mountain' ? 10 : 28); i++) {
         var fx, fy;
@@ -752,17 +780,21 @@ window.LC = window.LC || {};
       var S = this.S, A = this.A, col = this.skyColor(S.minutes);
       var lum = ((col >> 16 & 255) * 0.3 + (col >> 8 & 255) * 0.59 + (col & 255) * 0.11) / 255;
       var n = Phaser.Math.Clamp((1 - lum - 0.06) / 0.45, 0, 1);
+      if (A.cave) { col = 0x2e2638; n = 1; }             // the haunted mine is always dark: only lamps, Pelita and you
       this.nightF = n;
-      var tint = col;
-      if (A.dim) tint = mulColor(tint, 0xd2e2d0);        // shade under the rainforest canopy
-      if (A.warm) tint = mulColor(tint, 0xfff0dc);       // the dunes glow warm
+      var tint = col, sea = LC.State.season().id, outdoors = !A.cave && !A.underwater;
+      if (A.dim) tint = mulColor(tint, A.underwater ? 0xb8c8d8 : 0xd2e2d0);   // shade under the canopy (or inside the wreck)
+      if (A.warm || (sea === 'kemarau' && outdoors)) tint = mulColor(tint, 0xfff0dc);   // the dunes (and the dry season) glow warm
       if (A.fog) tint = mulColor(tint, 0xe8eef2);
-      if (A.underwater) tint = mulColor(tint, 0x8cc8e8);
+      if (A.golden) tint = mulColor(tint, 0xfff2d0);     // the Bunian village glows like late afternoon
+      if (this.raining && outdoors) tint = mulColor(tint, 0xc8d2de);
+      if (A.underwater) tint = mulColor(tint, A.jade ? 0x88e8c8 : 0x8cc8e8);
       this.dark.setVisible(tint !== 0xffffff).setTint(tint);
       var hgn = LC.State.isHGN(), shopOpen = this.shopOpen();
       if (this.warungLight) this.warungLight.base = shopOpen ? 0.8 : 0;
       if (this.spiritLight) this.spiritLight.base = 0.25 + S.ghost.glow / 100 * 0.7;
       this.playerLight.img.setPosition(this.player.x, this.player.y - 8);
+      if (A.cave) this.playerLight.img.setScale((this.ghostHere ? 3.2 + S.ghost.glow / 100 : 2.2) * (0.96 + 0.04 * Math.sin(time / 130)));   // Pelita's glow pushes the dark back
       this.lights.forEach(function (L) {
         var f = L.flicker ? 0.86 + 0.14 * Math.sin(time / 90 + L.ph) * Math.sin(time / 37 + L.ph * 2) : 1;
         L.img.setAlpha(n * L.base * f);
@@ -865,6 +897,8 @@ window.LC = window.LC || {};
         });
       } else if (guest) N.sendPos(this.player.x, this.player.y, this.dir, this.moving, this.area, S.companion, false, S.riding);
       this.updateCritters(dt);
+      this.updateFarmLife(time, dt);
+      this.updateEnemies(time, dt, blocked);
       this.updateLighting(time, dt);
 
       var act = blocked ? null : this.getAction();
@@ -887,8 +921,10 @@ window.LC = window.LC || {};
         var oa = this.objectAction(o, sl, it, isFood);
         if (oa) return oa;
       }
+      if (it && it.kind === 'weapon' && this.A.enemies) return { label: 'Swing the ' + it.name, swing: true, fn: function () { self.attack(); } };
       var cr = this.critterAt(f.fx, f.fy);
-      if (cr) return { label: 'Pet the ' + cr.kind, fn: function () { self.petCritter(cr); } };
+      if (cr && cr.aid) { var aa = this.animalAction(cr, sl, it); if (aa) return aa; }
+      else if (cr) return { label: 'Pet the ' + cr.kind, fn: function () { self.petCritter(cr); } };
       if (isFood && this.ghostNear) return { label: 'Feed Pelita ' + it.name, fn: function () { self.feedGhost(sl.id); } };
 
       var ch = this.grid[ty][tx], t = this.area === 'farm' ? LC.State.tile(tx, ty) : null;
@@ -916,7 +952,7 @@ window.LC = window.LC || {};
         case 'well': return { label: 'Draw water', fn: function () { self.refillCan(); } };
         case 'warung': return { label: this.shopOpen() ? 'Shop at the warung' : 'Warung (closed)', fn: function () { self.ui.openShop(); } };
         case 'tree': {
-          var tr = LC.TREES[o.kind], ready = S.trees[o.id] === 0;
+          var tr = LC.TREES[o.kind], ready = S.trees[o.id] === 0 && (!tr.season || LC.State.season().id === tr.season);
           return { label: ready ? 'Pick ' + LC.ITEMS[tr.fruit].name : tr.name, work: ready, fn: function () { self.shakeTree(o); } };
         }
         case 'forage': {
@@ -936,6 +972,17 @@ window.LC = window.LC || {};
         case 'turtle': return S.flags.turtleFreed ? null : { label: 'Free the sea turtle', work: true, fn: function () { self.freeTurtle(); } };
         case 'npc': return this.npcAction(o);
         case 'folk': return this.folkAction(o, sl, it);
+        // v1.5 (WorldFarm.js)
+        case 'coop': return { label: o.id === 'kandang' ? 'Goat pen' : 'Nenek\'s reban', fn: function () { self.ui.openCoop(); } };
+        case 'chest': return { label: 'Open the ' + LC.ITEMS[o.kind].name, fn: function () { self.ui.openChest(o.cid); } };
+        case 'pesta': return { label: LC.State.isPesta() ? 'Pesta! Enter a contest' : 'Pesta pavilion', fn: function () { self.ui.openPesta(); } };
+        case 'lift': return { label: 'Lift the training stone', work: true, fn: function () { self.ui.openLift(); } };
+        case 'keris': return S.flags.keris ? { label: 'Look', fn: function () { self.ui.say([{ text: 'The mossy stone where the keris slept for centuries. Bunian children now dare each other to touch it.' }]); } }
+          : { label: 'The keris in the stone', fn: function () { self.pullKeris(); } };
+        case 'portal': return this.portalAction(o);
+        case 'bunian_gate': return { label: 'Step through the Bunian gate', fn: function () { LC.Audio.sfx('gate'); self.goArea('bunian', self.tilePx(LC.AREAS.bunian.home), 'up'); } };
+        case 'wreck': return this.seaGateAction(o, 'Swim inside the sunken junk');
+        case 'seagate': return this.seaGateAction(o, o.to === 'kidul' ? 'Swim through the green arch' : 'Dive into the deep trench');
         default: return LC.TEXT[o.type] ? { label: 'Look', fn: function () { self.ui.say([{ text: LC.TEXT[o.type] }]); } } : null;
       }
     }
@@ -949,6 +996,8 @@ window.LC = window.LC || {};
         if (!this.canRide(rk)) return hint(this.A.underwater ? 'Not under the sea!' : rk === 'car' ? 'The car can\'t go here: the farm, the kampung and the dunes only.' : 'You can\'t ride here.');
         return { label: rk === 'car' ? 'Drive the kereta' : 'Ride the basikal', ride: true, fn: function () { self.setRide(rk); } };
       }
+      var v15 = this.toolAction15(sl, it, ch, t, tx, ty, hint);   // v1.5 items (WorldFarm.js)
+      if (v15) return v15;
       if (sl.id === 'joran') {
         if (water) return { label: 'Cast your line', tile: true, fn: function () { self.startFishing(tx, ty, water); } };
         return hint(this.A.underwater ? 'You are already under the sea! Fish from the land.' : 'Face the water to fish: a river, pool, lake or the sea.');
@@ -1027,8 +1076,10 @@ window.LC = window.LC || {};
       LC.State.remove(seedId, 1);
       this.fx.leaf.explode(3, tx * T + 8, ty * T + 10);
       LC.Audio.sfx('plant'); this.S.flags.planted = true;
+      var cd = LC.CROPS[LC.ITEMS[seedId].crop];
       this.doShared('plant', { x: tx, y: ty, crop: LC.ITEMS[seedId].crop }, function (ok) {
-        if (!ok) { LC.State.add(seedId, 1); self.toast('Someone beat you to that spot!'); }
+        if (!ok) { LC.State.add(seedId, 1); self.toast('Someone beat you to that spot!'); return; }
+        if (!LC.State.inSeason(cd.seasons)) self.toast(cd.name + ' only grows in ' + cd.seasons.map(function (s) { return LC.SEASONS.filter(function (q) { return q.id === s; })[0].name; }).join(' and ') + '. It will rest until then.', 'ic_' + 's_' + cd.seasons[0]);
       });
     }
     harvest(tx, ty) {
@@ -1056,6 +1107,10 @@ window.LC = window.LC || {};
       LC.Audio.sfx('shake');
       var self = this;
       function noFruit(days) { self.toast(tr.name + ': no ripe fruit yet. Check back in ' + days + ' day' + (days > 1 ? 's' : '') + '.'); }
+      if (tr.season && LC.State.season().id !== tr.season) {
+        var wait = 0; for (var d = S.day; LC.seasonOf(d).id !== tr.season && wait < 40; d++) wait++;
+        this.toast(tr.name + ': it only fruits in Musim Buah-buahan, the fruit season (in ' + wait + ' day' + (wait > 1 ? 's' : '') + ').', 'ic_s_buah'); return;
+      }
       if (S.trees[o.id] > 0) { noFruit(S.trees[o.id]); return; }
       if (!LC.State.canAdd(tr.fruit)) { this.toast('Your bag is full!'); return; }
       this.doShared('shake', { id: o.id }, function (res) {
@@ -1073,9 +1128,12 @@ window.LC = window.LC || {};
       LC.Audio.sfx(o.kind === 'boulder' || o.kind === 'clay' || o.kind === 'glint' ? 'till' : 'harvest'); this.bump();
       this.doShared('shake', { id: o.id }, function (res) {
         if (!res || !res.item) { S.energy += fg.energy || 0; if (res && res.days) self.toast(fg.name + ': picked clean. More in ' + res.days + ' day(s).'); return; }
-        LC.State.add(res.item, res.count);
-        (o.kind === 'boulder' || o.kind === 'clay' ? self.fx.dirt : self.fx.leaf).explode(8, spr.x, spr.y - 6);
-        self.toast('+' + res.count + ' ' + LC.ITEMS[res.item].name, 'i_' + res.item);
+        var bonus = S.flags.kidul && (self.area === 'laut' || self.area === 'island' || self.area === 'kidul' || self.area === 'atlantis' || self.area === 'kapal') ? 1 : 0;   // the Queen's blessing
+        LC.State.add(res.item, res.count + bonus);
+        (o.kind === 'boulder' || o.kind === 'clay' || o.kind === 'goldvein' ? self.fx.dirt : self.fx.leaf).explode(8, spr.x, spr.y - 6);
+        if (o.kind === 'goldvein' || o.kind === 'crystal') { LC.Audio.sfx('mine'); self.fx.sparkle.explode(6, spr.x, spr.y - 8); S.stats.gold = (S.stats.gold || 0) + res.count; }
+        var strUp = o.kind === 'boulder' || o.kind === 'goldvein' ? (Math.random() < 0.3 ? LC.State.gainStr(1) : 0) : 0;
+        self.toast('+' + (res.count + bonus) + ' ' + LC.ITEMS[res.item].name + (bonus ? '  (the Queen\'s blessing)' : '') + (strUp ? '  +1 strength' : ''), 'i_' + res.item);
         if (res.extra && LC.State.add(res.extra, 1)) {
           LC.Audio.sfx('chime'); self.fx.sparkle.explode(12, spr.x, spr.y - 6);
           self.toast('Something special! You found a ' + LC.ITEMS[res.extra].name + '!', 'i_' + res.extra);
@@ -1094,12 +1152,20 @@ window.LC = window.LC || {};
       if (!sl) return;
       var it = LC.ITEMS[sl.id];
       if (!it.food) { this.toast('You can\'t eat ' + it.name + '!'); return; }
-      if (S.energy >= S.maxEnergy) { this.toast('You are not hungry right now.'); return; }
+      var hurt = S.hp < S.maxHp, tonic = it.strength && S.jamuDay !== S.day;
+      if (S.energy >= S.maxEnergy && !hurt && !tonic) { this.toast('You are not hungry right now.'); return; }
       LC.State.remove(sl.id, 1);
-      var e = it.energy || Math.round(it.food.full * 0.8) + 5;
+      var e = it.energy || Math.round(it.food.full * 0.8) + 5, extra = '';
       S.energy = Math.min(S.maxEnergy, S.energy + e);
+      if (hurt) { var hp = Math.min(S.maxHp - S.hp, Math.round(it.food.full * 0.6) + 4); S.hp += hp; extra += '  +' + hp + ' health'; }
+      // v1.5: hearty home cooking (twice a day) and the Bunian tonic make you stronger
+      if (tonic) { S.jamuDay = S.day; var g1 = LC.State.gainStr(it.strength); extra += '  +' + g1 + ' strength!'; }
+      else if (it.kind === 'dish') {
+        if (S.strFoodDay !== S.day) { S.strFoodDay = S.day; S.strFood = 0; }
+        if (S.strFood < 2) { S.strFood++; if (LC.State.gainStr(1)) extra += '  +1 strength'; }
+      }
       LC.Audio.sfx('eat');
-      this.toast('You eat the ' + it.name + '. +' + e + ' energy' + (sl.id === 'cili' ? '  Pedas!!' : sl.id === 'jamu' ? '  So bitter... but so strong!' : ''), it.icon);
+      this.toast('You eat the ' + it.name + '. +' + e + ' energy' + extra + (sl.id === 'cili' ? '  Pedas!!' : sl.id === 'jamu' || sl.id === 'jamu_kuat' ? '  So bitter... but so strong!' : ''), it.icon);
     }
 
     // ---------------------------------------------------------------- Pelita care
@@ -1181,7 +1247,7 @@ window.LC = window.LC || {};
         if (self.area !== 'farm') { LC.followPid = self.followPid; self.scene.restart({ area: 'farm', summary: sum }); return; }   // you are carried home
         self.refreshAllTiles();
         self.refreshOfferings();
-        self.refreshPlots();
+        self.refreshPlots(); self.refreshSeason(); self.refreshAnimals(); self.refreshChests();
         self.player.setPosition(4 * T + 8, 8 * T + 13);
         self.dir = 'down';
         var h = self.ghostHome(); self.gpos.x = h.x; self.gpos.y = h.y;
@@ -1215,7 +1281,7 @@ window.LC = window.LC || {};
       if (this.area !== 'farm') { this.scene.restart({ area: 'farm', summary: sum }); return; }
       this.refreshAllTiles();
       this.refreshOfferings();
-      this.refreshPlots();
+      this.refreshPlots(); this.refreshSeason(); this.refreshAnimals(); this.refreshChests();
       var sp = this.homeSpot(this.pc); this.player.setPosition(sp.x, sp.y); this.dir = 'down';
       this.ui.showSummary(sum, function () {
         self.cameras.main.fadeIn(800);
@@ -1237,6 +1303,7 @@ window.LC = window.LC || {};
       if (LC.Net.isHost()) LC.Net.broadcast({ t: 'event', ev: 'level', lv: lv });
       var gift = LC.State.levelGift(lv);
       this.refreshGates();
+      this.refreshLevelThings();   // the warung's new stall, the mine shaft (WorldFarm.js)
       LC.Audio.sfx(r.stage ? 'stage' : 'levelup');
       if (this.ghostHere) this.fx.sparkle.explode(r.stage ? 30 : 18, gp.x, gp.y);
       this.cameras.main.flash(r.stage ? 600 : 300, 255, 240, 210);

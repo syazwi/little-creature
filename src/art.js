@@ -765,5 +765,6 @@ window.LC = window.LC || {};
     Object.keys(HUD).forEach(function (k) { make(scene, k, 12, 12, HUD[k], true); });
     if (Art.generate2) Art.generate2(scene);
     if (Art.generate3) Art.generate3(scene);
+    if (Art.generate4) Art.generate4(scene);
   };
 })(window.LC);

@@ -44,11 +44,12 @@ window.LC = window.LC || {};
     shake: function (a) {
       var S = LC.State.s, o = LC.objById(a.id);
       if (!o || (o.type !== 'tree' && o.type !== 'forage')) return null;
+      if (o.type === 'tree' && LC.TREES[o.kind].season && LC.State.season().id !== LC.TREES[o.kind].season) return { off: LC.TREES[o.kind].season };
       if (S.trees[a.id] > 0) return { days: S.trees[a.id] };
       if (o.type === 'tree') {
         var tr = LC.TREES[o.kind];
         S.trees[a.id] = tr.regrow;
-        return { item: tr.fruit, count: tr.count };
+        return { item: tr.fruit, count: tr.count + (LC.State.season().id === 'buah' ? 1 : 0) };   // fruit season: one extra
       }
       var fg = LC.FORAGE[o.kind], res = { item: fg.item, count: fg.count };
       S.trees[a.id] = fg.regrow;
@@ -87,6 +88,84 @@ window.LC = window.LC || {};
       g.glow = clamp(g.glow + 30); g.joy = clamp(g.joy + 10);
       return { ok: true, b: LC.State.addBond(8) };
     },
+    // ---- v1.5: compost makes a crop grow a day at once
+    fertilize: function (a) {
+      var t = LC.State.tile(a.x, a.y);
+      if (!t || !t.crop || t.crop.g >= LC.CROPS[t.crop.id].days) return false;
+      t.crop.g++;
+      return true;
+    },
+    // ---- v1.5: storage chests live in the world, so everyone on the farm shares them
+    chest_place: function (a) {
+      var S = LC.State.s;
+      if (!LC.CHESTS[a.kind] || !LC.chestSpotOk(a.area, a.x, a.y)) return { ok: false };
+      var id = 'c' + (S.chestSeq = (S.chestSeq || 0) + 1);
+      S.chests[id] = { area: a.area, x: a.x, y: a.y, kind: a.kind, items: [] };
+      return { ok: true, id: id };
+    },
+    chest_put: function (a) {
+      var c = LC.State.s.chests[a.id];
+      if (!c || !LC.ITEMS[a.item] || !(a.n > 0)) return { ok: false, n: 0 };
+      var n = a.n, cap = LC.CHESTS[c.kind].slots, it = c.items, i;
+      for (i = 0; i < it.length && n > 0; i++) if (it[i].id === a.item && it[i].n < 99) { var k = Math.min(n, 99 - it[i].n); it[i].n += k; n -= k; }
+      while (n > 0 && it.length < cap) { var m = Math.min(n, 99); it.push({ id: a.item, n: m }); n -= m; }
+      return { ok: n < a.n, n: a.n - n };
+    },
+    chest_take: function (a) {
+      var c = LC.State.s.chests[a.id];
+      if (!c) return { ok: false, n: 0 };
+      var want = a.n, got = 0;
+      for (var i = c.items.length - 1; i >= 0 && got < want; i--) {
+        if (c.items[i].id !== a.item) continue;
+        var k = Math.min(want - got, c.items[i].n); c.items[i].n -= k; got += k;
+      }
+      c.items = c.items.filter(function (s) { return s.n > 0; });
+      return { ok: got > 0, n: got, item: a.item };
+    },
+    chest_pick: function (a) {
+      var S = LC.State.s, c = S.chests[a.id];
+      if (!c || c.items.length) return { ok: false };
+      delete S.chests[a.id];
+      return { ok: true, kind: c.kind };
+    },
+    // ---- v1.5: farm animals (shared, they live at the reban)
+    animal_add: function (a) {
+      var D = LC.ANIMALS[a.kind];
+      if (!D) return { ok: false };
+      if (LC.State.animalRoom(D.home) <= 0) return { ok: false, full: true };
+      var an = LC.State.newAnimal(a.kind);
+      return { ok: true, id: an.id, name: an.name };
+    },
+    animals_feed: function (a) {
+      var S = LC.State.s, n = a.n || 0, fed = 0;
+      S.animals.forEach(function (an) { if (n > 0 && an.fedDay !== S.day && (!a.id || an.id === a.id)) { an.fedDay = S.day; n--; fed++; } });
+      return { ok: fed > 0, fed: fed };
+    },
+    animal_pet: function (a) {
+      var S = LC.State.s, an = LC.State.animal(a.id);
+      if (!an) return { ok: false };
+      if (an.petDay === S.day) return { ok: false, again: true, name: an.name };
+      an.petDay = S.day; an.love = Math.min(20, an.love + 1);
+      return { ok: true, name: an.name, love: an.love };
+    },
+    animal_groom: function (a) {
+      var S = LC.State.s, an = LC.State.animal(a.id);
+      if (!an || an.groomDay === S.day) return { ok: false };
+      an.groomDay = S.day; an.love = Math.min(20, an.love + 1);
+      return { ok: true, name: an.name };
+    },
+    coop_collect: function () {
+      var c = LC.State.s.coop, got = { telur: c.telur || 0, telur_itik: c.telur_itik || 0, susu: c.susu || 0 };
+      c.telur = 0; c.telur_itik = 0; c.susu = 0;
+      return { ok: got.telur + got.telur_itik + got.susu > 0, got: got };
+    },
+    coop_return: function (a) { var c = LC.State.s.coop; Object.keys(a.got || {}).forEach(function (k) { c[k] = (c[k] || 0) + a.got[k]; }); return { ok: true }; },
+    nest_add: function (a) {
+      var S = LC.State.s;
+      if (S.nest.length >= 3 || (a.egg !== 'telur' && a.egg !== 'telur_itik')) return { ok: false };
+      S.nest.push({ egg: a.egg, day: S.day });
+      return { ok: true };
+    },
     feed: function (a) {
       var g = LC.State.s.ghost, it = LC.ITEMS[a.item];
       if (!it || !it.food) return { ok: false };
@@ -122,7 +201,9 @@ window.LC = window.LC || {};
   // Which slice of shared state an op touched (what the host re-broadcasts afterwards).
   LC.Sim.part = function (op, a) {
     var S = LC.State.s;
-    if (op === 'till' || op === 'water' || op === 'plant' || op === 'harvest') {
+    if (op.indexOf('chest_') === 0) return { chests: S.chests, chestSeq: S.chestSeq };
+    if (op.indexOf('animal') === 0 || op.indexOf('coop_') === 0 || op === 'nest_add') return { animals: S.animals, animalSeq: S.animalSeq, coop: S.coop, nest: S.nest };
+    if (op === 'till' || op === 'water' || op === 'plant' || op === 'harvest' || op === 'fertilize') {
       var k = a.x + ',' + a.y, tiles = {}; tiles[k] = S.tiles[k] || null;
       return { tiles: tiles };
     }

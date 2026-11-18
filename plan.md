@@ -143,10 +143,12 @@ Stilt house (bed), spirit house + frangipani, dapur (stove), well (perigi), fenc
 | Q | Quick-select the next tool |
 | X | Eat the selected food yourself (restores energy) |
 | Tab / I | Inventory |
-| M | Toggle music |
+| M | Map |
+| N | Toggle music |
 | Esc | Close menu |
 | J | Journal (requests, places, spirits, fish, levels) |
 | R | Ride / get off the bicycle or car |
+| G | Put on / take off the Bunian glasses |
 | F | Fullscreen |
 
 Mouse clicks also work on all menus.
@@ -178,6 +180,13 @@ src/
   folk.js           villagers (roles, shops, requests, gifts) and folk spirits (wishes, blessings) (v1.3)
   art2.js           v1.3 textures: new tiles, buildings, villagers, critters, spirits, forage, icons
   art3.js           v1.4 textures: bicycles, cars (one per outfit colour), sea-floor tiles, coral, underwater buildings, sea folk
+  data2.js          v1.5 data: seasons, seasonal crops and orchard trees, animals, chests, Pesta contests, weapons, enemies, new villagers
+  areas2.js         v1.5 places: Kampung Bunian (hidden), Lombong Puaka (the haunted mine), new objects in old places, the map atlas
+  undersea.js       v1.5 deep sea: Kapal Karam (Si Tanggang), Istana Laut Selatan (Ratu Kidul), Kota Atlantis (Poseidon)
+  art4.js           v1.5 textures: cave/ship/jade/marble tiles, crops, orchard, animals, enemies, buildings, deep-sea folk, icons
+  scenes/WorldFarm.js    animals, chests, rain, glasses and hidden things, keris, mine and sea gates
+  scenes/WorldCombat.js  enemies, swinging, health, fainting
+  scenes/UIGames.js      map, chest, reban, Pesta and its three games, strength training, quests, the journal's You page
   art.js            procedural pixel-art texture generation
   audio.js          procedural music and sound effects
   state.js          game state model, save/load, day simulation
@@ -249,6 +258,21 @@ Slow pads, sparse bells, a soft bass pulse and a distant gong through a generate
 
 **Kampung Karang** (`laut`) needs Lv 5 and the Naga's friendship (`A.needs`, checked by `State.isOpen`). It is entered from the dive ring on Pulau Mutiara and left through the light column. Underwater: a permanent blue multiply tint, light rays, rising bubbles, a diving mask on the player, 0.8× swimming speed, a muffled music low-pass and a deep-water ambience. Sea folk: Tok Duyung (reef clean-up: rubbish hand-in at 8 kepeng a piece, gifts at 10/25/50 in `LC.CLEAN_GIFTS`), Nila (buys treasures ×1.3) and Pak Ketam (sea shop, buys sea produce ×1.3). Villagers now have an `area` (default kampung), and sea folk use their own sprites (`sprite: true`, drawn in art3.js). Forage: seaweed, sea cucumber, giant clam (20% pearl), rubbish, and the shipwreck chest (40% porcelain). A one-time turtle rescue runs `Sim.kind {n: 10}`. New dishes: kerabu rumpai and agar-agar (loved).
 
+### Seasons, animals, the Pesta, the hidden village, the haunted mine and the deep (v1.5)
+**Seasons.** `LC.seasonOf(day)`: four 7-day seasons (menanam, buah, kemarau, tengkujuh). Crops can have `seasons`; out of season they rest (no growth). Orchard trees have `season: 'buah'` and only bear then (`Sim.shake` returns `{off}`); in Musim Buah every fruit tree gives +1. Monsoon: `endDay` wets every tilled tile for the new day, and `WorldFarm.refreshSeason` shows rain (also each morning). Menanam: seeds -20% at the warung. Kemarau: wau prizes x2 and a warm tint.
+
+**Animals (shared).** `S.animals` [{id, kind, name, born, fedDay, petDay, groomDay, love 0-20}], `S.coop` (eggs and milk waiting), `S.nest` (eggs hatching). Ops: `animal_add`, `animals_feed`, `animal_pet`, `animal_groom`, `coop_collect` / `coop_return`, `nest_add`. `endDay`: fed animals produce (love 10+ = 30% double), chicks grow after 3 days, nest eggs hatch after 3 nights (30% Serama if you own one), unfed animals lose love. Animals wander the farm as critters with `aid`.
+
+**Chests (shared).** `S.chests` {id: {area, x, y, kind, items[]}}; ops `chest_place` (checked by `LC.chestSpotOk`), `chest_put`, `chest_take`, `chest_pick`. Peti Kayu 24 stacks, Peti Ukir 48.
+
+**Pesta.** `State.isPesta()` (every Sabtu). Three one-button games in UIGames (wau tension, gasing power + aim, Serama care + three poses), three rounds vs rivals, once per contest per Pesta (`S.contest`), trophies in `S.trophies`.
+
+**Strength and combat (personal).** `S.str` (10-100) from the batu angkat and silat (once a day each), dishes (twice a day), jamu kuat; `maxHp = 50 + str/2` (+20 from Poseidon). In places with `A.enemies` you swing the selected weapon with USE (damage = weapon + str/25, knockback, arc in front). Enemies run on each device only (not synced). At 0 HP you faint: half your gold ore, nuggets and crystals are lost and you wake at the farm. The stone guardian can be beaten once a day.
+
+**Bunian.** The Bunian request (`LC.BUNIAN_QUEST`) gives the glasses (`S.wear.glasses`, G). Objects with `hidden: 'glasses'` only exist while worn; `A.wear` gates the hidden village. The keris needs `LC.STR_KERIS` (60).
+
+**The deep.** Kapal Karam (Lv 5 + Naga): Si Tanggang's quest (`S.quests.tanggang`, selendang from Tok Duyung). Istana Laut Selatan (Lv 12): the Queen's gift (`LC.KIDUL_GIFT`, flag `kidul`: sea forage +1). Kota Atlantis (Lv 15): Poseidon's tribute (`LC.POSEIDON_TRIBUTE`: trident and +20 max HP). Co-op protocol is now 4.
+
 ## 8. Milestones
 
 1. **Skeleton.** Phaser boots, procedural textures, tilemap, player movement with collision, camera.
@@ -263,7 +287,7 @@ Slow pads, sparse bells, a soft bass pulse and a distant gong through a generate
 
 ## 9. Out of scope (future ideas)
 - Interiors, and upgrading your own house and farm buildings.
-- Seasons (wet and dry monsoon), a night market (pasar malam) every Sabtu, wayang kulit nights, sepak takraw with the villagers.
+- A night market (pasar malam), wayang kulit nights, sepak takraw with the villagers.
 - Saving a co-op guest's villager friendships and fish log with their bag.
 - Gamepad support, and a Play Store release (that would need an AAB build).
-- Co-op extras: shared chests, gifting items between players, a "everyone ready to sleep" vote, chat emotes, and a self-hosted PeerJS server for reliability.
+- Co-op extras: shared enemies in the mine, gifting items between players, a "everyone ready to sleep" vote, chat emotes, and a self-hosted PeerJS server for reliability.

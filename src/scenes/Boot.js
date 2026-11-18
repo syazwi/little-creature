@@ -40,6 +40,14 @@ LC.BootScene = class extends Phaser.Scene {
     Object.keys(LC.VILLAGERS).forEach(function (vid) {
       if (!a.exists('npc_' + vid + '_idle')) a.create({ key: 'npc_' + vid + '_idle', frames: [{ key: 'npc_' + vid + '_0', duration: 2400 + Math.floor(Math.random() * 1200) }, { key: 'npc_' + vid + '_1', duration: 140 }], repeat: -1 });
     });
+    // v1.5: farm animals, the shadows of the mine, the spinning gasing
+    ['serama', 'itik'].forEach(function (k) {
+      if (!a.exists(k + '_walk')) a.create({ key: k + '_walk', frames: [{ key: k + '_0' }, { key: k + '_2' }], frameRate: 6, repeat: -1 });
+      if (!a.exists(k + '_peck')) a.create({ key: k + '_peck', frames: [{ key: k + '_0' }, { key: k + '_1' }, { key: k + '_0' }, { key: k + '_0' }], frameRate: 4, repeat: -1 });
+    });
+    ['kambing', 'anak', 'kelawar', 'bayang', 'lipan', 'penunggu', 'gasing'].forEach(function (k) {
+      if (!a.exists(k + '_walk')) a.create({ key: k + '_walk', frames: [{ key: k + '_0' }, { key: k + '_1' }], frameRate: k === 'kelawar' ? 10 : k === 'gasing' ? 14 : k === 'penunggu' ? 3 : 6, repeat: -1 });
+    });
     if (!a.exists('ani_idle')) a.create({ key: 'ani_idle', frames: [{ key: 'npc_ani_0', duration: 2600 }, { key: 'npc_ani_1', duration: 140 }], repeat: -1 });
   }
 };

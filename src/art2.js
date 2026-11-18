@@ -278,11 +278,19 @@ window.LC = window.LC || {};
       case 'tudung': p.rect(4, 2, 8, 2, L.hatColor); p.rect(4, 3, 1, 6, L.hatColor); p.rect(11, 3, 1, 6, L.hatColor); p.rect(4, 8, 8, 2, L.hatColor); p.rect(5, 2, 6, 1, '#fff0f6'); break;
       case 'bun': p.rect(5, 2, 6, 2, HR); p.disc(8, 1, 1.6, HR); p.px(4, 4, HR); p.px(11, 4, HR); p.px(10, 1, '#e9b949'); break;
       case 'flower': p.rect(4, 2, 8, 2, HR); p.rect(4, 3, 1, 6, HR); p.rect(11, 3, 1, 6, HR); p.px(11, 2, '#ff6bb5'); p.px(12, 3, '#ff6bb5'); p.px(11, 3, '#ffd166'); break;
+      case 'kopiah': p.rect(5, 1, 6, 2, '#f5f0e6'); p.rect(5, 2, 6, 1, '#d8d2c4'); p.px(5, 3, HR); p.px(10, 3, HR); break;
+      case 'tanjak': case 'tanjak_gold': case 'tanjak_red': {   // the folded Malay headcloth
+        var tc = L.hat === 'tanjak_gold' ? '#e9c46a' : L.hat === 'tanjak_red' ? '#b8322a' : '#c8a040', tc2 = L.hat === 'tanjak_gold' ? '#c4922f' : L.hat === 'tanjak_red' ? '#7a1e1a' : '#8a6a28';
+        p.rect(5, 2, 6, 2, tc); p.rect(5, 3, 6, 1, tc2); p.poly([[9, 2], [12, -1], [11, 3]], tc); p.px(11, 0, tc2); p.px(5, 3, HR); break;
+      }
+      case 'leaf': p.poly([[3, 4], [8, -1], [13, 4]], '#3f8a3a'); p.line(8, -1, 8, 4, '#2a6a24'); p.px(8, 0, '#9be15d'); break;
       default: p.rect(5, 2, 6, 2, HR);
     }
     if (L.beard) { p.rect(6, 7, 4, 2, L.beard); p.px(7, 9, L.beard); }
     p.outline(OUT);
   }
+
+  Art.drawVillager = drawVillager;
 
   // ================================================================== CRITTERS
   function drawKancil(p, f) {
