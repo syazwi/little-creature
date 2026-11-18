@@ -31,6 +31,12 @@ LC.BootScene = class extends Phaser.Scene {
     if (!a.exists('kerbau_walk')) a.create({ key: 'kerbau_walk', frames: [{ key: 'kerbau_0' }, { key: 'kerbau_1' }], frameRate: 3, repeat: -1 });
     if (!a.exists('chicken_walk')) a.create({ key: 'chicken_walk', frames: [{ key: 'chicken_0' }, { key: 'chicken_2' }], frameRate: 6, repeat: -1 });
     if (!a.exists('chicken_peck')) a.create({ key: 'chicken_peck', frames: [{ key: 'chicken_0' }, { key: 'chicken_1' }, { key: 'chicken_0' }, { key: 'chicken_0' }], frameRate: 4, repeat: -1 });
+    ['kancil', 'ketam', 'penyu', 'biawak'].forEach(function (k) {
+      if (!a.exists(k + '_walk')) a.create({ key: k + '_walk', frames: [{ key: k + '_0' }, { key: k + '_1' }], frameRate: k === 'penyu' ? 2 : 6, repeat: -1 });
+    });
+    Object.keys(LC.VILLAGERS).forEach(function (vid) {
+      if (!a.exists('npc_' + vid + '_idle')) a.create({ key: 'npc_' + vid + '_idle', frames: [{ key: 'npc_' + vid + '_0', duration: 2400 + Math.floor(Math.random() * 1200) }, { key: 'npc_' + vid + '_1', duration: 140 }], repeat: -1 });
+    });
     if (!a.exists('ani_idle')) a.create({ key: 'ani_idle', frames: [{ key: 'npc_ani_0', duration: 2600 }, { key: 'npc_ani_1', duration: 140 }], repeat: -1 });
   }
 };

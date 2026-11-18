@@ -1,6 +1,8 @@
-/* World: the farm map, player, Pelita, crops, critters, day/night lighting and all interactions. */
+/* World: whichever place you are in (the farm, the kampung, the forest...), the player, Pelita, crops, critters,
+ * day/night lighting and all interactions. Travelling restarts this scene with { area, spawn }; the UI scene keeps running.
+ * Villagers, folk spirits, fishing, building and krathong live in WorldLife.js (mixed into this class). */
 window.LC = window.LC || {};
-(function () {
+(function (LC) {
   'use strict';
   var T = 16;
   var DIRV = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
@@ -9,67 +11,100 @@ window.LC = window.LC || {};
     var ar = a >> 16 & 255, ag = a >> 8 & 255, ab = a & 255, br = b >> 16 & 255, bg = b >> 8 & 255, bb = b & 255;
     return (Math.round(ar + (br - ar) * t) << 16) | (Math.round(ag + (bg - ag) * t) << 8) | Math.round(ab + (bb - ab) * t);
   }
+  function mulColor(a, b) {
+    return (Math.round((a >> 16 & 255) * (b >> 16 & 255) / 255) << 16) | (Math.round((a >> 8 & 255) * (b >> 8 & 255) / 255) << 8) | Math.round((a & 255) * (b & 255) / 255);
+  }
   function rint(n) { return Math.floor(Math.random() * n); }
   var clamp = function (v) { return Math.max(0, Math.min(100, v)); };
+
+  // wandering animals. near: how close they let you get; r: how close you must be to pet them
+  var CRIT = {
+    chicken: { idle: 'chicken_peck', walk: 'chicken_walk', speed: 16, w: 4, near: 8, r: 10, sfx: 'cluck', hop: true },
+    kerbau: { walk: 'kerbau_walk', speed: 7, w: 10, near: 14, r: 16, sfx: 'moo' },
+    kancil: { walk: 'kancil_walk', speed: 24, w: 6, near: 18, r: 12, sfx: 'pet', hop: true },
+    ketam: { walk: 'ketam_walk', speed: 12, w: 4, near: 6, r: 9, sfx: 'click', hop: true },
+    penyu: { walk: 'penyu_walk', speed: 3, w: 8, near: 12, r: 14, sfx: 'pet' },
+    biawak: { walk: 'biawak_walk', speed: 9, w: 10, near: 12, r: 14, sfx: 'pet' }
+  };
+  var TILE_PATHY = { p: 1, f: 1, F: 1, b: 1, j: 1, k: 1 };
 
   LC.WorldScene = class extends Phaser.Scene {
     constructor() { super('World'); }
 
-    create() {
-      this.S = LC.State.s;
-      this.W = LC.MAP_W; this.H = LC.MAP_H;
-      this.grid = LC.buildMap();
+    create(data) {
+      data = data || {};
+      var S = this.S = LC.State.s;
+      var area = data.area && LC.AREAS[data.area] ? data.area : 'farm';
+      this.area = area; this.A = LC.AREAS[area];
+      S.area = area; S.visited[area] = true;
+      this.grid = LC.areaGrid(area);
+      this.H = this.grid.length; this.W = this.grid[0].length;
+      this.objects = LC.areaObjects(area);
       this.solid = []; this.objAt = [];
       for (var y = 0; y < this.H; y++) { this.solid.push(new Array(this.W).fill(false)); this.objAt.push(new Array(this.W).fill(null)); }
-      this.sleeping = false;
+      this.sleeping = !!data.summary; this.leaving = false;
       this.emote = 'normal'; this.emoteUntil = 0; this.curExpr = 'normal';
-      this.cropSprites = {};
-      this.offeringSprites = [];
+      this.cropSprites = {}; this.offeringSprites = [];
+      this.spiritPos = null; this.dapurPos = null; this.warungPos = null; this.houseImg = null; this.ani = null;
+      this.npcs = {};
 
       this.buildGround();
       this.buildObjects();
+      this.buildGates();
       this.buildDecor();
       this.refreshAllTiles();
-      this.createPlayer();
+      this.createPlayer(data.spawn, data.dir);
       this.createGhost();
       this.createCritters();
       this.createLighting();
       this.createFx();
       this.refreshOfferings();
+      this.createFolk();   // villagers, folk spirits, your companion, kites (WorldLife.js)
 
       var cam = this.cameras.main;
       cam.setBounds(0, 0, this.W * T, this.H * T);
       cam.setZoom(3);
       cam.startFollow(this.player, true, 0.2, 0.2);
       cam.setRoundPixels(true);
-      cam.fadeIn(700);
+      if (!data.summary) cam.fadeIn(data.area ? 400 : 700);
 
       this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT');
       this.cursorImg = this.add.image(0, 0, 'cursor').setOrigin(0).setDepth(8990).setVisible(false);
       this.waterFrame = 0;
       this.time.addEvent({ delay: 450, loop: true, callback: this.animateWater, callbackScope: this });
 
-      this.scene.launch('UI');
-      this.ui = this.scene.get('UI');
+      // the UI scene runs alongside and survives travelling between places
+      if (this.scene.isActive('UI')) { this.ui = this.scene.get('UI'); this.ui.world = this; }
+      else { this.scene.launch('UI'); this.ui = this.scene.get('UI'); }
       this.wasFollowing = this.S.ghost.stage >= 1 && this.S.ghost.joy >= 12;
 
       // co-op
       this.remote = {};
-      this.followPid = 'me';
+      this.followPid = LC.followPid || 'me';
       this.bindNet();
       this.events.once('shutdown', function () { LC.Net.on = {}; });
+      LC.Audio.setArea(area);
+
+      var self = this;
+      if (data.summary) {
+        this.time.delayedCall(60, function () {
+          self.ui.showSummary(data.summary, function () { self.cameras.main.fadeIn(800); self.sleeping = false; self.morning(); });
+        });
+      } else if (data.area && this.ui.ready) this.ui.areaBanner(this.A.name, this.A.sub);
     }
+
+    tilePx(t) { return { x: (t.x + 0.5) * T, y: (t.y + 0.8) * T }; }
 
     // ================================================================ build
     buildGround() {
-      var TI = LC.Art.TI, data = [], rnd = new Phaser.Math.RandomDataGenerator(['kampung']), self = this;
+      var TI = LC.Art.TI, data = [], rnd = new Phaser.Math.RandomDataGenerator([this.area === 'farm' ? 'kampung' : this.area]), self = this;
       this.animTiles = [];
       for (var y = 0; y < this.H; y++) {
         var row = [];
         for (var x = 0; x < this.W; x++) {
-          var ch = this.grid[y][x], idx = TI.G0;
+          var ch = this.grid[y][x], idx = TI.G0, v;
           switch (ch) {
-            case '.': var v = rnd.frac(); idx = v < 0.55 ? TI.G0 : v < 0.82 ? TI.G1 : v < 0.9 ? TI.G2 : TI.G3; break;
+            case '.': v = rnd.frac(); idx = v < 0.55 ? TI.G0 : v < 0.82 ? TI.G1 : v < 0.9 ? TI.G2 : TI.G3; break;
             case 'p': idx = TI.PATH; break;
             case 'f': idx = TI.FIELD; break;
             case 'r': idx = TI.PADDY0; this.animTiles.push({ x: x, y: y, k: 'paddy' }); break;
@@ -80,6 +115,16 @@ window.LC = window.LC || {};
             case 'j': idx = TI.JETTY; break;
             case 'J': idx = TI.JUN0 + ((x * 7 + y * 3) % 2); break;
             case 'F': idx = this.fenceIdx(x, y); break;
+            case 'g': idx = rnd.frac() < 0.75 ? TI.FG0 : TI.FG1; break;
+            case 'q': idx = TI.POND0; this.animTiles.push({ x: x, y: y, k: 'pond' }); break;
+            case 'o': idx = TI.SEA0; this.animTiles.push({ x: x, y: y, k: 'sea' }); break;
+            case 'h': idx = TI.SHAL0; this.animTiles.push({ x: x, y: y, k: 'shallow' }); break;
+            case 'm': idx = rnd.frac() < 0.8 ? TI.ROCK0 : TI.ROCK1; break;
+            case 'M': idx = TI.CLIFF; break;
+            case 'k': idx = TI.STONEP; break;
+            case 'G': idx = TI.HGRASS; break;
+            case 'd': idx = rnd.frac() < 0.7 ? TI.DUNE0 : TI.DUNE1; break;
+            case 'R': idx = TI.REDROCK; break;
           }
           if (LC.SOLID_TILES[ch]) this.solid[y][x] = true;
           row.push(idx);
@@ -103,16 +148,27 @@ window.LC = window.LC || {};
       var TI = LC.Art.TI, f = ++this.waterFrame;
       this.animTiles.forEach(function (a) {
         if (!a.tile) return;
-        if (a.k === 'river') a.tile.index = TI.RIV0 + ((a.x + a.y + f) % 3);
-        else if (a.k === 'shore') a.tile.index = TI.SHORE0 + ((a.x + f) % 2);
-        else a.tile.index = TI.PADDY0 + ((a.x + a.y + (f >> 1)) % 2);
+        switch (a.k) {
+          case 'river': a.tile.index = TI.RIV0 + ((a.x + a.y + f) % 3); break;
+          case 'shore': a.tile.index = TI.SHORE0 + ((a.x + f) % 2); break;
+          case 'pond': a.tile.index = TI.POND0 + ((a.x + a.y + (f >> 1)) % 2); break;
+          case 'sea': a.tile.index = TI.SEA0 + ((a.x + a.y + f) % 3); break;
+          case 'shallow': a.tile.index = TI.SHAL0 + ((a.x + (f >> 1)) % 2); break;
+          default: a.tile.index = TI.PADDY0 + ((a.x + a.y + (f >> 1)) % 2);
+        }
       });
     }
 
+    harvestTex(o) {
+      var ready = this.S.trees[o.id] === 0;
+      return o.type === 'tree' ? o.kind + (ready ? '_f' : '') : 'fg_' + o.kind + (ready ? '' : '_e');
+    }
+    refreshHarvest(id) { var t = this.trees[id]; if (t) t.spr.setTexture(this.harvestTex(t.o)); }
+
     buildObjects() {
       var self = this, S = this.S;
-      this.trees = {}; this.torches = [];
-      LC.OBJECTS.forEach(function (o) {
+      this.trees = {}; this.torches = []; this.plots = {}; this.boats = [];
+      this.objects.forEach(function (o) {
         var w = o.w || 1, h = o.h || 1, bx = (o.x + w / 2) * T, by = (o.y + h) * T;
         if (o.type === 'warung') {
           self.add.image(bx, by, 'warung_back').setOrigin(0.5, 1).setDepth(by - 2);
@@ -121,12 +177,17 @@ window.LC = window.LC || {};
           self.add.image(bx, by, 'warung_front').setOrigin(0.5, 1).setDepth(by);
           self.warungPos = { x: bx, y: by };
           for (var ry = 5; ry < o.y; ry++) for (var rx = o.x; rx < o.x + w; rx++) self.solid[ry][rx] = true;  // behind the stall
-        } else if (o.type === 'tree') {
-          var spr = self.add.image(bx, by, o.kind + (S.trees[o.id] === 0 ? '_f' : '')).setOrigin(0.5, 1).setDepth(by);
+        } else if (o.type === 'tree' || o.type === 'forage') {
+          var spr = self.add.image(bx, by - (o.type === 'forage' ? 1 : 0), self.harvestTex(o)).setOrigin(0.5, 1).setDepth(by);
           self.trees[o.id] = { o: o, spr: spr };
         } else if (o.type === 'torch') {
           var tr = self.add.image(bx, by, 'torch_off').setOrigin(0.5, 1).setDepth(by);
           self.torches.push({ o: o, spr: tr, x: bx, y: by - 28 });
+        } else if (o.type === 'plot') {
+          self.plots[o.id] = { o: o, spr: self.add.image(bx, by + 2, 'plot').setOrigin(0.5, 1).setDepth(by) };
+        } else if (o.type === 'sampan') {
+          var bt = self.add.image(bx, by - 2, 'sampan').setOrigin(0.5, 1).setDepth(by - 8);
+          self.boats.push({ spr: bt, y0: by - 2 });
         } else {
           var im = self.add.image(bx, by, o.tex).setOrigin(0.5, 1).setDepth(by);
           if (o.type === 'spirit') self.spiritPos = { x: bx, y: by };
@@ -135,44 +196,98 @@ window.LC = window.LC || {};
         }
         for (var yy = o.y; yy < o.y + h; yy++) for (var xx = o.x; xx < o.x + w; xx++) { self.solid[yy][xx] = true; self.objAt[yy][xx] = o; }
       });
+      this.refreshPlots();
+      this.scatterTrees();
     }
-
-    buildDecor() {
-      var rnd = new Phaser.Math.RandomDataGenerator(['decor-kampung']), types = ['rock', 'bush', 'hibiscus', 'lalang', 'lalang', 'bush'];
-      var placed = 0, tries = 0, g = this.grid, self = this;
-      function near(x, y) {
-        for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) {
-          var c = g[y + dy] && g[y + dy][x + dx];
-          if (c === 'p' || c === 'f' || c === 'F' || c === 'b') return true;
-          if (self.objAt[y + dy] && self.objAt[y + dy][x + dx]) return true;
-        }
-        return false;
-      }
-      while (placed < 55 && tries < 3000) {
+    // a few dozen trees for a wild place, kept clear of paths, objects, spirits, villagers and entrances
+    scatterTrees() {
+      var Tr = this.A.trees, self = this;
+      if (!Tr) return;
+      var keep = {}, g = this.grid;
+      function mark(x, y, r) { for (var dy = -r; dy <= r; dy++) for (var dx = -r; dx <= r; dx++) keep[(x + dx) + ',' + (y + dy)] = 1; }
+      LC.SPIRIT_ORDER.forEach(function (sid) { var sp = LC.SPIRITS[sid]; if (sp.area === self.area) mark(sp.x, sp.y, 2); });
+      Object.keys(LC.VILLAGERS).forEach(function (vid) { var p = LC.VILLAGERS[vid].post; if (p && self.area === 'kampung') mark(p.x, p.y, 2); });
+      Object.keys(LC.PLOT_POSTS).forEach(function (k) { if (self.area === 'kampung') mark(LC.PLOT_POSTS[k].x, LC.PLOT_POSTS[k].y, 2); });
+      mark(Math.floor(this.A.home.x), Math.floor(this.A.home.y), 3);
+      this.objects.forEach(function (o) {   // never hide a building or a house plot behind a tree
+        if (o.type !== 'plot' && o.type !== 'bldg') return;
+        for (var y = o.y - 1; y <= o.y + (o.h || 1) + 3; y++) for (var x = o.x - 1; x <= o.x + (o.w || 1); x++) keep[x + ',' + y] = 1;
+      });
+      this.A.exits.forEach(function (e) { mark(e.x0, e.y0, 3); mark(e.x1, e.y1, 3); mark(Math.floor(e.sx), Math.floor(e.sy), 2); });
+      var rnd = new Phaser.Math.RandomDataGenerator(['trees-' + this.area]), placed = 0, tries = 0;
+      while (placed < Tr.n && tries < 3000) {
         tries++;
-        var x = rnd.between(1, 45), y = rnd.between(2, 27);
-        if (g[y][x] !== '.' || this.solid[y][x] || near(x, y)) continue;
-        var by = (y + 1) * T - 1;
-        this.add.image(x * T + 8 + rnd.between(-3, 3), by, rnd.pick(types)).setOrigin(0.5, 1).setDepth(by);
+        var x = rnd.between(2, this.W - 3), y = rnd.between(3, this.H - 3), ok = !keep[x + ',' + y];
+        for (var dy = -1; dy <= 1 && ok; dy++) for (var dx = -1; dx <= 1 && ok; dx++) {
+          var c = g[y + dy][x + dx];
+          if (c !== Tr.on || this.objAt[y + dy][x + dx] || this.solid[y + dy][x + dx]) ok = false;
+        }
+        if (!ok) continue;
+        var by = (y + 1) * T, o = { type: 'bldg', x: x, y: y, text: Tr.text };
+        this.add.image(x * T + 8, by, rnd.pick(Tr.tex)).setOrigin(0.5, 1).setDepth(by);
+        this.solid[y][x] = true; this.objAt[y][x] = o;
         placed++;
       }
     }
 
-    // ================================================================ tiles & crops
+    // locked exits show a gate (vines, rockfall, a sand drift...) until Pelita's level opens the way
+    buildGates() {
+      var self = this;
+      this.gates = [];
+      this.A.exits.forEach(function (e) {
+        if (!e.gate || LC.State.isOpen(e.to)) return;
+        var gt = e.gate, bx = (gt.x + gt.w / 2) * T, by = (gt.y + gt.h) * T, o = { type: 'gate', to: e.to };
+        var g = { img: self.add.image(bx, by, gt.tex).setOrigin(0.5, 1).setDepth(by), tiles: [], to: e.to };
+        for (var y = gt.y; y < gt.y + gt.h; y++) for (var x = gt.x; x < gt.x + gt.w; x++) { self.solid[y][x] = true; self.objAt[y][x] = o; g.tiles.push([x, y]); }
+        self.gates.push(g);
+      });
+    }
+    refreshGates() {
+      var self = this;
+      this.gates = this.gates.filter(function (g) {
+        if (!LC.State.isOpen(g.to)) return true;
+        self.fx.sparkle.explode(16, g.img.x, g.img.y - 10);
+        self.tweens.add({ targets: g.img, alpha: 0, duration: 800, onComplete: function () { g.img.destroy(); } });
+        g.tiles.forEach(function (t) { self.solid[t[1]][t[0]] = false; self.objAt[t[1]][t[0]] = null; });
+        return false;
+      });
+    }
+
+    buildDecor() {
+      var D = this.A.decor, rnd = new Phaser.Math.RandomDataGenerator(['decor-' + (this.area === 'farm' ? 'kampung' : this.area)]);
+      var placed = 0, tries = 0, g = this.grid, self = this;
+      function near(x, y) {
+        for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) {
+          var c = g[y + dy] && g[y + dy][x + dx];
+          if (TILE_PATHY[c]) return true;
+          if (self.objAt[y + dy] && self.objAt[y + dy][x + dx]) return true;
+        }
+        return false;
+      }
+      while (placed < D.n && tries < 4000) {
+        tries++;
+        var x = rnd.between(1, this.W - 3), y = rnd.between(2, this.H - 3);
+        if (g[y][x] !== D.on || this.solid[y][x] || near(x, y)) continue;
+        var by = (y + 1) * T - 1;
+        this.add.image(x * T + 8 + rnd.between(-3, 3), by, rnd.pick(D.types)).setOrigin(0.5, 1).setDepth(by);
+        placed++;
+      }
+    }
+
+    // ================================================================ tiles & crops (farm)
     refreshAllTiles() {
       var self = this;
       Object.keys(this.cropSprites).forEach(function (k) { self.cropSprites[k].destroy(); });
       this.cropSprites = {};
-      for (var y = 0; y < this.H; y++) for (var x = 0; x < this.W; x++) {
+      if (this.area === 'farm') for (var y = 0; y < this.H; y++) for (var x = 0; x < this.W; x++) {
         var ch = this.grid[y][x];
         if (ch === 'f' || ch === 'r') this.refreshTile(x, y);
       }
-      Object.keys(this.trees || {}).forEach(function (id) {
-        var t = self.trees[id]; t.spr.setTexture(t.o.kind + (self.S.trees[id] === 0 ? '_f' : ''));
-      });
+      Object.keys(this.trees || {}).forEach(function (id) { self.refreshHarvest(id); });
     }
 
     refreshTile(x, y) {
+      if (this.area !== 'farm') return;
       var TI = LC.Art.TI, ch = this.grid[y][x], t = LC.State.tile(x, y), key = x + ',' + y;
       if (ch === 'f') this.ground.putTileAt(t && t.tilled ? (t.wet ? TI.WET : TI.TILLED) : TI.FIELD, x, y);
       var spr = this.cropSprites[key];
@@ -184,13 +299,13 @@ window.LC = window.LC || {};
     }
 
     // ================================================================ player
-    createPlayer() {
+    createPlayer(spawn, dir) {
       this.pc = LC.Net.role ? LC.Net.myColor : 0;   // outfit colour (co-op players each get their own)
       this.plKey = LC.Art.plKey(this.pc); this.walkKey = LC.Art.walkKey(this.pc);
-      var sp = this.homeSpot(LC.Net.isGuest() ? this.pc : 0);
+      var sp = spawn || (this.area === 'farm' ? this.homeSpot(LC.Net.isGuest() ? this.pc : 0) : this.tilePx(this.A.home));
       this.player = this.add.sprite(sp.x, sp.y, this.plKey + '_down_0').setOrigin(0.5, 1);
       this.pShadow = this.add.image(this.player.x, this.player.y, 'shadow').setDepth(1);
-      this.dir = 'down';
+      this.dir = dir || 'down';
       this.moving = false;
     }
     homeSpot(c) { return c ? { x: (4 + c) * T + 8, y: 10 * T + 13 } : { x: 4 * T + 8, y: 8 * T + 13 }; }
@@ -227,7 +342,6 @@ window.LC = window.LC || {};
         else if (!((this.dir === 'left' && vx < 0) || (this.dir === 'right' && vx > 0) || (this.dir === 'up' && vy < 0) || (this.dir === 'down' && vy > 0)))
           this.dir = vx < 0 ? 'left' : 'right';
         p.play(this.walkKey + '_' + (this.dir === 'left' || this.dir === 'right' ? 'side' : this.dir), true);
-        if (p.x > (this.W - 2) * T && !this.edgeWarned) { this.edgeWarned = true; this.ui.toast(LC.TEXT.barrier); }
         this.moving = true;
       } else {
         p.stop();
@@ -244,13 +358,55 @@ window.LC = window.LC || {};
       return { tx: px + d[0], ty: py + d[1], fx: this.player.x + d[0] * 12, fy: this.player.y - 4 + d[1] * 12 };
     }
 
+    // ================================================================ travel
+    checkExits() {
+      if (this.leaving || this.sleeping) return;
+      var p = this.player, tx = Math.floor(p.x / T), ty = Math.floor((p.y - 3) / T), ex = this.A.exits;
+      for (var i = 0; i < ex.length; i++) {
+        var e = ex[i];
+        if (tx < e.x0 || tx > e.x1 || ty < e.y0 || ty > e.y1) continue;
+        if (!LC.State.isOpen(e.to)) {
+          var d = DIRV[e.dir]; p.x -= d[0] * 10; p.y -= d[1] * 10;
+          this.lockedMsg(e.to);
+          return;
+        }
+        this.goArea(e.to, this.tilePx({ x: e.sx, y: e.sy }), e.dir);
+        return;
+      }
+    }
+    goArea(to, spawn, dir, extra) {
+      if (this.leaving) return;
+      var self = this;
+      this.leaving = true;
+      this.ui.closeModal();
+      if (LC.Net.isGuest()) LC.Net.sendPos(this.player.x, this.player.y, this.dir, false, to, this.S.companion, true);
+      LC.followPid = this.followPid;
+      this.cameras.main.fadeOut(350, 0, 0, 0);
+      this.cameras.main.once('camerafadeoutcomplete', function () {
+        self.scene.restart(Object.assign({ area: to, spawn: spawn, dir: dir }, extra || {}));
+      });
+    }
+    lockedMsg(to) {
+      var A = LC.AREAS[to], now = this.time.now;
+      if (now - (this.lockedAt || 0) < 1500) return;
+      this.lockedAt = now;
+      LC.Audio.sfx('error');
+      this.ui.toast('The way to ' + A.name + ' is closed. Pelita must reach Lv ' + A.lvl + ' to light the path (now Lv ' + LC.State.level() + ').', 'ic_glow');
+    }
+
     // ================================================================ ghost (Pelita)
-    ghostHome() { return { x: this.spiritPos.x, y: this.spiritPos.y - 25 }; }
+    ghostHome() { return this.spiritPos ? { x: this.spiritPos.x, y: this.spiritPos.y - 25 } : this.farmGhostHome(); }
+    // where Pelita rests on the farm, known even while you are somewhere else (the co-op host streams it to guests)
+    farmGhostHome() {
+      var o = LC.OBJECTS.filter(function (x) { return x.type === 'spirit'; })[0];
+      return { x: (o.x + (o.w || 1) / 2) * T, y: (o.y + (o.h || 1)) * T - 25 };
+    }
     ghostPos() { return { x: this.ghost.x, y: this.ghost.y }; }
 
     createGhost() {
-      var h = this.ghostHome();
+      var h = this.spiritPos && !this.following() ? this.ghostHome() : { x: this.player.x, y: this.player.y - 18 };
       this.gpos = { x: h.x, y: h.y };
+      this.ghostHere = true;
       this.ghostGlow = this.add.image(h.x, h.y, 'glow').setBlendMode(Phaser.BlendModes.ADD).setDepth(9001).setTint(0xb8a8ff);
       this.ghostShadow = this.add.image(h.x, h.y + 18, 'shadow').setDepth(2).setAlpha(0.4);
       this.ghost = this.add.image(h.x, h.y, 'ghost_0_normal').setDepth(9002);
@@ -259,23 +415,30 @@ window.LC = window.LC || {};
     }
 
     setEmote(e, ms) { this.emote = e; this.emoteUntil = this.time.now + ms; }
+    following() { var g = this.S.ghost; return g.stage >= 1 && g.joy >= 12; }
 
     updateGhost(time, dt, blocked) {
-      var S = this.S, g = S.ghost, home = this.ghostHome();
-      var follow = g.stage >= 1 && g.joy >= 12;
+      var S = this.S, g = S.ghost, N = LC.Net;
+      var follow = this.following();
       if (this.wasFollowing && !follow && g.stage >= 1) this.ui.toast('Pelita feels neglected and sulks back to its spirit house...', 'ic_joy');
       if (!this.wasFollowing && follow && g.stage >= 1 && this.followInit) this.ui.toast('Pelita floats over to join you again!', 'ic_joy');
       this.wasFollowing = follow; this.followInit = true;
-      var tx, ty, guest = LC.Net.isGuest(), net = this.netGhost;
-      if (guest && net) { tx = net.x; ty = net.y; }            // the host decides where Pelita is
+      var tx, ty, tArea, guest = N.isGuest(), net = this.netGhost;
+      if (guest && net) { tx = net.x; ty = net.y; tArea = net.a || 'farm'; }   // the host decides where Pelita is
       else if (follow) {
-        // Pelita follows whoever cared for it last (you, or a co-op friend)
-        var tp = this.player, tdir = this.dir, r = this.followPid !== 'me' && this.remote[this.followPid], ro = r && LC.Net.others[this.followPid];
-        if (r && ro) { tp = r.spr; tdir = ro.dir || 'down'; } else this.followPid = 'me';
+        // Pelita follows whoever cared for it last (you, or a co-op friend), even into another place
+        var ro = this.followPid !== 'me' && N.others[this.followPid], r = ro && this.remote[this.followPid];
+        var tp = this.player, tdir = this.dir;
+        tArea = this.area;
+        if (ro) { tArea = ro.ar || 'farm'; tp = r ? r.spr : ro; tdir = ro.dir || 'down'; } else this.followPid = 'me';
         var d = DIRV[tdir] || DIRV.down;
         tx = tp.x - d[0] * 14 + (d[1] !== 0 ? 11 : 0);
         ty = tp.y - 18 - d[1] * 8;
-      } else { tx = home.x; ty = home.y; }
+      } else { tArea = 'farm'; var hm = this.ghostHome(); tx = hm.x; ty = hm.y; }
+      this.ghostArea = tArea;
+      var here = this.ghostHere = tArea === this.area;
+      this.ghost.setVisible(here); this.ghostGlow.setVisible(here); this.ghostShadow.setVisible(here);
+      if (!here) { this.gpos.x = tx; this.gpos.y = ty; this.bubble.setVisible(false); this.ghostNear = false; this.curExpr = 'normal'; return; }
       var k = Math.min(1, dt * (guest ? 8 : 2.4));
       this.gpos.x += (tx - this.gpos.x) * k; this.gpos.y += (ty - this.gpos.y) * k;
       var bob = Math.sin(time / 380) * 2;
@@ -293,7 +456,8 @@ window.LC = window.LC || {};
       this.ghost.setTexture('ghost_' + g.stage + '_' + expr);
       var n = this.nightF || 0;
       this.ghost.setAlpha(0.78 + 0.22 * n);
-      this.ghostGlow.setPosition(gx, gy).setScale(0.45 + g.glow / 100 * 0.55 + g.stage * 0.08).setAlpha((0.18 + 0.55 * n) * (0.4 + g.glow / 160));
+      var legend = (g.level || 1) >= LC.MAX_LEVEL;
+      this.ghostGlow.setPosition(gx, gy).setScale(0.45 + g.glow / 100 * 0.55 + g.stage * 0.08 + (legend ? 0.25 : 0)).setAlpha((0.18 + 0.55 * n) * (0.4 + g.glow / 160) + (legend ? 0.15 : 0));
       if (g.stage === 4) this.ghostGlow.setTint(0xffe08a);
       this.ghostShadow.setPosition(gx, Math.round(this.gpos.y + 19)).setAlpha(0.25 - 0.1 * n);
 
@@ -310,6 +474,7 @@ window.LC = window.LC || {};
       var others = LC.Net.others, self = this;
       Object.keys(others).forEach(function (id) {
         var o = others[id], r = self.remote[id];
+        if ((o.ar || 'farm') !== self.area) { if (r) self.dropRemote(id); return; }   // they are somewhere else
         if (!r) {
           r = self.remote[id] = {
             spr: self.add.sprite(o.x, o.y, LC.Art.plKey(o.color) + '_down_0').setOrigin(0.5, 1),
@@ -326,10 +491,15 @@ window.LC = window.LC || {};
         s.setFlipX(o.dir === 'left').setDepth(s.y);
         r.sh.setPosition(Math.round(s.x), Math.round(s.y - 1));
         r.name = o.name; r.color = o.color;
+        self.updateRemoteCompanion(id, r, o, dt);
       });
-      Object.keys(this.remote).forEach(function (id) {
-        if (!others[id]) { self.remote[id].spr.destroy(); self.remote[id].sh.destroy(); delete self.remote[id]; }
-      });
+      Object.keys(this.remote).forEach(function (id) { if (!others[id]) self.dropRemote(id); });
+    }
+    dropRemote(id) {
+      var r = this.remote[id];
+      if (!r) return;
+      r.spr.destroy(); r.sh.destroy(); if (r.comp) r.comp.destroy();
+      delete this.remote[id];
     }
 
     bindNet() {
@@ -353,15 +523,14 @@ window.LC = window.LC || {};
             if (parts.tiles[key]) S.tiles[key] = parts.tiles[key]; else delete S.tiles[key];
             var xy = key.split(','); self.refreshTile(+xy[0], +xy[1]);
           });
-          if (parts.trees) Object.keys(parts.trees).forEach(function (id) {
-            S.trees[id] = parts.trees[id];
-            var t = self.trees[id]; if (t) t.spr.setTexture(t.o.kind + (S.trees[id] === 0 ? '_f' : ''));
-          });
+          if (parts.trees) Object.keys(parts.trees).forEach(function (id) { S.trees[id] = parts.trees[id]; self.refreshHarvest(id); });
           if (parts.ghost) Object.keys(parts.ghost).forEach(function (k) { S.ghost[k] = parts.ghost[k]; });
           if (parts.offerings) { S.offerings = parts.offerings; self.refreshOfferings(); }
+          if (parts.buildings) { S.buildings = parts.buildings; self.refreshPlots(); }
+          if (parts.spirits) { S.spirits = parts.spirits; LC.State.recalc(); self.refreshFolkSpirits(); }
           if (m.by !== N.myId) self.remoteFx(m.op, m.a || {});
         };
-        N.on.event = function (m) { if (m.ev === 'stage') self.stageUp(m.st); };
+        N.on.event = function (m) { if (m.ev === 'level') self.levelUp(m.lv); };
         N.on.sleepStart = function (m) { self.guestSleep(m); };
         N.on.dayStart = function (m) { self.guestDayStart(m); };
         N.on.closed = function (why) {
@@ -371,7 +540,7 @@ window.LC = window.LC || {};
       }
     }
 
-    // Shared-farm actions: run here (single-player / host) or ask the host (guest). cb gets the LC.Sim result.
+    // Shared-world actions: run here (single-player / host) or ask the host (guest). cb gets the LC.Sim result.
     doShared(op, a, cb) {
       var self = this;
       if (LC.Net.isGuest()) { LC.Net.request(op, a, function (res) { if (self.sys && self.sys.isActive()) cb(res); }); return; }
@@ -380,8 +549,10 @@ window.LC = window.LC || {};
     applyOp(op, a, pid) {
       var S = this.S, res = LC.Sim[op] ? LC.Sim[op](a) : null, ok = LC.Sim.succeeded(res);
       if (op === 'till' || op === 'water' || op === 'plant' || op === 'harvest') this.refreshTile(a.x, a.y);
-      else if (op === 'shake') { var t = this.trees[a.id]; if (t) t.spr.setTexture(t.o.kind + (S.trees[a.id] === 0 ? '_f' : '')); }
+      else if (op === 'shake') this.refreshHarvest(a.id);
       else if (op === 'offer') this.refreshOfferings();
+      else if (op === 'build') this.refreshPlots();
+      else if (op === 'befriend') this.refreshFolkSpirits();
       if (ok && (op === 'feed' || op === 'pet')) this.followPid = pid;
       if (ok && pid !== 'me') {
         this.remoteFx(op, a);
@@ -393,6 +564,8 @@ window.LC = window.LC || {};
         var who = pid === 'me' ? LC.Net.myName : (LC.Net.guests[pid] || {}).name || 'A friend', msg = null, icon = null;
         if (op === 'feed') { msg = who + ' fed Pelita ' + LC.ITEMS[a.item].name + (res.craving ? ' (its craving!)' : '') + '.'; icon = LC.ITEMS[a.item].icon; }
         if (op === 'offer') { msg = who + ' placed ' + LC.ITEMS[a.item].name + ' at the spirit house.'; icon = LC.ITEMS[a.item].icon; }
+        if (op === 'build') { msg = who + ' started a ' + LC.HOUSES[a.style].name + ' in the kampung. It will be ready tomorrow!'; icon = 'i_kayu'; }
+        if (op === 'befriend') { msg = who + ' befriended the ' + LC.SPIRITS[a.sid].name + '!'; icon = 'ic_glow'; }
         if (msg) {
           LC.Net.broadcast({ t: 'toast', msg: msg, icon: icon }, pid === 'me' ? null : pid);
           if (pid !== 'me') this.ui.toast(msg, icon);
@@ -401,33 +574,33 @@ window.LC = window.LC || {};
       return res;
     }
     remoteFx(op, a) {
-      var gp = this.ghostPos();
+      var gp = this.ghostPos(), t;
       switch (op) {
-        case 'till': this.fx.dirt.explode(7, a.x * T + 8, a.y * T + 10); break;
-        case 'water': this.fx.drop.explode(9, a.x * T + 8, a.y * T + 6); break;
-        case 'plant': this.fx.leaf.explode(3, a.x * T + 8, a.y * T + 10); break;
-        case 'harvest': this.fx.leaf.explode(8, a.x * T + 8, a.y * T + 8); break;
-        case 'shake': var t = this.trees[a.id]; if (t) { this.fx.leaf.explode(10, t.spr.x, t.spr.y - t.spr.height * 0.6); this.tweens.add({ targets: t.spr, x: t.spr.x + 1, duration: 50, yoyo: true, repeat: 3 }); } break;
-        case 'feed': case 'pet': this.fx.heart.explode(4, gp.x, gp.y - 8); break;
-        case 'offer': this.fx.sparkle.explode(10, this.spiritPos.x, this.spiritPos.y - 26); break;
+        case 'till': if (this.area === 'farm') this.fx.dirt.explode(7, a.x * T + 8, a.y * T + 10); break;
+        case 'water': if (this.area === 'farm') this.fx.drop.explode(9, a.x * T + 8, a.y * T + 6); break;
+        case 'plant': if (this.area === 'farm') this.fx.leaf.explode(3, a.x * T + 8, a.y * T + 10); break;
+        case 'harvest': if (this.area === 'farm') this.fx.leaf.explode(8, a.x * T + 8, a.y * T + 8); break;
+        case 'shake': t = this.trees[a.id]; if (t) { this.fx.leaf.explode(10, t.spr.x, t.spr.y - t.spr.height * 0.6); this.tweens.add({ targets: t.spr, x: t.spr.x + 1, duration: 50, yoyo: true, repeat: 3 }); } break;
+        case 'feed': case 'pet': if (this.ghostHere) this.fx.heart.explode(4, gp.x, gp.y - 8); break;
+        case 'offer': if (this.spiritPos) this.fx.sparkle.explode(10, this.spiritPos.x, this.spiritPos.y - 26); break;
+        case 'build': t = this.plots[a.plot]; if (t) this.fx.smoke.explode(10, t.spr.x, t.spr.y - 20); break;
       }
     }
 
     // ================================================================ critters
     createCritters() {
+      var self = this;
       this.critters = [];
-      var cz = LC.ZONES.chickens, kz = LC.ZONES.kerbau;
-      for (var i = 0; i < 3; i++) {
-        var p = this.randomFree(cz);
-        var s = this.add.sprite(p.x, p.y, 'chicken_0').setOrigin(0.5, 1);
-        this.critters.push({ kind: 'chicken', spr: s, zone: cz, speed: 16, tx: p.x, ty: p.y, wait: Math.random() * 2, anim: '' });
-      }
-      var kp = this.randomFree(kz);
-      var ks = this.add.sprite(kp.x, kp.y, 'kerbau_0').setOrigin(0.5, 1);
-      this.critters.push({ kind: 'kerbau', spr: ks, zone: kz, speed: 7, tx: kp.x, ty: kp.y, wait: 1, anim: '' });
+      (this.A.critters || []).forEach(function (c) {
+        for (var i = 0; i < c.n; i++) {
+          var p = self.randomFree(c.zone);
+          var s = self.add.sprite(p.x, p.y, c.kind + '_0').setOrigin(0.5, 1);
+          self.critters.push({ kind: c.kind, def: CRIT[c.kind], spr: s, zone: c.zone, tx: p.x, ty: p.y, wait: Math.random() * 2, anim: '' });
+        }
+      });
     }
     randomFree(z) {
-      for (var i = 0; i < 60; i++) {
+      for (var i = 0; i < 80; i++) {
         var x = (z.x0 + Math.random() * (z.x1 - z.x0 + 1)) * T, y = (z.y0 + Math.random() * (z.y1 - z.y0 + 1)) * T;
         if (!this.solidPx(x, y - 2) && !this.solidPx(x - 6, y - 2) && !this.solidPx(x + 6, y - 2)) return { x: x, y: y };
       }
@@ -436,55 +609,68 @@ window.LC = window.LC || {};
     updateCritters(dt) {
       var self = this;
       this.critters.forEach(function (c) {
-        var s = c.spr;
+        var s = c.spr, D = c.def;
         if (c.wait > 0) {
           c.wait -= dt;
-          var idle = c.kind === 'chicken' ? 'chicken_peck' : null;
-          if (idle && c.anim !== idle) { s.play(idle); c.anim = idle; }
-          if (!idle && c.anim !== 'stand') { s.stop(); s.setTexture('kerbau_0'); c.anim = 'stand'; }
+          if (D.idle && c.anim !== D.idle) { s.play(D.idle); c.anim = D.idle; }
+          if (!D.idle && c.anim !== 'stand') { s.stop(); s.setTexture(c.kind + '_0'); c.anim = 'stand'; }
           if (c.wait <= 0) { var p = self.randomFree(c.zone); c.tx = p.x; c.ty = p.y; }
           return;
         }
         var dx = c.tx - s.x, dy = c.ty - s.y, d = Math.hypot(dx, dy);
         if (d < 1) { c.wait = 1 + Math.random() * 4; return; }
-        var step = Math.min(d, c.speed * dt * (self.nightF > 0.6 ? 0.5 : 1)), nx = s.x + dx / d * step, ny = s.y + dy / d * step;
-        var w = c.kind === 'kerbau' ? 10 : 4;
-        var near = Math.hypot(nx - self.player.x, ny - self.player.y) < (c.kind === 'kerbau' ? 14 : 8);
-        if (self.solidPx(nx - w, ny - 2) || self.solidPx(nx + w, ny - 2) || near) { c.wait = 0.6 + Math.random(); return; }
+        var step = Math.min(d, D.speed * dt * (self.nightF > 0.6 ? 0.5 : 1)), nx = s.x + dx / d * step, ny = s.y + dy / d * step;
+        var near = Math.hypot(nx - self.player.x, ny - self.player.y) < D.near;
+        if (self.solidPx(nx - D.w, ny - 2) || self.solidPx(nx + D.w, ny - 2) || near) { c.wait = 0.6 + Math.random(); return; }
         s.x = nx; s.y = ny;
         s.setFlipX(dx < 0);
-        var walk = c.kind === 'chicken' ? 'chicken_walk' : 'kerbau_walk';
-        if (c.anim !== walk) { s.play(walk); c.anim = walk; }
+        if (c.anim !== D.walk) { s.play(D.walk); c.anim = D.walk; }
         s.setDepth(s.y);
       });
     }
     critterAt(fx, fy) {
       for (var i = 0; i < this.critters.length; i++) {
-        var c = this.critters[i], r = c.kind === 'kerbau' ? 16 : 10;
-        if (Math.hypot(c.spr.x - fx, c.spr.y - 6 - fy) < r) return c;
+        var c = this.critters[i];
+        if (Math.hypot(c.spr.x - fx, c.spr.y - 6 - fy) < c.def.r) return c;
       }
       return null;
     }
 
     // ================================================================ lighting
     createLighting() {
-      var self = this;
+      var self = this, A = this.A;
       this.dark = this.add.image(0, 0, 'px').setOrigin(0).setDisplaySize(this.W * T, this.H * T).setDepth(9000).setBlendMode(Phaser.BlendModes.MULTIPLY).setVisible(false);
       this.lights = [];
       this.torches.forEach(function (t) { t.light = self.addLight(t.x, t.y + 2, 0xffa040, 1.5, true); });
-      var hx = this.houseImg.x - 40, hy = this.houseImg.y - 96;
-      this.addLight(hx + 18, hy + 46, 0xffc070, 0.7, true);
-      this.addLight(hx + 62, hy + 46, 0xffc070, 0.7, true);
-      this.addLight(this.dapurPos.x, this.dapurPos.y - 6, 0xff7a30, 0.9, true);
-      this.warungLight = this.addLight(this.warungPos.x, this.warungPos.y - 34, 0xfff0b0, 1.8, false);
-      this.spiritLight = this.addLight(this.spiritPos.x, this.spiritPos.y - 26, 0xd0b0ff, 1.0, false);
+      if (this.houseImg) {
+        var hx = this.houseImg.x - 40, hy = this.houseImg.y - 96;
+        this.addLight(hx + 18, hy + 46, 0xffc070, 0.7, true);
+        this.addLight(hx + 62, hy + 46, 0xffc070, 0.7, true);
+      }
+      if (this.dapurPos) this.addLight(this.dapurPos.x, this.dapurPos.y - 6, 0xff7a30, 0.9, true);
+      this.warungLight = this.warungPos ? this.addLight(this.warungPos.x, this.warungPos.y - 34, 0xfff0b0, 1.8, false) : null;
+      this.spiritLight = this.spiritPos ? this.addLight(this.spiritPos.x, this.spiritPos.y - 26, 0xd0b0ff, 1.0, false) : null;
+      this.objects.forEach(function (o) {   // windows, shrines and the lighthouse glow at night
+        var cx = (o.x + (o.w || 1) / 2) * T, by = (o.y + (o.h || 1)) * T;
+        if (o.type === 'shrine') self.addLight(cx, by - 18, 0xd0b0ff, 0.7, false);
+        else if (o.tex === 'house_penghulu') { self.addLight(cx - 22, by - 44, 0xffc070, 0.6, true); self.addLight(cx + 22, by - 44, 0xffc070, 0.6, true); }
+        else if (o.tex === 'rumah_api') self.addLight(cx, by - 54, 0xfff0b0, 2.2, false);
+        else if (o.tex === 'pondok') self.addLight(cx, by - 20, 0xffb060, 0.6, true);
+      });
       this.playerLight = this.addLight(0, 0, 0xfff2d0, 1.3, false);
       this.playerLight.base = 0.35;
       this.flies = [];
-      for (var i = 0; i < 28; i++) {
-        var fx = 16 + Math.random() * (this.W * T - 32), fy = i < 20 ? 24 * T + Math.random() * 4 * T : 2 * T + Math.random() * 2 * T;
+      for (var i = 0; i < (this.area === 'mountain' ? 10 : 28); i++) {
+        var fx, fy;
+        if (this.area === 'farm') { fx = 16 + Math.random() * (this.W * T - 32); fy = i < 20 ? 24 * T + Math.random() * 4 * T : 2 * T + Math.random() * 2 * T; }
+        else { var p = this.randomFree({ x0: 2, y0: 2, x1: this.W - 3, y1: this.H - 3 }); fx = p.x; fy = p.y - 10; }
         var img = this.add.image(fx, fy, 'firefly').setBlendMode(Phaser.BlendModes.ADD).setDepth(9003).setAlpha(0);
         this.flies.push({ img: img, bx: fx, by: fy, ph: Math.random() * 10, sp: 0.4 + Math.random() });
+      }
+      this.fogs = [];
+      if (A.fog) for (i = 0; i < 9; i++) {
+        var fg = this.add.image(Math.random() * this.W * T, Math.random() * this.H * T, 'fog').setDepth(8999).setScale(1.5 + Math.random() * 1.5).setAlpha(0.3 + Math.random() * 0.2);
+        this.fogs.push({ img: fg, v: 3 + Math.random() * 5 });
       }
     }
     addLight(x, y, tint, scale, flicker) {
@@ -498,15 +684,19 @@ window.LC = window.LC || {};
       for (var i = 1; i < SKY.length; i++) if (m <= SKY[i][0]) return lerpColor(SKY[i - 1][1], SKY[i][1], (m - SKY[i - 1][0]) / (SKY[i][0] - SKY[i - 1][0]));
       return SKY[SKY.length - 1][1];
     }
-    updateLighting(time) {
-      var S = this.S, col = this.skyColor(S.minutes);
+    updateLighting(time, dt) {
+      var S = this.S, A = this.A, col = this.skyColor(S.minutes);
       var lum = ((col >> 16 & 255) * 0.3 + (col >> 8 & 255) * 0.59 + (col & 255) * 0.11) / 255;
       var n = Phaser.Math.Clamp((1 - lum - 0.06) / 0.45, 0, 1);
       this.nightF = n;
-      this.dark.setVisible(lum < 0.995).setTint(col);
+      var tint = col;
+      if (A.dim) tint = mulColor(tint, 0xd2e2d0);        // shade under the rainforest canopy
+      if (A.warm) tint = mulColor(tint, 0xfff0dc);       // the dunes glow warm
+      if (A.fog) tint = mulColor(tint, 0xe8eef2);
+      this.dark.setVisible(tint !== 0xffffff).setTint(tint);
       var hgn = LC.State.isHGN(), shopOpen = this.shopOpen();
-      this.warungLight.base = shopOpen ? 0.8 : 0;
-      this.spiritLight.base = 0.25 + S.ghost.glow / 100 * 0.7;
+      if (this.warungLight) this.warungLight.base = shopOpen ? 0.8 : 0;
+      if (this.spiritLight) this.spiritLight.base = 0.25 + S.ghost.glow / 100 * 0.7;
       this.playerLight.img.setPosition(this.player.x, this.player.y - 8);
       this.lights.forEach(function (L) {
         var f = L.flicker ? 0.86 + 0.14 * Math.sin(time / 90 + L.ph) * Math.sin(time / 37 + L.ph * 2) : 1;
@@ -522,7 +712,10 @@ window.LC = window.LC || {};
         f.img.y = f.by + Math.cos(time / 1300 * f.sp + f.ph * 1.3) * 9;
         f.img.setAlpha(n * (0.3 + 0.7 * Math.abs(Math.sin(time / 420 * f.sp + f.ph))));
       });
-      this.ani.setVisible(shopOpen);
+      var mapW = this.W * T;
+      this.fogs.forEach(function (f) { f.img.x += f.v * dt; if (f.img.x > mapW + 120) f.img.x = -120; });
+      this.boats.forEach(function (b) { b.spr.y = b.y0 + Math.round(Math.sin(time / 600)); });
+      if (this.ani) this.ani.setVisible(shopOpen);
       LC.Audio.setNight(S.minutes >= 19 * 60);
     }
     shopOpen() { return this.S.minutes >= LC.SHOP_OPEN && this.S.minutes < LC.SHOP_CLOSE; }
@@ -540,15 +733,18 @@ window.LC = window.LC || {};
         smoke: mk('smoke', { speedY: { min: -16, max: -8 }, speedX: { min: -4, max: 4 }, lifespan: 1400, alpha: { start: 0.7, end: 0 }, scale: { start: 0.5, end: 1.5 } }),
         petal: mk('petal', { speed: { min: 6, max: 18 }, angle: { min: 60, max: 120 }, gravityY: 10, lifespan: 2200, alpha: { start: 1, end: 0 } })
       };
-      this.incense = this.add.particles(this.spiritPos.x - 8, this.spiritPos.y - 31, 'smoke', {
-        speedY: { min: -9, max: -5 }, speedX: { min: -2, max: 2 }, lifespan: 2000, alpha: { start: 0.45, end: 0 }, scale: { start: 0.3, end: 1 }, frequency: 380, emitting: false
-      }).setDepth(9004);
-      this.time.addEvent({ delay: 2600, loop: true, callback: function () {
-        if (self.S.minutes > 17 * 60) self.fx.petal.explode(1, (12 * T + 8) + (Math.random() - 0.5) * 30, 5 * T);
-      } });
+      if (this.spiritPos) {
+        this.incense = this.add.particles(this.spiritPos.x - 8, this.spiritPos.y - 31, 'smoke', {
+          speedY: { min: -9, max: -5 }, speedX: { min: -2, max: 2 }, lifespan: 2000, alpha: { start: 0.45, end: 0 }, scale: { start: 0.3, end: 1 }, frequency: 380, emitting: false
+        }).setDepth(9004);
+        this.time.addEvent({ delay: 2600, loop: true, callback: function () {
+          if (self.S.minutes > 17 * 60) self.fx.petal.explode(1, (12 * T + 8) + (Math.random() - 0.5) * 30, 5 * T);
+        } });
+      }
     }
 
     refreshOfferings() {
+      if (!this.spiritPos) return;
       this.offeringSprites.forEach(function (s) { s.destroy(); });
       this.offeringSprites = [];
       var S = this.S, sx = this.spiritPos.x, sy = this.spiritPos.y - 23, self = this;
@@ -565,9 +761,10 @@ window.LC = window.LC || {};
     update(time, delta) {
       if (!this.ui || !this.ui.ready) return;
       var dt = Math.min(delta, 50) / 1000, S = this.S, g = S.ghost;
-      var blocked = this.ui.isBlocking() || this.sleeping;
+      var blocked = this.ui.isBlocking() || this.sleeping || this.leaving;
 
       this.updatePlayer(dt, blocked);
+      this.checkExits();
 
       var N = LC.Net, guest = N.isGuest(), coop = N.active();
       // In co-op the clock never pauses for menus (friends are still playing). Guests just follow the host's clock.
@@ -586,20 +783,21 @@ window.LC = window.LC || {};
           this.ui.toast('Hungry Ghost Night has begun. The torches burn red... Pelita is ravenous!', 'ic_glow');
         }
       }
-      if (!guest && !blocked && S.pendingStage.length) this.stageUp(S.pendingStage.shift());
+      if (!guest && !blocked && S.pendingLevel.length) this.levelUp(S.pendingLevel.shift());
 
       this.updateGhost(time, dt, blocked);
+      this.updateFolk(time, dt);
       this.updateRemote(dt);
       if (N.isHost()) {
         N.hostTick({
           m: S.minutes, d: S.day,
-          g: { x: Math.round(this.gpos.x), y: Math.round(this.gpos.y), e: this.curExpr },
-          gs: { full: g.full, joy: g.joy, glow: g.glow, bond: g.bond, stage: g.stage, craving: g.craving, cravingDone: g.cravingDone, petAt: g.petAt },
-          me: { x: Math.round(this.player.x), y: Math.round(this.player.y), dir: this.dir, mv: this.moving }
+          g: { x: Math.round(this.gpos.x), y: Math.round(this.gpos.y), e: this.curExpr, a: this.ghostArea || 'farm' },
+          gs: { full: g.full, joy: g.joy, glow: g.glow, bond: g.bond, stage: g.stage, level: g.level, craving: g.craving, cravingDone: g.cravingDone, petAt: g.petAt },
+          me: { x: Math.round(this.player.x), y: Math.round(this.player.y), dir: this.dir, mv: this.moving, ar: this.area, cp: S.companion }
         });
-      } else if (guest) N.sendPos(this.player.x, this.player.y, this.dir, this.moving);
+      } else if (guest) N.sendPos(this.player.x, this.player.y, this.dir, this.moving, this.area, S.companion);
       this.updateCritters(dt);
-      this.updateLighting(time);
+      this.updateLighting(time, dt);
 
       var act = blocked ? null : this.getAction();
       this.ui.setPrompt(act && act.label);
@@ -611,47 +809,80 @@ window.LC = window.LC || {};
 
     // ================================================================ actions
     toast(m, icon) { this.ui.toast(m, icon); }
+    waterKind(ch) { var k = LC.WATER_TILES[ch]; return k === 'pond' ? this.A.pond : k; }
 
     getAction() {
       var S = this.S, self = this, sl = LC.State.selItem(), it = sl ? LC.ITEMS[sl.id] : null, f = this.facing(), tx = f.tx, ty = f.ty;
       if (tx < 0 || ty < 0 || tx >= this.W || ty >= this.H) return null;
       var o = this.objAt[ty][tx], isFood = !!(it && it.food);
       if (o) {
-        switch (o.type) {
-          case 'house': return { label: 'Sleep', fn: function () { self.ui.confirmSleep(); } };
-          case 'spirit':
-            if (isFood) return { label: 'Offer ' + it.name + ' to Pelita', fn: function () { self.feedGhost(sl.id); } };
-            return { label: 'Spirit house', fn: function () { self.ui.openSpirit(); } };
-          case 'dapur': return { label: 'Cook at the dapur', fn: function () { self.ui.openCook(); } };
-          case 'well': return { label: 'Draw water', fn: function () { self.refillCan(); } };
-          case 'warung': return { label: this.shopOpen() ? 'Shop at the warung' : 'Warung (closed)', fn: function () { self.ui.openShop(); } };
-          case 'tree':
-            var tr = LC.TREES[o.kind], ready = S.trees[o.id] === 0;
-            return { label: ready ? 'Pick ' + LC.ITEMS[tr.fruit].name : tr.name, fn: function () { self.shakeTree(o); } };
-          case 'torch': return { label: '', fn: function () { self.toast('A bamboo pelita torch. Nenek kept them burning every night.'); } };
-          default: return { label: 'Look', fn: function () { self.ui.say([{ text: LC.TEXT[o.type] }]); } };
-        }
+        var oa = this.objectAction(o, sl, it, isFood);
+        if (oa) return oa;
       }
       var cr = this.critterAt(f.fx, f.fy);
-      if (cr) return { label: 'Pet the ' + (cr.kind === 'kerbau' ? 'kerbau' : 'chicken'), fn: function () { self.petCritter(cr); } };
+      if (cr) return { label: 'Pet the ' + cr.kind, fn: function () { self.petCritter(cr); } };
       if (isFood && this.ghostNear) return { label: 'Feed Pelita ' + it.name, fn: function () { self.feedGhost(sl.id); } };
 
-      var ch = this.grid[ty][tx], t = LC.State.tile(tx, ty);
+      var ch = this.grid[ty][tx], t = this.area === 'farm' ? LC.State.tile(tx, ty) : null;
       if (t && t.crop && LC.cropStage(t.crop) === 3) return { label: 'Harvest ' + LC.CROPS[t.crop.id].name, tile: true, fn: function () { self.harvest(tx, ty); } };
 
       var ta = it ? this.toolAction(sl, it, ch, t, tx, ty) : null;
       if (ta && ta.label) return ta;
+      var comp = this.companionNear();   // your spirit companion wants to play (once a day)
+      if (comp) return { label: 'Play with the ' + LC.SPIRITS[comp].name, fn: function () { self.playSpirit(comp); } };
       if (this.ghostNear) return { label: 'Pet Pelita', fn: function () { self.petGhost(); } };
       if (ta) return ta;
-      if (ch === 'w' || ch === 'S') return { label: '', fn: function () { self.toast(LC.TEXT.river); } };
+      if (LC.WATER_TILES[ch]) return { label: '', fn: function () { self.toast(ch === 'o' || ch === 'h' ? 'The sea sparkles all the way to the horizon.' : LC.TEXT.river); } };
       if (isFood) return { label: '', fn: function () { self.toast('Press X to eat it yourself, or bring it to Pelita.'); } };
       return null;
     }
 
+    objectAction(o, sl, it, isFood) {
+      var S = this.S, self = this;
+      switch (o.type) {
+        case 'house': return { label: 'Sleep', fn: function () { self.ui.confirmSleep(); } };
+        case 'spirit':
+          if (isFood) return { label: 'Offer ' + it.name + ' to Pelita', fn: function () { self.feedGhost(sl.id); } };
+          return { label: 'Spirit house', fn: function () { self.ui.openSpirit(); } };
+        case 'dapur': return { label: 'Cook at the dapur', fn: function () { self.ui.openCook(); } };
+        case 'well': return { label: 'Draw water', fn: function () { self.refillCan(); } };
+        case 'warung': return { label: this.shopOpen() ? 'Shop at the warung' : 'Warung (closed)', fn: function () { self.ui.openShop(); } };
+        case 'tree': {
+          var tr = LC.TREES[o.kind], ready = S.trees[o.id] === 0;
+          return { label: ready ? 'Pick ' + LC.ITEMS[tr.fruit].name : tr.name, fn: function () { self.shakeTree(o); } };
+        }
+        case 'forage': {
+          var fg = LC.FORAGE[o.kind];
+          if (S.trees[o.id] === 0) return { label: fg.verb, fn: function () { self.forage(o); } };
+          return { label: '', fn: function () { var d = S.trees[o.id]; self.toast(fg.name + ': picked clean. More in ' + d + ' day' + (d > 1 ? 's' : '') + '.'); } };
+        }
+        case 'torch': return { label: '', fn: function () { self.toast('A bamboo pelita torch. Nenek kept them burning every night.'); } };
+        case 'gate': return { label: 'Blocked path', fn: function () { self.lockedAt = 0; self.lockedMsg(o.to); } };
+        case 'sampan': return { label: LC.State.isOpen(o.to) ? 'Row to ' + LC.AREAS[o.to].name : 'Nenek\'s old sampan', fn: function () { self.useBoat(o); } };
+        case 'shrine': return { label: 'Wayside shrine', fn: function () { self.useShrine(); } };
+        case 'signpost': return { label: 'Read the sign', fn: function () { self.ui.say([{ text: o.text }]); } };
+        case 'bldg': return { label: 'Look', fn: function () { self.ui.say([{ text: o.text }]); } };
+        case 'plot': return this.plotAction(o);
+        case 'npc': return this.npcAction(o);
+        case 'folk': return this.folkAction(o, sl, it);
+        default: return LC.TEXT[o.type] ? { label: 'Look', fn: function () { self.ui.say([{ text: LC.TEXT[o.type] }]); } } : null;
+      }
+    }
+
     toolAction(sl, it, ch, t, tx, ty) {
-      var self = this, S = this.S;
+      var self = this, S = this.S, water = this.waterKind(ch);
       function hint(m) { return { label: '', tile: true, fn: function () { self.toast(m); LC.Audio.sfx('error'); } }; }
+      if (sl.id === 'joran') {
+        if (water) return { label: 'Cast your line', tile: true, fn: function () { self.startFishing(tx, ty, water); } };
+        return hint('Face the water to fish: a river, pool, lake or the sea.');
+      }
+      if (it.kind === 'float') {
+        if (!water) return hint('Set the krathong on water: a river, pool or the sea.');
+        if (S.minutes < 18 * 60 && S.minutes >= 6 * 60) return hint('Krathong are floated after dark, when their candles can shine. Come back after 6 PM.');
+        return { label: 'Float the krathong', tile: true, fn: function () { self.floatKrathong(tx, ty); } };
+      }
       if (sl.id === 'hoe') {
+        if (this.area !== 'farm') return hint('Save your strength for the farm. Till inside Nenek\'s fenced field.');
         if (ch === 'f' && !(t && t.tilled)) return { label: 'Till soil', tile: true, fn: function () { self.till(tx, ty); } };
         if (ch === 'f' && t && t.crop) return hint('Careful! Something is growing there.');
         if (ch === 'f') return hint('Already tilled. Plant some seeds!');
@@ -659,7 +890,8 @@ window.LC = window.LC || {};
         return hint('The ground here is too hard. Till inside the fenced field.');
       }
       if (sl.id === 'can') {
-        if (ch === 'w' || ch === 'S') return { label: 'Fill gembor from the river', tile: true, fn: function () { self.refillCan(); } };
+        if (water === 'sea') return hint('Sea water is salty. It would hurt your crops!');
+        if (water) return { label: 'Fill gembor', tile: true, fn: function () { self.refillCan(); } };
         if (t && t.tilled) {
           if (S.water <= 0) return hint('The gembor is empty. Refill it at the well or the river.');
           if (t.wet) return hint('Already watered today.');
@@ -670,6 +902,7 @@ window.LC = window.LC || {};
       }
       if (it.kind === 'seed') {
         var cd = LC.CROPS[it.crop];
+        if (this.area !== 'farm') return hint('Plant your seeds back home, in Nenek\'s field.');
         if (cd.paddy) {
           if (ch === 'r' && !(t && t.crop)) return { label: 'Plant ' + cd.name, tile: true, fn: function () { self.plant(tx, ty, sl.id); } };
           return hint(ch === 'r' ? 'Something is already growing there.' : 'Padi grows in the flooded sawah, east of the field.');
@@ -682,7 +915,7 @@ window.LC = window.LC || {};
       return null;
     }
 
-    doAction() { if (this.sleeping) return; var a = this.getAction(); if (a) a.fn(); }
+    doAction() { if (this.sleeping || this.leaving) return; var a = this.getAction(); if (a) a.fn(); }
 
     useEnergy(n) {
       if (this.S.energy < n) { this.toast('You are exhausted... Eat something (X) or go to sleep.'); LC.Audio.sfx('error'); return false; }
@@ -690,7 +923,7 @@ window.LC = window.LC || {};
     }
     bump() { var p = this.player; this.tweens.add({ targets: p, scaleY: 0.88, duration: 70, yoyo: true }); }
 
-    // Personal costs (energy, water, seeds) are paid here; the shared field changes via doShared/LC.Sim.
+    // Personal costs (energy, water, seeds) are paid here; the shared world changes via doShared/LC.Sim.
     till(tx, ty) {
       var S = this.S;
       if (!this.useEnergy(2)) return;
@@ -723,7 +956,7 @@ window.LC = window.LC || {};
       this.doShared('harvest', { x: tx, y: ty }, function (res) {
         if (!res || !res.item) { self.toast('Too slow! A friend already harvested that one.'); return; }
         LC.State.add(res.item, res.count);
-        self.toast('+' + res.count + ' ' + LC.ITEMS[res.item].name, 'i_' + res.item);
+        self.toast('+' + res.count + ' ' + LC.ITEMS[res.item].name + (def.paddy && LC.State.friend('semangat') ? '  (blessed by the Semangat Padi)' : ''), 'i_' + res.item);
         self.S.flags.harvested = true;
       });
     }
@@ -750,9 +983,27 @@ window.LC = window.LC || {};
         self.toast('+' + res.count + ' ' + LC.ITEMS[res.item].name, 'i_' + res.item);
       });
     }
+    forage(o) {
+      var S = this.S, fg = LC.FORAGE[o.kind], spr = this.trees[o.id].spr, self = this;
+      if (!LC.State.canAdd(fg.item)) { this.toast('Your bag is full!'); LC.Audio.sfx('error'); return; }
+      if (fg.energy && !this.useEnergy(fg.energy)) return;
+      LC.Audio.sfx(o.kind === 'boulder' || o.kind === 'clay' || o.kind === 'glint' ? 'till' : 'harvest'); this.bump();
+      this.doShared('shake', { id: o.id }, function (res) {
+        if (!res || !res.item) { S.energy += fg.energy || 0; if (res && res.days) self.toast(fg.name + ': picked clean. More in ' + res.days + ' day(s).'); return; }
+        LC.State.add(res.item, res.count);
+        (o.kind === 'boulder' || o.kind === 'clay' ? self.fx.dirt : self.fx.leaf).explode(8, spr.x, spr.y - 6);
+        self.toast('+' + res.count + ' ' + LC.ITEMS[res.item].name, 'i_' + res.item);
+        if (res.extra && LC.State.add(res.extra, 1)) {
+          LC.Audio.sfx('chime'); self.fx.sparkle.explode(12, spr.x, spr.y - 6);
+          self.toast('Something special! You found a ' + LC.ITEMS[res.extra].name + '!', 'i_' + res.extra);
+        }
+        S.flags.foraged = true;
+      });
+    }
     petCritter(c) {
-      if (c.kind === 'kerbau') { LC.Audio.sfx('moo'); this.toast(LC.TEXT.kerbau); }
-      else { LC.Audio.sfx('cluck'); this.toast(LC.TEXT.chicken); c.wait = 0; c.tx = c.spr.x + (Math.random() - 0.5) * 60; c.ty = c.spr.y + (Math.random() - 0.5) * 30; }
+      LC.Audio.sfx(c.def.sfx);
+      this.toast(LC.TEXT[c.kind] || '');
+      if (c.def.hop) { c.wait = 0; c.tx = c.spr.x + (Math.random() - 0.5) * 60; c.ty = c.spr.y + (Math.random() - 0.5) * 30; }
       this.fx.heart.explode(2, c.spr.x, c.spr.y - 12);
     }
     eat() {
@@ -762,10 +1013,10 @@ window.LC = window.LC || {};
       if (!it.food) { this.toast('You can\'t eat ' + it.name + '!'); return; }
       if (S.energy >= S.maxEnergy) { this.toast('You are not hungry right now.'); return; }
       LC.State.remove(sl.id, 1);
-      var e = Math.round(it.food.full * 0.8) + 5;
+      var e = it.energy || Math.round(it.food.full * 0.8) + 5;
       S.energy = Math.min(S.maxEnergy, S.energy + e);
       LC.Audio.sfx('eat');
-      this.toast('You eat the ' + it.name + '. +' + e + ' energy' + (sl.id === 'cili' ? '  Pedas!!' : ''), it.icon);
+      this.toast('You eat the ' + it.name + '. +' + e + ' energy' + (sl.id === 'cili' ? '  Pedas!!' : sl.id === 'jamu' ? '  So bitter... but so strong!' : ''), it.icon);
     }
 
     // ---------------------------------------------------------------- Pelita care
@@ -779,7 +1030,7 @@ window.LC = window.LC || {};
         var gp = self.ghostPos();
         if (res.joy < 0) { self.setEmote('sad', 2200); LC.Audio.sfx('sad'); }
         else { self.setEmote('happy', 2200); LC.Audio.sfx('eat'); self.fx.heart.explode(4, gp.x, gp.y - 8); }
-        self.toast(res.msg + ' (+' + res.b + ' bond)', it.icon);
+        self.toast((id === 'durian' ? 'Pelita holds its nose... the smell! ' : '') + res.msg + ' (+' + res.b + ' bond)', it.icon);
         if (res.craving) {
           self.time.delayedCall(650, function () {
             LC.Audio.sfx('chime');
@@ -819,13 +1070,14 @@ window.LC = window.LC || {};
         if (!res || !res.ok) { LC.State.add(id, 1); if (res && res.full) full(); return; }
         if (id === 'colok') S.flags.incense = true;
         LC.Audio.sfx('offer');
-        self.fx.sparkle.explode(10, self.spiritPos.x, self.spiritPos.y - 26);
+        if (self.spiritPos) self.fx.sparkle.explode(10, self.spiritPos.x, self.spiritPos.y - 26);
         self.setEmote('happy', 2000);
         self.toast('You place the ' + it.name + '. Pelita glows brighter! (+' + res.b + ' bond)', it.icon);
       });
       return true;
     }
     cookFx() {
+      if (!this.dapurPos) return;
       this.fx.smoke.explode(6, this.dapurPos.x, this.dapurPos.y - 22);
       this.fx.sparkle.explode(5, this.dapurPos.x, this.dapurPos.y - 18);
     }
@@ -842,8 +1094,10 @@ window.LC = window.LC || {};
       this.cameras.main.once('camerafadeoutcomplete', function () {
         var sum = LC.State.endDay(fainted);
         if (LC.Net.isHost()) LC.Net.broadcast({ t: 'dayStart', sum: sum, world: LC.State.snapshot() });
+        if (self.area !== 'farm') { LC.followPid = self.followPid; self.scene.restart({ area: 'farm', summary: sum }); return; }   // you are carried home
         self.refreshAllTiles();
         self.refreshOfferings();
+        self.refreshPlots();
         self.player.setPosition(4 * T + 8, 8 * T + 13);
         self.dir = 'down';
         var h = self.ghostHome(); self.gpos.x = h.x; self.gpos.y = h.y;
@@ -868,11 +1122,15 @@ window.LC = window.LC || {};
       this.ui.closeModal();
       LC.State.applySnapshot(m.world);
       S.energy = S.maxEnergy;
-      var sum = Object.assign({}, m.sum, { earned: S.stats.earned });
+      var mine = LC.State.personalMorning();
+      S.energy = S.maxEnergy;
+      var sum = Object.assign({}, m.sum, { earned: S.stats.earned, lines: (m.sum.lines || []).concat(mine) });
       S.stats.earned = 0;
       LC.State.save();
+      if (this.area !== 'farm') { this.scene.restart({ area: 'farm', summary: sum }); return; }
       this.refreshAllTiles();
       this.refreshOfferings();
+      this.refreshPlots();
       var sp = this.homeSpot(this.pc); this.player.setPosition(sp.x, sp.y); this.dir = 'down';
       this.ui.showSummary(sum, function () {
         self.cameras.main.fadeIn(800);
@@ -888,16 +1146,33 @@ window.LC = window.LC || {};
       else if (g.stage >= 1) this.ui.toast('Pelita is craving ' + LC.ITEMS[g.craving].name + ' today.', 'i_' + g.craving);
     }
 
-    stageUp(st) {
-      var self = this, gp = this.ghostPos();
-      if (LC.Net.isHost()) LC.Net.broadcast({ t: 'event', ev: 'stage', st: st });
-      LC.Audio.sfx('stage');
-      this.cameras.main.flash(600, 255, 240, 210);
-      this.fx.sparkle.explode(30, gp.x, gp.y);
-      this.setEmote('happy', 4000);
+    // ---------------------------------------------------------------- Pelita levels up (and sometimes evolves)
+    levelUp(lv) {
+      var self = this, r = LC.LEVEL_REWARDS[lv] || {}, gp = this.ghostPos();
+      if (LC.Net.isHost()) LC.Net.broadcast({ t: 'event', ev: 'level', lv: lv });
+      var gift = LC.State.levelGift(lv);
+      this.refreshGates();
+      LC.Audio.sfx(r.stage ? 'stage' : 'levelup');
+      if (this.ghostHere) this.fx.sparkle.explode(r.stage ? 30 : 18, gp.x, gp.y);
+      this.cameras.main.flash(r.stage ? 600 : 300, 255, 240, 210);
+      this.setEmote('happy', 3500);
+      this.ui.toast('Pelita reached Level ' + lv + '!', 'ic_bond');
+      var lines = [];
+      if (r.unlock) {
+        var A = LC.AREAS[r.unlock];
+        lines.push({ text: '✦ A new place is open: ' + A.name + ', ' + A.sub + '! ✦' });
+        lines.push({ name: 'Pelita', portrait: 'ghost', expr: 'happy', text: '(Pelita\'s light reaches a little further...) ' + LC.AREA_HOWTO[r.unlock] });
+      }
+      if (gift) lines.push({ text: gift });
+      if (r.stage) { this.stageUp(r.stage, lines); return; }
+      if (lines.length) this.time.delayedCall(500, function () { self.ui.say([{ text: '✦ Pelita reached Level ' + lv + '! ✦' }].concat(lines)); });
+    }
+    stageUp(st, extra) {
+      var self = this;
       if (st === 4) { this.festival(); return; }
-      var lines = [{ text: '✦ Pelita has grown into a ' + LC.STAGES[st].name + '! ✦' }];
+      var lines = [{ text: '✦ Pelita has grown into a ' + LC.STAGES[st].name + '! (Level ' + LC.State.level() + ') ✦' }];
       LC.STAGE_TEXT[st].forEach(function (t) { lines.push({ name: 'Pelita', portrait: 'ghost', expr: 'happy', text: t }); });
+      lines = lines.concat(extra || []);
       this.time.delayedCall(500, function () { self.ui.say(lines); });
     }
     festival() {
@@ -919,11 +1194,11 @@ window.LC = window.LC || {};
         self.ui.say([
           { text: 'The river begins to glow. One by one, little lanterns rise from the water, as if the whole kampung remembered at once.' },
           { name: 'Pelita', portrait: 'ghost', expr: 'happy', text: '...Te... terima kasih. (Pelita speaks its very first words: "thank you.")' },
-          { text: '✦ Pelita has become the Guardian of the Kampung! ✦' },
+          { text: '✦ Pelita has become the Guardian of the Kampung! (Level 12) ✦' },
           { text: 'Somewhere, you are sure Nenek is smiling. The farm, the river and the little spirit are in good hands.' },
-          { text: 'Thank you for playing Little Creature! The days go on: keep farming, cooking and caring for Pelita.' }
+          { text: 'The days go on: Pelita can keep growing all the way to Level 20, and there are still spirits and friends to find.' }
         ], { onDone: function () { S.flags.guardian = true; LC.State.save(); } });
       });
     }
   };
-})();
+})(window.LC);

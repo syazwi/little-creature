@@ -4,6 +4,7 @@
 
 Nenek has left you her stilt house by the river and a tiny spirit named **Pelita** living in the spirit house beside the stairs.
 You farm by day, cook at the clay stove, and leave offerings so Pelita's light grows from a weak flicker into the **Guardian of the Kampung**.
+As Pelita levels up, its light opens the way to the wider land: a riverside village to rebuild, a rainforest, a pearl island, a misty mountain and red dunes. There you fish, build houses with the villagers, and befriend spirits from Southeast Asian folklore.
 
 ## Play it
 
@@ -31,12 +32,14 @@ PC browsers and Android phones can all play together.
 
 | Shared by everyone | Your own (kept on your device) |
 |---|---|
-| Fields, crops, trees, the clock and the day | Bag, hotbar and kepeng |
-| Pelita (feeding, petting, offerings, bond, growth) | Energy and watering can |
-| | Cooking, crafting, and buying or selling at the warung |
+| Fields, crops, trees, forage spots, the clock and the day | Bag, hotbar and kepeng |
+| Pelita (feeding, petting, offerings, bond, levels, growth) | Energy and watering can |
+| Houses built in the kampung, spirits befriended | Villager friendship and requests, your fish log |
+| | Cooking, crafting, fishing, and buying or selling |
 
-- Pelita follows whoever fed or petted it last.
-- **Only the host ends the day.** When the host sleeps, everyone sleeps and sees the day summary. A friend can use the house to tell the host they're sleepy.
+- Friends can explore different places at the same time. You see each other when you are in the same place.
+- Pelita follows whoever fed or petted it last, even into another place. Your spirit companion is visible to friends too.
+- **Only the host ends the day.** When the host sleeps, everyone sleeps (wherever they are, they wake up at the farm) and sees the day summary. A friend can use the house to tell the host they're sleepy.
 - The host's farm is saved on the host's device. A friend's bag goes home with them, so they can bring it to the next session.
 - Co-op needs internet. Friends connect directly to each other (WebRTC, via [PeerJS](https://peerjs.com)). Solo play stays fully offline.
 
@@ -52,6 +55,7 @@ PC browsers and Android phones can all play together.
 | Pause menu | Esc | **II** button (top), or Android **Back** |
 | Music on/off | M | Pause menu |
 | Fullscreen | F | Automatic (Android app, and phone browsers on the first tap) |
+| Journal | J | Pause menu → Journal |
 
 Touch controls switch on automatically on touch screens. You can toggle them, the music and the nature sounds in the pause menu.
 
@@ -65,7 +69,24 @@ Touch controls switch on automatically on touch screens. You can toggle them, th
 - **Trade.** **Mak Ani's warung** on the east road (7 AM – 8 PM) sells seeds, colok and *air merah*, and buys your harvest.
 - **Nights.** If all three of Pelita's needs are 50 or more when you sleep, it rests content. If any is under 20, expect a prank.
 - **Ahad.** Every 7th day is **Hungry Ghost Night**. Pelita gets hungry twice as fast, but all bond counts double.
-- **Growth.** Pelita grows through 5 stages: Flicker → Little Spirit → Lantern Spirit → Garden Spirit → Guardian. Each stage brings a blessing.
+- **Levels.** Every act of care gives Pelita bond. Pelita has **20 levels**. It evolves at Lv 3, 6, 9 and 12 (Flicker → Little Spirit → Lantern Spirit → Garden Spirit → Guardian), and most other levels bring a gift. Each evolution brings a blessing. The **Journal (J)** lists every level and its reward.
+
+### The wider land (opens as Pelita levels up)
+| Place | Pelita level | How to get there | What's there |
+|---|---|---|---|
+| **Kampung Tepian**, the village | Lv 2 | Road east from the farm | Villagers, house plots, Pak Mat's jetty |
+| **Hutan Rimba**, the rainforest | Lv 3 | Trail north of the farm | Wood, rattan, mushrooms, herbs, durian, kancil, a forest pool |
+| **Pulau Mutiara**, pearl island | Lv 5 | Row Nenek's sampan from the farm jetty | Nipa thatch, seashells (and pearls), coconuts, sea fishing, turtles |
+| **Gunung Kabus**, the misty mountain | Lv 8 | Trail north through the rainforest | Tea terraces, strawberries, stone, a lake with golden carp |
+| **Bukit Pasir**, the red dunes | Lv 11 | Road east through the kampung | Dragon fruit, clay, buried old coins, an oasis, a Cham tower |
+
+Locked paths are blocked by vines, rockfall or sand until Pelita is strong enough. From Lv 7, wayside shrines take you home, and the spirit house sends you to any place you've visited.
+
+- **Fishing.** Pak Mat gives you a **Joran** (fishing rod) the first time you meet him at the kampung jetty. Hold it, face any water and press USE. Wait for the bite, strike, then stop the marker in the green. Rivers, forest pools, the sea, the mountain lake and the oasis each have their own fish. Some bite best at night. Cook fish into *ikan bakar*, *asam pedas* and more.
+- **Villagers.** Tok Penghulu (village head), Pak Mat (fisherman) and Tukang Leong (carpenter) live in the kampung. Each one has a request every day: fulfil it for kepeng and friendship, and Pelita gains bond too. Chat once a day for friendship. At 3, 6 and 10 hearts they give you a gift. Several also run a shop and buy goods for more than the warung pays.
+- **Building houses (gotong-royong).** Bring materials and kepeng to one of the four empty plots in the kampung: *kayu* (wood, forest), *atap* (thatch, island), *batu* (stone, mountain) and *tanah liat* (clay, dunes). Tukang Leong sells them too. Choose a Pondok Buluh, Rumah Kayu or Rumah Batu. The whole village raises it overnight, and a family moves home: Cik Siti the herbalist, Auntie Lai the tea planter, Mbak Dewi the batik artist and Kak Mai the fruit trader. Each brings new requests and a shop.
+- **Spirits of the land.** Five folk spirits wait to be befriended, one in each region: the Semangat Padi (rice soul, in the farm's sawah), the Orang Bunian (hidden forest folk), a young Naga (island shallows), the Kenyalang (hornbill messenger, mountain) and the Nuno sa Punso (mound spirit, dunes; mind your manners and say *tabi-tabi po*!). Grant a spirit's wish and it blesses you: more rice, forest gifts every morning, better fishing, +30 energy, or soil that grows crops even unwatered. Play with each one once a day, and choose one to travel with you as your companion.
+- **Krathong.** Craft a krathong (banana, marigold and colok) at the spirit house, or buy one from Mbak Dewi. Float it on any water after dark for a big boost to Pelita's glow and bond.
 
 The game saves every night when you sleep, and whenever you leave the game (switch apps, close the tab).
 
@@ -97,7 +118,8 @@ Icons are generated by `node tools/make-icons.mjs`.
 ```
 index.html            the game (open this to play from the folder)
 dist/                 ready-to-play builds: LittleCreature.html (single file) and LittleCreature.apk
-src/                  game code: data, state, sim (shared-farm rules), net (co-op), lobby, procedural art + audio, scenes
+src/                  game code: data, areas (maps of every place), folk (villagers and spirits), state, sim (shared-world rules),
+                      net (co-op), lobby, procedural art (art.js, art2.js) + audio, scenes (World + WorldLife, UI + UIMenus)
 lib/                  Phaser 3.80.1 (MIT), PeerJS 1.5.4 (MIT) and the Pixelify Sans font (SIL OFL 1.1), vendored
 icons/                app icons
 android/              Android wrapper app (WebView). It packages the web game from the root at build time.
@@ -115,4 +137,4 @@ plan.md               design document
 - **Multiplayer:** [PeerJS](https://peerjs.com), MIT licence. It uses the free public PeerJS server for matchmaking.
 - **Font:** [Pixelify Sans](https://fonts.google.com/specimen/Pixelify+Sans) by Stefie Justprince, SIL Open Font License 1.1.
 - **Art, music and sound:** original. Every sprite, note and sound is generated in code (`src/art.js`, `src/audio.js`, `tools/make-icons.mjs`).
-- **Cultural inspirations:** Thai/Lao/Khmer spirit houses, Malay *rumah panggung* and *kampung* life, Balinese *canang sari*, Thai *phuang malai*, Hungry Ghost Festival traditions, and Loy Krathong / Yi Peng lanterns. All are drawn with affection.
+- **Cultural inspirations:** Thai/Lao/Khmer spirit houses, Malay *rumah panggung* and *kampung* life, *gotong-royong* and the *kenduri*, Balinese *canang sari*, Thai *phuang malai*, Hungry Ghost Festival traditions, Loy Krathong / Yi Peng lanterns, Malay *wau* kites, Javanese batik and *jamu*, Malaysian highland tea, Vietnam's red dunes, dragon fruit and Cham towers, Sang Kancil the mouse deer, and folk spirits: the Malay *semangat padi* and *orang bunian*, the Mekong *naga*, the Iban *kenyalang* and the Filipino *nuno sa punso*. All are drawn with affection and respect.

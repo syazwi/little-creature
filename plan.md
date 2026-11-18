@@ -145,6 +145,8 @@ Stilt house (bed), spirit house + frangipani, dapur (stove), well (perigi), fenc
 | Tab / I | Inventory |
 | M | Toggle music |
 | Esc | Close menu |
+| J | Journal (requests, places, spirits, fish, levels) |
+| F | Fullscreen |
 
 Mouse clicks also work on all menus.
 
@@ -170,13 +172,18 @@ plan.md             this document
 README.md           how to run, controls, credits
 lib/phaser.min.js   vendored engine
 src/
-  data.js           items, crops, recipes, offerings, stages, map layout, dialogue
+  data.js           items, crops, recipes, offerings, stages, levels, forage, fishing tables, houses, farm map, dialogue
+  areas.js          every place: tile maps, objects, exits/gates, critters, ambience (v1.3)
+  folk.js           villagers (roles, shops, requests, gifts) and folk spirits (wishes, blessings) (v1.3)
+  art2.js           v1.3 textures: new tiles, buildings, villagers, critters, spirits, forage, icons
   art.js            procedural pixel-art texture generation
   audio.js          procedural music and sound effects
   state.js          game state model, save/load, day simulation
   scenes/Boot.js    generates textures, waits for the font
   scenes/Title.js   title screen (new game / continue)
-  scenes/World.js   map, player, spirit, crops, critters, day/night, interactions
+  scenes/World.js   the current place (loaded per area), player, Pelita, crops, critters, day/night, travel, interactions
+  scenes/WorldLife.js  villagers, folk spirits + companion, fishing, house building, boats, shrines, krathong, kites
+  scenes/UIMenus.js    fishing minigame, villager / build / spirit menus, Journal, place banner
   scenes/UI.js      HUD (clock, kepeng, needs, hotbar), menus (shop, cook, craft, inventory), dialogue, toasts
   main.js           Phaser game config
 ```
@@ -205,6 +212,36 @@ src/
 ### Audio (chill mix)
 Slow pads, sparse bells, a soft bass pulse and a distant gong through a generated convolution reverb, at 56 bpm by day and 46 bpm by night. A separate nature bus carries the river, koels and bulbuls by day, and crickets and frogs (*kodok*) at night. Music and nature sounds can be toggled independently.
 
+### Beyond the farm (v1.3)
+**Pelita's levels.** `LC.LEVELS` gives the bond needed for Lv 1–20. The evolutions keep their old bond thresholds, so they land on Lv 3, 6, 9 and 12. `LC.LEVEL_REWARDS` lists what each level opens or gives (places, spirit paths at Lv 7, a bigger gembor at Lv 10, max energy, kepeng and pearls). `State.addBond` queues `pendingLevel`. The host or single player shows each celebration (`World.levelUp`) and broadcasts `event{ev:'level'}`, so every player gets the personal gift. Old saves get their level from their bond on load, with no celebrations.
+
+**Places.** Each place is a tile map plus objects in `areas.js`. Travelling restarts the World scene with `{ area, spawn, dir }` while the UI scene keeps running. Exits are walk-off zones at a map edge; a locked exit shows a gate (vines, rockfall, a sand drift) until `LC.areaOpen`. The island is reached by sampan. Wild places scatter trees with a seeded RNG, kept clear of paths, entrances, spirits and buildings.
+
+| Place | Lv | Water (fish table) | Gather | Critters |
+|---|---|---|---|---|
+| Nenek's Farm | 1 | river | crops, fruit trees | chickens, kerbau |
+| Kampung Tepian | 2 | river | fruit trees | chickens, kerbau |
+| Hutan Rimba | 3 | forest pool (stream) | kayu, rotan, cendawan, herba, durian | kancil |
+| Pulau Mutiara | 5 | sea | atap (nipa), kerang (+mutiara), kelapa | ketam, penyu |
+| Gunung Kabus | 8 | lake | daun teh, strawberi, batu | — (mist) |
+| Bukit Pasir | 11 | oasis | buah naga, tanah liat, duit lama | biawak |
+
+**Gathering** reuses the fruit-tree system: every tree and forage spot has an id, and its regrow timer lives in `S.trees` (shared). `Sim.shake` handles both and rolls rare extras (pearls, coins).
+
+**Fishing** is personal: a rod (*joran*), a UI-modal minigame (wait, strike in time, stop the marker in the green zone with 2 tries). Difficulty sets the zone width and marker speed. `LC.FISHING` weights the catch by water; night fish bite twice as often after dark. Each cast costs 2 energy and about 8 minutes.
+
+**Villagers** (`folk.js`): Tok Penghulu, Pak Mat and Tukang Leong are there from the start; Cik Siti, Auntie Lai, Mbak Dewi and Kak Mai move in as houses are built. Each has a daily request from a pool (reward ≈ 1.6× value), a once-a-day chat, friendship points (4 per heart, gifts at 3/6/10 hearts), and optionally a shop and better prices for their trade. Friendship and requests are personal (`S.folk`). Delivering a request runs `Sim.kind` (+4 Pelita bond).
+
+**Houses** (gotong-royong): four plots. `Sim.build` records `S.buildings[plot]` (shared). Materials are paid locally and refunded if the host refuses. `endDay` finishes each house and assigns the next villager in `LC.MOVE_IN`.
+
+**Folk spirits**: Semangat Padi (farm), Orang Bunian (forest), Naga (island), Kenyalang (mountain), Nuno sa Punso (dunes; say *tabi-tabi po* first). Granting a wish runs `Sim.befriend` (shared `S.spirits`, +15 bond). Blessings: +2 padi per rice harvest (`Sim.harvest`); morning forest gifts (`State.personalMorning`); faster bites, a wider reeling zone and more rare fish (`State.rollFish`, `UI.openFishing`); +30 max energy (`State.recalc`); a 50% chance unwatered crops still grow (`endDay`). `Sim.play` works once a day per spirit (+3 bond). One befriended spirit can be your companion (`S.companion`, personal, streamed to friends as `cp`).
+
+**Krathong**: crafted (pisang + marigold + colok) or bought from Dewi; floated on any water after 6 PM via `Sim.krathong` (+30 glow, +10 joy, +8 bond).
+
+**Co-op with places** (protocol 2): `pos` and `tick` carry each player's area (`ar`) and companion (`cp`). Players only draw friends in the same place. The host streams Pelita's area (`g.a`): Pelita follows whoever cared for it last, even into another place, and is only drawn where it is. At night the host must be home to sleep; guests anywhere are carried to the farm for the summary. Every new shared action must go through `LC.Sim` and `LC.Sim.part`.
+
+**Culture, drawn with respect:** gotong-royong and the kenduri, wau kites, batik and jamu, tea terraces, Mũi Né-style red dunes with dragon fruit and a Cham tower, rafflesia and tualang trees, Sang Kancil, sea turtles, and the five folk spirits, each with a short lore line in the game.
+
 ## 8. Milestones
 
 1. **Skeleton.** Phaser boots, procedural textures, tilemap, player movement with collision, camera.
@@ -218,8 +255,8 @@ Slow pads, sparse bells, a soft bass pulse and a distant gong through a generate
 ---
 
 ## 9. Out of scope (future ideas)
-- Interiors, more villagers and friendship.
-- Seasons (wet and dry monsoon), fishing in the river, a krathong-making minigame.
-- More spirits from regional folklore, each with their own tastes.
+- Interiors, and upgrading your own house and farm buildings.
+- Seasons (wet and dry monsoon), a night market (pasar malam) every Sabtu, wayang kulit nights, sepak takraw with the villagers.
+- Saving a co-op guest's villager friendships and fish log with their bag.
 - Gamepad support, and a Play Store release (that would need an AAB build).
 - Co-op extras: shared chests, gifting items between players, a "everyone ready to sleep" vote, chat emotes, and a self-hosted PeerJS server for reliability.

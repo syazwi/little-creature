@@ -18,7 +18,7 @@ window.LC = window.LC || {};
     inv[6] = { id: 'seed_marigold', n: 2 };
     inv[7] = { id: 'seed_melati', n: 2 };
     var trees = {};
-    LC.OBJECTS.forEach(function (o) { if (o.type === 'tree') trees[o.id] = 0; });
+    LC.allHarvestables().forEach(function (o) { trees[o.id] = 0; });
     return {
       version: 1,
       day: 1,
@@ -31,10 +31,19 @@ window.LC = window.LC || {};
       tiles: {},          // "x,y" -> { tilled, wet, crop: { id, g } }
       trees: trees,       // id -> days until fruit (0 = ready)
       offerings: [],      // offerings placed today
-      ghost: { full: 20, joy: 20, glow: 8, bond: 0, stage: 0, craving: 'nasi', cravingDone: false, petAt: -999 },
+      ghost: { full: 20, joy: 20, glow: 8, bond: 0, stage: 0, level: 1, craving: 'nasi', cravingDone: false, petAt: -999 },
       flags: {},
-      stats: { earned: 0, totalDays: 0 },
-      pendingStage: []
+      stats: { earned: 0, totalDays: 0, fish: 0 },
+      pendingStage: [],
+      pendingLevel: [],
+      // v1.3
+      area: 'farm',
+      visited: { farm: true },
+      buildings: {},      // shared: plotId -> { style, day, done, vid }
+      spirits: {},        // shared: spiritId -> { friend, playDay }
+      folk: {},           // personal: villagerId -> { met, pts, chatDay, task: { item, n, reward }, taskDay, done, gifts }
+      fishLog: {},        // personal: itemId -> count
+      companion: null     // personal: a befriended spirit following you
     };
   }
 
@@ -61,12 +70,13 @@ window.LC = window.LC || {};
     // -------------------------------------------------------------- co-op
     snapshot: function () {
       var s = this.s;
-      return JSON.parse(JSON.stringify({ day: s.day, minutes: s.minutes, tiles: s.tiles, trees: s.trees, ghost: s.ghost, offerings: s.offerings }));
+      return JSON.parse(JSON.stringify({ day: s.day, minutes: s.minutes, tiles: s.tiles, trees: s.trees, ghost: s.ghost, offerings: s.offerings, buildings: s.buildings, spirits: s.spirits }));
     },
     applySnapshot: function (w) {
       var s = this.s;
       s.day = w.day; s.minutes = w.minutes; s.tiles = w.tiles || {}; s.trees = w.trees || {};
       s.offerings = w.offerings || [];
+      s.buildings = w.buildings || {}; s.spirits = w.spirits || {};
       if (s.ghost) Object.keys(w.ghost).forEach(function (k) { s.ghost[k] = w.ghost[k]; }); else s.ghost = w.ghost;
     },
     // A guest plays on the host's shared world with their own travelling bag.
@@ -86,6 +96,7 @@ window.LC = window.LC || {};
       s.flags = { introDone: true, fedOnce: true, incense: true, tilled: true, planted: true, watered: true, slept: true, harvested: true, cooked: true, metAni: true };
       this.s = s;
       this.applySnapshot(world);
+      this.recalc();
       return s;
     },
     load: function () {
@@ -96,10 +107,17 @@ window.LC = window.LC || {};
         Object.keys(base).forEach(function (k) { if (data[k] === undefined) data[k] = base[k]; });
         Object.keys(base.ghost).forEach(function (k) { if (data.ghost[k] === undefined) data.ghost[k] = base.ghost[k]; });
         Object.keys(base.trees).forEach(function (k) { if (data.trees[k] === undefined) data.trees[k] = 0; });
+        Object.keys(base.stats).forEach(function (k) { if (data.stats[k] === undefined) data.stats[k] = base.stats[k]; });
+        // v1.3: Pelita's level comes from its bond (no celebrations for levels earned before the update)
+        data.ghost.level = LC.levelFor(data.ghost.bond);
+        data.pendingStage = []; data.pendingLevel = [];
+        data.area = 'farm';
+        if (data.flags.metAni) data.visited.kampung = data.visited.kampung || false;
         while (data.inv.length < LC.INV_SIZE) data.inv.push(null);
         // saves happen at bedtime and whenever the app is backgrounded, so keep the clock
         if (!(data.minutes >= LC.DAY_START && data.minutes < LC.DAY_END - 10)) data.minutes = LC.DAY_START;
         this.s = data;
+        this.recalc();
         return true;
       } catch (e) { return false; }
     },
@@ -109,11 +127,14 @@ window.LC = window.LC || {};
     weekday: function () { return LC.WEEKDAYS[(this.s.day - 1) % 7]; },
     selItem: function () { return this.s.inv[this.s.sel] || null; },
 
+    // '@fish' style ids mean "any item of that category"
+    matches: function (id, itemId) { return id[0] === '@' ? LC.ITEMS[itemId].cat === id.slice(1) : id === itemId; },
     count: function (id) {
-      var n = 0;
-      this.s.inv.forEach(function (sl) { if (sl && sl.id === id) n += sl.n; });
+      var n = 0, self = this;
+      this.s.inv.forEach(function (sl) { if (sl && self.matches(id, sl.id)) n += sl.n; });
       return n;
     },
+    ingName: function (id) { return id[0] === '@' ? (LC.CATS[id.slice(1)] || id.slice(1)) : LC.ITEMS[id].name; },
     has: function (map) {
       var self = this;
       return Object.keys(map).every(function (id) { return self.count(id) >= map[id]; });
@@ -137,12 +158,17 @@ window.LC = window.LC || {};
     },
     remove: function (id, n) {
       n = n || 1;
-      var inv = this.s.inv;
-      // take from the selected slot first, then the back of the bag
-      var order = [this.s.sel];
-      for (var i = inv.length - 1; i >= 0; i--) if (i !== this.s.sel) order.push(i);
+      var inv = this.s.inv, self = this, order = [];
+      if (id[0] === '@') {   // any of a category: use up the cheapest first, so rare fish are kept
+        inv.forEach(function (sl, j) { if (sl && self.matches(id, sl.id)) order.push(j); });
+        order.sort(function (a, b) { return (LC.ITEMS[inv[a].id].sell || 0) - (LC.ITEMS[inv[b].id].sell || 0); });
+      } else {
+        // take from the selected slot first, then the back of the bag
+        order.push(this.s.sel);
+        for (var i = inv.length - 1; i >= 0; i--) if (i !== this.s.sel) order.push(i);
+      }
       order.forEach(function (j) {
-        if (n > 0 && inv[j] && inv[j].id === id) {
+        if (n > 0 && inv[j] && self.matches(id, inv[j].id)) {
           var k = Math.min(n, inv[j].n); inv[j].n -= k; n -= k;
           if (inv[j].n <= 0) inv[j] = null;
         }
@@ -166,16 +192,103 @@ window.LC = window.LC || {};
       var g = this.s.ghost;
       if (this.isHGN()) n *= 2;
       g.bond += n;
-      while (g.stage < LC.STAGES.length - 1 && g.bond >= LC.STAGES[g.stage + 1].bond) {
-        g.stage++;
-        this.s.pendingStage.push(g.stage);
-      }
+      while (g.stage < LC.STAGES.length - 1 && g.bond >= LC.STAGES[g.stage + 1].bond) g.stage++;
+      var lv = LC.levelFor(g.bond);
+      while ((g.level || 1) < lv) { g.level = (g.level || 1) + 1; this.s.pendingLevel.push(g.level); }
       LC.emit('ghost');
       return n;
     },
     nextStageBond: function () {
       var g = this.s.ghost;
       return g.stage < LC.STAGES.length - 1 ? LC.STAGES[g.stage + 1].bond : null;
+    },
+    level: function () { return this.s.ghost.level || 1; },
+    nextLevelBond: function () { var l = this.level(); return l < LC.MAX_LEVEL ? LC.LEVELS[l] : null; },
+    isOpen: function (area) { return LC.areaOpen(area, this.level()); },
+    friend: function (sid) { var sp = this.s.spirits[sid]; return !!(sp && sp.friend); },
+
+    // personal limits that grow with Pelita's level and spirit blessings
+    recalc: function () {
+      var s = this.s, lv = this.level(), e = 120;
+      Object.keys(LC.LEVEL_REWARDS).forEach(function (k) { if (lv >= +k && LC.LEVEL_REWARDS[k].energy) e += LC.LEVEL_REWARDS[k].energy; });
+      if (this.friend('kenyalang')) e += 30;
+      s.maxEnergy = e;
+      s.maxWater = 20 + (lv >= 10 ? 10 : 0);
+      if (s.energy > s.maxEnergy) s.energy = s.maxEnergy;
+    },
+    // a level's personal gifts (every player on the farm gets them). Returns a line for the celebration.
+    levelGift: function (lv) {
+      var r = LC.LEVEL_REWARDS[lv], s = this.s;
+      if (!r) return null;
+      if (r.kepeng) s.kepeng += r.kepeng;
+      if (r.item) this.add(r.item[0], r.item[1]);
+      this.recalc();
+      return r.text || null;
+    },
+
+    // -------------------------------------------------------------- fishing
+    rollFish: function (kind) {
+      var tbl = LC.FISHING[kind] || LC.FISHING.river, night = this.s.minutes >= 19 * 60 || this.s.minutes < 6 * 60, naga = this.friend('naga');
+      var opts = tbl.map(function (e) {
+        var it = LC.ITEMS[e[0]], w = e[1];
+        if (night && it.night) w *= 2;
+        if (naga && (it.diff || 1) >= 3) w *= 2;
+        if (naga && it.kind === 'junk') w *= 0.5;
+        return [e[0], w];
+      });
+      var tot = opts.reduce(function (a, e) { return a + e[1]; }, 0), r = Math.random() * tot;
+      for (var i = 0; i < opts.length; i++) { r -= opts[i][1]; if (r <= 0) return opts[i][0]; }
+      return opts[0][0];
+    },
+
+    // -------------------------------------------------------------- villagers (personal friendship and requests)
+    folk: function (vid) {
+      var f = this.s.folk[vid];
+      if (!f) f = this.s.folk[vid] = { met: false, pts: 0, chatDay: 0, task: null, taskDay: 0, done: false, gifts: {} };
+      if (f.taskDay !== this.s.day) this.newTask(vid);
+      return f;
+    },
+    hearts: function (vid) { return Math.min(10, Math.floor((this.s.folk[vid] ? this.s.folk[vid].pts : 0) / 4)); },
+    newTask: function (vid) {
+      var v = LC.VILLAGERS[vid], f = this.s.folk[vid], t = v.tasks[rint(v.tasks.length)];
+      var n = t[1] + rint(t[2] - t[1] + 1), it = LC.ITEMS[t[0]], val = it.sell || it.price || 20;
+      f.task = { item: t[0], n: n, reward: Math.round(val * n * 1.6 / 5) * 5 + 10 };
+      f.taskDay = this.s.day; f.done = false;
+    },
+    // returns any heart-gifts newly earned: [{ hearts, item, n }]
+    addFriendship: function (vid, pts) {
+      var f = this.folk(vid), before = this.hearts(vid), out = [], self = this;
+      f.pts = Math.min(40, f.pts + pts);
+      var after = this.hearts(vid), gifts = LC.VILLAGERS[vid].gifts || {};
+      Object.keys(gifts).forEach(function (h) {
+        if (after >= +h && before < +h && !f.gifts[h]) {
+          f.gifts[h] = true;
+          var g = gifts[h];
+          if (g[0] === 'kepeng') self.s.kepeng += g[1]; else self.add(g[0], g[1]);
+          out.push({ hearts: +h, item: g[0], n: g[1] });
+        }
+      });
+      return out;
+    },
+    // which villager lives on each built plot, and who is in the kampung right now
+    villagerAtPlot: function (plot) { var b = this.s.buildings[plot]; return b && b.done ? b.vid : null; },
+    villagerHome: function (vid) {
+      if (!LC.VILLAGERS[vid].movesIn) return LC.VILLAGERS[vid].post;
+      var B = this.s.buildings;
+      for (var p in B) if (B[p].done && B[p].vid === vid) return LC.PLOT_POSTS[p];
+      return null;
+    },
+
+    // personal new-day chores, for the host/single player (from endDay) and for co-op guests (at dayStart)
+    personalMorning: function () {
+      var s = this.s, lines = [];
+      if (this.friend('bunian')) {
+        var pool = ['cendawan', 'herba', 'rotan', 'kayu', 'cendawan'], got = [];
+        for (var i = 0; i < 2; i++) { var it = pool[rint(pool.length)]; if (this.add(it, 1)) got.push(LC.ITEMS[it].name); }
+        if (got.length) lines.push('The Orang Bunian left ' + got.join(' and ') + ' on your doorstep.');
+      }
+      this.recalc();
+      return lines;
     },
 
     pickCraving: function () {
@@ -233,12 +346,12 @@ window.LC = window.LC || {};
       }
 
       // crops grow
-      var grown = 0, blessed = 0, ready = 0, lanternWater = g.stage >= 2 && g.glow >= 50;
+      var grown = 0, blessed = 0, ready = 0, lanternWater = g.stage >= 2 && g.glow >= 50, nuno = this.friend('nuno');
       Object.keys(s.tiles).forEach(function (k) {
         var t = s.tiles[k];
         if (t.crop) {
           var def = LC.CROPS[t.crop.id];
-          var watered = def.paddy || t.wet;
+          var watered = def.paddy || t.wet || (nuno && t.tilled && Math.random() < 0.5);
           if (watered && t.crop.g < def.days) {
             t.crop.g++; grown++;
             if (g.stage >= 3 && !neglected && t.crop.g < def.days && Math.random() < 0.3) { t.crop.g++; blessed++; }
@@ -256,7 +369,18 @@ window.LC = window.LC || {};
         lines.push('Pelita found ' + found + ' kepeng under the house!');
       }
 
-      // trees regrow
+      // gotong-royong: houses started today are raised overnight, and a family moves in
+      var B = s.buildings || {};
+      Object.keys(B).sort().forEach(function (p) {
+        var b = B[p];
+        if (b.done) return;
+        var taken = {}; Object.keys(B).forEach(function (q) { if (B[q].vid) taken[B[q].vid] = 1; });
+        var vid = LC.MOVE_IN.filter(function (v) { return !taken[v]; })[0] || null;
+        b.done = true; b.vid = vid;
+        lines.push('Gotong-royong! The whole kampung raised the ' + LC.HOUSES[b.style].name + ' overnight.' + (vid ? ' ' + LC.VILLAGERS[vid].name + ' (' + LC.VILLAGERS[vid].role.toLowerCase() + ') has moved in!' : ''));
+      });
+
+      // trees and forage regrow
       Object.keys(s.trees).forEach(function (id) { if (s.trees[id] > 0) s.trees[id]--; });
 
       // overnight needs
@@ -277,6 +401,7 @@ window.LC = window.LC || {};
       g.cravingDone = false;
       g.craving = self.pickCraving();
       if (!fainted) s.flags.slept = true;
+      this.personalMorning().forEach(function (l) { lines.push(l); });
       this.save();
       LC.emit('inv'); LC.emit('ghost');
       return summary;

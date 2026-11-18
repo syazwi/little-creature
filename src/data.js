@@ -49,13 +49,56 @@ window.LC = window.LC || {};
 
     air_merah: { name: 'Air Merah', kind: 'drink', price: 25, sell: 10, food: { full: 15, joy: 30 }, desc: 'Red soda with a straw. Spirits adore it.' },
     colok:     { name: 'Colok', kind: 'offering', price: 15, glow: 20, bond: 4, desc: 'Incense sticks. Light them at the spirit house.' },
-    malai:     { name: 'Phuang Malai', kind: 'offering', glow: 35, bond: 6, sell: 60, desc: 'A garland of jasmine, threaded by hand.' },
-    canang:    { name: 'Canang', kind: 'offering', glow: 45, joy: 10, bond: 8, sell: 70, desc: 'A palm-leaf tray of flowers. A daily gift to the spirits.' }
+    malai:     { name: 'Phuang Malai', kind: 'offering', price: 70, glow: 35, bond: 6, sell: 60, desc: 'A garland of jasmine, threaded by hand.' },
+    canang:    { name: 'Canang', kind: 'offering', price: 80, glow: 45, joy: 10, bond: 8, sell: 70, desc: 'A palm-leaf tray of flowers. A daily gift to the spirits.' },
+    krathong:  { name: 'Krathong', kind: 'float', price: 60, sell: 50, desc: 'A lotus float of banana leaf, flowers and incense. Set it on any water after dark.' },
+
+    // ---- v1.3: fishing, foraging, building
+    joran: { name: 'Joran', kind: 'tool', price: 60, desc: 'A bamboo fishing rod. Face any water and press USE to cast.' },
+
+    kayu:       { name: 'Kayu', kind: 'material', price: 15, sell: 6, desc: 'Sturdy timber for building.' },
+    batu:       { name: 'Batu', kind: 'material', price: 20, sell: 8, desc: 'Mountain stone for steps and walls.' },
+    atap:       { name: 'Atap', kind: 'material', price: 20, sell: 8, desc: 'Nipa-palm thatch for roofs.' },
+    tanah_liat: { name: 'Tanah Liat', kind: 'material', price: 25, sell: 10, desc: 'Red clay from the dunes, for roof tiles and pots.' },
+    rotan:      { name: 'Rotan', kind: 'material', sell: 14, desc: 'Rattan cane. Weavers and builders love it.' },
+
+    cendawan:  { name: 'Cendawan', kind: 'forage', sell: 18, food: { full: 8, joy: 2 }, desc: 'Wild forest mushrooms.' },
+    herba:     { name: 'Herba', kind: 'forage', sell: 24, desc: 'Fragrant wild herbs: serai, kunyit and daun kaduk.' },
+    durian:    { name: 'Durian', kind: 'fruit', price: 70, sell: 60, food: { full: 18, joy: -6 }, desc: 'The king of fruits. Spiky, creamy... and very smelly.' },
+    daun_teh:  { name: 'Daun Teh', kind: 'forage', sell: 15, desc: 'Fresh tea leaves from the misty highlands.' },
+    strawberi: { name: 'Strawberi', kind: 'fruit', sell: 30, food: { full: 6, joy: 12 }, desc: 'Highland strawberries, sweet and cold.' },
+    buah_naga: { name: 'Buah Naga', kind: 'fruit', price: 50, sell: 40, food: { full: 12, joy: 10 }, desc: 'Dragon fruit: magenta skin, speckled sweet flesh.' },
+    kerang:    { name: 'Kerang', kind: 'forage', sell: 15, desc: 'Pretty seashells from Pulau Mutiara.' },
+    mutiara:   { name: 'Mutiara', kind: 'treasure', sell: 250, desc: 'A real pearl! It shimmers like moonlight.' },
+    duit_lama: { name: 'Duit Lama', kind: 'treasure', sell: 80, desc: 'An old coin from a forgotten trading port.' },
+
+    ikan_tilapia:  { name: 'Tilapia', kind: 'fish', cat: 'fish', sell: 30, diff: 1, desc: 'A plump river fish. Common and tasty.' },
+    ikan_keli:     { name: 'Ikan Keli', kind: 'fish', cat: 'fish', sell: 25, diff: 1, night: true, desc: 'Whiskered catfish. Bites best after dark.' },
+    udang:         { name: 'Udang Galah', kind: 'fish', cat: 'fish', sell: 40, diff: 2, desc: 'Giant river prawn with long blue claws.' },
+    ikan_puyu:     { name: 'Ikan Puyu', kind: 'fish', cat: 'fish', sell: 20, diff: 1, desc: 'Climbing perch. It can wriggle over land!' },
+    ikan_haruan:   { name: 'Ikan Haruan', kind: 'fish', cat: 'fish', sell: 45, diff: 2, desc: 'Snakehead. Made into a healing soup.' },
+    ikan_kelah:    { name: 'Ikan Kelah', kind: 'fish', cat: 'fish', sell: 120, diff: 3, desc: 'Mahseer, the king of the forest rivers. Rare!' },
+    ikan_kembung:  { name: 'Ikan Kembung', kind: 'fish', cat: 'fish', sell: 30, diff: 1, desc: 'Silvery mackerel from the sea.' },
+    sotong:        { name: 'Sotong', kind: 'fish', cat: 'fish', sell: 40, diff: 2, night: true, desc: 'Squid. Drawn to lights on the water at night.' },
+    ikan_kerapu:   { name: 'Ikan Kerapu', kind: 'fish', cat: 'fish', sell: 110, diff: 3, desc: 'Spotted grouper from the coral. Rare!' },
+    ikan_sebarau:  { name: 'Ikan Sebarau', kind: 'fish', cat: 'fish', sell: 60, diff: 2, desc: 'Hampala barb with a black band. A fighter.' },
+    ikan_emas:     { name: 'Ikan Emas', kind: 'fish', cat: 'fish', sell: 150, diff: 3, desc: 'A golden carp from the mountain lake. Very lucky!' },
+    selipar:       { name: 'Old Selipar', kind: 'junk', sell: 1, desc: 'Somebody\'s lost flip-flop. Ha!' },
+
+    ikan_bakar:    { name: 'Ikan Bakar', kind: 'dish', sell: 70, food: { full: 35, joy: 10 }, desc: 'Fish grilled in banana leaf over coals.' },
+    asam_pedas:    { name: 'Asam Pedas', kind: 'dish', sell: 120, food: { full: 50, joy: 15 }, desc: 'Sour, spicy fish stew from Melaka.' },
+    sambal_udang:  { name: 'Sambal Udang', kind: 'dish', sell: 130, food: { full: 45, joy: 18 }, desc: 'Prawns in a fiery chilli sambal.' },
+    sotong_goreng: { name: 'Sotong Goreng', kind: 'dish', sell: 110, food: { full: 40, joy: 20 }, desc: 'Crispy fried squid rings.' },
+    sup_cendawan:  { name: 'Sup Cendawan', kind: 'dish', sell: 90, food: { full: 40, joy: 12 }, desc: 'Warm mushroom and sweet-potato soup.' },
+    pengat_durian: { name: 'Pengat Durian', kind: 'dish', sell: 160, food: { full: 45, joy: 30 }, desc: 'Durian simmered in coconut milk and palm sugar.' },
+    teh_o:         { name: 'Teh O', kind: 'drink', price: 20, sell: 30, food: { full: 5, joy: 20 }, desc: 'Hot sweet highland tea, no milk.' },
+    jamu:          { name: 'Jamu', kind: 'drink', price: 35, sell: 20, energy: 70, food: { full: 4, joy: -2 }, desc: 'Bitter herbal tonic from Java. Eat it (X) for +70 energy.' }
   };
   Object.keys(LC.ITEMS).forEach(function (id) { LC.ITEMS[id].id = id; LC.ITEMS[id].icon = 'i_' + id; });
+  LC.CATS = { fish: 'any fish' };   // recipe inputs like '@fish' accept any item of that category
 
-  LC.LOVES = ['pulut_mangga', 'kuih_pandan', 'air_merah', 'pisang_goreng'];
-  LC.DISLIKES = ['cili'];
+  LC.LOVES = ['pulut_mangga', 'kuih_pandan', 'air_merah', 'pisang_goreng', 'pengat_durian', 'teh_o'];
+  LC.DISLIKES = ['cili', 'durian'];
 
   // ---------------------------------------------------------------- crops
   LC.CROPS = {
@@ -81,22 +124,63 @@ window.LC = window.LC || {};
     { out: 'bubur_ubi', inp: { ubi: 1, kelapa: 1 } },
     { out: 'kuih_pandan', inp: { pandan: 1, kelapa: 1, padi: 1 } },
     { out: 'nasi_lemak', inp: { padi: 1, cili: 1, kelapa: 1 } },
-    { out: 'pulut_mangga', inp: { padi: 1, mangga: 1, kelapa: 1 } }
+    { out: 'pulut_mangga', inp: { padi: 1, mangga: 1, kelapa: 1 } },
+    { out: 'ikan_bakar', inp: { '@fish': 1 } },
+    { out: 'asam_pedas', inp: { '@fish': 1, cili: 2 } },
+    { out: 'sambal_udang', inp: { udang: 2, cili: 1 } },
+    { out: 'sotong_goreng', inp: { sotong: 1, padi: 1 } },
+    { out: 'sup_cendawan', inp: { cendawan: 2, ubi: 1 } },
+    { out: 'pengat_durian', inp: { durian: 1, kelapa: 1 } },
+    { out: 'teh_o', inp: { daun_teh: 2 } }
   ];
   LC.CRAFTS = [
     { out: 'malai', inp: { melati: 2 } },
-    { out: 'canang', inp: { marigold: 1, melati: 1 } }
+    { out: 'canang', inp: { marigold: 1, melati: 1 } },
+    { out: 'krathong', inp: { pisang: 1, marigold: 1, colok: 1 } }
   ];
   LC.SHOP = ['seed_ubi', 'seed_pandan', 'seed_cili', 'seed_marigold', 'seed_melati', 'seed_padi', 'colok', 'air_merah'];
 
   // ---------------------------------------------------------------- spirit
   LC.STAGES = [
-    { name: 'Flicker', bond: 0 },
-    { name: 'Little Spirit', bond: 30 },
-    { name: 'Lantern Spirit', bond: 150 },
-    { name: 'Garden Spirit', bond: 380 },
-    { name: 'Guardian of the Kampung', bond: 750 }
+    { name: 'Flicker', short: 'Flicker', bond: 0 },
+    { name: 'Little Spirit', short: 'Little Spirit', bond: 30 },
+    { name: 'Lantern Spirit', short: 'Lantern Spirit', bond: 150 },
+    { name: 'Garden Spirit', short: 'Garden Spirit', bond: 380 },
+    { name: 'Guardian of the Kampung', short: 'Guardian', bond: 750 }
   ];
+
+  // Pelita's levels (v1.3). LEVELS[i] is the bond needed for level i+1. Evolutions land on Lv 3, 6, 9 and 12
+  // (the same bond as the stages above), and new places open on the way.
+  LC.LEVELS = [0, 12, 30, 60, 100, 150, 210, 290, 380, 470, 570, 750, 900, 1080, 1280, 1500, 1750, 2050, 2400, 2800];
+  LC.MAX_LEVEL = LC.LEVELS.length;
+  LC.levelFor = function (bond) {
+    var l = 1;
+    for (var i = 1; i < LC.LEVELS.length; i++) if (bond >= LC.LEVELS[i]) l = i + 1;
+    return l;
+  };
+  // what each level brings (gifts are given to every player on the farm)
+  LC.LEVEL_REWARDS = {
+    2: { unlock: 'kampung' },
+    3: { stage: 1, unlock: 'forest' },
+    4: { kepeng: 60, text: 'Pelita found 60 kepeng for you.' },
+    5: { unlock: 'island' },
+    6: { stage: 2 },
+    7: { paths: true, item: ['colok', 3], text: 'Spirit paths: wayside shrines can now carry you home, and the spirit house can send you to any place you have visited.' },
+    8: { unlock: 'mountain' },
+    9: { stage: 3 },
+    10: { water: 10, text: 'Your gembor now holds 30 waterings.' },
+    11: { unlock: 'desert' },
+    12: { stage: 4 },
+    13: { kepeng: 150, text: 'Pelita found 150 kepeng under the stilts.' },
+    14: { energy: 20, text: 'Pelita\'s warm light gives you +20 max energy.' },
+    15: { item: ['mutiara', 1], text: 'Pelita brought you a pearl from the river bed.' },
+    16: { item: ['canang', 3], text: 'The spirits of the kampung send 3 canang.' },
+    17: { kepeng: 250, text: 'Pelita found 250 kepeng in an old jar.' },
+    18: { energy: 20, text: '+20 max energy.' },
+    19: { item: ['mutiara', 2], text: 'Two pearls glitter on your doorstep.' },
+    20: { kepeng: 500, legend: true, text: 'Pelita is now a Legend of the Kampung! Its light reaches every corner of the land.' }
+  };
+
   LC.STAGE_TEXT = [
     null,
     ['Pelita\'s faint flicker swells into a little round spirit!',
@@ -111,7 +195,41 @@ window.LC = window.LC || {};
   LC.TREES = {
     banana: { fruit: 'pisang', count: 2, regrow: 3, name: 'Banana tree' },
     palm:   { fruit: 'kelapa', count: 2, regrow: 3, name: 'Coconut palm' },
-    mango:  { fruit: 'mangga', count: 2, regrow: 4, name: 'Mango tree' }
+    mango:  { fruit: 'mangga', count: 2, regrow: 4, name: 'Mango tree' },
+    durian: { fruit: 'durian', count: 1, regrow: 4, name: 'Durian tree' }
+  };
+
+  // Things to gather in the wider world. They regrow like fruit trees (state lives in S.trees, keyed by object id).
+  LC.FORAGE = {
+    branches:   { name: 'Fallen branches', verb: 'Gather branches', item: 'kayu', count: 2, regrow: 1, energy: 1 },
+    rattan:     { name: 'Rattan vine', verb: 'Cut rattan', item: 'rotan', count: 1, regrow: 2, energy: 1 },
+    mushroom:   { name: 'Mushrooms', verb: 'Pick mushrooms', item: 'cendawan', count: 2, regrow: 2, energy: 0 },
+    herbs:      { name: 'Wild herbs', verb: 'Pick herbs', item: 'herba', count: 1, regrow: 2, energy: 0 },
+    nipa:       { name: 'Nipa palm', verb: 'Cut nipa thatch', item: 'atap', count: 2, regrow: 2, energy: 1 },
+    shells:     { name: 'Seashells', verb: 'Collect shells', item: 'kerang', count: 2, regrow: 1, energy: 0, rare: ['mutiara', 0.08] },
+    tea:        { name: 'Tea bush', verb: 'Pluck tea leaves', item: 'daun_teh', count: 2, regrow: 1, energy: 0 },
+    strawberry: { name: 'Strawberry patch', verb: 'Pick strawberries', item: 'strawberi', count: 2, regrow: 2, energy: 0 },
+    boulder:    { name: 'Boulder', verb: 'Break off stone', item: 'batu', count: 2, regrow: 2, energy: 3 },
+    dragon:     { name: 'Dragon fruit cactus', verb: 'Pick dragon fruit', item: 'buah_naga', count: 2, regrow: 3, energy: 0 },
+    clay:       { name: 'Clay pit', verb: 'Dig clay', item: 'tanah_liat', count: 2, regrow: 2, energy: 3 },
+    glint:      { name: 'Something glinting', verb: 'Dig it up', item: 'duit_lama', count: 1, regrow: 3, energy: 2, rare: ['mutiara', 0.12] }
+  };
+
+  // Fishing: what bites in each kind of water. [item, weight]. Night fish bite twice as often after dark.
+  LC.FISHING = {
+    river:  [['ikan_tilapia', 40], ['ikan_keli', 32], ['udang', 18], ['selipar', 6]],
+    stream: [['ikan_puyu', 40], ['ikan_haruan', 30], ['ikan_kelah', 12], ['selipar', 5]],
+    sea:    [['ikan_kembung', 45], ['sotong', 25], ['ikan_kerapu', 12], ['selipar', 5]],
+    lake:   [['ikan_puyu', 30], ['ikan_sebarau', 30], ['ikan_emas', 12], ['selipar', 5]],
+    oasis:  [['ikan_puyu', 45], ['ikan_keli', 25], ['duit_lama', 8], ['selipar', 10]]
+  };
+  LC.WATER_NAMES = { river: 'river', stream: 'forest pool', sea: 'sea', lake: 'mountain lake', oasis: 'oasis' };
+
+  // Houses the kampung raises together (gotong-royong) on an empty plot. Ready the next morning.
+  LC.HOUSES = {
+    hut:    { name: 'Pondok Buluh', desc: 'A breezy bamboo hut on stilts.', cost: { kayu: 6, atap: 6 }, kepeng: 120 },
+    timber: { name: 'Rumah Kayu', desc: 'A carved timber stilt house, like Nenek\'s.', cost: { kayu: 12, atap: 4, batu: 4 }, kepeng: 250 },
+    brick:  { name: 'Rumah Batu', desc: 'A Melaka-style house with clay roof tiles and tiled stone steps.', cost: { kayu: 6, batu: 10, tanah_liat: 6 }, kepeng: 400 }
   };
 
   // ---------------------------------------------------------------- map
@@ -133,6 +251,7 @@ window.LC = window.LC || {};
     fill(11, 12, 12, 12, 'p');
     fill(20, 12, 21, 27, 'p');
     fill(39, 9, 42, 9, 'p');
+    fill(29, 0, 30, 9, 'p');      // v1.3: the north trail into Hutan Rimba
     // fenced farm field
     fill(5, 13, 18, 13, 'F'); fill(5, 22, 18, 22, 'F'); fill(5, 13, 5, 22, 'F'); fill(18, 13, 18, 22, 'F');
     fill(11, 13, 12, 13, 'p');
@@ -144,7 +263,6 @@ window.LC = window.LC || {};
     fill(20, 28, 21, 32, 'j');
     return g;
   };
-  LC.SOLID_TILES = { J: 1, w: 1, S: 1, F: 1 };
 
   LC.OBJECTS = [
     { id: 'house', type: 'house', x: 2, y: 2, w: 5, h: 6, tex: 'house' },
@@ -155,7 +273,8 @@ window.LC = window.LC || {};
     { id: 'well', type: 'well', x: 15, y: 8, w: 1, h: 1, tex: 'well' },
     { id: 'warung', type: 'warung', x: 39, y: 7, w: 4, h: 2 },
     { id: 'sign', type: 'sign', x: 44, y: 9, w: 1, h: 1, tex: 'sign' },
-    { id: 'barrier', type: 'barrier', x: 47, y: 10, w: 1, h: 2, tex: 'barrier' },
+    { id: 'sampan_farm', type: 'sampan', x: 22, y: 31, w: 2, h: 1, to: 'island' },
+    { id: 'sign_north', type: 'signpost', x: 31, y: 4, w: 1, h: 1, tex: 'sign', text: 'HUTAN RIMBA (the old rainforest) ^  The trail north is overgrown. Pelita at Lv 3 could light the way.' },
 
     { id: 'banana1', type: 'tree', kind: 'banana', x: 2, y: 14, w: 1, h: 1 },
     { id: 'banana2', type: 'tree', kind: 'banana', x: 3, y: 17, w: 1, h: 1 },
@@ -204,12 +323,16 @@ window.LC = window.LC || {};
       'Coconut milk, rice and a little chili. Nasi lemak! The best breakfast in the world.',
       'Cooked food fills a spirit far more than raw crops. Use Nenek\'s dapur!'
     ],
-    sign: 'KE KAMPUNG (To the village) >>  The bridge is being repaired after the monsoon floods.',
+    sign: 'KE KAMPUNG TEPIAN (To the village) >>  The villagers are rebuilding after the monsoon floods. Pelita at Lv 2 can light the road.',
     barrier: 'The road to the village is closed for repairs. Maybe next season.',
     frangipani: 'Bunga kemboja (frangipani). Its sweet scent drifts strongest at night, when the spirits wander.',
     woodpile: 'Nenek\'s firewood for the dapur. Neatly stacked, as always.',
     river: 'The river glitters. Sampans drift by on their way to the morning market.',
     kerbau: 'The kerbau chews thoughtfully and lets out a long, happy "Moooo."',
-    chicken: 'Kok-kok-kok! The ayam kampung pecks at your sandals.'
+    chicken: 'Kok-kok-kok! The ayam kampung pecks at your sandals.',
+    kancil: 'Sang Kancil, the clever mouse deer from the old tales! It twitches its nose and darts away.',
+    ketam: 'A little ketam (crab) waves its claws at you. Snip snip!',
+    penyu: 'A sea turtle (penyu) rests on the warm sand. Its eggs may be buried nearby. Best to let it be.',
+    biawak: 'A biawak (monitor lizard) flicks its tongue and suns itself. It seems quite unbothered.'
   };
 })(window.LC);

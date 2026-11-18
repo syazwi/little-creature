@@ -322,9 +322,13 @@ window.LC = window.LC || {};
       else if (!f.harvested) t = 'Water your crops each day until they are ready to harvest.';
       else if (!f.cooked) t = 'Cook a dish at the dapur. Cooked food fills Pelita far more.';
       else if (!f.metAni) t = 'Visit Mak Ani\'s warung on the east road to sell and buy.';
+      else if (LC.State.isOpen('kampung') && !S.visited.kampung) t = 'The road east is open! Visit Kampung Tepian and meet the villagers.';
+      else if (S.visited.kampung && !LC.State.count('joran') && !f.fished) t = 'Visit Pak Mat at the kampung jetty to learn fishing.';
+      else if (S.visited.kampung && !Object.keys(S.buildings).length) t = 'Help rebuild the kampung: ask Tukang Leong, then build a house on an empty plot.';
       else {
-        var nb = LC.State.nextStageBond();
-        t = nb === null ? 'Pelita is the Guardian of the Kampung. Keep the farm thriving!' : 'Help Pelita grow: ' + Math.floor(g.bond) + ' / ' + nb + ' bond to become a ' + LC.STAGES[g.stage + 1].name + '.';
+        var lv = LC.State.level(), nl = LC.State.nextLevelBond(), r = LC.LEVEL_REWARDS[lv + 1] || {};
+        var what = r.unlock ? ' to open ' + LC.AREAS[r.unlock].name : r.stage ? ' to evolve' : '';
+        t = nl === null ? 'Pelita is a Legend of the Kampung! Befriend every spirit and help every neighbour.' : 'Pelita Lv ' + lv + ': ' + Math.floor(g.bond) + ' / ' + nl + ' bond for Lv ' + (lv + 1) + what + '. Care for Pelita and help the villagers.';
       }
       return pre + 'Goal: ' + t;
     }
@@ -347,11 +351,11 @@ window.LC = window.LC || {};
       this.bar(gf, px + 132, py + 68, 124, 12, g.full / 100, g.full < 25 ? 0xe76f51 : 0xf2d06b);
       this.bar(gf, px + 132, py + 93, 124, 12, g.joy / 100, g.joy < 20 ? 0xe76f51 : 0xff7aa8);
       this.bar(gf, px + 132, py + 118, 124, 12, g.glow / 100, g.glow < 20 ? 0xe76f51 : 0xb8a8ff);
-      var nb = LC.State.nextStageBond(), pb = LC.STAGES[g.stage].bond;
+      var lv = LC.State.level(), nb = LC.State.nextLevelBond(), pb = LC.LEVELS[lv - 1];
       this.bar(gf, px + 20, py + 164, 234, 7, nb === null ? 1 : (g.bond - pb) / (nb - pb), 0xffd166);
       this.portrait.setTexture('ghost_' + g.stage + '_' + (this.world.curExpr || 'normal'));
-      this.tStage.setText(LC.STAGES[g.stage].name);
-      this.tBond.setText(nb === null ? 'Bond ' + Math.floor(g.bond) + '  (max)' : 'Bond ' + Math.floor(g.bond) + ' / ' + nb);
+      this.tStage.setText('Lv ' + lv + ' · ' + LC.STAGES[g.stage].short);
+      this.tBond.setText(nb === null ? 'Bond ' + Math.floor(g.bond) + '  (max level)' : 'Bond ' + Math.floor(g.bond) + ' / ' + nb + '  (Lv ' + (lv + 1) + ')');
       if (g.stage === 0) { this.tCrave.setText('Craving: ???'); this.icCrave.setVisible(false); }
       else if (g.cravingDone) { this.tCrave.setText('Craving: satisfied!'); this.icCrave.setVisible(false); }
       else { this.tCrave.setText('Craving: ' + LC.ITEMS[g.craving].name); this.icCrave.setVisible(true).setTexture('i_' + g.craving); }
@@ -439,6 +443,7 @@ window.LC = window.LC || {};
         case 'KeyM': this.toast('Music ' + (LC.Audio.toggleMusic() ? 'on' : 'off'), 'ic_glow'); break;
         case 'KeyX': this.world.eat(); break;
         case 'KeyF': if (LC.canFullscreen()) LC.toggleFullscreen(); break;
+        case 'KeyJ': this.openJournal(); break;
         case 'Escape': this.openPause(); break;
       }
     }
@@ -550,7 +555,8 @@ window.LC = window.LC || {};
       if (tabs.length > 1) {
         listY = Y + 104;
         tabs.forEach(function (tb, k) {
-          var t = self.txt(X + 36 + k * 150, Y + 62, tb.label, 20, '#cdb8a0').setInteractive({ useHandCursor: true });
+          var tw = Math.min(150, (Wd - 50) / tabs.length);
+          var t = self.txt(X + (tabs.length > 3 ? 26 : 36) + k * tw, Y + 62, tb.label, tabs.length > 3 ? 17 : 20, '#cdb8a0').setInteractive({ useHandCursor: true });
           t.on('pointerdown', function () { tab = k; sel = 0; scroll = 0; LC.Audio.sfx('click'); render(); });
           c.add(t); tabT.push(t);
         });
@@ -599,7 +605,7 @@ window.LC = window.LC || {};
           var on = scroll + r === sel, dis = it.enabled === false;
           rg.fillStyle(on ? 0x4a3520 : 0x2b1f17, 1); rg.fillRoundedRect(X + 20, o.y, Wd - 40, RH - 4, 6);
           if (on) { rg.lineStyle(2, 0xffd166, 1); rg.strokeRoundedRect(X + 20, o.y, Wd - 40, RH - 4, 6); }
-          o.ic.setVisible(!!it.icon); if (it.icon) o.ic.setTexture(it.icon).setAlpha(dis ? 0.45 : 1);
+          o.ic.setVisible(!!it.icon); if (it.icon) o.ic.setTexture(it.icon).setScale(it.iconScale || 2).setAlpha(dis ? 0.45 : 1);
           o.lb.setText(it.label).setColor(dis ? '#7a6a5a' : '#fbecc8');
           o.sb.setText(it.sub || '');
           o.rt.setText(it.right || '').setColor(dis ? '#7a6a5a' : '#f7dd8a');
@@ -641,7 +647,7 @@ window.LC = window.LC || {};
     }
 
     ingText(inp) {
-      return Object.keys(inp).map(function (id) { return inp[id] + ' ' + LC.ITEMS[id].name + ' (have ' + LC.State.count(id) + ')'; }).join('  +  ');
+      return Object.keys(inp).map(function (id) { return inp[id] + ' ' + LC.State.ingName(id) + ' (have ' + LC.State.count(id) + ')'; }).join('  +  ');
     }
 
     openShop() {
@@ -717,14 +723,26 @@ window.LC = window.LC || {};
           } },
           { label: 'Pelita', rows: function () {
             var st = g.stage, bless = ['None yet.', 'Follows you and shows its cravings.', 'Waters crops overnight when Glow is 50+.', 'Crops may grow extra fast. Finds lost kepeng.', 'Guardian of the Kampung. All blessings.'];
+            var lv = LC.State.level(), nl = LC.State.nextLevelBond();
             return [
+              { icon: 'ic_bond', label: 'Level ' + lv + ' of ' + LC.MAX_LEVEL + ' · Bond ' + Math.floor(g.bond) + (nl === null ? '' : ' / ' + nl), sub: nl === null ? 'Pelita is a Legend of the Kampung!' : 'Every act of care gives bond. Levels open new places, evolve Pelita and bring gifts (see the Journal, J).' },
               { icon: 'ic_full', label: 'Kenyang (fullness): ' + Math.round(g.full), sub: 'Falls through the day, twice as fast on Hungry Ghost Night. Feed it!' },
               { icon: 'ic_joy', label: 'Gembira (joy): ' + Math.round(g.joy), sub: 'Pet it, feed its favourites and meet its craving. Below 12 it sulks at home.' },
               { icon: 'ic_glow', label: 'Cahaya (glow): ' + Math.round(g.glow), sub: 'Incense, garlands and canang. Fades every night.' },
-              { icon: 'i_pulut_mangga', label: 'Favourite foods', sub: 'Pulut Mangga, Kuih Pandan, Air Merah and Pisang Goreng. Raw cili? Definitely not.' },
+              { icon: 'i_pulut_mangga', label: 'Favourite foods', sub: 'Pulut Mangga, Kuih Pandan, Pisang Goreng, Pengat Durian, Teh O and Air Merah. Raw cili or durian? No thanks!' },
               { icon: 'ic_bond', label: LC.STAGES[st].name, sub: 'Blessing: ' + bless[st] },
               { icon: 'ic_moon', label: 'Every night', sub: 'If all three needs are 50+, Pelita sleeps content (+bond). If any is below 20... expect pranks.' }
             ];
+          } },
+          { label: 'Spirits', rows: function () { return self.spiritRows(true); } },
+          { label: 'Paths', empty: 'Spirit paths open when Pelita reaches Lv 7.', rows: function () {
+            if (LC.State.level() < 7) return [];
+            return LC.AREA_ORDER.filter(function (a) { return a !== 'farm'; }).map(function (a) {
+              var A = LC.AREAS[a], open = LC.State.isOpen(a), seen = !!S.visited[a];
+              return { icon: open && seen ? 'ic_glow' : 'ic_moon', label: A.name, sub: !open ? 'Locked until Pelita reaches Lv ' + A.lvl + '.' : !seen ? 'Walk there once first: ' + LC.AREA_HOWTO[a] : 'Travel along Pelita\'s spirit path to ' + A.sub + '.',
+                right: open && seen ? 'Go' : '', enabled: open && seen, why: !open ? 'Pelita must reach Lv ' + A.lvl + '.' : 'Visit it on foot first.',
+                action: function () { W.spiritPath(a); return 'close'; } };
+            });
           } }
         ]
       });
@@ -747,14 +765,15 @@ window.LC = window.LC || {};
             { icon: 'ic_joy', label: 'Invite friends (co-op)', sub: 'Open this farm so friends can join from a PC or Android phone. Needs internet.', action: function () { self.inviteFriends(); return 'close'; } }
           ];
           return [
-            { icon: 'ic_sun', label: 'Resume', sub: 'Back to the kampung.', action: function () { return 'close'; } }
+            { icon: 'ic_sun', label: 'Resume', sub: 'Back to the kampung.', action: function () { return 'close'; } },
+            { icon: 'ic_bond', label: 'Journal', sub: 'Villager requests, places, spirits, fish and Pelita\'s levels. Press J anytime.', action: function () { self.openJournal(); } }
           ].concat(coop, [
             { icon: 'ic_bond', label: 'Save game', sub: 'Save your farm, bag and Pelita right now.', action: function () { self.toast(LC.State.save() ? 'Game saved.' : 'Could not save: browser storage is blocked.', 'ic_bond'); return 'close'; } },
             { icon: 'ic_glow', label: 'Music: ' + (LC.Audio.musicOn ? 'On' : 'Off'), sub: 'Chill gamelan-style music, generated live. Press M anytime.', action: function () { LC.Audio.toggleMusic(); } },
             { icon: 'ic_moon', label: 'Nature sounds: ' + (LC.Audio.ambienceOn ? 'On' : 'Off'), sub: 'River, birdsong by day, crickets and frogs at night.', action: function () { LC.Audio.toggleAmbience(); } },
             { icon: 'ic_joy', label: 'Touch controls: ' + (self.touchOn ? 'On' : 'Off'), sub: 'On-screen joystick and USE / EAT / BAG buttons for phones and tablets.', action: function () { self.setTouch(!self.touchOn); } },
             LC.canFullscreen() ? { icon: 'ic_sun', label: 'Fullscreen: ' + (LC.isFullscreen() ? 'On' : 'Off'), sub: 'Fill the whole screen with the kampung' + (self.touchOn ? '.' : '. Press F anytime.'), action: function () { LC.toggleFullscreen(); } } : null,
-            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact · tap the hotbar to select · II pauses' : 'WASD/Arrows move · E use · 1-9 or wheel select · Q next tool · X eat · Tab bag · M music · F fullscreen' },
+            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact · tap the hotbar to select · II pauses' : 'WASD/Arrows move · E use · 1-9/wheel select · Q tool · X eat · Tab bag · J journal · M music · F fullscreen' },
             { icon: 'ic_moon', label: 'Quit to title', sub: LC.Net.role ? 'Also ends the co-op session.' : 'Anything since your last sleep (or save) is lost.', action: function () { self.quitToTitle(); } }
           ]).filter(Boolean);
         } }]

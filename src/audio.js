@@ -143,6 +143,27 @@ window.LC = window.LC || {};
     var lfo = c.createOscillator(), lfoG = c.createGain();       // slow swell, like water lapping
     lfo.frequency.value = 0.13; lfoG.gain.value = 0.1; lfo.connect(lfoG); lfoG.connect(g.gain); lfo.start();
     s.connect(bp); bp.connect(lp); lp.connect(g); g.connect(A.amb); s.start();
+    A.riv = { g: g, bp: bp, lp: lp, lfo: lfo, lfoG: lfoG };
+    A.applyArea();
+  };
+  // each place has its own nature bed: river, rainforest, sea waves, mountain/dune wind (v1.3)
+  var AREA_SOUND = {
+    river: { g: 0.32, bp: 520, lp: 1400, lfo: 0.13, depth: 0.1, birds: 1 },
+    forest: { g: 0.12, bp: 700, lp: 1800, lfo: 0.2, depth: 0.05, birds: 2.4 },
+    sea: { g: 0.5, bp: 360, lp: 900, lfo: 0.09, depth: 0.32, birds: 0.5 },
+    wind: { g: 0.26, bp: 900, lp: 2400, lfo: 0.05, depth: 0.2, birds: 0.35 }
+  };
+  A.areaSound = AREA_SOUND.river;
+  A.setArea = function (area) {
+    var a = LC.AREAS && LC.AREAS[area];
+    A.areaSound = AREA_SOUND[(a && a.amb) || 'river'] || AREA_SOUND.river;
+    A.applyArea();
+  };
+  A.applyArea = function () {
+    if (!A.ctx || !A.riv) return;
+    var t = A.ctx.currentTime, q = A.areaSound, r = A.riv;
+    r.g.gain.setTargetAtTime(q.g, t, 0.8); r.bp.frequency.setTargetAtTime(q.bp, t, 0.8); r.lp.frequency.setTargetAtTime(q.lp, t, 0.8);
+    r.lfo.frequency.setTargetAtTime(q.lfo, t, 0.8); r.lfoG.gain.setTargetAtTime(q.depth, t, 0.8);
   };
   A.bird = function (t) {
     var d = pan(A.amb, rnd(-0.8, 0.8)), kind = Math.random();
@@ -191,7 +212,7 @@ window.LC = window.LC || {};
       A.next += spb; A.step++;
     }
     if (A.ambienceOn) {
-      if (!A.night && now >= A.nextBird) { A.bird(now + 0.05); A.nextBird = now + rnd(2.5, 7); }
+      if (!A.night && now >= A.nextBird) { A.bird(now + 0.05); A.nextBird = now + rnd(2.5, 7) / A.areaSound.birds; }
       if (A.night && now >= A.nextCricket) { A.cricket(now + 0.05); A.nextCricket = now + rnd(0.5, 1.4); }
       if (A.night && now >= A.nextFrog) { A.frog(now + 0.05); A.nextFrog = now + rnd(3, 8); }
     }
@@ -252,6 +273,12 @@ window.LC = window.LC || {};
       case 'moo': A.tone(t, 'sawtooth', 130, 95, 0.8, 0.04); break;
       case 'cluck': A.tone(t, 'square', 700, 500, 0.05, 0.03); A.tone(t + 0.09, 'square', 760, 520, 0.05, 0.03); break;
       case 'sad': A.tone(t, 'sine', 520, 300, 0.45, 0.08); break;
+      case 'levelup': [0, 2, 4, 5, 7].forEach(function (d, k) { A.bell(A.freq(d + 5), t + k * 0.07, 1.1, 0.11); }); A.gong(A.freq(-5), t + 0.4, 2.5, 0.12); break;
+      case 'cast': A.noise(t, 0.25, 0.14, 'bandpass', 2400, 800); A.tone(t + 0.3, 'sine', 700, 260, 0.12, 0.12); break;
+      case 'bite': A.tone(t, 'sine', 620, 200, 0.1, 0.18); A.tone(t + 0.14, 'sine', 560, 180, 0.1, 0.14); break;
+      case 'catch': A.noise(t, 0.3, 0.2, 'bandpass', 1600, 600); [0, 2, 4, 7].forEach(function (d, k) { A.bell(A.freq(d + 5), t + 0.15 + k * 0.08, 0.9, 0.1); }); break;
+      case 'reel': A.tone(t, 'square', 1200, 1100, 0.025, 0.03); break;
+      case 'build': [0, 0.18, 0.36, 0.6].forEach(function (d) { A.tone(t + d, 'triangle', 180, 120, 0.09, 0.22); A.noise(t + d, 0.05, 0.12, 'lowpass', 900); }); break;
       case 'buy': A.bell(A.freq(8), t, 0.3, 0.08); A.bell(A.freq(10), t + 0.05, 0.4, 0.08); break;
     }
   };

@@ -35,17 +35,57 @@ window.LC = window.LC || {};
     harvest: function (a) {
       var t = LC.State.tile(a.x, a.y);
       if (!t || !t.crop || LC.cropStage(t.crop) !== 3) return null;
-      var d = LC.CROPS[t.crop.id];
+      var d = LC.CROPS[t.crop.id], n = d.count;
+      if (d.paddy && LC.State.friend('semangat')) n += 2;   // the Semangat Padi's blessing
       t.crop = null;
-      return { item: d.item, count: d.count };
+      return { item: d.item, count: n };
     },
+    // fruit trees and forage spots anywhere in the world (their regrow timers live in S.trees)
     shake: function (a) {
-      var S = LC.State.s, o = LC.OBJECTS.filter(function (x) { return x.id === a.id; })[0];
-      if (!o || o.type !== 'tree') return null;
+      var S = LC.State.s, o = LC.objById(a.id);
+      if (!o || (o.type !== 'tree' && o.type !== 'forage')) return null;
       if (S.trees[a.id] > 0) return { days: S.trees[a.id] };
-      var tr = LC.TREES[o.kind];
-      S.trees[a.id] = tr.regrow;
-      return { item: tr.fruit, count: tr.count };
+      if (o.type === 'tree') {
+        var tr = LC.TREES[o.kind];
+        S.trees[a.id] = tr.regrow;
+        return { item: tr.fruit, count: tr.count };
+      }
+      var fg = LC.FORAGE[o.kind], res = { item: fg.item, count: fg.count };
+      S.trees[a.id] = fg.regrow;
+      if (fg.rare && Math.random() < fg.rare[1]) res.extra = fg.rare[0];
+      return res;
+    },
+    // gotong-royong: start a house on an empty kampung plot (materials are paid by whoever asked)
+    build: function (a) {
+      var S = LC.State.s, o = LC.objById(a.plot);
+      if (!o || o.type !== 'plot' || !LC.HOUSES[a.style] || S.buildings[a.plot]) return { ok: false };
+      S.buildings[a.plot] = { style: a.style, day: S.day, done: false, vid: null };
+      return { ok: true };
+    },
+    // grant a spirit's wish (the items are paid by whoever asked)
+    befriend: function (a) {
+      var S = LC.State.s;
+      if (!LC.SPIRITS[a.sid] || LC.State.friend(a.sid)) return { ok: false };
+      S.spirits[a.sid] = { friend: true, playDay: 0 };
+      LC.State.recalc();
+      return { ok: true, b: LC.State.addBond(15) };
+    },
+    // play with a befriended spirit: Pelita loves the company (once a day per spirit)
+    play: function (a) {
+      var S = LC.State.s, sp = S.spirits[a.sid];
+      if (!sp || !sp.friend) return { ok: false };
+      if (sp.playDay === S.day) return { ok: false, again: true };
+      sp.playDay = S.day;
+      S.ghost.joy = clamp(S.ghost.joy + 6);
+      return { ok: true, b: LC.State.addBond(3) };
+    },
+    // helping villagers makes Pelita proud
+    kind: function () { return { ok: true, b: LC.State.addBond(4) }; },
+    // float a krathong at night: Pelita's light swells
+    krathong: function () {
+      var g = LC.State.s.ghost;
+      g.glow = clamp(g.glow + 30); g.joy = clamp(g.joy + 10);
+      return { ok: true, b: LC.State.addBond(8) };
     },
     feed: function (a) {
       var g = LC.State.s.ghost, it = LC.ITEMS[a.item];
@@ -87,6 +127,8 @@ window.LC = window.LC || {};
       return { tiles: tiles };
     }
     if (op === 'shake') { var tr = {}; tr[a.id] = S.trees[a.id]; return { trees: tr }; }
+    if (op === 'build') return { buildings: S.buildings };
+    if (op === 'befriend' || op === 'play') return { ghost: S.ghost, spirits: S.spirits };
     return { ghost: S.ghost, offerings: S.offerings };
   };
   LC.Sim.succeeded = function (res) { return !!(res && (res === true || res.ok || res.item)); };

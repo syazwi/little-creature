@@ -195,10 +195,15 @@ window.LC = window.LC || {};
       sand, jetty, jungle, jungle, fenceH, fenceV, fenceC,
       function (p) { shore(p, 0); }, function (p) { shore(p, 1); }
     ];
-    var c = canvas(16 * fns.length, 16), ctx = c.getContext('2d');
+    var extra = Art.extraTiles || [];   // v1.3 tiles from art2.js
+    var c = canvas(16 * (fns.length + extra.length), 16), ctx = c.getContext('2d');
     fns.forEach(function (fn, i) {
       var t = canvas(16, 16), p = new P(t.getContext('2d'), 16, 16, 500 + (i === 9 || i === 12 || i === 13 || i === 22 ? i - 1 : i) * 31);
       fn(p); ctx.drawImage(t, i * 16, 0);
+    });
+    extra.forEach(function (e, k) {
+      var i = fns.length + k, t = canvas(16, 16), p = new P(t.getContext('2d'), 16, 16, e.seed || 900 + i * 31);
+      e.fn(p); ctx.drawImage(t, i * 16, 0);
     });
     if (scene.textures.exists('tiles')) scene.textures.remove('tiles');
     scene.textures.addCanvas('tiles', c);
@@ -758,5 +763,6 @@ window.LC = window.LC || {};
     Object.keys(LC.ITEMS).forEach(function (id) { if (ICON[id]) make(scene, 'i_' + id, 16, 16, ICON[id], true); });
     make(scene, 'i_kepeng', 16, 16, ICON.kepeng, true);
     Object.keys(HUD).forEach(function (k) { make(scene, k, 12, 12, HUD[k], true); });
+    if (Art.generate2) Art.generate2(scene);
   };
 })(window.LC);
