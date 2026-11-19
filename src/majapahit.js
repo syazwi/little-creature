@@ -95,6 +95,7 @@ window.LC = window.LC || {};
       { text: 'Then a horn sounds across the sea. A great jong with golden sails glides up to Nenek\'s jetty: the flagship of the King of Majapahit himself.' },
       { who: 'raden', text: 'Kebo Taruna! I gave my word at Barunai, and you have shamed it. I never ordered this.' },
       { who: 'laksamana', text: '...They cheated, my king. A spirit light...' },
+      { text: '(For a moment the admiral\'s eyes look far away, as if he is listening to someone. Out over the dark water, very faintly, an old woman cackles.)' },
       { who: 'raden', text: 'No. They won fairly. I lost my temper, and Asmara paid for it. And I hear that this friend went to Asmara\'s ghost and laid him to rest, when no one from Majapahit ever did.' },
       { who: 'raden', text: 'Forgive us, friend. Kebo Taruna and his sailors will stay and rebuild every roof they burned, with their own hands. And from now on, Majapahit ships will come to your jetty to trade, never to fight.' },
       { who: 'raden', text: 'Take this keris. It was made in the workshops of Majapahit, and it has never been drawn in anger. Keep it that way.' },

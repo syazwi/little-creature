@@ -397,6 +397,8 @@ The user picked this continuation: the exiled admiral makes a pact with an origi
 
 **While the shadow is loose** (steps 1-4, `LC.shadowLoose`): Pelita is drawn pale and its glow small (an `updateGhost` wrapper), farm and kampung torches stay dark (an `updateLighting` wrapper), `bayang` groups roam both places at night (not the farm once the guard lamps burn), and `State.endDay` dries up to two growing crops a night without the lamps. Si Kelam's shield resets its health until all four torches burn. The reward is granted before the finale's dialogue. Co-op protocol 12.
 
+**v2.3.1: Mak Lampir.** The user asked for Mak Lampir, "the black magic witch influencing the attack". She is a character of the Indonesian radio play and TV series *Misteri Gunung Merapi* (not a documented folk legend), so the game uses only her name and the witch archetype: its own art, words and story, nothing else from the series, and no religion. She whispered in the admiral's ear since Barunai (a hint in Chapter 4's king scene; he says so in the finale), holds Si Kelam's leash, and is the second phase on Pulau Kelam (`quests.c5witch`, saved): she watches from the crag (`lampir5`), then fights as `maklampir` (blinks around `C5.witch.zone`, snuffs a lit torch every 13 s with a violet bolt; shielded while any torch is dark). Beaten, she turns into a bat and flies off; the rewards come first. Co-op protocol 13.
+
 **Also in v2.3:** Pixelify Sans drew the "fi" ligature like an "A" ("first" came out as "Arst"), so every Text object now renders with `textRendering = 'optimizeSpeed'` (no ligatures).
 
 ## 8. Milestones

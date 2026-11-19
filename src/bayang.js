@@ -1,16 +1,19 @@
 /* Little Creature — Chapter 5: Bayang Hitam, "Black Shadow" (v2.3). It begins after Chapter 4, on the same save.
- * Laksamana Kebo Taruna was sent to guard Pulau Kelam, a lonely black rock far out at sea. In his anger he called
- * out to the dark, and something answered: Si Kelam, a shadow that drinks light (an original creature of this game,
- * not a figure of any faith). Now it wants the brightest little light on these shores: Pelita.
+ * Mak Lampir, a black-magic witch (v2.3.1, at the user's request; her look, words and story here are this game's own),
+ * has whispered in Laksamana Kebo Taruna's ear since the cockfight of Barunai: she fed the anger behind the attack of
+ * Chapter 4. Now he guards Pulau Kelam, a black rock far out at sea, and she has bound Si Kelam, a shadow that drinks
+ * light (an original creature of this game, not a figure of any faith), to his anger. She wants Pelita's light, a
+ * light that never goes out, to stay young for a thousand years.
  *  0 (a night after Chapter 4) the lamps go out on Nenek's farm   1 drive the shadows off the farm
  *  2 show the shadow shard to Juragan Wira on the trading jong; Tukang Leong's guard lamps; sail to Java
  *  3 Java: the king, and Empu Lintang the old lamp-maker, who made Pelita's first lamp. He needs brass from Barunai,
  *    a Cahaya Bunian (the hidden folk wash shadow shards clean) and damar resin from Hutan Rimba
- *  4 Pulau Kelam: light the four stone torches with the Pelita Purnama, then face Si Kelam
- *  5 Pelita becomes Pelita Purnama, the Full Moon Spirit; the admiral is freed and goes home to Java.
+ *  4 Pulau Kelam: light the four stone torches with the Pelita Purnama, then face Si Kelam; then Mak Lampir herself
+ *    (quests.c5witch), whose magic snuffs the torches out again
+ *  5 Pelita becomes Pelita Purnama, the Full Moon Spirit; the witch flees as a bat; the admiral is freed.
  * While the shadow is loose (steps 1-4) Pelita is pale, the torches of the farm and the kampung will not stay lit,
  * shadows prowl at night, and they wilt crops on the farm unless the guard lamps are burning. No gore anywhere:
- * Si Kelam bursts into sparks like fireflies. */
+ * Si Kelam bursts into sparks, and Mak Lampir turns into a bat and flaps away. */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -33,7 +36,8 @@ window.LC = window.LC || {};
   // ================================================================ the shadows
   Object.assign(LC.ENEMIES, {
     kelam: { name: 'Bayang Kelam', hp: 6, speed: 30, dmg: 7, sight: 130, w: 6, drop: [] },
-    sikelam: { name: 'Si Kelam', hp: 60, speed: 19, dmg: 12, sight: 200, w: 15, boss: true, drop: [] }
+    sikelam: { name: 'Si Kelam', hp: 60, speed: 19, dmg: 12, sight: 200, w: 15, boss: true, drop: [] },
+    maklampir: { name: 'Mak Lampir', hp: 50, speed: 24, dmg: 10, sight: 200, w: 8, boss: true, drop: [] }
   });
   function shadowNight(farm) { return function () { var S = LC.State.s, s = c5(S); return s >= 2 && s <= 4 && isNight(S) && !(farm && q(S).c5lamps); }; }
   LC.AREAS.farm.enemies = (LC.AREAS.farm.enemies || []).concat([
@@ -48,7 +52,8 @@ window.LC = window.LC || {};
     shards: { serpihan_bayang: 3 },
     obor: [{ x: 11, y: 8 }, { x: 28, y: 8 }, { x: 11, y: 18 }, { x: 28, y: 18 }],
     javaStock: ['kain_batik', 'celengan', 'jamu_kuat', 'damar'],
-    reward: 8000
+    reward: 8000,
+    witch: { zone: { x0: 13, y0: 7, x1: 26, y1: 17 }, blink: 4.5, snuff: 13 }   // she vanishes and reappears; her magic snuffs a torch
   };
   // Tukang Leong's guard lamps on Nenek's farm, and the old damar tree in Hutan Rimba
   [{ x: 19, y: 12 }, { x: 37, y: 12 }, { x: 4, y: 23 }, { x: 24, y: 26 }].forEach(function (t, i) {
@@ -113,7 +118,8 @@ window.LC = window.LC || {};
     pond: 'sea', amb: 'wind', decor: { n: 26, types: ['rock', 'rubble', 'stalagmite', 'rubble'], on: 'm' },
     critters: [], cave: true,
     enemies: [
-      { kind: 'sikelam', n: 1, zone: { x0: 16, y0: 9, x1: 23, y1: 14 }, when: function () { return c5(LC.State.s) === 4; } },
+      { kind: 'sikelam', n: 1, zone: { x0: 16, y0: 9, x1: 23, y1: 14 }, when: function () { var S = LC.State.s; return c5(S) === 4 && !q(S).c5witch; } },
+      { kind: 'maklampir', n: 1, zone: { x0: 15, y0: 8, x1: 24, y1: 14 }, when: function () { var S = LC.State.s; return c5(S) === 4 && !!q(S).c5witch; } },
       { kind: 'kelam', n: 4, zone: { x0: 8, y0: 6, x1: 31, y1: 19 }, when: function () { return c5(LC.State.s) === 4; } }
     ],
     exits: [], home: { x: 19.5, y: 22 }, ride: {}
@@ -136,7 +142,7 @@ window.LC = window.LC || {};
       look: look('#6a5a4a', 'none', { skin: '#9a6440', hair: '#2a1a10', beard: '#2a1a10', bottom: '#8a3a2a', bottom2: '#6a2a1e' }),
       intro: ['You. Of all the people to walk down this jetty... Please, do not be afraid. The dark has gone out of me. You saw to that.',
         'The king took away my ships and my title, and gave me a rope and a crate. It is honest work. I sleep at night now.'],
-      chat: ['Lift with your legs, not your pride.', 'I wrote to the Penghulu of your kampung. He wrote back. He said "come and thatch my roof again". I think that was a joke.', 'When the lamps go on in the harbour, I always stop and watch.', 'Anger is a door. Be careful what walks through it.'],
+      chat: ['If you ever hear an old woman cackling at night, light a lamp. A big one.', 'I wrote to the Penghulu of your kampung. He wrote back. He said "come and thatch my roof again". I think that was a joke.', 'When the lamps go on in the harbour, I always stop and watch.', 'Anger is a door. Be careful what walks through it.'],
       tasks: [['nasi', 1, 2], ['ikan_bakar', 1, 2]], taskText: 'for the harbour crew', gifts: { 3: ['kepeng', 400], 6: ['celengan', 1], 10: ['kepeng', 1200] },
       hideIf: function (S) { return c5(S) < 5; }
     }
@@ -144,6 +150,7 @@ window.LC = window.LC || {};
   LC.SPEAKERS = Object.assign(LC.SPEAKERS || {}, {
     wira: { name: 'Juragan Wira', portrait: 'wira_0' },
     kelam: { name: 'Si Kelam', portrait: 'sikelam_face' },
+    maklampir: { name: 'Mak Lampir', portrait: 'maklampir_face' },
     pelita: { name: 'Pelita', portrait: 'ghost' }
   });
 
@@ -153,6 +160,7 @@ window.LC = window.LC || {};
       { text: 'One by one, the lights of Nenek\'s farm gutter and go out: the pelita torches, the lamp in the spirit house, even the fireflies. A cold wind blows in from the sea.' },
       { text: 'Shadows peel away from the walls and slide across the yard. Pelita gives a tiny cry, and its light shrinks to a flicker.' },
       { who: 'kelam', text: '...so small... so bright... I will drink it all...' },
+      { text: 'Far out over the sea, a thin old voice cackles. Then the wind snatches it away.' },
       { text: '✦ Chapter 5: Bayang Hitam (Black Shadow) ✦  Drive the shadows away from Nenek\'s farm!' }
     ],
     gone: [
@@ -163,7 +171,8 @@ window.LC = window.LC || {};
     wira: [
       { who: 'wira', text: 'Show me that... Aduh! A shard of Si Kelam! My grandmother told us about it when we were small: a shadow from the old days that drinks light. Lamps, stars, little spirits. It is never full.' },
       { who: 'wira', text: 'And there is worse. After the battle here, the king sent Kebo Taruna to guard Pulau Kelam, a black rock far out at sea. Ships that pass it now say no lamp burns there, and his boat flies a black sail.' },
-      { who: 'wira', text: 'If Si Kelam has found him, it has found an angry heart to hide in. And now it wants your Pelita, the brightest little light on these shores.' },
+      { who: 'wira', text: 'And a fisherman from Tuban swears he saw an old woman on that rock, with wild white hair down to her knees, cackling at the moon. If that is Mak Lampir, then this is black magic. They say she keeps shadows the way other people keep dogs.' },
+      { who: 'wira', text: 'If she has found Kebo Taruna\'s anger, she has found a door to walk through. And now she wants your Pelita, the brightest little light on these shores.' },
       { who: 'wira', text: 'Only one person can help: Empu Lintang, the old lamp-maker of the king\'s court. He is older than my grandmother. I will sail you to Java whenever you are ready.' },
       { who: 'wira', text: 'But not before your farm is safe. The shadows will come every night now. Ask your carpenter for guard lamps: brass on good wood, burning all night long.' }
     ],
@@ -181,7 +190,8 @@ window.LC = window.LC || {};
       { who: 'empu', text: 'Let me see this little one... Ah. Ahh. I know this light. I have not seen it for seventy years.' },
       { who: 'empu', text: 'When I was a boy, my master made a lamp for a trader from Borneo: a little brass lamp whose flame never went out. One night the flame climbed out of the lamp and floated away into the trees. My master laughed until he cried. "It has gone to find a home," he said.' },
       { who: 'empu', text: 'It found one, I see. With your Nenek, and now with you.' },
-      { who: 'empu', text: 'Si Kelam is drinking its light, a little more every night. To save it, I will make a new lamp: a Pelita Purnama, a full-moon lamp. Inside it, Pelita\'s light can grow so bright that no shadow could ever swallow it.' },
+      { who: 'empu', text: 'And now Mak Lampir wants it. Hmph. I know that name. Long ago she came to my master\'s workshop, wanting a lamp that could hold a stolen light: a light that never goes out could keep a witch young forever. My master threw her out.' },
+      { who: 'empu', text: 'Her shadow, Si Kelam, is drinking its light a little more every night. To save it, I will make a new lamp: a Pelita Purnama, a full-moon lamp. Inside it, Pelita\'s light can grow so bright that no shadow could ever swallow it.' },
       { who: 'empu', text: 'Bring me three things. Three Kendi Tembaga, brass from the smiths of Barunai, for the body. A Cahaya Bunian, a light from the hidden folk: they know how to wash a shadow shard clean. And two lumps of damar resin, from the old damar tree in Hutan Rimba, for the flame.' }
     ],
     batin: [
@@ -200,17 +210,25 @@ window.LC = window.LC || {};
     ],
     island: [
       { who: 'kelam', text: 'You brought it to me. How kind.' },
-      { who: 'laksamana', text: '(bound in shadow by the crag) Go back! It feeds on anger. It fed on mine: I called out to the dark, and it answered. Forgive me, and go back!' },
+      { who: 'maklampir', text: '(cackling, high on the crag) Heh-heh-heh! Good shadow, Kelam! Fetch me that little light, and Mak Lampir will stay young for a thousand years!' },
+      { who: 'laksamana', text: '(bound in shadow beside her) Go back! She has whispered in my ear since the night of the cockfight. Every night: you were cheated, you were cheated... Forgive me, and go back!' },
       { text: 'A towering shadow rises from the rocks. Your blade would pass straight through it: light the four stone torches with the Pelita Purnama first!' }
+    ],
+    witch: [
+      { text: 'Si Kelam shrieks and bursts into cold sparks. From the crag comes a furious screech.' },
+      { who: 'maklampir', text: 'My shadow! My lovely shadow! Wretched little farmer... Then Mak Lampir will take the light herself!' },
+      { text: 'The witch leaps down from the crag, her white hair flying. Her black magic can snuff the torches out: whenever one goes dark, light it again, and strike her while all four burn!' }
     ],
     lit: [{ text: 'The fourth torch roars into flame. Caught in the light from every side, Si Kelam shrinks and hisses. Now it has a shape you can strike!' }],
     finale: [
-      { text: 'Si Kelam staggers. Then Pelita darts into the Pelita Purnama, and the little brass lamp blazes up like a full moon rising over the sea.' },
-      { text: 'Light pours over the island. Si Kelam tries to drink it, and cannot: it swells, and cracks, and bursts into a thousand sparks, like fireflies over a river. The shadows around Kebo Taruna melt away.' },
+      { text: 'Mak Lampir staggers back against the rocks. Then Pelita darts into the Pelita Purnama, and the little brass lamp blazes up like a full moon rising over the sea.' },
+      { text: 'Light pours over the island. Mak Lampir shields her eyes and shrieks. Her black magic unravels like old thread, and the shadows around Kebo Taruna melt away.' },
+      { who: 'maklampir', text: 'Too bright! TOO BRIGHT! This is not the last you will see of Mak Lampir, little light!' },
+      { text: 'In a puff of black smoke, the witch turns into a small, bad-tempered bat and flaps away over the dark sea. Her cackle grows fainter, and fainter, and is gone.' },
       { who: 'pelita', expr: 'happy', text: '...Kawan. (Pelita floats out of the lamp, round and bright as the moon. Its light is warmer than it has ever been.)' },
-      { who: 'laksamana', text: 'The dark has gone out of my head... I remember everything: the farm, the fires, this island. Friend, I owe you more than I can ever repay.' },
-      { who: 'laksamana', text: 'I will go home to Java and serve the king however he wishes, even if he only lets me carry crates at the harbour.' },
-      { text: '✦ Chapter 5: Bayang Hitam, complete! Pelita is now Pelita Purnama, the Full Moon Spirit. (+8000 kepeng, +20 max health) The shadows are gone from the farm and the kampung. ✦' }
+      { who: 'laksamana', text: 'Her voice is gone from my head... It was her all along: at Barunai, on the night I sailed on your kampung, and here. She fed my anger until I could hear nothing else.' },
+      { who: 'laksamana', text: 'That is no excuse: I listened. I will go home to Java and serve the king however he wishes, even if he only lets me carry crates at the harbour.' },
+      { text: '✦ Chapter 5: Bayang Hitam, complete! Pelita is now Pelita Purnama, the Full Moon Spirit. (+8000 kepeng, +20 max health) Mak Lampir has fled, and the shadows are gone from the farm and the kampung. ✦' }
     ],
     wilt: 'In the night, shadows crept over the field and drank the water from {n}. (Tukang Leong\'s guard lamps would keep them away.)'
   };

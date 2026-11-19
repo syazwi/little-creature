@@ -27,6 +27,7 @@ window.LC = window.LC || {};
         return 'Chapter 5: for Empu Lintang: ' + forgeList() + '.';
       case 4:
         if (!LC.State.count('pelita_purnama')) return 'Chapter 5: collect the Pelita Purnama from Empu Lintang in Java.';
+        if (area === 'kelam' && Q.c5witch) return 'Chapter 5: Mak Lampir! Strike her while all the torches burn (' + Object.keys(Q.c5obor || {}).length + ' / ' + LC.C5.obor.length + ' lit).';
         if (area === 'kelam') return 'Chapter 5: light the stone torches (' + Object.keys(Q.c5obor || {}).length + ' / ' + LC.C5.obor.length + '), then defeat Si Kelam!';
         return 'Chapter 5: sail to Pulau Kelam on the jong, with the Pelita Purnama.';
     }
@@ -112,9 +113,9 @@ window.LC = window.LC || {};
     // ================================================================ the Journal: Chapter 5
     ch5ChapterRows: function () {
       var Q = q(), st = Q.ch5 || 0, rows = [];
-      rows.push({ icon: 'i_pelita_purnama', label: 'Chapter 5: Bayang Hitam' + (st >= 5 ? '  (complete)' : ''), right: st >= 5 ? 'Done' : '', sub: LC.ch5Goal() || 'A shadow came to drink Pelita\'s light. Now Pelita shines like the full moon.' });
+      rows.push({ icon: 'i_pelita_purnama', label: 'Chapter 5: Bayang Hitam' + (st >= 5 ? '  (complete)' : ''), right: st >= 5 ? 'Done' : '', sub: LC.ch5Goal() || 'A witch and her shadow came to drink Pelita\'s light. Now Pelita shines like the full moon.' });
       [[1, 'The lamps go out', 'Shadows on Nenek\'s farm.'], [2, 'Juragan Wira', 'The shadow shard, the guard lamps, the voyage.'],
-       [3, 'Java', 'The king, Empu Lintang, and three things for a lamp.'], [4, 'Pulau Kelam', 'Four stone torches, and Si Kelam.']].forEach(function (s) {
+       [3, 'Java', 'The king, Empu Lintang, and three things for a lamp.'], [4, 'Pulau Kelam', 'Four stone torches, Si Kelam, and Mak Lampir.']].forEach(function (s) {
         if (st < s[0]) return;
         var doneS = st > s[0];
         rows.push({ icon: doneS ? 'ic_bond' : 'ic_moon', label: (doneS ? '✓ ' : '') + s[1], right: doneS ? 'Done' : 'Now', sub: s[2] });

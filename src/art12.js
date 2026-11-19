@@ -34,6 +34,32 @@ window.LC = window.LC || {};
     p.line(8, 18, 16, 18, '#3a2a58'); p.speck(3, 4, 18, 18, M, 12);
   }
 
+  // Mak Lampir (v2.3.1): this game's own drawing of the witch. Hunched, wild white hair to her knees, glowing eyes,
+  // a ragged dark kebaya, bare feet, and a crooked stick with a violet glow in its knot.
+  function drawLampir(p, f) {   // 20x28
+    var s = f ? 1 : 0, H = '#ecebe4', H2 = '#c8c6bc', SK = '#a88a6a', SK2 = '#86684c', C = '#2a2a24', C2 = '#3e3a30';
+    p.poly([[3, 6], [12, 4], [15, 12], [16, 25 + s], [13, 22], [11, 26], [8, 22], [5, 26 - s], [2, 20], [1, 12]], H2);   // the hair, behind
+    p.poly([[5, 12], [14, 12], [15, 24], [12, 27], [9, 24], [6, 27], [4, 24]], C);                                  // the ragged kebaya
+    p.rect(6, 14, 7, 1, C2); p.px(8, 18, C2); p.px(11, 20, C2); p.px(6, 22, C2);
+    p.rect(6, 26, 2, 2, SK2); p.rect(11, 26, 2, 2, SK2);                                                           // bare feet
+    p.ell(8, 9, 4, 4, SK); p.poly([[4, 10], [2, 12 + s], [5, 11]], SK);                                            // a face bent forward, a hooked nose
+    p.px(6, 8, '#b8ff9a'); p.px(9, 8, '#b8ff9a'); p.px(6, 7, '#3a2a1a'); p.px(9, 7, '#3a2a1a');                     // glowing eyes, heavy brows
+    p.rect(6, 11, 3, 1, '#4a2a20'); p.px(7, 11, '#f0e8d0');                                                         // a grin with one tooth
+    p.line(5, 6, 10, 6, SK2);
+    p.poly([[3, 4], [12, 3], [14, 6], [10, 5], [6, 6], [3, 8]], H); p.px(13, 2, H); p.px(2, 5, H); p.px(15, 8 + s, H);   // the wild fringe
+    p.line(2, 14, 4, 13, SK, 1); p.line(15, 14, 17, 13 - s, SK, 1);                                                 // bony arms
+    p.line(17, 4 - s, 18, 27, '#5a3a20', 1); p.line(16, 4 - s, 18, 3 - s, '#5a3a20', 1);                           // the crooked stick
+    p.disc(17, 3 - s, 1.6, '#9a5aff'); p.px(17, 3 - s, '#e8d0ff');
+  }
+  function drawLampirFace(p) {   // 24x26 for the dialogue box
+    var H = '#ecebe4', H2 = '#c8c6bc', SK = '#a88a6a', SK2 = '#86684c';
+    p.poly([[2, 4], [21, 2], [23, 24], [17, 20], [12, 25], [7, 20], [1, 24]], H2);
+    p.ell(11, 13, 7, 8, SK); p.poly([[5, 13], [2, 17], [6, 16]], SK);
+    p.rect(7, 11, 2, 1, '#b8ff9a'); p.rect(13, 11, 2, 1, '#b8ff9a'); p.line(6, 9, 9, 10, '#3a2a1a'); p.line(16, 9, 13, 10, '#3a2a1a');
+    p.line(8, 17, 14, 17, '#4a2a20'); p.px(10, 17, '#f0e8d0'); p.line(7, 15, 9, 14, SK2); p.line(15, 15, 13, 14, SK2);
+    p.poly([[3, 6], [20, 3], [21, 8], [15, 6], [8, 8], [3, 10]], H); p.px(22, 2, H); p.px(1, 7, H);
+  }
+
   // Pelita Purnama, the Full Moon Spirit (20x22, the same expressions as the other forms)
   function drawPurnama(p, ex) {
     var B = '#fffdf4', S = '#f6e7b8', D = '#c89a3a', EYE = '#3b2f5c', BL = '#f5a3c7', MO = '#7a3a5a';
@@ -138,8 +164,10 @@ window.LC = window.LC || {};
     for (var f = 0; f < 2; f++) (function (f) {
       make(scene, 'kelam_' + f, 16, 22, function (p) { drawKelam(p, f); });
       make(scene, 'sikelam_' + f, 44, 52, function (p) { drawSiKelam(p, f); });
+      make(scene, 'maklampir_' + f, 20, 28, function (p) { drawLampir(p, f); }, true);
     })(f);
     make(scene, 'sikelam_face', 24, 26, drawSiKelamFace);
+    make(scene, 'maklampir_face', 24, 26, drawLampirFace, true);
     ['normal', 'happy', 'sad', 'sleepy'].forEach(function (ex) { make(scene, 'ghost_5_' + ex, 20, 22, function (p) { drawPurnama(p, ex); }); });
     make(scene, 'wira_0', 16, 20, function (p) { Art.drawVillager(p, WIRA, false); });
     make(scene, 'tiang_pelita', 16, 32, drawTiangPelita, true);
@@ -152,7 +180,7 @@ window.LC = window.LC || {};
     make(scene, 'gerai_jawa', 48, 32, drawGerai, true);
     Object.keys(IC).forEach(function (id) { make(scene, 'i_' + id, 16, 16, IC[id], true); });
     var a = scene.anims;
-    [['kelam_walk', 'kelam', 5], ['sikelam_walk', 'sikelam', 3]].forEach(function (k) {
+    [['kelam_walk', 'kelam', 5], ['sikelam_walk', 'sikelam', 3], ['maklampir_walk', 'maklampir', 4]].forEach(function (k) {
       if (!a.exists(k[0])) a.create({ key: k[0], frames: [{ key: k[1] + '_0' }, { key: k[1] + '_1' }], frameRate: k[2], repeat: -1 });
     });
   };

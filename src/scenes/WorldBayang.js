@@ -13,6 +13,7 @@ window.LC = window.LC || {};
   proto.enemyDie = function (e) {
     if (e.kind === 'kelam') return this.shadowDown(e);
     if (e.kind === 'sikelam') return this.kelamDown(e);
+    if (e.kind === 'maklampir') return this.witchDown(e);
     return enemyDie.call(this, e);
   };
   var createKampong = proto.createKampong;
@@ -60,7 +61,7 @@ window.LC = window.LC || {};
   Object.assign(proto, {
     createBayang: function () {
       var self = this, q = Q(), st = LC.ch5Step();
-      this.c5 = { tick: 1, boss: null, shieldT: 0 };
+      this.c5 = { tick: 1, shieldT: 0, flames: {}, blinkT: 5, snuffT: 10 };
       if (this.area === 'jawa') {
         this.kaThing('raja5', { x: 22, y: 7 }, 'npc_raden_0', { type: 'raja5' }, 'npc_raden_idle');
         if (q.c5arrive) {   // (the first landing: the step moved on before the place was built, so Empu Lintang is here)
@@ -75,6 +76,10 @@ window.LC = window.LC || {};
           var kb = this.kaThing('kebo5', { x: 19, y: 5 }, 'laksamana_0', { type: 'kebo5' });
           kb.spr.setTint(0x5a4a7a);
           this.tweens.add({ targets: kb.spr, x: kb.hx + 1, duration: 120, yoyo: true, repeat: -1 });
+          if (!q.c5witch) {   // Mak Lampir watches from the crag while her shadow fights
+            var lp = this.kaThing('lampir5', { x: 21, y: 5 }, 'maklampir_0', { type: 'lampir5' }, 'maklampir_walk');
+            this.tweens.add({ targets: lp.spr, y: lp.hy - 2, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+          }
           this.time.delayedCall(800, function () { if (!self.leaving) self.ui.say(self.ch2Lines(LC.CH5TEXT.island)); });
         }
       }
@@ -87,21 +92,25 @@ window.LC = window.LC || {};
         c.tick = 1;
         if (this.area === 'farm' && LC.ch5Step() === 0 && (q.ch4 || 0) >= 4 && S.day > (q.ch4day || 0) && isNight(S)) this.c5Dark();
       }
-      // Si Kelam cannot be hurt until all four stone torches burn
-      if (this.area !== 'kelam') return;
-      if (!c.boss && this.enemies) c.boss = this.enemies.filter(function (e) { return e.kind === 'sikelam'; })[0] || null;
-      var b = c.boss;
-      if (!b || b.dead || b.away) return;
-      var open = this.litCount() >= LC.C5.obor.length;
+      // Si Kelam (and then Mak Lampir) cannot be hurt until all four stone torches burn
+      if (this.area !== 'kelam' || !this.enemies) return;
+      var b = this.enemies.filter(function (e) { return (e.kind === 'sikelam' || e.kind === 'maklampir') && !e.dead && !e.away; })[0];
+      if (!b) return;
+      var open = this.litCount() >= LC.C5.obor.length, witch = b.kind === 'maklampir';
       b.spr.setAlpha(open ? 1 : 0.72);
+      if (witch) { b.light.base = 0.3; b.light.img.setTint(0x8a6aff); }   // (a faint violet glow: the boss glow hid her small figure)
       if (!open && b.hp < b.def.hp) {
         b.hp = b.def.hp;
         if (time > c.shieldT) {
           c.shieldT = time + 2500;
-          this.ui.floatText(b.spr.x, b.spr.y - 60, 'It passes through!', '#b8a8ff');
-          this.toast('Your blade passes straight through the shadow! Light the ' + LC.C5.obor.length + ' stone torches first (' + this.litCount() + ' lit).', 'ic_moon');
+          this.ui.floatText(b.spr.x, b.spr.y - b.spr.height - 8, witch ? 'Turned aside!' : 'It passes through!', '#b8a8ff');
+          this.toast((witch ? 'Her black magic turns your blade aside! Light the dark torch again' : 'Your blade passes straight through the shadow! Light the ' + LC.C5.obor.length + ' stone torches first') + ' (' + this.litCount() + ' / ' + LC.C5.obor.length + ' lit).', 'ic_moon');
         }
       }
+      // the witch never stands still: she vanishes and reappears, and her magic snuffs out a torch
+      if (!witch || blocked || b.stoneT > 0) return;
+      if ((c.blinkT -= dt) <= 0) { c.blinkT = LC.C5.witch.blink + Math.random() * 2; this.witchBlink(b); }
+      if (open && (c.snuffT -= dt) <= 0) { c.snuffT = LC.C5.witch.snuff; this.witchSnuff(b); }
     },
     bayangObjAction: function (o) {
       var self = this, st = LC.ch5Step(), q = Q();
@@ -112,6 +121,7 @@ window.LC = window.LC || {};
         case 'obor5': return { label: (q.c5obor || {})[o.i] ? 'A stone torch' : 'Light the stone torch', fn: function () { self.lightObor(o.i); } };
         case 'damar': return { label: 'The old damar tree', fn: function () { self.tapDamar(); } };
         case 'raja5': return { label: 'Talk to the King of Majapahit', fn: function () { self.talkKing5(); } };
+        case 'lampir5': return { label: 'Mak Lampir', fn: function () { self.ui.say(self.ch2Lines([{ who: 'maklampir', text: 'Heh-heh-heh! Come closer, little farmer. Bring the little light where Kelam can reach it!' }])); } };
         case 'kebo5': return { label: 'Kebo Taruna', fn: function () { self.ui.say(self.ch2Lines([{ who: 'laksamana', text: '...the torches... light the torches, and it cannot hide...' }])); } };
       }
       return undefined;
@@ -189,16 +199,75 @@ window.LC = window.LC || {};
       n = this.litCount();
       if (n < LC.C5.obor.length) { this.toast('The stone torch blazes up! (' + n + ' / ' + LC.C5.obor.length + ')', 'ic_glow'); return; }
       LC.Audio.sfx('restu'); this.cameras.main.flash(400, 255, 230, 170);
-      if (this.c5.boss) this.c5.boss.spr.setScale(0.85);
+      if (q.c5witch) { this.c5.snuffT = LC.C5.witch.snuff; this.toast('All four torches burn! Strike Mak Lampir now, before her magic snuffs one out!', 'ic_glow'); return; }
+      this.enemies.forEach(function (e) { if (e.kind === 'sikelam' && !e.dead) e.spr.setScale(0.85); });
       this.ui.say(LC.CH5TEXT.lit);
     },
     oborFlame: function (i, fresh) {
       var t = LC.C5.obor[i], x = (t.x + 0.5) * T, y = (t.y + 1) * T - 20;
-      this.add.sprite(x, y, 'api_0').setOrigin(0.5, 1).setDepth((t.y + 1) * T + 1).play('api_burn').setScale(0.8);
-      this.addLight(x, y - 6, 0xffc060, 2.6, true);
+      var spr = this.add.sprite(x, y, 'api_0').setOrigin(0.5, 1).setDepth((t.y + 1) * T + 1).play('api_burn').setScale(0.8);
+      this.c5.flames[i] = { spr: spr, L: this.addLight(x, y - 6, 0xffc060, 2.6, true), x: x, y: y };
       if (fresh) { LC.Audio.sfx('chime'); this.fx.sparkle.explode(14, x, y - 8); }
     },
+    // ---------------------------------------------------------------- Mak Lampir
+    snuffObor: function (i) {
+      var f = this.c5.flames[i], q = Q();
+      if (q.c5obor) delete q.c5obor[i];
+      if (!f) return;
+      var k = this.lights.indexOf(f.L);
+      if (k >= 0) this.lights.splice(k, 1);
+      f.L.img.destroy(); f.spr.destroy();
+      this.fx.smoke.explode(14, f.x, f.y - 8);
+      delete this.c5.flames[i];
+    },
+    witchBlink: function (w) {
+      var p = this.player, t = this.randomFree(LC.C5.witch.zone);
+      for (var k = 0; k < 6 && Math.hypot(t.x - p.x, t.y - p.y) < 50; k++) t = this.randomFree(LC.C5.witch.zone);
+      LC.Audio.sfx('poof');
+      this.fx.smoke.explode(12, w.spr.x, w.spr.y - 14);
+      w.spr.setPosition(t.x, t.y); w.tx = t.x; w.ty = t.y; w.kx = 0; w.ky = 0; w.windT = 0;
+      this.fx.smoke.explode(12, t.x, t.y - 14);
+      if (Math.random() < 0.35) this.ui.floatText(t.x, t.y - 34, 'Heh-heh-heh!', '#c8ffb0');
+    },
+    witchSnuff: function (w) {
+      var self = this, lit = Object.keys(Q().c5obor || {}).map(Number);
+      if (!lit.length) return;
+      var i = lit[Math.floor(Math.random() * lit.length)], f = this.c5.flames[i];
+      if (!f) { this.snuffObor(i); return; }
+      var g = this.add.graphics().setDepth(9600).setBlendMode(Phaser.BlendModes.ADD);
+      g.lineStyle(3, 0x9a5aff, 1).lineBetween(w.spr.x, w.spr.y - 20, f.x, f.y - 8);
+      g.lineStyle(1, 0xe8d0ff, 1).lineBetween(w.spr.x, w.spr.y - 20, f.x, f.y - 8);
+      LC.Audio.sfx('wind');
+      this.tweens.add({ targets: g, alpha: 0, duration: 700, onComplete: function () { g.destroy(); } });
+      this.time.delayedCall(350, function () {
+        if (self.leaving || !self.c5.flames[i]) return;
+        self.snuffObor(i);
+        self.toast('Mak Lampir\'s black magic snuffs out a torch! Light it again with the Pelita Purnama.', 'ic_moon');
+      });
+    },
+    // Si Kelam falls, and the witch comes down from the crag herself
     kelamDown: function (e) {
+      var self = this, s = e.spr, q = Q();
+      e.dead = true; e.respawn = 1e9; e.stoneT = 0; e.light.base = 0;
+      if (s.anims.isPaused) s.anims.resume();
+      if (q.ch5 !== 4 || q.c5witch) return;
+      q.c5witch = 1;   // (saved: if you faint now, Mak Lampir is waiting when you come back)
+      LC.Audio.sfx('poof'); LC.Audio.sfx('wind');
+      this.fx.smoke.explode(24, s.x, s.y - 24); this.fx.sparkle.explode(30, s.x, s.y - 24);
+      this.cameras.main.flash(500, 200, 180, 255);
+      s.clearTint();
+      this.tweens.add({ targets: s, alpha: 0, scaleX: 1.6, scaleY: 0.2, duration: 900, onComplete: function () { s.setVisible(false).setScale(1).setAlpha(1); } });
+      this.cutscene = true;
+      this.time.delayedCall(1000, function () {
+        var lp = self.k2.things.lampir5;
+        if (lp) { self.fx.smoke.explode(16, lp.spr.x, lp.spr.y - 14); self.kaRemove('lampir5', false); }
+        self.c5.blinkT = 5; self.c5.snuffT = 9;
+        self.checkGroups();
+        self.cutscene = false;
+        self.ui.say(self.ch2Lines(LC.CH5TEXT.witch));
+      });
+    },
+    witchDown: function (e) {
       var self = this, s = e.spr, q = Q(), S = this.S, kebo = this.k2.things.kebo5;
       e.dead = true; e.respawn = 1e9; e.stoneT = 0; e.light.base = 0;
       if (s.anims.isPaused) s.anims.resume();
@@ -216,17 +285,33 @@ window.LC = window.LC || {};
       LC.Audio.sfx('restu'); LC.Audio.sfx('poof');
       this.cameras.main.flash(900, 255, 244, 200);
       this.fx.sparkle.explode(60, s.x, s.y - 24); this.fx.smoke.explode(18, s.x, s.y - 24);
-      s.clearTint();
-      this.tweens.add({ targets: s, alpha: 0, scaleX: 1.8, scaleY: 1.8, duration: 1100, onComplete: function () { s.setVisible(false).setScale(1).setAlpha(1); } });
+      s.setTint(0xfff0c8).setAlpha(1);   // she cowers in the full-moon light while she shrieks
       var gp = this.ghostHere ? { x: this.ghost.x, y: this.ghost.y } : { x: this.player.x, y: this.player.y - 22 };
       var moon = this.add.image(gp.x, gp.y, 'glow').setBlendMode(Phaser.BlendModes.ADD).setDepth(9500).setTint(0xfff2c0).setScale(0.3).setAlpha(0.95);
       this.tweens.add({ targets: moon, scale: 7, alpha: 0, duration: 2400, ease: 'Sine.easeOut', onComplete: function () { moon.destroy(); } });
+      var batDone = false;
+      function toBat() {   // ...then turns into a small, bad-tempered bat and flaps away over the sea
+        if (batDone) return;
+        batDone = true;
+        LC.Audio.sfx('poof'); self.fx.smoke.explode(22, s.x, s.y - 14);
+        s.setVisible(false).clearTint();
+        var bat = self.add.sprite(s.x, s.y - 16, 'kelawar_0').setDepth(9550);
+        if (self.anims.exists('kelawar_walk')) bat.play('kelawar_walk');
+        self.tweens.add({ targets: bat, x: s.x + 260, y: s.y - 220, duration: 2600, ease: 'Sine.easeIn', onComplete: function () { bat.destroy(); } });
+      }
+      this.time.delayedCall(20000, toBat);   // (in case the lines are closed early)
+      var F = LC.CH5TEXT.finale, cut = 3;
       this.time.delayedCall(1300, function () {
         if (kebo) { self.tweens.killTweensOf(kebo.spr); kebo.spr.setPosition(kebo.hx, kebo.hy).clearTint(); }
-        self.ui.say(self.ch2Lines(LC.CH5TEXT.finale), { onDone: function () {
-          self.cutscene = false;
-          LC.Audio.sfx('stage');
-          self.time.delayedCall(700, function () { if (!self.leaving) self.sailTo('farm'); });
+        self.ui.say(self.ch2Lines(F.slice(0, cut)), { onDone: function () {
+          toBat();
+          self.time.delayedCall(1300, function () {
+            self.ui.say(self.ch2Lines(F.slice(cut)), { onDone: function () {
+              self.cutscene = false;
+              LC.Audio.sfx('stage');
+              self.time.delayedCall(700, function () { if (!self.leaving) self.sailTo('farm'); });
+            } });
+          });
         } });
       });
     }
