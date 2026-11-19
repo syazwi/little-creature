@@ -4,7 +4,7 @@
  *   T  replay Si Tanggang's story (switch between "before he meets his mother" and "reunited")
  *   B  replay Badang's story (switch between "skinny, on the night watch" and "the strongest man in the land")
  *   K  Chapter 2: jump to its next step
- *   L  Chapter 3: jump to its next step (finishes Chapter 2 first) */
+ *   L  Chapter 3: jump to its next step (finishes Chapter 2 first; parts 1 and 2) */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -77,10 +77,14 @@ window.LC = window.LC || {};
         if ((Q3.ch2 || 0) < 8) { Q3.ch2 = 8; s3 = -1; }
         if (s3 === 5) Q3.ch3train = 3;
         if (s3 === 7) { Q3.buluMutiara = 1; Q3.asmara = 1; State.recalc(); }
-        Q3.ch3 = Math.min(8, s3 + 1);
+        if (s3 === 9 && !LC.State.count('kulit_ikan')) LC.State.add('kulit_ikan', 1);
+        if (s3 === 10) { Q3.jinn = 1; LC.State.remove('kulit_ikan', 1); State.recalc(); }
+        if (s3 === 11) { Q3.tourOn = 1; Q3.tour = { 0: 1, 1: 1, 2: 1 }; }
+        if (s3 === 12) Q3.lantakaGot = 0;
+        Q3.ch3 = Math.min(13, s3 + 1);
         Q3.kaStage = Math.max(Q3.kaStage || 0, Math.min(3, Q3.ch3 - 1));
         LC.syncBarunai();
-        this.toast('Chapter 3, step ' + Q3.ch3 + ': ' + (LC.ch3Goal() || 'part 1 complete').replace(/^Chapter 3: /, '') + ' (Re-enter Barunai to see it.)', 'ic_glow');
+        this.toast('Chapter 3, step ' + Q3.ch3 + ': ' + (LC.ch3Goal() || 'complete').replace(/^Chapter 3: /, '') + ' (Re-enter Barunai to see it.)', 'ic_glow');
         return;
       }
       case 'KeyB': {   // v1.7: replay Badang's story (skinny, by the forest pool) or make him strong again

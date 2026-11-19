@@ -986,6 +986,7 @@ window.LC = window.LC || {};
         case 'helper': return this.helperAction(o);
         case 'jejak': case 'tembadau': case 'bulu': case 'pinggai': case 'salvage': case 'vase': return this.barunaiObjAction(o);   // v1.9
         case 'kplot': case 'padian': case 'hop': case 'ghost_ayam': case 'batu_ayam': return this.kampongObjAction(o);   // v2.0
+        case 'hero': case 'vision': case 'vision_back': case 'tour': case 'meriam': case 'api': case 'keluarga': return this.kampongObjAction(o);   // v2.1
         case 'spirit':
           if (isFood) return { label: 'Offer ' + it.name + ' to Pelita', fn: function () { self.feedGhost(sl.id); } };
           return { label: 'Spirit house', fn: function () { self.ui.openSpirit(); } };

@@ -205,6 +205,10 @@ src/
   kampong.js        v2.0 Chapter 3 data: nibong and belian, the building stages, workshops, house pilings, the padian, Teluk Barunai, the craftspeople, Senuai, the King of Majapahit, story text
   art9.js           v2.0 textures: workshops, pilings, a third stilt house, padian boats, the roosters (and the ghost and the stone one), the Majapahit jong, the little perahu, icons
   scenes/WorldKampong.js   the village growing (reloads the place), the water taxi hop, padian boats, the cockfight scene, the stone rooster, the ghost of Asmara
+  kampong2.js       v2.1 Chapter 3 part 2 data: the fish skin, Bilanapura and the soldiers, the stone lamp, the Kampong Ayer (1521/1578) map, Jerambak, Tok Gergasi, Antonio, Pak Damit, story text
+  art10.js          v2.1 textures: Bilanapura, the soldiers, the tall ship, the meriam, flames, the elephant, Pelita's stone lamp, three families, icons
+  scenes/WorldKampong2.js  the jinn battle with the three heroes, the visions, Antonio's tour, the four waves of 1578
+  scenes/UIKampong2.js     part 2 Talk rows (Semaun, Jerambak, the ogre's trade, Antonio, Pak Damit), the meriam game, the goal line from step 8
   scenes/UIKampong.js      Berbai's building rows, the craftspeople's services, the padian and pilings menus, the training and cockfight games, Chapter 3 in the Journal and goal line
   cheats.js         test build only (dist/LittleCreature_full.html)
   scenes/UIGames.js      map, chest, reban, Pesta and its contest games, strength training, quests, the journal's You page
@@ -361,6 +365,15 @@ Continues on the same save after Chapter 2 (`quests.ch2` 8). Sources: the histor
 **Barunai grows** through `LC.syncBarunai` (wrapped): the `KA_WALKS` of each built stage become jetty tiles. Workshops, pilings (`kplot`), the jong (ch3 4-6) and the Teluk perahu (ch3 7+) are `when` objects. A new stage or the fleet reloads Barunai around the player (`World.applyKampong` → `goArea` to the same place), so the new villagers appear. The craftspeople and Senuai/the king use `hideIf` (generalised for non-chapter2 villagers in kampong.js). The padian boats appear at stage 2+ from 06:00 to 14:00, with 4 items a day picked from `LC.PADIAN_POOL` by a day-seeded generator. The water taxi (`World.hopTo`) fades and moves the player within the place (20 kepeng, free with your own perahu).
 
 **Teluk Barunai** (`LC.AREAS.teluk`, 44x32): Pulau Pilong-Pilongan (sand, rock and a cliff), its jetty, and the Lumut Lunting sandbank, joined by two little `hop` boats. The ghost rooster (`LC.GHOST_SPOT`) is placed by `updateKampong` at night while ch3 is 7. Co-op protocol 9.
+
+### Chapter 3: Kampong Ayer, part 2 (v2.1)
+The user asked for the wars to be included, and then for "part 2 and the rest", so all three are built: the jinn (from the epic: Awang Semaun, Awang Jerambak and Damang Sari fought Bilanapura for nine months, and Jerambak beat it with a magic fish skin taken from an ogre; here the ogre is gentle and trades it for a meal), "the Venice of the East" (Antonio Pigafetta's 1521 account: a city of some 25,000 households built in salt water on wooden posts, women selling food from boats, silk-draped elephants), and the 1578 Castilian War (a Manila fleet took the city; the people fought back; disease in the invaders' camp made them leave). Kept out: gore, religion, royal titles, and wars against neighbouring peoples. The soldiers are not killed: they fall into the river and swim back.
+
+**Progress** continues in `quests.ch3`: 8 Semaun's news; 9 the ogre's trade (`LC.OGRE_TRADE`; the row comes back if the skin is lost); 10 the battle (`kulit_ikan` needed; heroes placed in Teluk by `createKampong2`); 11 1521 (`tourOn`, `tour` {stop: 1}); 12 1578; 13 complete. Flags: `jinn` (+20 max HP in `recalc`), `lantakaGot` (Berbai hands it over if the bag was full).
+
+**Combat hooks** (WorldKampong2 wraps WorldCombat): an enemy group can have `when(W)`, checked by `groupOn`; `enemyDie` sends `bilanapura` and `askar` to their own scenes (no respawn: `respawn = 1e9`); `createEnemies` clears any fight left over from the last place (the scene object outlives reloads). The heroes strike the jinn for 2 every 2.2 s while you fight.
+
+**Kampong Ayer** (`LC.AREAS.kayer`, 48x34, not in `AREA_ORDER`, like the deep-sea places): reached only through the `vision` lamp in Barunai (ch3 11-12), left through the `vision_back` lamp. Three walkways with 33 houses, a brassmiths' workshop and the great hall (tour stops), and `when` objects per year (elephants, the padian, Antonio's ship in 1521; the meriam in 1578). The 1578 run lives in `World.war` (`LC.kaWar` for the goal line) and restarts if you leave: wave 1 `ships` (the meriam game, `UI.openMeriam`), 2 `fires` on `LC.WAR.fires` houses (2 water each), 3 `families`, 4 six `askar`. Co-op protocol 10.
 
 ## 8. Milestones
 

@@ -90,8 +90,8 @@ window.LC = window.LC || {};
       if (vid === 'juru') rows.push(Q.tempered ? { icon: 'i_parang', label: 'Tempered blades', sub: 'Wak Juru tempered your blades in his forge. Every weapon hits a little harder (+1 damage).' } : this.craftRow('i_parang', 'Temper my blades', '"Stone for the furnace, and a little kepeng for the charcoal." Every weapon hits harder (+1 damage).', { batu: 10 }, 1500, function () {
         Q.tempered = 1; LC.Audio.sfx('mine'); self.toast('Clang! Clang! Wak Juru tempers your blades. (+1 damage)', 'i_parang');
       }));
-      if (vid === 'kemala') rows.push(Q.gembor ? { icon: 'i_gembor', label: 'Brass gembor', sub: 'Dang Kemala lined your gembor with brass. It holds 10 more water.' } : this.craftRow('i_gembor', 'A brass gembor', '"Wood for the fire, and I will line your watering can with brass." It holds 10 more water.', { kayu: 4 }, 1200, function () {
-        Q.gembor = 1; LC.State.recalc(); S.water = S.maxWater; LC.Audio.sfx('bell'); self.toast('Your gembor shines like a gong! (+10 water)', 'i_gembor');
+      if (vid === 'kemala') rows.push(Q.gembor ? { icon: 'i_can', label: 'Brass gembor', sub: 'Dang Kemala lined your gembor with brass. It holds 10 more water.' } : this.craftRow('i_can', 'A brass gembor', '"Wood for the fire, and I will line your watering can with brass." It holds 10 more water.', { kayu: 4 }, 1200, function () {
+        Q.gembor = 1; LC.State.recalc(); S.water = S.maxWater; LC.Audio.sfx('bell'); self.toast('Your gembor shines like a gong! (+10 water)', 'i_can');
       }));
       if (vid === 'lajak') {
         if (!Q.perahu) rows.push(this.craftRow('i_belian', 'Build me a perahu', '"Wood for the planks, belian for the keel." Your own boat: the water taxi is free for you, forever.', { kayu: 30, belian: 6 }, 2000, function () {
@@ -242,7 +242,7 @@ window.LC = window.LC || {};
     // ================================================================ the Journal: Chapter 3
     ch3ChapterRows: function () {
       var Q = q(), st = Q.ch3 || 0, rows = [];
-      rows.push({ icon: 'i_nibong', label: 'Chapter 3: Kampong Ayer' + (st >= 8 ? '  (part 1 complete)' : ''), right: st >= 8 ? 'Done' : '', sub: LC.ch3Goal() || 'The water village grows, and two roosters become legends. (More of the story is coming soon.)' });
+      rows.push({ icon: 'i_nibong', label: 'Chapter 3: Kampong Ayer' + (st >= 13 ? '  (complete)' : st >= 8 ? '  (part 2)' : ''), right: st >= 13 ? 'Done' : '', sub: LC.ch3Goal() || 'The water village grows, two roosters become legends, a jinn is beaten, and the city stands for six hundred years.' });
       var steps = [
         [0, 'Why build on the water?', 'Pateh Berbai explains.'],
         [1, 'The craft quarter', 'Five workshops: iron, brass, cloth, boats and gold.'],
@@ -251,7 +251,12 @@ window.LC = window.LC || {};
         [4, 'The fleet of Majapahit', 'Forty ships, and a challenge.'],
         [5, 'Training Mutiara', 'Three days with Awang Senuai (' + Math.min(3, Q.ch3train || 0) + ' / 3).'],
         [6, 'The great cockfight', 'Mutiara against Asmara.'],
-        [7, 'The bay of the two roosters', 'Pulau Pilong-Pilongan and Lumut Lunting.']
+        [7, 'The bay of the two roosters', 'Pulau Pilong-Pilongan and Lumut Lunting.'],
+        [8, 'Trouble in the bay', 'Awang Semaun has news.'],
+        [9, 'The old ogre', 'A magic fish skin from Gunung Kabus.'],
+        [10, 'Bilanapura', 'With Awang Semaun, Awang Jerambak and Damang Sari.'],
+        [11, 'The Venice of the East (1521)', 'Show Antonio the water city.'],
+        [12, 'The defence of Kampong Ayer (1578)', 'Meriam, fires, families, walkways.']
       ];
       steps.forEach(function (s) {
         if (st < s[0]) return;
