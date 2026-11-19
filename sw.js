@@ -6,7 +6,7 @@
  * dist/ (the version news and the downloads) always comes from the internet. */
 
 // ---- stamped by tools/build-web.mjs on every build (do not edit by hand): the version, and every file the game needs
-var CACHE = 'little-creature-21-20261119143019';
+var CACHE = 'little-creature-22-20261119155109';
 var FILES = [
   './', 'index.html', 'manifest.webmanifest', 'lib/phaser.min.js', 'lib/peerjs.min.js', 'src/version.js',
   'src/update.js', 'src/data.js', 'src/areas.js', 'src/folk.js', 'src/data2.js', 'src/areas2.js', 'src/undersea.js',

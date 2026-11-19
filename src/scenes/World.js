@@ -605,6 +605,7 @@ window.LC = window.LC || {};
       var self = this, N = LC.Net, S = this.S;
       N.on = {};
       N.on.toast = function (msg, icon) { self.ui.toast(msg, icon); };
+      N.on.gift = function (m) { return self.receiveGift(m); };   // v2.4.3
       if (N.isHost()) {
         N.on.op = function (op, a, pid) { return self.applyOp(op, a, pid); };
         N.on.spawn = function (c) { return self.homeSpot(c); };
@@ -651,6 +652,70 @@ window.LC = window.LC || {};
           self.ui.say([{ text: why + ' You keep everything in your bag.' }], { onDone: function () { self.ui.quitToTitle(); } });
         };
       }
+    }
+
+    // ================================================================ v2.4.3: give a friend something from your bag
+    // friends in this place within reach (px), nearest first: [{id, name, x, y}]
+    friendsNear(reach) {
+      var N = LC.Net, p = this.player, self = this, out = [];
+      if (!N.role || !p) return out;
+      Object.keys(N.others).forEach(function (id) {
+        var o = N.others[id], d = Math.hypot(o.x - p.x, o.y - p.y);
+        if ((o.ar || 'farm') === self.area && d <= reach) out.push({ id: id, name: o.name || 'Friend', x: o.x, y: o.y, d: d });
+      });
+      return out.sort(function (a, b) { return a.d - b.d; });
+    }
+    // the gift flies from one player to the other
+    flyGift(x0, y0, x1, y1, icon) {
+      var img = this.add.image(x0, y0 - 16, icon).setDepth(9600).setScale(0.8);
+      this.tweens.add({ targets: img, x: x1, duration: 520, ease: 'Sine.easeInOut' });
+      this.tweens.add({ targets: img, y: { from: y0 - 16, to: y1 - 16 }, duration: 520, ease: 'Sine.easeInOut' });
+      this.tweens.add({ targets: img, scale: 1.3, duration: 260, yoyo: true, ease: 'Sine.easeOut' });
+      this.time.delayedCall(540, function () { img.destroy(); });
+    }
+    // how many of an item still fit in my bag
+    bagRoom(id) {
+      return this.S.inv.reduce(function (a, sl) { return a + (!sl ? 99 : sl.id === id ? Math.max(0, 99 - sl.n) : 0); }, 0);
+    }
+    giveItem(f, idx, id, k) {
+      var S = this.S, sl = S.inv[idx], it = LC.ITEMS[id], self = this, p = this.player;
+      if (!sl || sl.id !== id || !it) return;
+      k = Math.min(k, sl.n); sl.n -= k; if (sl.n <= 0) S.inv[idx] = null;
+      LC.emit('inv');
+      var what = (k > 1 ? k + ' ' : '') + it.name;
+      this.flyGift(p.x, p.y, f.x, f.y, it.icon);
+      LC.Audio.sfx('toss');
+      function back(n) {   // what they could not take comes back
+        if (n <= 0) return 0;
+        var fit = Math.min(n, self.bagRoom(id));
+        if (fit > 0) LC.State.add(id, fit);
+        return n - fit;
+      }
+      LC.Net.give(f.id, id, k, function (took) {
+        if (!self.sys || !self.sys.isActive()) { if (took === null) LC.State.add(id, k); else if (took < k) LC.State.add(id, k - took); return; }
+        var lost;
+        if (took === null) { lost = back(k); self.toast(f.name + ' did not get your ' + it.name + ' (the connection is slow), so it came back to you.' + (lost ? ' (Your bag was full: ' + lost + ' fell out.)' : ''), it.icon); return; }
+        lost = back(k - took);
+        if (took >= k) { self.toast('You gave ' + f.name + ' ' + what + '.', it.icon); LC.Audio.sfx('coin'); }
+        else if (took > 0) self.toast(f.name + '\'s bag was nearly full: they took ' + took + ', and ' + (k - took) + ' came back to you.', it.icon);
+        else self.toast(f.name + '\'s bag is full, so your ' + it.name + ' came back to you.', it.icon);
+        if (lost) self.toast('Your own bag was full too: ' + lost + ' ' + it.name + ' fell out.', it.icon);
+      });
+    }
+    // a friend gave me something: keep what fits, and answer how many
+    receiveGift(m) {
+      var it = LC.ITEMS[m.id], n = Math.floor(+m.n) || 0, p = this.player, from = LC.Net.others[m.from];
+      if (!it || n < 1 || n > 999) return 0;
+      var took = Math.min(n, this.bagRoom(m.id)), who = m.fromName || 'Your friend';
+      if (took > 0) LC.State.add(m.id, took);
+      if (!this.sys || !this.sys.isActive() || !p) return took;
+      if (from && (from.ar || 'farm') === this.area) this.flyGift(from.x, from.y, p.x, p.y, it.icon);
+      if (took > 0) {
+        this.time.delayedCall(500, function () { if (this.fx && this.player) this.fx.heart.explode(4, this.player.x, this.player.y - 12); }, null, this);
+        LC.Audio.sfx('chime');
+        this.toast(who + ' gave you ' + (took > 1 ? took + ' ' : '') + it.name + '!' + (took < n ? ' (Your bag is full: the other ' + (n - took) + ' went back.)' : ''), it.icon);
+      } else this.toast(who + ' tried to give you ' + it.name + ', but your bag is full.', it.icon);
+      return took;
     }
 
     // Shared-world actions: run here (single-player / host) or ask the host (guest). cb gets the LC.Sim result.

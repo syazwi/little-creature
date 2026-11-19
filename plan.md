@@ -431,6 +431,9 @@ The user asked whether the game plays on an iPhone, then wanted it "to work just
 
 **iPhone glue (main.js):** `LC.IOS` (iPadOS reports a Mac with touch), `LC.STANDALONE`, `LC.installHint()` (the title screen's green "Add to Home Screen" box in Safari, replaced by the update box when one shows), a rotation-lock tip added to `#rotate` (web apps cannot force landscape), no pinch zoom (`gesturestart`), `navigator.storage.persist()`, a screen wake lock on phone browsers (the APK keeps the screen on itself), and sound that resumes on every tap end (Safari only unlocks audio on touchend and can leave the context `interrupted`; `LC.Audio.resume/init` now resume any state but running/closed). The Android app and the PC files are unchanged in behaviour.
 
+### Give a friend (v2.4.3)
+The user asked whether they can share items with friends (only through shared chests before) and then asked for a direct way. Bags stay on each device, so a gift is a message, not an `LC.Sim` op: the giver takes it out of their bag first (`World.giveItem`; `LC.FIXED_ITEMS` cannot be given), `LC.Net.give` sends `gift{gid,to,id,n}` to the host, which passes it on (or takes it itself) with the giver's name; the receiver keeps what fits (`World.bagRoom`) and answers `giftRes{took}`, routed back through the host; the giver gets the rest back. A friend who left answers 0, and no answer in 10 s gives everything back. Reach: friends in the same place within 64 px (`World.friendsNear`). UI: a green **Give a friend** button under Throw away in the bag (only with friends), key G, then "who" (up to 3 names) and "how many" choices. The icon flies between the two players. Co-op protocol 17.
+
 ## 8. Milestones
 
 1. **Skeleton.** Phaser boots, procedural textures, tilemap, player movement with collision, camera.

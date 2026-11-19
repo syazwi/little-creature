@@ -111,8 +111,17 @@ window.LC = window.LC || {};
       var tbz = this.add.zone(tbx, tby, tbw, tbh).setOrigin(0).setInteractive({ useHandCursor: true });
       tbz.on('pointerdown', function () { throwAway(); });
       c.add([tg, tbt, tbz]);
+      // v2.4.3: the Give button, under it, while friends are playing with you
+      var coop = !!LC.Net.role && LC.Net.count() > 1, REACH = 64, gby = tby + tbh + 8, gg2 = null, gbt = null;
+      if (coop) {
+        gg2 = this.add.graphics();
+        gbt = this.txt(tbx + tbw / 2, gby + tbh / 2, 'Give a friend', 19, '#d8f7c0', { ox: 0.5, oy: 0.5 });
+        var gbz = this.add.zone(tbx, gby, tbw, tbh).setOrigin(0).setInteractive({ useHandCursor: true });
+        gbz.on('pointerdown', function () { give(); });
+        c.add([gg2, gbt, gbz]);
+      }
       c.add(this.txt(480, Y + Hd - 18, this.touchOn ? 'Tap an item to pick it up, tap another slot to swap  ·  X (top) to close'
-        : 'Arrows/mouse move  ·  E or click: pick up, then swap  ·  T / Delete: throw away  ·  Esc close', 12, '#8a7a6a', { ox: 0.5 }));
+        : 'Arrows/mouse move  ·  E or click: pick up, then swap  ·  T / Delete: throw away' + (coop ? '  ·  G: give a friend' : '') + '  ·  Esc close', 12, '#8a7a6a', { ox: 0.5 }));
       function keepVisible() {
         if (cur < 9) return;
         var row = Math.floor((cur - 9) / 9);
@@ -137,6 +146,11 @@ window.LC = window.LC || {};
         tg.clear(); tg.fillStyle(sl && !fixed ? 0x6a2a24 : 0x2e2219, 1); tg.fillRoundedRect(tbx, tby, tbw, tbh, 10);
         tg.lineStyle(2, sl && !fixed ? 0xff8a7a : 0x5a4a3a, 1); tg.strokeRoundedRect(tbx, tby, tbw, tbh, 10);
         tbt.setAlpha(sl && !fixed ? 1 : 0.35);
+        if (gg2) {
+          gg2.clear(); gg2.fillStyle(sl && !fixed ? 0x2a4a24 : 0x2e2219, 1); gg2.fillRoundedRect(tbx, gby, tbw, tbh, 10);
+          gg2.lineStyle(2, sl && !fixed ? 0x9be15d : 0x5a4a3a, 1); gg2.strokeRoundedRect(tbx, gby, tbw, tbh, 10);
+          gbt.setAlpha(sl && !fixed ? 1 : 0.35);
+        }
         if (sl) {
           var it = LC.ITEMS[sl.id], info = [];
           tName.setText(it.name + (sl.n > 1 ? '  x' + sl.n : ''));
@@ -145,7 +159,7 @@ window.LC = window.LC || {};
           if (it.glow) info.push('Offering: +' + it.glow + ' glow');
           if (it.sell) info.push('Sells for ' + it.sell + ' kepeng');
           if (LC.LOVES.indexOf(sl.id) >= 0) info.push('Pelita loves this!');
-          if (fixed) info.push('You need this: it can\'t be thrown away.');
+          if (fixed) info.push('You need this: it can\'t be thrown away' + (coop ? ' or given away.' : '.'));
           tInfo.setText(info.join('   ·   '));
         } else { tName.setText(''); tDesc.setText(cur < 9 ? 'Empty hotbar slot.' : 'Empty backpack slot.'); tInfo.setText(''); }
       }
@@ -170,12 +184,37 @@ window.LC = window.LC || {};
         if (count > 1) choices.push({ label: 'Throw away all ' + count, fn: function () { toss(count); } });
         self.say([{ text: 'Throw away ' + it.name + (count > 1 ? ' (' + count + ' in this slot)' : '') + '? It will be gone for good.' + (it.sell ? ' (Mak Ani would pay ' + it.sell + ' kepeng each.)' : '') }], { choices: choices });
       }
+      // v2.4.3: hand it to a friend standing near you (pick who if several are close, then how many)
+      function give() {
+        var idx = cur, sl = S.inv[idx], W = self.world;
+        if (!coop || !sl || !W) return;
+        var it = LC.ITEMS[sl.id], id = sl.id, count = sl.n;
+        if (LC.FIXED_ITEMS[id]) { self.toast('You need your ' + it.name + ': keep it!', it.icon); LC.Audio.sfx('error'); return; }
+        var near = W.friendsNear(REACH);
+        if (!near.length) {
+          var names = Object.keys(LC.Net.others).map(function (k) { return LC.Net.others[k].name; }).join(', ');
+          self.toast('Stand next to a friend to give them something' + (names ? ' (' + names + ')' : '') + '.', 'ic_joy'); LC.Audio.sfx('error'); return;
+        }
+        function reopen() { self.time.delayedCall(100, function () { self.openInventory(idx); }); }
+        function send(f, k) { W.giveItem(f, idx, id, k); reopen(); }
+        function howMany(f) {
+          var choices = [{ label: 'Keep it', fn: reopen }, { label: count > 1 ? 'Give 1' : 'Give it', fn: function () { send(f, 1); } }];
+          if (count > 1) choices.push({ label: 'Give all ' + count, fn: function () { send(f, count); } });
+          self.say([{ text: 'Give ' + f.name + ' your ' + it.name + (count > 1 ? ' (' + count + ' in this slot)' : '') + '?' }], { choices: choices });
+        }
+        close();
+        if (near.length === 1) { howMany(near[0]); return; }
+        self.say([{ text: 'Who should get your ' + it.name + '?' }], { choices: near.slice(0, 3).map(function (f) {
+          return { label: f.name, fn: function () { self.time.delayedCall(80, function () { howMany(f); }); } };
+        }).concat([{ label: 'Never mind', fn: reopen }]) });
+      }
       function close() { c.destroy(); if (self.modal === m) self.modal = null; }
       m = {
         type: 'inv', close: close,
         key: function (code) {
           if (code === 'Escape' || code === 'Tab' || code === 'KeyI') { close(); return; }
           if (code === 'KeyT' || code === 'Delete' || code === 'Backspace') { throwAway(); return; }
+          if (code === 'KeyG' && coop) { give(); return; }
           if (code === 'ArrowLeft' || code === 'KeyA') cur = (cur + n - 1) % n;
           else if (code === 'ArrowRight' || code === 'KeyD') cur = (cur + 1) % n;
           else if (code === 'ArrowUp' || code === 'KeyW') cur = (cur - 9 + n) % n;

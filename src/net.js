@@ -10,11 +10,12 @@
  *   host -> guest : welcome{id,color,hostName,code,world} · reject{why} · tick{m,d,g,gs,p} · res{rid,res}
  *                   sync{op,a,by,parts} · toast{msg,icon} · event{ev,st} · sleepStart · dayStart{sum,world} · bye{why}
  *                   reload{world,by} (the host loaded a saved farm) · saved{by} (the host saved: guests save their bags too)
+ *   v2.4.3 gifts, through the host:  gift{gid,to,id,n} -> gift{gid,from,fromName,id,n} -> giftRes{gid,to,took} -> giftRes{gid,took}
  */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
-  var PROTO = 16, MAX_PLAYERS = 4, PREFIX = 'littlecreature-';
+  var PROTO = 17, MAX_PLAYERS = 4, PREFIX = 'littlecreature-';
   var ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   var NAME_KEY = 'littleCreature.name';
 
@@ -107,6 +108,7 @@ window.LC = window.LC || {};
         safeSend(conn, { t: 'res', rid: m.rid, res: res === undefined ? null : res });
         break;
       case 'sleepy': N.emit('toast', g.name + ' is sleepy. Sleep in the house to end the day for everyone.', 'ic_moon'); break;
+      case 'gift': case 'giftRes': routeGift(id, m); break;
     }
   }
   function dropGuest(id) {
@@ -182,7 +184,41 @@ window.LC = window.LC || {};
       case 'reload': N.emit('reload', m); break;
       case 'saved': N.emit('saved', m); break;
       case 'bye': var why = m.why; N.leave(); N.emit('closed', why || 'Your friend closed their farm.'); break;
+      case 'gift': receiveGift(m); break;
+      case 'giftRes': giftAnswered(m); break;
     }
+  }
+
+  // ================================================================ gifts (v2.4.3): hand something from your bag to a friend
+  // Every bag lives on its own player's device, so a gift is a message (passed on by the host). The friend answers
+  // how many fitted in their bag, and the giver gets the rest back. No answer in 10 s: it all goes back to the giver.
+  var gifts = {}, giftN = 0;
+  N.give = function (to, id, n, cb) {
+    var gid = N.myId + ':' + (++giftN) + ':' + Date.now();
+    gifts[gid] = cb;
+    setTimeout(function () { var f = gifts[gid]; if (f) { delete gifts[gid]; f(null); } }, 10000);
+    var m = { t: 'gift', gid: gid, to: to, id: id, n: n };
+    if (N.role === 'host') routeGift('host', m); else if (N.role === 'guest') safeSend(N.hostConn, m);
+  };
+  function giftAnswered(m) { var f = gifts[m.gid]; if (f) { delete gifts[m.gid]; f(Math.max(0, Math.floor(+m.took) || 0)); } }
+  // the host passes a gift, or its answer, on to whoever it is for (fromId: who sent this message)
+  function routeGift(fromId, m) {
+    if (N.role !== 'host') return;
+    if (m.t === 'gift') {
+      var g = N.guests[fromId], out = { t: 'gift', gid: m.gid, from: fromId, fromName: fromId === 'host' ? N.myName : (g && g.name) || 'Friend', id: m.id, n: m.n };
+      if (m.to === 'host' && fromId !== 'host') receiveGift(out);
+      else if (m.to !== fromId && N.guests[m.to]) safeSend(N.guests[m.to].conn, out);
+      else routeGift(m.to, { t: 'giftRes', gid: m.gid, to: fromId, took: 0 });   // they went home: it all goes back
+    } else {
+      var res = { t: 'giftRes', gid: m.gid, took: m.took };
+      if (m.to === 'host') giftAnswered(res); else if (N.guests[m.to]) safeSend(N.guests[m.to].conn, res);
+    }
+  }
+  function receiveGift(m) {
+    var took = 0;
+    try { took = N.on.gift ? N.on.gift(m) || 0 : 0; } catch (e) { console.error(e); }
+    var res = { t: 'giftRes', gid: m.gid, to: m.from, took: took };
+    if (N.role === 'host') routeGift('host', res); else safeSend(N.hostConn, res);
   }
   N.request = function (op, a, cb) {
     if (!N.hostConn || !N.hostConn.open) { cb(null); return; }

@@ -63,6 +63,7 @@ PC browsers and Android phones can all play together.
 | Houses built in the kampung, spirits befriended, the land Badang clears, Nenek's house, the helpers and the pantry | Villager friendship and requests, your fish log, your bubu, your bike and car, Badang at your side |
 | | Cooking, crafting, fishing, and buying or selling |
 
+- **Give a friend something (v2.4.3).** Stand next to a friend, open your **Bag**, pick the item and press **Give a friend** (or **G**). Choose who (when several friends are close) and how many: 1 or the whole stack. It flies over to their bag. If their bag is full, it comes back to you. Tools you need (cangkul, gembor, joran and the like) stay with you. Storage chests are shared too, for friends who are far away.
 - Friends can explore different places at the same time. You see each other when you are in the same place.
 - Pelita follows whoever fed or petted it last, even into another place. Your spirit companion is visible to friends too.
 - **Only the host ends the day.** When the host sleeps, everyone sleeps (wherever they are, they wake up at the farm) and sees the day summary. A friend can use the house to tell the host they're sleepy.
