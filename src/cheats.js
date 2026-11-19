@@ -4,7 +4,8 @@
  *   T  replay Si Tanggang's story (switch between "before he meets his mother" and "reunited")
  *   B  replay Badang's story (switch between "skinny, on the night watch" and "the strongest man in the land")
  *   K  Chapter 2: jump to its next step
- *   L  Chapter 3: jump to its next step (finishes Chapter 2 first; parts 1 and 2) */
+ *   L  Chapter 3: jump to its next step (finishes Chapter 2 first; parts 1 and 2)
+ *   O  Chapter 4: jump to its next step or wave (finishes Chapters 2 and 3 first) */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -87,6 +88,16 @@ window.LC = window.LC || {};
         this.toast('Chapter 3, step ' + Q3.ch3 + ': ' + (LC.ch3Goal() || 'complete').replace(/^Chapter 3: /, '') + ' (Re-enter Barunai to see it.)', 'ic_glow');
         return;
       }
+      case 'KeyO': {   // v2.2: jump to the next step (or wave) of Chapter 4
+        var Q4 = S.quests, s4 = Q4.ch4 || 0, w4 = Q4.c4wave || 0;
+        if ((Q4.ch3 || 0) < 13) { Q4.ch2 = 8; Q4.ch3 = 13; Q4.kaStage = 3; Q4.asmara = 1; Q4.jinn = 1; Q4.ch3day = S.day - 1; State.recalc(); Q4.ch4 = 1; }
+        else if (s4 < 2) Q4.ch4 = s4 + 1;
+        else if (s4 === 2) { Q4.c4pagar = Q4.c4meriam = Q4.c4allies = 1; Q4.ch4 = 3; Q4.c4wave = 0; }
+        else if (s4 === 3 && w4 < 4) { Q4.c4wave = w4 + 1; if (Q4.c4wave >= 3) Q4.c4fires = { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1 }; }
+        else if (s4 === 3) { Q4.ch4 = 4; Q4.c4wave = 5; if (!LC.State.count('keris_majapahit')) LC.State.add('keris_majapahit', 1); }
+        this.toast('Chapter 4, step ' + Q4.ch4 + (Q4.ch4 === 3 ? ', wave ' + (Q4.c4wave || 0) : '') + ': ' + (LC.ch4Goal() || 'complete').replace(/^Chapter 4: /, '') + ' (Re-enter the place to see it.)', 'ic_glow');
+        return;
+      }
       case 'KeyB': {   // v1.7: replay Badang's story (skinny, by the forest pool) or make him strong again
         var strong = (S.quests.badang || 0) >= 3;
         S.quests.badang = strong ? 2 : 3; S.buddy = null;
@@ -100,6 +111,6 @@ window.LC = window.LC || {};
   LC.UIScene.prototype.create = function () {
     create.apply(this, arguments);
     var self = this;
-    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story, B replay the Badang story, K next Chapter 2 step, L next Chapter 3 step.', 'ic_glow'); });
+    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story, B replay the Badang story, K next Chapter 2 step, L next Chapter 3 step, O next Chapter 4 step.', 'ic_glow'); });
   };
 })(window.LC);

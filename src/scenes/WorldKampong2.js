@@ -295,7 +295,7 @@ window.LC = window.LC || {};
       this.war.won = true; this.cutscene = true;
       LC.Audio.setBattle(false); LC.Audio.sfx('cheer');
       this.ui.say(this.ch2Lines(LC.CH3TEXT2.warEnd), { onDone: function () {
-        q.ch3 = 13; S.kepeng += 5000; S.stats.earned += 5000;
+        q.ch3 = 13; q.ch3day = S.day; S.kepeng += 5000; S.stats.earned += 5000;   // (v2.2: Chapter 4 begins on a later day)
         if (!LC.State.add('lantaka', 1)) self.toast('Your bag is full, so Pak Damit sends the Lantaka to Barunai for you... (make room and talk to Pateh Berbai).');
         else q.lantakaGot = 1;
         LC.Audio.sfx('stage');

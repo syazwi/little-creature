@@ -209,6 +209,10 @@ src/
   art10.js          v2.1 textures: Bilanapura, the soldiers, the tall ship, the meriam, flames, the elephant, Pelita's stone lamp, three families, icons
   scenes/WorldKampong2.js  the jinn battle with the three heroes, the visions, Antonio's tour, the four waves of 1578
   scenes/UIKampong2.js     part 2 Talk rows (Semaun, Jerambak, the ogre's trade, Antonio, Pak Damit), the meriam game, the goal line from step 8
+  majapahit.js      v2.2 Chapter 4 data: the soldiers and the admiral, the farm and kampung battle groups, the stockade and cannons, the trading jong, story text
+  art11.js          v2.2 textures: Majapahit soldiers, Laksamana Kebo Taruna, the bamboo stockade, icons (Keris Majapahit, celengan, batik)
+  scenes/WorldMajapahit.js the alarm, the four waves, the heroes fighting beside you, the fires on the farm, the king's arrival, a cutscene safety net
+  scenes/UIMajapahit.js    Chapter 4 Talk rows (Pak Mat, the Penghulu, Leong, Kemala, Semaun, Badang), the trading jong's shop, the goal line and Journal
   scenes/UIKampong.js      Berbai's building rows, the craftspeople's services, the padian and pilings menus, the training and cockfight games, Chapter 3 in the Journal and goal line
   cheats.js         test build only (dist/LittleCreature_full.html)
   scenes/UIGames.js      map, chest, reban, Pesta and its contest games, strength training, quests, the journal's You page
@@ -374,6 +378,13 @@ The user asked for the wars to be included, and then for "part 2 and the rest", 
 **Combat hooks** (WorldKampong2 wraps WorldCombat): an enemy group can have `when(W)`, checked by `groupOn`; `enemyDie` sends `bilanapura` and `askar` to their own scenes (no respawn: `respawn = 1e9`); `createEnemies` clears any fight left over from the last place (the scene object outlives reloads). The heroes strike the jinn for 2 every 2.2 s while you fight.
 
 **Kampong Ayer** (`LC.AREAS.kayer`, 48x34, not in `AREA_ORDER`, like the deep-sea places): reached only through the `vision` lamp in Barunai (ch3 11-12), left through the `vision_back` lamp. Three walkways with 33 houses, a brassmiths' workshop and the great hall (tour stops), and `when` objects per year (elephants, the padian, Antonio's ship in 1521; the meriam in 1578). The 1578 run lives in `World.war` (`LC.kaWar` for the goal line) and restarts if you leave: wave 1 `ships` (the meriam game, `UI.openMeriam`), 2 `fires` on `LC.WAR.fires` houses (2 water each), 3 `families`, 4 six `askar`. Co-op protocol 10.
+
+### Chapter 4: Layar Merah (v2.2)
+The user asked for a chapter where Majapahit attacks the home of Chapter 1, and accepted the plan's rogue admiral (Laksamana Kebo Taruna, invented) as the villain, so that Chapter 3's fair King of Majapahit stays honourable: he arrives to stop it. No real historical figures as villains (no Gajah Mada or Hayam Wuruk), no gore, no religion.
+
+**Progress** (`quests.ch4`): 0 waits for a day after Chapter 3 (`quests.ch3day`, set when 1578 is won), then the alarm plays on the farm; 1 Pak Mat; 2 preparations (`c4pagar`, `c4meriam`, `c4allies`, optional `c4badang`; the stockade and cannons are `when` objects in Kampung Tepian); 3 the attack (`c4wave` 1 kampung jetty, 2 farm fires `c4fires`, 3 raiders at the spirit house, 4 the admiral at the farm jetty), saved so a wave carries on after travelling or fainting; 4 complete (Keris Majapahit, or `c4kerisOwed` with the Penghulu; the `jong_dagang` object and shop on the farm).
+
+**How the battle works:** enemy groups on `LC.AREAS.kampung` and `LC.AREAS.farm` with `when` (the farm had no enemies before); `soldierDown`/`admiralDown` replace `enemyDie` for `prajurit`/`laksamana`; the heroes (`C4.allies` by place and wave) strike the nearest foe every 2.4 s. Each wave starts before its dialogue, so closing a dialogue early can never stall it, and the reward is granted before the king's scene. A safety net releases any story cutscene that has had no dialogue on screen for 6 s. Co-op protocol 11.
 
 ## 8. Milestones
 

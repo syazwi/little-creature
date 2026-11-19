@@ -114,7 +114,7 @@ window.LC = window.LC || {};
     },
     craftRow: function (icon, label, sub, cost, k, fn) {
       var ok = canPay(cost, k);
-      return { icon: icon, label: label, right: k + ' k', sub: sub + ' Needs ' + need(cost) + ' and ' + k + ' kepeng.', enabled: ok, why: payWhy(cost, k),
+      return { icon: icon, label: label, right: k ? k + ' k' : (ok ? 'Build' : ''), sub: sub + ' Needs ' + need(cost) + (k ? ' and ' + k + ' kepeng' : '') + '.', enabled: ok, why: payWhy(cost, k),
         action: function () { LC.State.takeAll(cost); LC.State.s.kepeng -= k; fn(); return 'close'; } };
     },
 
