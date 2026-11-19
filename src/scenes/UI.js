@@ -371,7 +371,7 @@ window.LC = window.LC || {};
       this.bar(gf, px + 132, py + 118, 124, 12, g.glow / 100, g.glow < 20 ? 0xe76f51 : 0xb8a8ff);
       var lv = LC.State.level(), nb = LC.State.nextLevelBond(), pb = LC.LEVELS[lv - 1];
       this.bar(gf, px + 20, py + 164, 234, 7, nb === null ? 1 : (g.bond - pb) / (nb - pb), 0xffd166);
-      this.portrait.setTexture('ghost_' + g.stage + '_' + (this.world.curExpr || 'normal'));
+      this.portrait.setTexture(LC.ghostTex(g.stage, this.world.curExpr || 'normal'));
       this.tStage.setText('Lv ' + lv + ' · ' + LC.STAGES[g.stage].short);
       this.tBond.setText(nb === null ? 'Bond ' + Math.floor(g.bond) + '  (max level)' : 'Bond ' + Math.floor(g.bond) + ' / ' + nb + '  (Lv ' + (lv + 1) + ')');
       if (g.stage === 0) { this.tCrave.setText('Craving: ???'); this.icCrave.setVisible(false); }
@@ -500,7 +500,7 @@ window.LC = window.LC || {};
         tx = 90; var ww = 770;
         if (hasP) {
           pg.fillStyle(0x3b2f5c, 1); pg.fillRoundedRect(84, 452, 112, 116, 8);
-          por.setTexture(L.portrait === 'ghost' ? 'ghost_' + S.ghost.stage + '_' + (L.expr || 'normal') : L.portrait);
+          por.setTexture(L.portrait === 'ghost' ? LC.ghostTex(S.ghost.stage, L.expr || 'normal') : L.portrait);
           tx = 218; ww = 650;
         }
         name.setPosition(tx, 448).setText(L.name || '');
@@ -936,7 +936,7 @@ window.LC = window.LC || {};
       c.add(this.txt(480, Y + 18, (sum.fainted ? 'You passed out...  ' : '') + 'Day ' + sum.day + ' complete', 30, '#ffd166', { ox: 0.5 }));
       var expr = sum.mood === 'content' ? 'happy' : sum.mood === 'neglected' ? 'sad' : 'sleepy';
       bg.fillStyle(0x3b2f5c, 1); bg.fillCircle(X + 80, Y + 118, 42);
-      c.add(this.add.image(X + 80, Y + 116, 'ghost_' + S.ghost.stage + '_' + expr).setScale(3));
+      c.add(this.add.image(X + 80, Y + 116, LC.ghostTex(S.ghost.stage, expr)).setScale(3));
       var moodTxt = sum.mood === 'content' ? 'Pelita is content.' : sum.mood === 'neglected' ? 'Pelita feels neglected...' : 'Pelita is a little restless.';
       c.add(this.txt(X + 140, Y + 92, moodTxt, 22, sum.mood === 'neglected' ? '#ff8a7a' : '#e8dcff'));
       c.add(this.txt(X + 140, Y + 124, LC.STAGES[S.ghost.stage].name + '  ·  Bond ' + Math.floor(S.ghost.bond), 15, '#b8a8ff'));

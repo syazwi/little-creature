@@ -123,7 +123,7 @@ window.LC = window.LC || {};
       dot.fillStyle(0xffffff, 1); dot.fillCircle(me.x - 52, me.y - 14, 6); dot.fillStyle(Phaser.Display.Color.HexStringToColor(LC.Art.OUTFIT_COLORS[W.pc || 0]).color, 1); dot.fillCircle(me.x - 52, me.y - 14, 4);
       this.tweens.add({ targets: dot, alpha: 0.3, duration: 400, yoyo: true, repeat: -1 });
       var ga = W.ghostArea || 'farm';
-      if (LC.MAP_POS[ga]) { var gp = pos(ga); body.add(this.add.image(gp.x + 74, gp.y - 22, 'ghost_' + S.ghost.stage + '_happy').setScale(1.4)); }
+      if (LC.MAP_POS[ga]) { var gp = pos(ga); body.add(this.add.image(gp.x + 74, gp.y - 22, LC.ghostTex(S.ghost.stage, 'happy')).setScale(1.4)); }
       body.add(this.txt(480, Y + Hd - 46, '(you are blinking)  ·  Pelita\'s icon shows where it is  ·  dashed lines: by boat, by diving or by secret ways', 13, '#cdb8a0', { ox: 0.5 }));
     },
 

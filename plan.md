@@ -212,6 +212,10 @@ src/
   majapahit.js      v2.2 Chapter 4 data: the soldiers and the admiral, the farm and kampung battle groups, the stockade and cannons, the trading jong, story text
   art11.js          v2.2 textures: Majapahit soldiers, Laksamana Kebo Taruna, the bamboo stockade, icons (Keris Majapahit, celengan, batik)
   scenes/WorldMajapahit.js the alarm, the four waves, the heroes fighting beside you, the fires on the farm, the king's arrival, a cutscene safety net
+  bayang.js         v2.3 Chapter 5 data: the shadows and Si Kelam, Java and Pulau Kelam (maps and objects), Empu Lintang, Kebo Taruna, Juragan Wira, the guard lamps, the damar tree, story text, LC.ghostTex
+  art12.js          v2.3 textures: the shadows, Si Kelam, Pelita Purnama (ghost_5_*), Juragan Wira, the guard lamps, the damar tree, the stone torches, the pendopo, the split gate, Javanese houses, market stalls, icons
+  scenes/WorldBayang.js    the night the lamps go out, Pelita growing pale, the torches failing, wilted crops, the voyages, the king, the damar tree, the stone torches, Si Kelam's shield, the finale
+  scenes/UIBayang.js       Chapter 5 Talk rows (the Penghulu, Leong, Tok Batin, Empu Lintang), the jong's voyage menu, the market of Majapahit, the goal line and Journal
   scenes/UIMajapahit.js    Chapter 4 Talk rows (Pak Mat, the Penghulu, Leong, Kemala, Semaun, Badang), the trading jong's shop, the goal line and Journal
   scenes/UIKampong.js      Berbai's building rows, the craftspeople's services, the padian and pilings menus, the training and cockfight games, Chapter 3 in the Journal and goal line
   cheats.js         test build only (dist/LittleCreature_full.html)
@@ -385,6 +389,15 @@ The user asked for a chapter where Majapahit attacks the home of Chapter 1, and 
 **Progress** (`quests.ch4`): 0 waits for a day after Chapter 3 (`quests.ch3day`, set when 1578 is won), then the alarm plays on the farm; 1 Pak Mat; 2 preparations (`c4pagar`, `c4meriam`, `c4allies`, optional `c4badang`; the stockade and cannons are `when` objects in Kampung Tepian); 3 the attack (`c4wave` 1 kampung jetty, 2 farm fires `c4fires`, 3 raiders at the spirit house, 4 the admiral at the farm jetty), saved so a wave carries on after travelling or fainting; 4 complete (Keris Majapahit, or `c4kerisOwed` with the Penghulu; the `jong_dagang` object and shop on the farm).
 
 **How the battle works:** enemy groups on `LC.AREAS.kampung` and `LC.AREAS.farm` with `when` (the farm had no enemies before); `soldierDown`/`admiralDown` replace `enemyDie` for `prajurit`/`laksamana`; the heroes (`C4.allies` by place and wave) strike the nearest foe every 2.4 s. Each wave starts before its dialogue, so closing a dialogue early can never stall it, and the reward is granted before the king's scene. A safety net releases any story cutscene that has had no dialogue on screen for 6 s. Co-op protocol 11.
+
+### Chapter 5: Bayang Hitam (v2.3)
+The user picked this continuation: the exiled admiral makes a pact with an original shadow spirit that wants to put out Pelita's light; shadows attack the farm and the kampungs at night; you sail to the Majapahit court for the lamp that made Pelita; the finale frees the admiral and gives Pelita a new form. Si Kelam is invented (no folklore or religious figure), and nobody is punished.
+
+**Progress** (`quests.ch5`): 0 waits for a night after Chapter 4 (`quests.ch4day`, set when the admiral falls) on the farm; 1 four `kelam` shadows on the farm (one-shot); 2 Juragan Wira (`c5wira`, on the jong's menu) and the guard lamps (`c5lamps`, farm `when` objects with lights); sailing to Java sets 3 before the place is built (`c5arrive` shows the landing text); 3 the king (`c5king`, a figure, not a villager), Empu Lintang (`c5empu`), the Cahaya Bunian, the damar tree (`c5damarDay`), the forge; 4 Pulau Kelam (`c5obor` saves the lit torches); 5 complete (+20 max health in `recalc`, `ghost_5_*` through `LC.ghostTex`).
+
+**While the shadow is loose** (steps 1-4, `LC.shadowLoose`): Pelita is drawn pale and its glow small (an `updateGhost` wrapper), farm and kampung torches stay dark (an `updateLighting` wrapper), `bayang` groups roam both places at night (not the farm once the guard lamps burn), and `State.endDay` dries up to two growing crops a night without the lamps. Si Kelam's shield resets its health until all four torches burn. The reward is granted before the finale's dialogue. Co-op protocol 12.
+
+**Also in v2.3:** Pixelify Sans drew the "fi" ligature like an "A" ("first" came out as "Arst"), so every Text object now renders with `textRendering = 'optimizeSpeed'` (no ligatures).
 
 ## 8. Milestones
 

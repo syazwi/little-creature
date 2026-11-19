@@ -300,7 +300,7 @@ window.LC = window.LC || {};
       if (s.inv) { var bag = LC.bagSize(lv); while (s.inv.length < bag) s.inv.push(null); }   // v1.8: the bag grows with Pelita's level
       s.maxWater = 20 + (lv >= 10 ? 10 : 0) + (s.quests && s.quests.gembor ? 10 : 0);   // v2.0: Dang Kemala's brass gembor
       if (s.energy > s.maxEnergy) s.energy = s.maxEnergy;
-      s.maxHp = LC.maxHpFor(s.str || 10) + (s.flags && s.flags.poseidon ? 20 : 0) + (s.quests && s.quests.jinn ? 20 : 0);   // v2.1: Gelang Jerambak
+      s.maxHp = LC.maxHpFor(s.str || 10) + (s.flags && s.flags.poseidon ? 20 : 0) + (s.quests && s.quests.jinn ? 20 : 0) + (s.quests && (s.quests.ch5 || 0) >= 5 ? 20 : 0);   // v2.1: Gelang Jerambak; v2.3: Pelita Purnama
       if (s.hp === undefined || s.hp > s.maxHp) s.hp = s.maxHp;
     },
     // a level's personal gifts (every player on the farm gets them). Returns a line for the celebration.

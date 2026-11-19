@@ -773,5 +773,6 @@ window.LC = window.LC || {};
     if (Art.generate9) Art.generate9(scene);
     if (Art.generate10) Art.generate10(scene);
     if (Art.generate11) Art.generate11(scene);
+    if (Art.generate12) Art.generate12(scene);
   };
 })(window.LC);

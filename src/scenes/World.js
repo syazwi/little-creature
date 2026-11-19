@@ -549,7 +549,7 @@ window.LC = window.LC || {};
       else if (S.minutes >= 22 * 60) expr = 'sleepy';
       else if (g.joy >= 70) expr = 'happy';
       this.curExpr = expr;
-      this.ghost.setTexture('ghost_' + g.stage + '_' + expr);
+      this.ghost.setTexture(LC.ghostTex(g.stage, expr));   // (v2.3: Pelita Purnama)
       var n = this.nightF || 0;
       this.ghost.setAlpha(0.78 + 0.22 * n);
       var legend = (g.level || 1) >= LC.LEGEND_LEVEL;
@@ -988,6 +988,7 @@ window.LC = window.LC || {};
         case 'kplot': case 'padian': case 'hop': case 'ghost_ayam': case 'batu_ayam': return this.kampongObjAction(o);   // v2.0
         case 'hero': case 'vision': case 'vision_back': case 'tour': case 'meriam': case 'api': case 'keluarga': return this.kampongObjAction(o);   // v2.1
         case 'ally': case 'api4': case 'jong_dagang': return this.kampongObjAction(o);   // v2.2
+        case 'jong5': case 'pasar5': case 'obor5': case 'damar': case 'raja5': case 'kebo5': return this.kampongObjAction(o);   // v2.3
         case 'spirit':
           if (isFood) return { label: 'Offer ' + it.name + ' to Pelita', fn: function () { self.feedGhost(sl.id); } };
           return { label: 'Spirit house', fn: function () { self.ui.openSpirit(); } };

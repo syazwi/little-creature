@@ -180,7 +180,7 @@ window.LC = window.LC || {};
       var king = this.add.sprite(23 * T + 8, 31 * T, 'npc_raden_0').setOrigin(0.5, 1).setDepth(31 * T + 2).setAlpha(0);
       if (this.anims.exists('npc_raden_idle')) king.play('npc_raden_idle');
       var T4 = LC.CH4TEXT;
-      q.ch4 = 4; q.c4wave = 5; S.kepeng += 6000; S.stats.earned += 6000;   // (the reward is safe even if the scene is cut short)
+      q.ch4 = 4; q.c4wave = 5; q.ch4day = S.day; S.kepeng += 6000; S.stats.earned += 6000;   // (the reward is safe even if the scene is cut short)
       if (!LC.State.add('keris_majapahit', 1)) q.c4kerisOwed = 1;
       self.doShared('kind', { n: 20 }, function () {});
       this.ui.say(T4.king.slice(0, 1), { onDone: function () {

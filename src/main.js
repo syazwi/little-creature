@@ -113,6 +113,14 @@
   document.addEventListener('fullscreenchange', queueRefit);
   document.addEventListener('webkitfullscreenchange', queueRefit);
 
+  // v2.3: Pixelify Sans joins "fi" into a ligature that draws like an "A" ("first" came out as "Arst"). Text drawn
+  // with textRendering 'optimizeSpeed' skips ligatures, so every letter is drawn on its own.
+  var syncFont = Phaser.GameObjects.TextStyle.prototype.syncFont;
+  Phaser.GameObjects.TextStyle.prototype.syncFont = function (canvas, context) {
+    syncFont.call(this, canvas, context);
+    try { context.textRendering = 'optimizeSpeed'; } catch (e) { /* older browsers: nothing to do */ }
+  };
+
   window.addEventListener('load', function () {
     var v = LC.viewSize();
     LC.game = new Phaser.Game({
