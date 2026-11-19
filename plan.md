@@ -150,6 +150,7 @@ Stilt house (bed), spirit house + frangipani, dapur (stove), well (perigi), fenc
 | R | Ride / get off the bicycle or car |
 | G | Put on / take off the Bunian glasses |
 | F | Fullscreen |
+| C | Call Nek Lampir (after Chapter 6); in a fight with her beside you, her green circle |
 
 Mouse clicks also work on all menus.
 
@@ -220,6 +221,10 @@ src/
   art13.js          v2.4 textures: Nenek asleep on the pangkin, areca palms, the waterfall, the princess's pavilion, the Bunga Ledang, the duellists, Mak Lampir again, icons
   scenes/WorldLedang.js    Nenek's homecoming and the curse, the voyage, the silat duels (three touches), the areca palms, the bridge rails, the last fight (curse circles, stolen light, Hang Tuah), waking Nenek
   scenes/UILedang.js       Chapter 6 Talk rows (Tuah, Jebat, the princess, the tears, Leong's bridge), the jong's new destination, the goal line and Journal
+  neklampir.js      v2.4.1 Nek Lampir the helper: tuning (LC.NEK), unlock checks, real-clock cooldowns (LC.nekLeft), teleport places and prices, her lines
+  art14.js          v2.4.1 textures: her button (ic_nek), the green circle icon (ic_bulatan), the pepper pouch
+  scenes/WorldNek.js       calling her and her refusals, following and blinking, Serbuk Lada, Bulatan Hijau (playerHurt hook), the rescue, the paid teleport, the peace scene
+  scenes/UINek.js          her button beside the hotbar (C), the "what do you want?" dialogue, the teleport menu, her Talk rows and Journal line
   scenes/UIMajapahit.js    Chapter 4 Talk rows (Pak Mat, the Penghulu, Leong, Kemala, Semaun, Badang), the trading jong's shop, the goal line and Journal
   scenes/UIKampong.js      Berbai's building rows, the craftspeople's services, the padian and pilings menus, the training and cockfight games, Chapter 3 in the Journal and goal line
   cheats.js         test build only (dist/LittleCreature_full.html)
@@ -413,6 +418,11 @@ The user asked how Puteri Gunung Ledang and Hang Tuah could fit, wanted the stor
 **Progress** (`quests.ch6`): 0 waits for a day after Chapter 5 (`ch5day`) in the daytime on the farm; 1 Nenek is home (a figure at `C6.home`, `c6day`); 2 the curse that night, or the next morning if you slept (Nenek on the pangkin, `diari_nenek`); sailing to Gunung Ledang (a row added to the jong's menu through `LC.jongExtraRows`) sets 3 before the place is built (`c6arrive`); 3 Hang Tuah's duel; 4 the princess (`c6asked`), the tears (`c6tears`), the bridge (`c6bridge`, `LC.syncLedang` turns the stream tiles into planks, called from World.create), the areca nuts (`c6pinang` per palm per day); 5 the Bunga Ledang (`c6fight`, saved); 6 home with the flower (`c6bungaOwed` if the bag was full); 7 Nenek wakes (a villager from now on; +20 max energy in `recalc`).
 
 **The duels** use enemy kinds `pendekar_hangtuah`/`pendekar_jebat` with 999 health: each drop is a touch (health restored), each drop in your own health is a touch on you, three wins or loses, your health is given back, and the villager is hidden while his duellist fights. **The last fight**: `lampir6` (80 health) blinks around the garden, casts a curse circle under you every 6.5 s (9 damage if you are still in it after 1.3 s), drinks the light every 16 s (a dark overlay), and Hang Tuah strikes every 2.4 s. Rewards always come before the dialogue. Co-op protocol 15.
+
+### Nek Lampir, your grumpy helper (v2.4.1)
+The user wanted Nek Lampir to fight beside them, and chose her skills: **Serbuk Lada** (pepper powder) and **Bulatan Hijau** (a green circle). They wanted her grumpy and loyal to the player alone ("doesn't want to work together with other spirits, Hang Tuah, etc."), only coming when called, and able to teleport with a cooldown. Their answers: she refuses when anyone else is helping (and leaves in a huff if they turn up); Pelita stays; she teleports in three ways (herself, in and away from enemies; you, out of danger; you, to a place, for a fee). Her black magic is gone, so her help is herbs and an old smoke-step trick.
+
+**Unlock:** `quests.nekLampir`, set at the start of the peace scene (10 hearts with `lampir` after `ch6` 7: a Talk row, then `nekPeaceGo` sends you to the farm and `createNek` plays the scene). **Rivals** (`nekRival`): Badang along, Hang Tuah's Ch6 ally or a duel, Ch4 allies, the Ch3 jinn heroes or war, the Si Tanggang escort, any co-op player in the same place (`W.remote`), underwater. **Her AI**: follows a step behind (the side away from Pelita), blinks to the far side of you when an enemy comes within 22 px of her, throws pepper every 2.4 s at the foe nearest you (2 damage, 1 to bosses; the stagger sets `restT`), and goes home after 12 s without a fight (40 s if there never was one). **Green circle**: 8 s, 22 s cooldown; the `playerHurt` hook halves damage inside the ellipse. **Rescue**: in the same hook, a blow that would leave you under 30% is clamped to leave at least 1 health, and you are moved to the arrival spot of the place (its home, or any exit spawn leading here) farthest from enemies; 90 s cooldown. **Teleport**: any visited, open, dry place (`LC.nekPlaces`), 200 k or 500 k across the sea, 120 s cooldown. Cooldowns use the real clock (`LC.nekCallAt`, `nekCircleAt`, `nekRescueAt`, `nekTpAt`), like the stone curse. Simulated per device; no shared ops. Co-op protocol 16.
 
 ## 8. Milestones
 

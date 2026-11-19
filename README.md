@@ -13,7 +13,7 @@ As Pelita levels up, its light opens the way to the wider land: a riverside vill
 - **Or:** download this whole repository (**Code → Download ZIP**), unzip it, and double-click **`index.html`**. (`index.html` needs the folders next to it, so to copy just one file, use `dist/LittleCreature.html`.)
 - The game fills the whole browser window at any size. Press **F** (or use the pause menu) to go fullscreen.
 - Saves are kept by the browser on that PC. A different PC or browser starts its own farm. There are **three save slots**: see [Saving and loading](#saving-and-loading).
-- **Testing build:** [`dist/LittleCreature_full.html`](dist/LittleCreature_full.html) starts with everything unlocked (Pelita Lv 30 with a 72-slot bag, Nenek's house fully grown, every place, spirit, weapon and vehicle, 99,999 kepeng, max strength, Sumpahan Batu and Restu Ibu, Badang already strong, 3 bubu). It uses its own saves, so your real farm is never touched. Test keys: **]** next day, **[** next season, **\** next Pesta, **H** full health (and abilities ready), **T** replay Si Tanggang's story (switch between "before the reunion" and "reunited"), **B** replay Badang's story (switch between "skinny, on the night watch" and "the strongest man in the land"), **K** jump to the next step of Chapter 2, **L** jump to the next step of Chapter 3, parts 1 and 2 (it finishes Chapter 2 first), **O** jump to the next step (or battle wave) of Chapter 4 (it finishes Chapters 2 and 3 first), **P** jump to the next step of Chapter 5 (it finishes Chapters 2, 3 and 4 first), **Y** jump to the next step of Chapter 6 (it finishes Chapters 2 to 5 first).
+- **Testing build:** [`dist/LittleCreature_full.html`](dist/LittleCreature_full.html) starts with everything unlocked (Pelita Lv 30 with a 72-slot bag, Nenek's house fully grown, every place, spirit, weapon and vehicle, 99,999 kepeng, max strength, Sumpahan Batu and Restu Ibu, Badang already strong, 3 bubu). It uses its own saves, so your real farm is never touched. Test keys: **]** next day, **[** next season, **\** next Pesta, **H** full health (and abilities ready), **T** replay Si Tanggang's story (switch between "before the reunion" and "reunited"), **B** replay Badang's story (switch between "skinny, on the night watch" and "the strongest man in the land"), **K** jump to the next step of Chapter 2, **L** jump to the next step of Chapter 3, parts 1 and 2 (it finishes Chapter 2 first), **O** jump to the next step (or battle wave) of Chapter 4 (it finishes Chapters 2 and 3 first), **P** jump to the next step of Chapter 5 (it finishes Chapters 2, 3 and 4 first), **Y** jump to the next step of Chapter 6 (it finishes Chapters 2 to 5 first), **Z** Nek Lampir the helper (switch between "unlocked, press C" and "10 hearts, ready to make peace with Nenek"; it finishes Chapter 6 first).
 - If double-clicking opens the file in something other than a browser, right-click it and choose **Open with → Microsoft Edge** (or Chrome or Firefox).
 
 ### On an Android phone
@@ -75,6 +75,7 @@ PC browsers and Android phones can all play together.
 | Swing a weapon (wherever enemies roam) | E | **USE** |
 | Stone curse (Sumpahan Batu, once you have it) | V | Tap the stone beside the hotbar |
 | Giant stride (Langkah Semaun, Chapter 2) | Shift | Tap the footprints beside the hotbar |
+| Call Nek Lampir (after Chapter 6); with her beside you in a fight, her green circle | C | Tap her face beside the hotbar |
 
 Touch controls switch on automatically on touch screens. You can toggle them in the pause menu, where **Sound & music** also sets the volume of the music, the battle music, the sound effects and the nature sounds.
 
@@ -236,6 +237,16 @@ Seventy years ago, a little girl from Borneo chased a lost light up **Gunung Led
 - **Nenek wakes**, and decides to stay on the farm for good: she is now a neighbour you can talk to every day. +15,000 kepeng in all and +20 max energy.
 - No gore and no religion: the princess's cruellest old demand is never named, and the Sultan is only a proud king who learns to accept no.
 
+### Nek Lampir, your grumpy helper (v2.4.1)
+After Chapter 6, the old witch grows herbs on the lower slopes of Gunung Ledang. Become her best friend (10 hearts: bring her kuih pandan and chat every day), then choose **Make peace with Nenek** in her Talk menu. She grumbles, teleports you both to the farm, and says sorry to Nenek (who laughs at her hair). After that, press **C** anywhere to call her.
+- **Only you.** She will not come while another helper is with you (Badang, Hang Tuah, the brothers, Si Tanggang), while a co-op friend is in the same place, or under the sea ("I am NOT getting my hair wet"). If one turns up while she is there, she leaves in a huff. Pelita stays: she pretends not to see it.
+- **She teleports.** She pops in beside you in a puff of smoke, and blinks away whenever an enemy gets close to her.
+- **Serbuk Lada (pepper powder).** In a fight she throws pouches of pepper at anything that bites you: a little damage, and it sneezes and staggers back.
+- **Bulatan Hijau (the green circle).** Press **C** again in a fight: a circle of crushed herbs appears at your feet for 8 seconds, and every blow hurts you half as much while you stand in it (ready again after 22 seconds).
+- **Out of danger.** When your health falls below 30%, she grabs you by the collar and teleports you to the safest spot in the place (then rests 90 seconds).
+- **A paid teleport.** With no fight around, calling her opens her service: she sends you to any place you have already been, for 200 kepeng (500 across the sea), then rests 2 minutes.
+- She goes home by herself when there is nothing left to fight (or when you send her home), and needs 20 seconds before she will come again.
+
 ### Chapter 5: Bayang Hitam, "Black Shadow" (v2.3)
 Ever since the cockfight of Barunai, **Mak Lampir**, a black-magic witch, has been whispering in Laksamana Kebo Taruna's ear: it was her voice that fed the anger behind the attack of Chapter 4. Now the king has sent him to guard **Pulau Kelam**, a lonely black rock far out at sea, and she has bound **Si Kelam**, a shadow that drinks light (a creature made up for this game), to his anger. She wants Pelita's light, a light that never goes out, to stay young for a thousand years.
 - **The lamps go out.** A night after Chapter 4, every light on Nenek's farm gutters out and shadows slide across the yard. Drive them off. They leave a cold shard behind, and Pelita turns pale and small.
@@ -284,13 +295,13 @@ Icons are generated by `node tools/make-icons.mjs`.
 index.html            the game (open this to play from the folder)
 dist/                 ready-to-play builds: LittleCreature.html (single file) and LittleCreature.apk, and version.json (what the update check reads)
 src/                  game code: data, areas (maps of every place), folk (villagers and spirits), state, sim (shared-world rules),
-                      net (co-op), lobby, procedural art (art.js ... art13.js) + audio, data2/areas2/undersea (v1.5 content),
+                      net (co-op), lobby, procedural art (art.js ... art14.js) + audio, data2/areas2/undersea (v1.5 content),
                       battle.js (v1.6: wild enemies, abilities, Mak Deruma), badang.js (v1.7: Badang, the hantu, bubu,
-                      Ladang Badang, Lempar Batu), barunai.js (v1.9: Chapter 2), kampong.js + kampong2.js (v2.0-2.1: Chapter 3), majapahit.js (v2.2: Chapter 4), bayang.js (v2.3: Chapter 5), ledang.js (v2.4: Chapter 6), home.js (v1.8: house stages, helpers, bigger bag,
+                      Ladang Badang, Lempar Batu), barunai.js (v1.9: Chapter 2), kampong.js + kampong2.js (v2.0-2.1: Chapter 3), majapahit.js (v2.2: Chapter 4), bayang.js (v2.3: Chapter 5), ledang.js (v2.4: Chapter 6), neklampir.js (v2.4.1: Nek Lampir the helper), home.js (v1.8: house stages, helpers, bigger bag,
                       Lv 30, Mak Thuy and Pak Tam), version.js + update.js (update check), cheats.js (test build only),
                       scenes (World + WorldLife, WorldFarm, WorldCombat, WorldTanggang, WorldBadang, WorldHome, WorldBarunai,
-                      WorldKampong, WorldKampong2, WorldMajapahit, WorldBayang, WorldLedang; UI + UIMenus, UIGames,
-                      UISettings, UIBadang, UIHome, UIBarunai, UIKampong, UIKampong2, UIMajapahit, UIBayang, UILedang)
+                      WorldKampong, WorldKampong2, WorldMajapahit, WorldBayang, WorldLedang, WorldNek; UI + UIMenus, UIGames,
+                      UISettings, UIBadang, UIHome, UIBarunai, UIKampong, UIKampong2, UIMajapahit, UIBayang, UILedang, UINek)
 lib/                  Phaser 3.80.1 (MIT), PeerJS 1.5.4 (MIT) and the Pixelify Sans font (SIL OFL 1.1), vendored
 icons/                app icons
 android/              Android wrapper app (WebView). It packages the web game from the root at build time.

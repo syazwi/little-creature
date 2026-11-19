@@ -775,5 +775,6 @@ window.LC = window.LC || {};
     if (Art.generate11) Art.generate11(scene);
     if (Art.generate12) Art.generate12(scene);
     if (Art.generate13) Art.generate13(scene);
+    if (Art.generate14) Art.generate14(scene);   // v2.4.1: Nek Lampir the helper
   };
 })(window.LC);

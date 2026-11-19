@@ -422,6 +422,11 @@ window.LC = window.LC || {};
       case 'punch': A.tone(t, 'sine', 120, 45, 0.2, 0.4); A.noise(t, 0.1, 0.3, 'lowpass', 900); break;
       case 'dash': A.noise(t, 0.22, 0.22, 'bandpass', 2200, 900); A.tone(t, 'sine', 300, 700, 0.14, 0.06); break;
       case 'throw': A.noise(t, 0.5, 0.18, 'bandpass', 1800, 900); A.tone(t, 'sine', 500, 180, 0.4, 0.04); break;
+      // v2.4.1: Nek Lampir
+      case 'toss': A.noise(t, 0.16, 0.12, 'bandpass', 2400, 1200); break;
+      case 'sneeze': A.tone(t, 'sine', 380, 520, 0.16, 0.05); A.noise(t + 0.16, 0.18, 0.22, 'highpass', 2200); break;   // ah... CHOO!
+      case 'blink': A.noise(t, 0.3, 0.16, 'bandpass', 700, 300); A.tone(t, 'sine', 900, 300, 0.22, 0.05); break;
+      case 'herbs': A.noise(t, 0.4, 0.1, 'bandpass', 3200, 1200); [0, 3, 7].forEach(function (d, k) { A.bell(A.freq(d + 2), t + k * 0.08, 0.9, 0.08); }); break;
     }
   };
 })(window.LC);

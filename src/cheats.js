@@ -7,7 +7,8 @@
  *   L  Chapter 3: jump to its next step (finishes Chapter 2 first; parts 1 and 2)
  *   O  Chapter 4: jump to its next step or wave (finishes Chapters 2 and 3 first)
  *   P  Chapter 5: jump to its next step (finishes Chapters 2, 3 and 4 first)
- *   Y  Chapter 6: jump to its next step (finishes Chapters 2 to 5 first) */
+ *   Y  Chapter 6: jump to its next step (finishes Chapters 2 to 5 first)
+ *   Z  Nek Lampir the helper: switch between "unlocked (press C)" and "10 hearts, ready to make peace with Nenek" (finishes Chapter 6 first) */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -56,7 +57,7 @@ window.LC = window.LC || {};
       case 'BracketRight': sleepTo(S.day + 1); return;
       case 'BracketLeft': { var d = S.day + 1; while (LC.seasonOf(d) === State.season()) d++; this.toast('Skipping to ' + LC.seasonOf(d).name + '...', 'ic_glow'); sleepTo(d); return; }
       case 'Backslash': { var p = S.day + 1; while (p % 7 !== 6) p++; this.toast('Skipping to the next Pesta (Sabtu)...', 'i_wau'); sleepTo(p); return; }
-      case 'KeyH': S.hp = S.maxHp; S.energy = S.maxEnergy; S.water = S.maxWater; this.toast('Full health, energy and water (and abilities ready).', 'ic_hp'); S.restuDay = 0; LC.stoneReadyAt = 0; return;
+      case 'KeyH': S.hp = S.maxHp; S.energy = S.maxEnergy; S.water = S.maxWater; this.toast('Full health, energy and water (and abilities ready).', 'ic_hp'); S.restuDay = 0; LC.stoneReadyAt = 0; LC.nekCallAt = LC.nekCircleAt = LC.nekRescueAt = LC.nekTpAt = 0; return;
       case 'KeyT': {
         var re = (S.quests.tanggang || 0) >= 4;
         S.quests.tanggang = re ? 2 : 4; S.escort = null; S.restuDay = 0;
@@ -122,6 +123,16 @@ window.LC = window.LC || {};
         this.toast('Chapter 6, step ' + Q6.ch6 + ': ' + (LC.ch6Goal() || 'complete').replace(/^Chapter 6: /, '') + ' (Re-enter the place to see it. The jong at the farm jetty sails to Gunung Ledang.)', 'ic_glow');
         return;
       }
+      case 'KeyZ': {   // v2.4.1: Nek Lampir the helper (finishes Chapter 6 first)
+        var QZ = S.quests;
+        if ((QZ.ch6 || 0) < 7) { QZ.ch2 = 8; QZ.ch3 = 13; QZ.kaStage = 3; QZ.asmara = 1; QZ.jinn = 1; QZ.ch3day = S.day - 4; QZ.ch4 = 4; QZ.c4wave = 5; QZ.ch4day = S.day - 3; QZ.ch5 = 5; QZ.ch5day = S.day - 2; QZ.ch6 = 7; QZ.c6day = S.day - 1; if (!State.count('keris_majapahit')) State.add('keris_majapahit', 1); }
+        State.folk('lampir').pts = 40;
+        if (QZ.nekLampir) delete QZ.nekLampir; else QZ.nekLampir = 1;
+        LC.nekCallAt = LC.nekCircleAt = LC.nekRescueAt = LC.nekTpAt = 0;
+        State.recalc();
+        this.toast(QZ.nekLampir ? 'Nek Lampir is your helper: press C to call her (when you are alone, and not under the sea).' : 'Nek Lampir reset: 10 hearts, ready to make peace with Nenek (talk to her on Gunung Ledang, by the landing).', 'ic_nek');
+        return;
+      }
       case 'KeyB': {   // v1.7: replay Badang's story (skinny, by the forest pool) or make him strong again
         var strong = (S.quests.badang || 0) >= 3;
         S.quests.badang = strong ? 2 : 3; S.buddy = null;
@@ -135,6 +146,6 @@ window.LC = window.LC || {};
   LC.UIScene.prototype.create = function () {
     create.apply(this, arguments);
     var self = this;
-    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story, B replay the Badang story, K next Chapter 2 step, L next Chapter 3 step, O next Chapter 4 step, P next Chapter 5 step, Y next Chapter 6 step.', 'ic_glow'); });
+    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story, B replay the Badang story, K next Chapter 2 step, L next Chapter 3 step, O next Chapter 4 step, P next Chapter 5 step, Y next Chapter 6 step, Z Nek Lampir the helper.', 'ic_glow'); });
   };
 })(window.LC);
