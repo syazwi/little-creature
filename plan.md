@@ -151,6 +151,8 @@ Stilt house (bed), spirit house + frangipani, dapur (stove), well (perigi), fenc
 | G | Put on / take off the Bunian glasses |
 | F | Fullscreen |
 | C | Call Nek Lampir (after Chapter 6); in a fight with her beside you, her green circle |
+| B | Call Sang Bualang (after Chapter 7; he takes 10-20 s on the wind); in a fight with him beside you, a spin at once |
+| U | Angin Bualang: blow back every enemy around you (after Chapter 7) |
 
 Mouse clicks also work on all menus.
 
@@ -225,6 +227,13 @@ src/
   art14.js          v2.4.1 textures: her button (ic_nek), the green circle icon (ic_bulatan), the pepper pouch
   scenes/WorldNek.js       calling her and her refusals, following and blinking, Serbuk Lada, Bulatan Hijau (playerHurt hook), the rescue, the paid teleport, the peace scene
   scenes/UINek.js          her button beside the hotbar (C), the "what do you want?" dialogue, the teleport menu, her Talk rows and Journal line
+  santubong.js      v2.5 Chapter 7: items, Kampung Santubong and Pulau Satang, Mak Dayang, the two princesses, Putera Serapi, Sang Bualang, the storm creatures, LC.C7 tuning, the story (LC.CH7TEXT)
+  bualang.js        v2.5 Sang Bualang the helper and Angin Bualang (LC.BUALANG, real-clock cooldowns), Pelita's daylight, Nek Lampir's refusal
+  art15.js          v2.5 textures: the two mountains, the meeting stone, loom, lesung, houses, dye plants, the crag, Bualang (villager, boss), storm creatures, whirlwind, Raja Kayangan, icons
+  scenes/WorldSantubong.js the mist, the princesses at night, dyes, weaving and pounding, the storm, the sampan, the boss, the finale
+  scenes/WorldBualang.js   calling Bualang (the wind takes time), his spin, Angin Bualang, catching up after travel, Pelita's daylight
+  scenes/UISantubong.js    goal line, Journal page, the jong to Santubong, Talk rows, the rice-pounding game
+  scenes/UIBualang.js      the wau and gust buttons (B, U), the edge arrow, Journal rows, the daylight switch
   scenes/UIMajapahit.js    Chapter 4 Talk rows (Pak Mat, the Penghulu, Leong, Kemala, Semaun, Badang), the trading jong's shop, the goal line and Journal
   scenes/UIKampong.js      Berbai's building rows, the craftspeople's services, the padian and pilings menus, the training and cockfight games, Chapter 3 in the Journal and goal line
   cheats.js         test build only (dist/LittleCreature_full.html)
@@ -433,6 +442,13 @@ The user asked whether the game plays on an iPhone, then wanted it "to work just
 
 ### Give a friend (v2.4.3)
 The user asked whether they can share items with friends (only through shared chests before) and then asked for a direct way. Bags stay on each device, so a gift is a message, not an `LC.Sim` op: the giver takes it out of their bag first (`World.giveItem`; `LC.FIXED_ITEMS` cannot be given), `LC.Net.give` sends `gift{gid,to,id,n}` to the host, which passes it on (or takes it itself) with the giver's name; the receiver keeps what fits (`World.bagRoom`) and answers `giftRes{took}`, routed back through the host; the giver gets the rest back. A friend who left answers 0, and no answer in 10 s gives everything back. Reach: friends in the same place within 64 px (`World.friendsNear`). UI: a green **Give a friend** button under Throw away in the bag (only with friends), key G, then "who" (up to 3 names) and "how many" choices. The icon flies between the two players. Co-op protocol 17.
+
+### Chapter 7: Puteri Santubong (v2.5)
+The user picked the Sarawak legend of Puteri Santubong and Puteri Sejinjang (researched first: the common core is two sky princesses, a weaver and a rice-pounder, who quarrelled over Putera Serapi and became Gunung Santubong and Bukit Sejinjang; Pasir Kuning/Pasir Putih and Sang Bualang come from one less-documented telling). They asked for Puteri Gunung Ledang to be part of it, for Sang Bualang to be the villain who becomes a friend, unlocks a new power and fights beside the player, for him to take time to arrive "because he is riding the wind", and for Pelita's "bright as day" power as the reward. Nenek is from Santubong (her name, Minah, and her father the trader who ordered the brass lamp are this game's own story).
+
+**Steps** (`quests.ch7`): 0 a day after Ch6 (`c7wait`), the mist on the farm · 1 Ledang: `kabus_ledang` · 2 sail · 3 Mak Dayang (legend; places the princesses) · 4 night: `c7askS`/`c7askJ`, three dyes + `benang_emas` woven at the loom (`c7kain`), 3 padi pounded in the rhythm game (`c7beras`, `UI.openLesung`, `peek()` for tests), then "Carry her words" · 5 storm (`c7storm`, 8 kills of `ribut`/`camar`) · 6 Putera Serapi (`surat_serapi`) · 7 Pulau Satang (sampan `perahu7`), `c7boss` at the crag: `bualang7` with gusts (ring warning, push), whirlwinds (`c7.twisters`) and lightning circles until `calmStorm` at half health · 8 sit (`c7sat`), wau from Mak Dayang (`wau_bualang`) · 9 `c7aboard` from the Ledang Talk row · 10 finale at the meeting stone (`c7Finale`; rewards first). The princesses (glow villagers) only show from dusk to dawn until step 10 (an `updateFolk` wrap). Chapter treasures are in `LC.FIXED_ITEMS`. Speaker id `ledang` is Puteri Gunung Ledang (the villager id `puteri` is shared with Chapter 2's Tuan Puteri, so its name in dialogue is wrong; Ch7 avoids it). `UI.say` gained `onLine(i)`.
+
+**Sang Bualang** (`bualang.js`, `WorldBualang`, `UIBualang`): `quests.bualang`. B starts a call (`LC.bualangDueAt`, 10 s or 20 s when `A.cave || A.dim`; refused underwater); he swoops in, follows, spins every 2.8 s (`blowAway`: damage, knockback, `restT` dizzy), leaves after 9 s without a fight (2.5 s if he missed it), rests 25 s; if you travel while he is with you, he catches up in 3 s. U = Angin Bualang (radius 92, cd 12 s; also clears `c6.dark`, fog, twisters). `nekRival` returns `bualang` while he is present. HUD: a second row at y 514 above Nek Lampir and the dash (x 56 and 116); PC toasts move up 66 px when it shows; an edge arrow while he is on his way. **Pelita's daylight** (`quests.pelitaSun`, Lv 30, `flags.sunOff`): `updateLighting` runs at noon minutes when Pelita is here (not in caves), with a moonlight tint at night; pause-menu row via `LC.pauseExtraRow`. Dapur: `LC.MAKES` rows can have `when(S)`. Test keys: 0 (Chapter 7), and Badang's replay moved from B to minus. Co-op protocol 18.
 
 ## 8. Milestones
 

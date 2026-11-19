@@ -2,13 +2,14 @@
  * (so it never touches your real farm), and a few test keys:
  *   ]  sleep now (next day)      [  skip to the next season      \  skip to the next Pesta (Sabtu)      H  full health and energy
  *   T  replay Si Tanggang's story (switch between "before he meets his mother" and "reunited")
- *   B  replay Badang's story (switch between "skinny, on the night watch" and "the strongest man in the land")
+ *   -  replay Badang's story (switch between "skinny, on the night watch" and "the strongest man in the land"; B was this key until v2.5)
  *   K  Chapter 2: jump to its next step
  *   L  Chapter 3: jump to its next step (finishes Chapter 2 first; parts 1 and 2)
  *   O  Chapter 4: jump to its next step or wave (finishes Chapters 2 and 3 first)
  *   P  Chapter 5: jump to its next step (finishes Chapters 2, 3 and 4 first)
  *   Y  Chapter 6: jump to its next step (finishes Chapters 2 to 5 first)
- *   Z  Nek Lampir the helper: switch between "unlocked (press C)" and "10 hearts, ready to make peace with Nenek" (finishes Chapter 6 first) */
+ *   Z  Nek Lampir the helper: switch between "unlocked (press C)" and "10 hearts, ready to make peace with Nenek" (finishes Chapter 6 first)
+ *   0  Chapter 7: jump to its next step (finishes Chapters 2 to 6 first); at the end, Sang Bualang (B) and Angin Bualang (U) */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -57,7 +58,7 @@ window.LC = window.LC || {};
       case 'BracketRight': sleepTo(S.day + 1); return;
       case 'BracketLeft': { var d = S.day + 1; while (LC.seasonOf(d) === State.season()) d++; this.toast('Skipping to ' + LC.seasonOf(d).name + '...', 'ic_glow'); sleepTo(d); return; }
       case 'Backslash': { var p = S.day + 1; while (p % 7 !== 6) p++; this.toast('Skipping to the next Pesta (Sabtu)...', 'i_wau'); sleepTo(p); return; }
-      case 'KeyH': S.hp = S.maxHp; S.energy = S.maxEnergy; S.water = S.maxWater; this.toast('Full health, energy and water (and abilities ready).', 'ic_hp'); S.restuDay = 0; LC.stoneReadyAt = 0; LC.nekCallAt = LC.nekCircleAt = LC.nekRescueAt = LC.nekTpAt = 0; return;
+      case 'KeyH': S.hp = S.maxHp; S.energy = S.maxEnergy; S.water = S.maxWater; this.toast('Full health, energy and water (and abilities ready).', 'ic_hp'); S.restuDay = 0; LC.stoneReadyAt = 0; LC.nekCallAt = LC.nekCircleAt = LC.nekRescueAt = LC.nekTpAt = 0; LC.bualangRestAt = LC.bualangDueAt = LC.anginAt = 0; return;
       case 'KeyT': {
         var re = (S.quests.tanggang || 0) >= 4;
         S.quests.tanggang = re ? 2 : 4; S.escort = null; S.restuDay = 0;
@@ -133,7 +134,27 @@ window.LC = window.LC || {};
         this.toast(QZ.nekLampir ? 'Nek Lampir is your helper: press C to call her (when you are alone, and not under the sea).' : 'Nek Lampir reset: 10 hearts, ready to make peace with Nenek (talk to her on Gunung Ledang, by the landing).', 'ic_nek');
         return;
       }
-      case 'KeyB': {   // v1.7: replay Badang's story (skinny, by the forest pool) or make him strong again
+      case 'Digit0': {   // v2.5: jump to the next step of Chapter 7 (finishes Chapter 6 first)
+        var QZ = S.quests, s7 = QZ.ch7 || 0;
+        if ((QZ.ch6 || 0) < 7) { QZ.ch2 = 8; QZ.ch3 = 13; QZ.kaStage = 3; QZ.asmara = 1; QZ.jinn = 1; QZ.ch3day = S.day - 4; QZ.ch4 = 4; QZ.c4wave = 5; QZ.ch4day = S.day - 3; QZ.ch5 = 5; QZ.ch5day = S.day - 2; QZ.ch6 = 7; QZ.c6day = S.day - 1; if (!State.count('keris_majapahit')) State.add('keris_majapahit', 1); }
+        else if (s7 === 0) QZ.ch7 = 1;
+        else if (s7 === 1) { QZ.ch7 = 2; if (!State.count('kabus_ledang')) State.add('kabus_ledang', 1); }
+        else if (s7 === 2) { QZ.ch7 = 3; S.visited.santubong = true; }
+        else if (s7 === 3) QZ.ch7 = 4;
+        else if (s7 === 4 && !(QZ.c7kain && QZ.c7beras)) { QZ.c7askS = QZ.c7askJ = 1; QZ.c7kain = QZ.c7beras = 1; if (!State.count('kain_santubong')) State.add('kain_santubong', 1); if (!State.count('beras_sejinjang')) State.add('beras_sejinjang', 1); }
+        else if (s7 === 4) { QZ.ch7 = 5; QZ.c7storm = 1; QZ.c7kills = 0; }
+        else if (s7 === 5) { QZ.ch7 = 6; delete QZ.c7storm; }
+        else if (s7 === 6) { QZ.ch7 = 7; if (!State.count('surat_serapi')) State.add('surat_serapi', 1); }
+        else if (s7 === 7) { QZ.ch7 = 8; delete QZ.c7boss; }
+        else if (s7 === 8) { QZ.c7sat = 1; QZ.ch7 = 9; }
+        else if (s7 === 9 && !QZ.c7aboard) QZ.c7aboard = 1;
+        else if (s7 === 9) { QZ.ch7 = 10; delete QZ.c7aboard; QZ.bualang = 1; QZ.pelitaSun = 1; ['kabus_ledang', 'kain_santubong', 'beras_sejinjang', 'surat_serapi'].forEach(function (id) { if (State.count(id)) State.remove(id, State.count(id)); }); }
+        LC.bualangRestAt = LC.bualangDueAt = LC.anginAt = 0;
+        State.recalc();
+        this.toast('Chapter 7, step ' + (QZ.ch7 || 0) + ': ' + ((QZ.ch7 || 0) >= 10 ? 'complete! B calls Sang Bualang, U is Angin Bualang.' : (LC.ch7Goal() || '').replace(/^Chapter 7: /, '')) + ' (Re-enter the place to see it. The jong at the farm jetty sails to Gunung Ledang and Santubong.)', 'ic_glow');
+        return;
+      }
+      case 'Minus': {   // v1.7: replay Badang's story (moved from B in v2.5: B calls Sang Bualang) (skinny, by the forest pool) or make him strong again
         var strong = (S.quests.badang || 0) >= 3;
         S.quests.badang = strong ? 2 : 3; S.buddy = null;
         this.toast(strong ? 'Badang story reset: he is skinny again, keeping watch at the forest pool in Hutan Rimba. Go after 7 PM and grab the hantu! (Re-enter the forest to see it.)' : 'Badang is the strongest man in the land again (Kampung Tepian).', 'ic_badang');
@@ -146,6 +167,6 @@ window.LC = window.LC || {};
   LC.UIScene.prototype.create = function () {
     create.apply(this, arguments);
     var self = this;
-    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story, B replay the Badang story, K next Chapter 2 step, L next Chapter 3 step, O next Chapter 4 step, P next Chapter 5 step, Y next Chapter 6 step, Z Nek Lampir the helper.', 'ic_glow'); });
+    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story, - replay the Badang story, K next Chapter 2 step, L next Chapter 3 step, O next Chapter 4 step, P next Chapter 5 step, Y next Chapter 6 step, Z Nek Lampir the helper, 0 next Chapter 7 step.', 'ic_glow'); });
   };
 })(window.LC);

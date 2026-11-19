@@ -496,6 +496,7 @@ window.LC = window.LC || {};
         idx++;
         if (idx >= lines.length) { finish(); return; }
         var L = lines[idx], hasP = !!L.portrait;
+        if (opts.onLine) opts.onLine(idx);   // v2.5: a scene can react to a line as it appears
         pg.clear(); por.setVisible(hasP);
         tx = 90; var ww = 770;
         if (hasP) {
@@ -741,7 +742,7 @@ window.LC = window.LC || {};
       this.openMenu({
         title: 'Nenek\'s Dapur', footer: 'Cooked dishes fill Pelita far more than raw crops (favourites have a heart). Eating home cooking yourself also makes you stronger.',
         tabs: [{ label: 'Craft', rows: function () {
-          return LC.MAKES.map(function (r) {
+          return LC.MAKES.filter(function (r) { return !r.when || r.when(S); }).map(function (r) {   // (v2.5: some only after their chapter)
             var it = LC.ITEMS[r.out], ok = LC.State.has(r.inp), lvOk = !r.lvl || LC.State.level() >= r.lvl;
             return { icon: it.icon, label: it.name + (lvOk ? '' : '  (Pelita Lv ' + r.lvl + ')'), sub: self.ingText(r.inp), right: 'x' + LC.State.count(r.out), enabled: ok && lvOk && LC.State.canAdd(r.out),
               why: !lvOk ? 'Needs Pelita Lv ' + r.lvl + '.' : ok ? 'Your bag is full!' : 'Missing materials.',
@@ -841,6 +842,7 @@ window.LC = window.LC || {};
             { icon: 'ic_joy', label: 'Touch controls: ' + (self.touchOn ? 'On' : 'Off'), sub: 'On-screen joystick and USE / EAT / BAG buttons for phones and tablets.', action: function () { self.setTouch(!self.touchOn); } },
             LC.canFullscreen() ? { icon: 'ic_sun', label: 'Fullscreen: ' + (LC.isFullscreen() ? 'On' : 'Off'), sub: 'Fill the whole screen with the kampung' + (self.touchOn ? '.' : '. Press F anytime.'), action: function () { LC.toggleFullscreen(); } } : null,
             self.updateRow(),
+            LC.pauseExtraRow ? LC.pauseExtraRow.call(self) : null,   // v2.5: Pelita's daylight
             { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact (and swing a weapon) · tap the stone by the hotbar for the stone curse · MAP · II pauses' : 'WASD/Arrows move · E use/swing · V stone curse · 1-9/wheel select · Q tool · X eat · R ride · G glasses · Tab bag · J journal · M map · N music · F fullscreen' },
             { icon: 'ic_moon', label: 'Quit to title', sub: LC.Net.role ? 'Also ends the co-op session.' : 'Anything since your last sleep (or save) is lost.', action: function () { self.quitToTitle(); } }
           ]).filter(Boolean);
