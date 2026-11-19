@@ -255,6 +255,7 @@ Seventy years ago, a little girl from Borneo chased a lost light up **Gunung Led
 - **The Bunga Ledang.** When you reach for the flower, Mak Lampir attacks with the magic she has scraped together: violet curse circles under your feet (step out!), bats, and a spell that drinks the light. Hang Tuah fights beside you. Beaten, she has her black magic taken away by the princess, and becomes an ordinary old woman, **Nek Lampir**, who grows herbs on the lower slopes (and sells them, grumpily).
 - **Nenek wakes**, and decides to stay on the farm for good: she is now a neighbour you can talk to every day. +15,000 kepeng in all and +20 max energy.
 - No gore and no religion: the princess's cruellest old demand is never named, and the Sultan is only a proud king who learns to accept no.
+- **Fixed in v2.5.1:** from v2.4 to v2.5, the princess of the mountain was called "Tuan Puteri" in her lines, and she had taken the place of Chapter 2's Tuan Puteri, who was missing from Barunai. Each princess has her own name and place again. Hearts you earned with the mountain princess stay with her (and Tuan Puteri keeps hers).
 
 ### Nek Lampir, your grumpy helper (v2.4.1)
 After Chapter 6, the old witch grows herbs on the lower slopes of Gunung Ledang. Become her best friend (10 hearts: bring her kuih pandan and chat every day), then choose **Make peace with Nenek** in her Talk menu. She grumbles, teleports you both to the farm, and says sorry to Nenek (who laughs at her hair). After that, press **C** anywhere to call her.

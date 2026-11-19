@@ -110,7 +110,7 @@ window.LC = window.LC || {};
       tasks: [['ikan_bakar', 1, 2], ['nasi', 1, 2]], taskText: 'for a hungry warrior', gifts: { 3: ['kepeng', 500], 6: ['jamu_kuat', 2], 10: ['kepeng', 1200] },
       hideIf: function (S) { return c6(S) < 4; }
     },
-    puteri: {
+    puteri_ledang: {   // (v2.5.1: her own id; 'puteri' is Chapter 2's Tuan Puteri)
       name: 'Puteri Gunung Ledang', role: 'The princess of the mountain', area: 'ledang', post: { x: 37, y: 13 }, glow: 0xfff0d0,
       look: look('#f2e8d8', 'flower', { skin: '#e8c4a0', shirt2: '#e9c46a', hair: '#1a1210', bottom: '#e9c46a', bottom2: '#c4922f' }),
       intro: ['...Welcome, child of the little light. I am the princess of this mountain. Kings have called me many things. You may call me Puteri.'],
@@ -177,11 +177,11 @@ window.LC = window.LC || {};
     ],
     jebatWin: [{ who: 'jebat', text: 'Ha! You fight like Tuah: far too polite. Here, take a little of my strength, and all of my respect. (+5 strength, +1500 kepeng)' }],
     ask: [
-      { who: 'puteri', text: 'I know. The mist told me. Mak Lampir has hated your Nenek since the night that little girl took the light the witch was hunting. A light that never goes out could keep a witch young forever. Pelita chose a child instead.' },
-      { who: 'puteri', text: 'The Bunga Ledang grows in my garden across the stream. One petal wakes anyone from any spell. But my bridge washed away long ago, and the flower only opens for someone who comes with gifts.' },
-      { who: 'puteri', text: 'Once, a Sultan asked for my hand, and I asked him for impossible things: a bridge of gold and silver, a jar of tears, the juice of young areca nuts... He could not buy them. Let us see if love can.' },
-      { who: 'puteri', text: 'Bring me a jar of tears, but happy ones, from the people who love your Nenek. Build me a bridge of gold and silver across my stream. And bring me three young areca nuts from the palms on this mountain.' },
-      { who: 'puteri', text: '(she smiles) And seven trays of mosquito hearts? No, no. I only asked the Sultan for those because I knew he would never find them.' }
+      { who: 'puteri_ledang', text: 'I know. The mist told me. Mak Lampir has hated your Nenek since the night that little girl took the light the witch was hunting. A light that never goes out could keep a witch young forever. Pelita chose a child instead.' },
+      { who: 'puteri_ledang', text: 'The Bunga Ledang grows in my garden across the stream. One petal wakes anyone from any spell. But my bridge washed away long ago, and the flower only opens for someone who comes with gifts.' },
+      { who: 'puteri_ledang', text: 'Once, a Sultan asked for my hand, and I asked him for impossible things: a bridge of gold and silver, a jar of tears, the juice of young areca nuts... He could not buy them. Let us see if love can.' },
+      { who: 'puteri_ledang', text: 'Bring me a jar of tears, but happy ones, from the people who love your Nenek. Build me a bridge of gold and silver across my stream. And bring me three young areca nuts from the palms on this mountain.' },
+      { who: 'puteri_ledang', text: '(she smiles) And seven trays of mosquito hearts? No, no. I only asked the Sultan for those because I knew he would never find them.' }
     ],
     tears: {
       penghulu: 'Your Nenek? Under a witch\'s curse? (He wipes his eyes.) When I was a boy, she patched my sarong every year before the Pesta, and pretended not to see the holes I made climbing trees. ...Hm. Here: one tear, for her jar.',
@@ -190,8 +190,8 @@ window.LC = window.LC || {};
       leong: 'When I came to this kampung with nothing but a saw, your Nenek fed me nasi lemak every morning for a month. (Leong blows his nose, loudly.) For the jar. And I will build her bridge.'
     },
     gifts: [
-      { who: 'puteri', text: 'A jar of tears that taste of laughter. A bridge that a whole kampung built together. Young areca nuts, picked by your own hand. A Sultan could not buy these things. You were given them.' },
-      { who: 'puteri', text: 'Cross your bridge, child. The Bunga Ledang is waiting for you in my garden.' }
+      { who: 'puteri_ledang', text: 'A jar of tears that taste of laughter. A bridge that a whole kampung built together. Young areca nuts, picked by your own hand. A Sultan could not buy these things. You were given them.' },
+      { who: 'puteri_ledang', text: 'Cross your bridge, child. The Bunga Ledang is waiting for you in my garden.' }
     ],
     fight: [
       { text: 'As you reach for the Bunga Ledang, the garden goes cold. Bats pour out of the pines, and a familiar cackle rings across the mountain.' },
@@ -203,12 +203,12 @@ window.LC = window.LC || {};
     beaten: [
       { text: 'Mak Lampir staggers. Hang Tuah knocks the stick from her hand, and Pelita\'s full-moon light washes over her.' },
       { text: 'The mist parts. The princess walks across the bridge, and the witch shrinks back from her.' },
-      { who: 'puteri', text: 'Enough, Lampir. Seventy years of hunting little lights, of feeding on anger and taking what you could not earn. Give it back.' },
+      { who: 'puteri_ledang', text: 'Enough, Lampir. Seventy years of hunting little lights, of feeding on anger and taking what you could not earn. Give it back.' },
       { text: 'The princess holds out her hand. Thread by thread, the black magic unwinds from Mak Lampir like old cotton from a spindle, and drifts away into the mist.' },
       { who: 'maklampir', text: '...My magic. My beautiful magic. (Without it, she is only a small, tired old woman with wild white hair.) What am I now?' },
-      { who: 'puteri', text: 'Only Lampir. An old woman who can still learn to grow herbs, and to say sorry. Stay on the lower slopes, if you like. The mountain is patient.' },
+      { who: 'puteri_ledang', text: 'Only Lampir. An old woman who can still learn to grow herbs, and to say sorry. Stay on the lower slopes, if you like. The mountain is patient.' },
       { text: 'The princess picks a single Bunga Ledang and places it in your hands. It glows like a little sunrise.' },
-      { who: 'puteri', text: 'Go home, child of the little light. Your Nenek has slept long enough.' }
+      { who: 'puteri_ledang', text: 'Go home, child of the little light. Your Nenek has slept long enough.' }
     ],
     wake: [
       { text: 'You lay the Bunga Ledang on Nenek\'s pillow. Its petals open one by one, and a warm golden light spreads over the pangkin.' },

@@ -135,8 +135,8 @@ window.LC = window.LC || {};
         var f = this.add.image(p.x + (Math.random() - 0.5) * 420, p.y + (Math.random() - 0.5) * 260, 'fog').setDepth(9005).setScale(2 + Math.random() * 1.5).setAlpha(0);
         fogs.push(f); this.tweens.add({ targets: f, alpha: 0.45, x: f.x + 30, duration: 1800, delay: i * 120 });
       }
-      var pr = this.add.sprite(p.x + 34, p.y, 'npc_puteri_0').setOrigin(0.5, 1).setDepth(9006).setAlpha(0);
-      if (this.anims.exists('npc_puteri_idle')) pr.play('npc_puteri_idle');
+      var pr = this.add.sprite(p.x + 34, p.y, 'npc_puteri_ledang_0').setOrigin(0.5, 1).setDepth(9006).setAlpha(0);
+      if (this.anims.exists('npc_puteri_ledang_idle')) pr.play('npc_puteri_ledang_idle');
       var pg = this.add.image(pr.x, pr.y - 10, 'glow').setBlendMode(ADD()).setDepth(9005).setTint(0xfff0d0).setScale(0.9).setAlpha(0);
       this.tweens.add({ targets: [pr, pg], alpha: { from: 0, to: 0.7 }, duration: 1600, delay: 900 });
       this.ui.say(this.ch2Lines(X.mist), { onDone: function () {
@@ -400,7 +400,7 @@ window.LC = window.LC || {};
       put('npc_santubong_0', 'npc_santubong_idle', 21, 7, 0xb8d8ff);
       put('npc_sejinjang_0', 'npc_sejinjang_idle', 26.2, 7, 0xffd8b0, true);
       put('npc_serapi_0', 'npc_serapi_idle', 20.6, 9.2);
-      put('npc_puteri_0', 'npc_puteri_idle', 25.2, 9.4, 0xfff0d0, true);
+      put('npc_puteri_ledang_0', 'npc_puteri_ledang_idle', 25.2, 9.4, 0xfff0d0, true);
       var bu = put('npc_bualang_0', 'bualang_fly', 27.4, 9.2, 0xd8f0ff, true);
       var wau = this.add.image(bu.x + 18, bu.y - 60, 'i_wau_bualang').setDepth(9550).setAlpha(0);
       this.tweens.add({ targets: wau, alpha: 1, y: wau.y - 6, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });

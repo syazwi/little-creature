@@ -236,8 +236,8 @@ window.LC = window.LC || {};
       s.clearTint().setTint(0xd8d0c8);
       this.time.delayedCall(1200, function () {
         var pt = { x: s.x + 30, y: s.y };
-        puteri = self.add.sprite(pt.x, pt.y, 'npc_puteri_0').setOrigin(0.5, 1).setDepth(9002).setAlpha(0);
-        if (self.anims.exists('npc_puteri_idle')) puteri.play('npc_puteri_idle');
+        puteri = self.add.sprite(pt.x, pt.y, 'npc_puteri_ledang_0').setOrigin(0.5, 1).setDepth(9002).setAlpha(0);
+        if (self.anims.exists('npc_puteri_ledang_idle')) puteri.play('npc_puteri_ledang_idle');
         var pg = self.add.image(pt.x, pt.y - 10, 'glow').setBlendMode(Phaser.BlendModes.ADD).setDepth(9001).setTint(0xfff0d0).setScale(0.9).setAlpha(0);
         self.tweens.add({ targets: [puteri, pg], alpha: { from: 0, to: 0.9 }, duration: 900 });
         self.ui.say(self.ch2Lines(LC.CH6TEXT.beaten), { onDone: function () {

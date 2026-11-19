@@ -167,6 +167,14 @@ window.LC = window.LC || {};
         if (!data.wear || typeof data.wear !== 'object') data.wear = {};
         if (data.flags.metAni) data.visited.kampung = data.visited.kampung || false;
         while (data.inv.length < LC.INV_SIZE) data.inv.push(null);
+        // v2.5.1: Chapter 6's princess used Chapter 2's villager id ('puteri') and replaced Tuan Puteri. She has her own
+        // id now, and keeps the friendship made under the old one (moved if Tuan Puteri was never met, copied if she was).
+        var fk = data.folk || {}, q0 = data.quests || {};
+        if (fk.puteri && !fk.puteri_ledang && (q0.ch6 || 0) >= 4) {
+          fk.puteri_ledang = JSON.parse(JSON.stringify(fk.puteri));
+          if ((q0.ch2 || 0) < 6) delete fk.puteri;
+          else if (q0.ch2 === 6) fk.puteri.met = false;   // (her quest is still open: let her ask again)
+        }
         // saves happen at bedtime and whenever the app is backgrounded, so keep the clock
         if (!(data.minutes >= LC.DAY_START && data.minutes < LC.DAY_END - 10)) data.minutes = LC.DAY_START;
         this.s = data;

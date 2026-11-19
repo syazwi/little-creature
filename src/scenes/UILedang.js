@@ -48,14 +48,14 @@ window.LC = window.LC || {};
       if (vid === 'hangtuah' && st === 3) rows.push(duel('hangtuah', 'Hang Tuah\'s test', 'A friendly silat duel: land three touches before he lands three on you. Nobody gets hurt.'));
       if (vid === 'hangtuah' && st >= 4) rows.push(duel('hangtuah', 'Spar with Hang Tuah', 'Just for practice. Three touches.'));
       if (vid === 'jebat' && st >= 4) rows.push(duel('jebat', Q.c6jebat ? 'Spar with Hang Jebat' : 'Hang Jebat\'s challenge', Q.c6jebat ? 'Just for practice. Three touches.' : 'Beat him to three touches for a little of his strength (+5 strength, +1500 kepeng).'));
-      if (vid === 'puteri' && st === 4 && !Q.c6asked) rows.push({ icon: 'i_diari_nenek', label: 'Nenek is cursed', right: 'Ask', sub: 'Show the princess Nenek\'s diary, and ask for her help.', action: function () {
+      if (vid === 'puteri_ledang' && st === 4 && !Q.c6asked) rows.push({ icon: 'i_diari_nenek', label: 'Nenek is cursed', right: 'Ask', sub: 'Show the princess Nenek\'s diary, and ask for her help.', action: function () {
         Q.c6asked = 1; sayLines(T6.ask); return 'close';
       } });
-      if (vid === 'puteri' && st === 4 && Q.c6asked) rows.push({ icon: 'i_bunga_ledang', label: 'The three gifts', right: giftsReady() ? 'Give' : '', sub: giftList() + '.', enabled: giftsReady(), why: 'Not all three gifts are ready yet.', action: function () {
+      if (vid === 'puteri_ledang' && st === 4 && Q.c6asked) rows.push({ icon: 'i_bunga_ledang', label: 'The three gifts', right: giftsReady() ? 'Give' : '', sub: giftList() + '.', enabled: giftsReady(), why: 'Not all three gifts are ready yet.', action: function () {
         LC.State.remove('pinang_muda', 3); Q.ch6 = 5; LC.Audio.sfx('chime');
         sayLines(T6.gifts); return 'close';
       } });
-      if (vid === 'puteri' && Q.c6bungaOwed) rows.push({ icon: 'i_bunga_ledang', label: 'The Bunga Ledang', right: 'Take', sub: 'The princess kept it safe while your bag was full.', action: function () {
+      if (vid === 'puteri_ledang' && Q.c6bungaOwed) rows.push({ icon: 'i_bunga_ledang', label: 'The Bunga Ledang', right: 'Take', sub: 'The princess kept it safe while your bag was full.', action: function () {
         if (!LC.State.add('bunga_ledang', 1)) { self.toast('Make room in your bag first!'); LC.Audio.sfx('error'); return; }
         delete Q.c6bungaOwed; LC.Audio.sfx('chime'); return 'close';
       } });

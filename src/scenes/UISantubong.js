@@ -48,12 +48,12 @@ window.LC = window.LC || {};
       var self = this, W = this.world, Q = q(), st = Q.ch7 || 0, rows = [];
       function sayLines(arr, opts) { self.say(W.ch2Lines(arr), opts); }
       function night() { return LC.isDusk(LC.State.s); }
-      if (vid === 'puteri' && st === 1) rows.push({ icon: 'i_kabus_ledang', label: 'The thunder over Santubong', right: 'Ask', sub: 'Ask the princess what she has for you.', action: function () {
+      if (vid === 'puteri_ledang' && st === 1) rows.push({ icon: 'i_kabus_ledang', label: 'The thunder over Santubong', right: 'Ask', sub: 'Ask the princess what she has for you.', action: function () {
         if (!LC.State.canAdd('kabus_ledang')) { self.toast('Your bag is full! Make room for the princess\'s gift first.'); LC.Audio.sfx('error'); return; }
         LC.State.add('kabus_ledang', 1); Q.ch7 = 2; LC.Audio.sfx('chime');
         sayLines(X.kabus); return 'close';
       } });
-      if (vid === 'puteri' && st === 9 && !Q.c7aboard) rows.push({ icon: 'ic_glow', label: 'Come to Santubong', right: 'Ask', sub: 'Ask the princess to cross the sea with you, to speak to her old friends.', action: function () {
+      if (vid === 'puteri_ledang' && st === 9 && !Q.c7aboard) rows.push({ icon: 'ic_glow', label: 'Come to Santubong', right: 'Ask', sub: 'Ask the princess to cross the sea with you, to speak to her old friends.', action: function () {
         Q.c7aboard = 1; LC.Audio.sfx('chime'); sayLines(X.ledangAsk); return 'close';
       } });
       if (vid === 'dayang' && st === 3) rows.push({ icon: 'ic_moon', label: 'The thunder', right: 'Ask', sub: 'Ask Mak Dayang about the thunder between the two mountains. (And give her Nenek\'s greeting.)', action: function () {

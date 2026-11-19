@@ -201,7 +201,7 @@ window.LC = window.LC || {};
     }
   });
   LC.SPEAKERS = Object.assign(LC.SPEAKERS || {}, {
-    ledang: { name: 'Puteri Gunung Ledang', portrait: 'npc_puteri_0' },
+    ledang: { name: 'Puteri Gunung Ledang', portrait: 'npc_puteri_ledang_0' },
     kayangan: { name: 'Raja Kayangan', portrait: 'kayangan_face' },
     bualangW: { name: 'Sang Bualang', portrait: 'npc_bualang_0' },
     wira: { name: 'Juragan Wira', portrait: 'wira_0' }
