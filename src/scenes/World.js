@@ -42,6 +42,7 @@ window.LC = window.LC || {};
       S.area = area; S.visited[area] = true;
       LC.syncLadang();   // v1.7: has Badang cleared the land south of the field?
       LC.syncDesert();   // v1.8: is the brick path to the old tower restored?
+      LC.syncBarunai();  // v1.9: has Barunai been founded (its walkways over the river)?
       this.grid = LC.areaGrid(area);
       this.H = this.grid.length; this.W = this.grid[0].length;
       this.objects = LC.areaObjects(area);
@@ -74,6 +75,7 @@ window.LC = window.LC || {};
       this.createTanggang();   // v1.6: guiding Si Tanggang home to his mother (WorldTanggang.js)
       this.createBadang();     // v1.7: Badang at your side, the river hantu, your bubu (WorldBadang.js)
       this.createHome();       // v1.8: Nenek's house as it has grown, and the helpers (WorldHome.js)
+      this.createBarunai();    // v1.9: Chapter 2 (WorldBarunai.js)
 
       var cam = this.cameras.main;
       cam.setBounds(0, 0, this.W * T, this.H * T);
@@ -930,6 +932,7 @@ window.LC = window.LC || {};
       this.updateTanggang(time, dt, blocked);
       this.updateBadang(time, dt, blocked);
       this.updateHome(time, dt);
+      this.updateBarunai(time, dt, blocked);
       this.updateLighting(time, dt);
 
       var act = blocked ? null : this.getAction();
@@ -978,6 +981,7 @@ window.LC = window.LC || {};
       switch (o.type) {
         case 'house': case 'house_wing': return { label: 'Nenek\'s house', fn: function () { self.ui.openHouse(); } };   // v1.8: sleep, the pantry, helpers, building
         case 'helper': return this.helperAction(o);
+        case 'jejak': case 'tembadau': case 'bulu': case 'pinggai': case 'salvage': case 'vase': return this.barunaiObjAction(o);   // v1.9
         case 'spirit':
           if (isFood) return { label: 'Offer ' + it.name + ' to Pelita', fn: function () { self.feedGhost(sl.id); } };
           return { label: 'Spirit house', fn: function () { self.ui.openSpirit(); } };

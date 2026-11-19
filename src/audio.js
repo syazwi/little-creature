@@ -420,6 +420,7 @@ window.LC = window.LC || {};
       case 'gulp': A.tone(t, 'sine', 300, 110, 0.18, 0.18); break;
       case 'grow': A.tone(t, 'sine', 60, 50, 1.4, 0.3); for (i = 0; i < 6; i++) A.tone(t + 0.15 * i, 'triangle', 180 + i * 70, 220 + i * 70, 0.14, 0.05); A.gong(A.freq(-12), t + 0.9, 3, 0.18); break;
       case 'punch': A.tone(t, 'sine', 120, 45, 0.2, 0.4); A.noise(t, 0.1, 0.3, 'lowpass', 900); break;
+      case 'dash': A.noise(t, 0.22, 0.22, 'bandpass', 2200, 900); A.tone(t, 'sine', 300, 700, 0.14, 0.06); break;
       case 'throw': A.noise(t, 0.5, 0.18, 'bandpass', 1800, 900); A.tone(t, 'sine', 500, 180, 0.4, 0.04); break;
     }
   };

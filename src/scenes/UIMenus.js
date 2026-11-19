@@ -263,6 +263,7 @@ window.LC = window.LC || {};
             });
           } },
           { label: 'You', rows: function () { return self.youRows(); } },
+          { label: 'Chapters', rows: function () { return self.chapterRows(); } },   // v1.9
           { label: 'Levels', rows: function () {
             var lv = LC.State.level(), rows = [];
             for (var l = 2; l <= LC.MAX_LEVEL; l++) {

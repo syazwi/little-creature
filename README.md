@@ -13,7 +13,7 @@ As Pelita levels up, its light opens the way to the wider land: a riverside vill
 - **Or:** download this whole repository (**Code → Download ZIP**), unzip it, and double-click **`index.html`**. (`index.html` needs the folders next to it, so to copy just one file, use `dist/LittleCreature.html`.)
 - The game fills the whole browser window at any size. Press **F** (or use the pause menu) to go fullscreen.
 - Saves are kept by the browser on that PC. A different PC or browser starts its own farm. There are **three save slots**: see [Saving and loading](#saving-and-loading).
-- **Testing build:** [`dist/LittleCreature_full.html`](dist/LittleCreature_full.html) starts with everything unlocked (Pelita Lv 30 with a 72-slot bag, Nenek's house fully grown, every place, spirit, weapon and vehicle, 99,999 kepeng, max strength, Sumpahan Batu and Restu Ibu, Badang already strong, 3 bubu). It uses its own saves, so your real farm is never touched. Test keys: **]** next day, **[** next season, **\** next Pesta, **H** full health (and abilities ready), **T** replay Si Tanggang's story (switch between "before the reunion" and "reunited"), **B** replay Badang's story (switch between "skinny, on the night watch" and "the strongest man in the land").
+- **Testing build:** [`dist/LittleCreature_full.html`](dist/LittleCreature_full.html) starts with everything unlocked (Pelita Lv 30 with a 72-slot bag, Nenek's house fully grown, every place, spirit, weapon and vehicle, 99,999 kepeng, max strength, Sumpahan Batu and Restu Ibu, Badang already strong, 3 bubu). It uses its own saves, so your real farm is never touched. Test keys: **]** next day, **[** next season, **\** next Pesta, **H** full health (and abilities ready), **T** replay Si Tanggang's story (switch between "before the reunion" and "reunited"), **B** replay Badang's story (switch between "skinny, on the night watch" and "the strongest man in the land"), **K** jump to the next step of Chapter 2.
 - If double-clicking opens the file in something other than a browser, right-click it and choose **Open with → Microsoft Edge** (or Chrome or Firefox).
 
 ### On an Android phone
@@ -74,6 +74,7 @@ PC browsers and Android phones can all play together.
 | Put on / take off the Bunian glasses | G | Select them and press **USE** |
 | Swing a weapon (wherever enemies roam) | E | **USE** |
 | Stone curse (Sumpahan Batu, once you have it) | V | Tap the stone beside the hotbar |
+| Giant stride (Langkah Semaun, Chapter 2) | Shift | Tap the footprints beside the hotbar |
 
 Touch controls switch on automatically on touch screens. You can toggle them in the pause menu, where **Sound & music** also sets the volume of the music, the battle music, the sound effects and the nature sounds.
 
@@ -102,6 +103,7 @@ Touch controls switch on automatically on touch screens. You can toggle them in 
 | **Lombong Puaka**, the haunted gold mine | Lv 9 | The old mine shaft in Gunung Kabus | Darkness, shadows that attack, gold seams, cave crystals, a blind cave fish, the stone guardian |
 | **Istana Laut Selatan**, the Palace of the Southern Sea | Lv 12 | The green arch at the south of Kampung Karang | Kanjeng Ratu Kidul, the Queen of the Southern Sea, and her lady-in-waiting |
 | **Kota Atlantis**, the sunken city | Lv 15 | The deep trench at the west of Kampung Karang | Poseidon on his throne, a scholar, marble ruins, amphorae and crystals |
+| **Barunai**, Chapter 2 | Lv 20 | Nenek's perahu at the farm jetty | Awang Alak Betatar, Awang Semaun and their brothers, a camp, the tembadau, and later a water village on stilts |
 | **Bukit Pasir**, the red dunes | Lv 11 | Road east through the kampung | Dragon fruit, clay, buried old coins, an oasis, a Cham tower, Mak Thuy the potter, Pak Tam the dragon-fruit farmer |
 
 Locked paths are blocked by vines, rockfall or sand until Pelita is strong enough. From Lv 7, wayside shrines take you home, and the spirit house sends you to any place you've visited.
@@ -174,6 +176,19 @@ Locked paths are blocked by vines, rockfall or sand until Pelita is strong enoug
 - **Menus on phones:** the **more** buttons beside every long list are now big and easy to tap, and each tap turns a whole page.
 - **Bukit Pasir has people now.** **Mak Thuy**, a Cham potter by the old tower, shapes pots by hand from your clay (*periuk tanah*, clay lamps for Pelita, and the big *tempayan* water jars Nenek's kitchen wing needs). Help her restore the **brick path to the old tower** (8 tanah liat, 4 kayu and 3 of the old coins you dig up, for the elders' little shelf of old things by the door). **Pak Tam**, a dragon-fruit farmer, sells **dragon-fruit cuttings** to grow on your farm (in the hot and planting seasons), sells *jus buah naga*, and pays well for dragon fruit.
 
+### Chapter 2: Barunai (v1.9)
+Everything above is **Chapter 1**, and it stays exactly as it was. **Chapter 2** continues the same story on the same farm, once Pelita becomes a **Legend of the Kampung (Lv 20)**. It is based on the Bruneian epic *Syair Awang Semaun*, told with respect.
+- **Nenek's second letter.** Pelita's light finds an old tin box in the roof. When Nenek was a girl she sailed to **Barunai** and met fourteen brothers who were searching for one another. She has left a **perahu** at the farm jetty for you.
+- **The brothers' camp.** In Barunai, **Awang Alak Betatar** and the youngest, **Awang Semaun**, tell their story: their father, I-Pai Samaring, followed a *tembadau* (a wild ox) through thirteen villages, and in each one a son was born.
+- **Gather the brothers.** Twelve brothers wait across the land: in Barunai, Kampung Tepian, Hutan Rimba, Pulau Mutiara, Gunung Kabus, Bukit Pasir and even on your farm. Each asks for a little something from home (wood, honey, herbs, shells, tea...), then sets off for Barunai. Awang Alak Betatar's Talk menu shows who is still missing, and where.
+- **The tembadau trail.** Follow its hoofprints across the hills, then approach it gently. It leads you to a bend in the river.
+- **"Baru nah!"** ("Now we have found it!"). All fourteen brothers gather on the riverbank and name the place: Barunai. Houses rise on stilts over the water, joined by long wooden walkways, with a great Balai on the hill. (+1000 kepeng) Now the brothers have shops and requests: Hapu Awang sells *ambuyat* and *kelupis*, and Pateh Berbai buys treasures.
+- **Awang Semaun's voyage.** He sails to Johor to ask for a princess's hand for his brother, and is back the next day with **Tuan Puteri**. But her ship sank at the river mouth: follow **Si Pinggai**'s feathers along the walkways to find her bird, and dive where the bubbles rise to save her dowry chest.
+- **The wedding kenduri.** Bring 5 cooked dishes for the feast. Semaun gives you **Langkah Semaun**, his giant stride: press **Shift** (or tap the footprints beside your hotbar) to leap a few steps forward, even past enemies (every 4 seconds).
+- **A secret of the river.** On some quiet nights, a magic *tempayan* floats in the river of Barunai, with a treasure inside.
+- The **Journal** has a new **Chapters** page that shows your progress, and the goal line at the top-left shows the current task.
+- Left out on purpose, out of respect: the old wars of conquest, religion, and any present-day royal titles.
+
 ### Saving and loading
 - There are **three save slots**. On the title screen, **Continue** opens the farm you played last, **Load Game** lets you pick a slot, and **New Game** asks which slot to start in (a slot that already has a farm asks twice before it is overwritten).
 - While playing, pause (Esc or **II**) and choose **Save game** to save into any slot, or **Load game** to go back to a saved farm.
@@ -211,12 +226,12 @@ Icons are generated by `node tools/make-icons.mjs`.
 index.html            the game (open this to play from the folder)
 dist/                 ready-to-play builds: LittleCreature.html (single file) and LittleCreature.apk, and version.json (what the update check reads)
 src/                  game code: data, areas (maps of every place), folk (villagers and spirits), state, sim (shared-world rules),
-                      net (co-op), lobby, procedural art (art.js ... art7.js) + audio, data2/areas2/undersea (v1.5 content),
+                      net (co-op), lobby, procedural art (art.js ... art8.js) + audio, data2/areas2/undersea (v1.5 content),
                       battle.js (v1.6: wild enemies, abilities, Mak Deruma), badang.js (v1.7: Badang, the hantu, bubu,
-                      Ladang Badang, Lempar Batu), home.js (v1.8: house stages, helpers, bigger bag,
+                      Ladang Badang, Lempar Batu), barunai.js (v1.9: Chapter 2), home.js (v1.8: house stages, helpers, bigger bag,
                       Lv 30, Mak Thuy and Pak Tam), version.js + update.js (update check), cheats.js (test build only),
-                      scenes (World + WorldLife, WorldFarm, WorldCombat, WorldTanggang, WorldBadang, WorldHome;
-                      UI + UIMenus, UIGames, UISettings, UIBadang, UIHome)
+                      scenes (World + WorldLife, WorldFarm, WorldCombat, WorldTanggang, WorldBadang, WorldHome, WorldBarunai;
+                      UI + UIMenus, UIGames, UISettings, UIBadang, UIHome, UIBarunai)
 lib/                  Phaser 3.80.1 (MIT), PeerJS 1.5.4 (MIT) and the Pixelify Sans font (SIL OFL 1.1), vendored
 icons/                app icons
 android/              Android wrapper app (WebView). It packages the web game from the root at build time.
@@ -234,4 +249,4 @@ plan.md               design document
 - **Multiplayer:** [PeerJS](https://peerjs.com), MIT licence. It uses the free public PeerJS server for matchmaking.
 - **Font:** [Pixelify Sans](https://fonts.google.com/specimen/Pixelify+Sans) by Stefie Justprince, SIL Open Font License 1.1.
 - **Art, music and sound:** original. Every sprite, note and sound is generated in code (`src/art.js`, `src/audio.js`, `tools/make-icons.mjs`).
-- **Cultural inspirations:** Thai/Lao/Khmer spirit houses, Malay *rumah panggung* and *kampung* life, *gotong-royong* and the *kenduri*, Balinese *canang sari*, Thai *phuang malai*, Hungry Ghost Festival traditions, Loy Krathong / Yi Peng lanterns, Malay *wau* kites, Javanese batik and *jamu*, Kelantan's *wau bulan* and *gasing*, Malaysian Serama chickens, *silat*, the keris, *ais kacang* and the fruit season, the Malay legend of Si Tanggang, the tale of Badang the strongman and his stone from the *Sejarah Melayu* (Malay Annals), bamboo *bubu* fish traps, the Javanese legend of Nyi Roro Kidul (Kanjeng Ratu Kidul, Queen of the Southern Sea), the old Raub gold mines, the Greek tale of Atlantis and Poseidon, Sabah's seaweed salad, Langkawi *gamat*, the dugong (*duyung*) behind the mermaid legends, sunken trading junks of the old spice route, Malaysian highland tea, Vietnam's red dunes, dragon fruit and Cham towers, Sang Kancil the mouse deer, and folk spirits: the Malay *semangat padi* and *orang bunian*, the Mekong *naga*, the Iban *kenyalang* and the Filipino *nuno sa punso*. All are drawn with affection and respect.
+- **Cultural inspirations:** Thai/Lao/Khmer spirit houses, Malay *rumah panggung* and *kampung* life, *gotong-royong* and the *kenduri*, Balinese *canang sari*, Thai *phuang malai*, Hungry Ghost Festival traditions, Loy Krathong / Yi Peng lanterns, Malay *wau* kites, Javanese batik and *jamu*, Kelantan's *wau bulan* and *gasing*, Malaysian Serama chickens, *silat*, the keris, *ais kacang* and the fruit season, the Malay legend of Si Tanggang, the tale of Badang the strongman and his stone from the *Sejarah Melayu* (Malay Annals), the Bruneian epic *Syair Awang Semaun* (the fourteen brothers and the founding of Brunei, "Baru nah!") and Kampong Ayer, the water village on stilts, bamboo *bubu* fish traps, the Javanese legend of Nyi Roro Kidul (Kanjeng Ratu Kidul, Queen of the Southern Sea), the old Raub gold mines, the Greek tale of Atlantis and Poseidon, Sabah's seaweed salad, Langkawi *gamat*, the dugong (*duyung*) behind the mermaid legends, sunken trading junks of the old spice route, Malaysian highland tea, Vietnam's red dunes, dragon fruit and Cham towers, Sang Kancil the mouse deer, and folk spirits: the Malay *semangat padi* and *orang bunian*, the Mekong *naga*, the Iban *kenyalang* and the Filipino *nuno sa punso*. All are drawn with affection and respect.

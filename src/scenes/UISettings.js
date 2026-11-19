@@ -20,11 +20,11 @@ window.LC = window.LC || {};
       this.skIcon = this.add.image(200, 604, 'ic_batu').setScale(2.6);
       this.skKey = this.txt(180, 582, 'V', 11, '#a08a6a');
       this.skCd = this.txt(200, 604, '', 18, '#fffdf2', { ox: 0.5, oy: 0.5, stroke: 4 });
-      this.rsIcon = this.add.image(152, 615, 'ic_restu').setScale(2);
+      this.rsIcon = this.add.image(200, 556, 'ic_restu').setScale(2);   // (v1.9: above the stone, to make room for Langkah Semaun)
       var z = this.add.zone(176, 580, 48, 48).setOrigin(0).setInteractive({ useHandCursor: true });
       z.isTouchBtn = true;
       z.on('pointerdown', function () { if (!self.modal) self.pressKey('KeyV'); });
-      var rz = this.add.zone(136, 598, 32, 32).setOrigin(0).setInteractive({ useHandCursor: true });
+      var rz = this.add.zone(184, 540, 32, 32).setOrigin(0).setInteractive({ useHandCursor: true });
       rz.isTouchBtn = true;
       rz.on('pointerdown', function () { if (!self.modal) self.toast(LC.State.s.restuDay === LC.State.s.day ? 'Restu Ibu has already saved you today. It returns tomorrow.' : 'Restu Ibu is with you: if your health runs out today, Mak Deruma\'s prayer will lift you up.', 'ic_restu'); });
       this.skZones = [z, rz];
@@ -47,7 +47,7 @@ window.LC = window.LC || {};
         if (this.skCd.text !== t) this.skCd.setText(t);
       }
       if (restu) {
-        var used = S.restuDay === S.day, rx = 136, ry = 598;
+        var used = S.restuDay === S.day, rx = 184, ry = 540;
         g.fillStyle(0x1e1510, 0.85); g.fillRoundedRect(rx, ry, 32, 32, 7);
         g.lineStyle(2, used ? 0x6a5034 : 0xffd166, 1); g.strokeRoundedRect(rx, ry, 32, 32, 7);
         this.rsIcon.setAlpha(used ? 0.35 : 1);

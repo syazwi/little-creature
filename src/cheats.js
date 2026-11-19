@@ -2,7 +2,8 @@
  * (so it never touches your real farm), and a few test keys:
  *   ]  sleep now (next day)      [  skip to the next season      \  skip to the next Pesta (Sabtu)      H  full health and energy
  *   T  replay Si Tanggang's story (switch between "before he meets his mother" and "reunited")
- *   B  replay Badang's story (switch between "skinny, on the night watch" and "the strongest man in the land") */
+ *   B  replay Badang's story (switch between "skinny, on the night watch" and "the strongest man in the land")
+ *   K  Chapter 2: jump to its next step */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -59,6 +60,17 @@ window.LC = window.LC || {};
         this.toast(re ? 'Tanggang story reset: talk to Si Tanggang in the sunken junk (Kampung Karang) to guide him to his mother.' : 'Si Tanggang and Mak Deruma reunited: Restu Ibu unlocked.', 'ic_restu');
         return;
       }
+      case 'KeyK': {   // v1.9: jump to the next step of Chapter 2 (gathers every brother at once)
+        var Q = S.quests, st = Q.ch2 || 0;
+        if (st === 2) { Q.ch2found = {}; LC.BROTHERS.forEach(function (b) { Q.ch2found[b] = 1; }); }
+        if (st === 3) Q.ch2t1 = LC.CH2.trail1.length;
+        if (st === 6) { Q.ch2day = S.day - 1; Q.ch2bird = 1; Q.ch2ship = 1; }
+        Q.ch2 = Math.min(8, st + 1);
+        if (Q.ch2 === 6) Q.ch2day = S.day - 1;
+        LC.syncBarunai();
+        this.toast('Chapter 2, step ' + Q.ch2 + ': ' + (LC.ch2Goal() || 'complete') + ' (Re-enter Barunai to see it.)', 'ic_glow');
+        return;
+      }
       case 'KeyB': {   // v1.7: replay Badang's story (skinny, by the forest pool) or make him strong again
         var strong = (S.quests.badang || 0) >= 3;
         S.quests.badang = strong ? 2 : 3; S.buddy = null;
@@ -72,6 +84,6 @@ window.LC = window.LC || {};
   LC.UIScene.prototype.create = function () {
     create.apply(this, arguments);
     var self = this;
-    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story, B replay the Badang story.', 'ic_glow'); });
+    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story, B replay the Badang story, K next Chapter 2 step.', 'ic_glow'); });
   };
 })(window.LC);

@@ -335,6 +335,7 @@ window.LC = window.LC || {};
       else if (S.visited.kampung && !LC.State.count('joran') && !f.fished) t = 'Visit Pak Mat at the kampung jetty to learn fishing.';
       else if (S.visited.kampung && !f.lahHen) t = 'Meet Pak Lah in Kampung Tepian. He has a gift for Nenek\'s empty reban.';
       else if (S.visited.kampung && !Object.keys(S.buildings).length) t = 'Help rebuild the kampung: ask Tukang Leong, then build a house on an empty plot.';
+      else if (LC.ch2Goal && LC.ch2Goal()) t = LC.ch2Goal();   // v1.9: Chapter 2
       else {
         var lv = LC.State.level(), nl = LC.State.nextLevelBond(), r = LC.LEVEL_REWARDS[lv + 1] || {};
         var what = r.unlock ? ' to open ' + LC.AREAS[r.unlock].name : r.stage ? ' to evolve' : '';

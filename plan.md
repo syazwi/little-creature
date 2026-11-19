@@ -198,6 +198,10 @@ src/
   art7.js           v1.8 textures: the house wings and carved gables, helpers, pottery yard, fruit stall, dragon-fruit crop, icons
   scenes/WorldHome.js      the house as it grows, the helpers on the farm, the restored tower path
   scenes/UIHome.js         the house menu, the scrolling bag with Throw away, Mak Thuy's pots and tower quest
+  barunai.js        v1.9 Chapter 2 data: the Barunai map, the 14 brothers and the princess, items, trails, story text
+  art8.js           v1.9 textures: stilt houses, the Balai, the camp, hoofprints, feathers, the tembadau, the pinggai bird, the magic tempayan
+  scenes/WorldBarunai.js   the letter, trails, the founding scene, the bird, the chest, the vase, Langkah Semaun (dash)
+  scenes/UIBarunai.js      the brothers' Talk rows, the kenduri, the Journal Chapters page, the goal line, the dash button
   cheats.js         test build only (dist/LittleCreature_full.html)
   scenes/UIGames.js      map, chest, reban, Pesta and its contest games, strength training, quests, the journal's You page
   art.js            procedural pixel-art texture generation
@@ -333,6 +337,17 @@ Players piled up kepeng with nothing big to spend it on, and full bags were a ch
 **Menus.** `UI.scrollBtn` draws big tappable up/down buttons beside `openMenu` lists (and the bag); each tap turns a page. They show only when the list is longer than the view. v1.8.1 made the cards roomier (a 780-wide panel, 5 cards of 84 px per page): a title shrinks (18, 16, 14 px) so it never meets the price on the right, and a description gets two lines at 13 px, three at 12 or 11 px, and is only shortened with "..." beyond that.
 
 **Bukit Pasir.** Mak Thuy (Cham potter, post 31,7, pottery yard object) makes pots from clay (`LC.POTS`: periuk tanah, pelita tanah (an offering), tempayan) and has the tower quest (`LC.TOWER_QUEST`, `quests.menaraAsked`/`menara`): it restores the brick path (`LC.syncDesert` turns x 34-35, y 6-11 into stone path, live via `World.refreshDesertPath`). The Cham tower is treated as a place of memory and heritage, not of worship. Pak Tam (dragon-fruit farmer, post 15,13, stall object) sells `seed_buahnaga` (crop `buahnaga`, 6 days, 3 fruit, kemarau and menanam) and `jus_buah_naga` (also a dapur recipe), and buys fruit at x1.4. Co-op protocol 7.
+
+### Chapter 2: Barunai (v1.9)
+The user asked for Chapter 1 (everything before) to stay exactly as it was, with Barunai as a continuation chapter on the same save. Source: the Bruneian epic *Syair Awang Semaun* (I-Pai Samaring and the tembadau, the fourteen brothers, Awang Alak Betatar gathering them, "Baru nah!", Awang Semaun bringing the Johor princess whose pinggai bird and sinking ship are part of the tale, and the magic jar of Temburong folklore). Left out: the wars of conquest (they cast real peoples as enemies), the religious conversion, and present-day titles.
+
+**Progress** (personal `quests.ch2`): 0 Chapter 1; 1 the letter (shown on the farm once Pelita is Lv `LEGEND_LEVEL` 20, also for old saves already past it); 2 met Alak Betatar; 3 brothers gathered (`quests.ch2found`); 4 tembadau befriended (`ch2t1` = hoofprint index); 5 founded; 6 Semaun sailed (`ch2day`: he is away that day; the princess arrives the next); 7 bird and chest done (`ch2t2`, `ch2bird`, `ch2ship`); 8 kenduri (5 dishes) and Langkah Semaun. `LC.ch2Goal()` feeds the goal line and the Journal's Chapters tab.
+
+**Barunai** (`LC.AREAS.barunai`, Lv 20, reached by the perahu at the farm jetty, which appears via `when` once Lv 20 or later). Hills, the old track, sand, the river; the camp, a jetty, an old landing. `LC.syncBarunai` turns the `BARUNAI_WALKS` (the main walkway, four spurs and a landing) from water into jetty tiles once founded; houses and the Balai are `when: founded` objects. The founding scene (`World.foundBarunai`) brings you to the bank and gathers all 14 brother sprites, then `applyFounding` redraws the tiles live (and drops them from the water animation) and `World.refreshWhen` adds the objects. Trails, the tembadau, the bird, the chest bubbles and the magic tempayan are placed per step by `World.refreshBarunai`/`placeThing`.
+
+**The brothers** are villagers with `chapter2: true`. `LC.villager` hides them (area `none`) until Chapter 2 begins (`hideIf`), so Chapter 1 is unchanged. Twelve wait in their mothers' places with a `find` request; once found, `aliveIf` moves them to their Barunai posts. Every spot was checked to be free and walkable. Hapu Awang sells ambuyat and kelupis; Pateh Berbai buys treasures.
+
+**Langkah Semaun** (`LC.LANGKAH` 4 s, 56 px): Shift or the footprints button. A 4 px step-wise dash that stops at anything solid, with 0.45 s of invulnerability, golden afterimages and dust. The Restu Ibu chip moved above the stone slot to make room. Co-op protocol 8.
 
 ## 8. Milestones
 
