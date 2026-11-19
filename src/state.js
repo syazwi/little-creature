@@ -54,7 +54,9 @@ window.LC = window.LC || {};
       // v1.6 personal: guiding Si Tanggang home, and the day Restu Ibu last saved you
       escort: null, restuDay: 0,
       // v1.7: your bubu in the water (personal), Badang at your side (personal, for one day), the land he clears (shared: 0 / 1 tonight / 2 done)
-      bubus: [], buddy: null, buddyDay: 0, ladang: 0
+      bubus: [], buddy: null, buddyDay: 0, ladang: 0,
+      // v1.8 shared: how far Nenek's house has grown (0-3), a stage being built tonight, and the hired helpers
+      house: 0, houseBuild: 0, helpers: {}
     };
   }
   var BAG_EXTRA = ['str', 'wear', 'trophies', 'contest', 'quests', 'bubus'];   // a co-op guest's own progress travels in their bag
@@ -115,7 +117,7 @@ window.LC = window.LC || {};
     snapshot: function () {
       var s = this.s;
       return JSON.parse(JSON.stringify({ day: s.day, minutes: s.minutes, tiles: s.tiles, trees: s.trees, ghost: s.ghost, offerings: s.offerings, buildings: s.buildings, spirits: s.spirits,
-        chests: s.chests, chestSeq: s.chestSeq, animals: s.animals, animalSeq: s.animalSeq, coop: s.coop, nest: s.nest, ladang: s.ladang || 0, flags: { penunggu: s.flags.penunggu || 0 } }));
+        chests: s.chests, chestSeq: s.chestSeq, animals: s.animals, animalSeq: s.animalSeq, coop: s.coop, nest: s.nest, ladang: s.ladang || 0, house: s.house || 0, houseBuild: s.houseBuild || 0, helpers: s.helpers || {}, flags: { penunggu: s.flags.penunggu || 0 } }));
     },
     applySnapshot: function (w) {
       var s = this.s;
@@ -123,14 +125,14 @@ window.LC = window.LC || {};
       s.offerings = w.offerings || [];
       s.buildings = w.buildings || {}; s.spirits = w.spirits || {};
       s.chests = w.chests || {}; s.chestSeq = w.chestSeq || 0; s.animals = w.animals || []; s.animalSeq = w.animalSeq || 0;
-      s.coop = w.coop || { telur: 0, telur_itik: 0, susu: 0 }; s.nest = w.nest || []; s.ladang = w.ladang || 0;
+      s.coop = w.coop || { telur: 0, telur_itik: 0, susu: 0 }; s.nest = w.nest || []; s.ladang = w.ladang || 0; s.house = w.house || 0; s.houseBuild = w.houseBuild || 0; s.helpers = w.helpers || {};
       if (s.ghost) Object.keys(w.ghost).forEach(function (k) { s.ghost[k] = w.ghost[k]; }); else s.ghost = w.ghost;
     },
     // A guest plays on the host's shared world with their own travelling bag.
     makeGuest: function (world) {
       var s = newState(), bag = null;
       try { bag = JSON.parse(localStorage.getItem(BAG_KEY) || 'null'); } catch (e) { bag = null; }
-      var inv = new Array(LC.INV_SIZE).fill(null);
+      var inv = new Array(Math.max(LC.INV_SIZE, bag && bag.inv ? bag.inv.length : 0)).fill(null);   // (v1.8: bags grow with Pelita's level)
       if (bag && bag.inv) { bag.inv.forEach(function (sl, i) { if (i < inv.length && sl && LC.ITEMS[sl.id]) inv[i] = sl; }); }
       else { inv[0] = { id: 'hoe', n: 1 }; inv[1] = { id: 'can', n: 1 }; inv[2] = { id: 'nasi', n: 1 }; inv[3] = { id: 'seed_ubi', n: 4 }; inv[4] = { id: 'seed_pandan', n: 2 }; }
       if (!inv.some(function (sl) { return sl && sl.id === 'hoe'; })) { var i = inv.indexOf(null); if (i >= 0) inv[i] = { id: 'hoe', n: 1 }; }
@@ -292,7 +294,9 @@ window.LC = window.LC || {};
       var s = this.s, lv = this.level(), e = 120;
       Object.keys(LC.LEVEL_REWARDS).forEach(function (k) { if (lv >= +k && LC.LEVEL_REWARDS[k].energy) e += LC.LEVEL_REWARDS[k].energy; });
       if (this.friend('kenyalang')) e += 30;
+      for (var hs = 1; hs <= (s.house || 0); hs++) if (LC.HOUSE_STAGES[hs] && LC.HOUSE_STAGES[hs].energy) e += LC.HOUSE_STAGES[hs].energy;   // v1.8: a bigger house
       s.maxEnergy = e;
+      if (s.inv) { var bag = LC.bagSize(lv); while (s.inv.length < bag) s.inv.push(null); }   // v1.8: the bag grows with Pelita's level
       s.maxWater = 20 + (lv >= 10 ? 10 : 0);
       if (s.energy > s.maxEnergy) s.energy = s.maxEnergy;
       s.maxHp = LC.maxHpFor(s.str || 10) + (s.flags && s.flags.poseidon ? 20 : 0);
@@ -439,6 +443,8 @@ window.LC = window.LC || {};
         lines.push('Pelita never got the ' + LC.ITEMS[g.craving].name + ' it was craving...');
       }
 
+      var work = LC.Home.dusk(s, lines);   // v1.8: wages, and the farmhand waters the field
+
       // crops grow
       var grown = 0, blessed = 0, ready = 0, lanternWater = g.stage >= 2 && g.glow >= 50, nuno = this.friend('nuno'), resting = 0;
       Object.keys(s.tiles).forEach(function (k) {
@@ -506,6 +512,7 @@ window.LC = window.LC || {};
 
       // trees and forage regrow
       Object.keys(s.trees).forEach(function (id) { if (s.trees[id] > 0) s.trees[id]--; });
+      LC.Home.dawn(s, lines, work);   // v1.8: the helpers harvest, gather and cook; a house stage is finished
 
       // overnight needs
       g.full = clamp(g.full - 15, 0, 100);

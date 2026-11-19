@@ -565,6 +565,20 @@ window.LC = window.LC || {};
       this.say([{ text: q }], { choices: [{ label: 'Sleep', fn: function () { self.world.sleep(false); } }, { label: 'Not yet' }] });
     }
 
+    // a big tappable scroll button (v1.8): x, y, height; up or down; fn on tap. show(visible, active) dims it at the end.
+    scrollBtn(c, x, y, h, upward, fn) {
+      var w = 58, g = this.add.graphics(), t = this.txt(x + w / 2, upward ? y + h - 22 : y + 8, 'more', 13, '#ffd166', { ox: 0.5 });
+      var z = this.add.zone(x - 6, y - 6, w + 12, h + 12).setOrigin(0).setInteractive({ useHandCursor: true });
+      g.fillStyle(0x2b1f17, 0.95); g.fillRoundedRect(x, y, w, h, 10);
+      g.lineStyle(2, 0xffd166, 1); g.strokeRoundedRect(x, y, w, h, 10);
+      var cx = x + w / 2, ty = upward ? y + 18 : y + h - 18;
+      g.fillStyle(0xffd166, 1);
+      if (upward) g.fillTriangle(cx - 16, ty + 14, cx + 16, ty + 14, cx, ty - 6); else g.fillTriangle(cx - 16, ty - 14, cx + 16, ty - 14, cx, ty + 6);
+      z.on('pointerdown', fn);
+      c.add([g, t, z]);
+      return { show: function (vis, on) { g.setVisible(vis).setAlpha(on ? 1 : 0.3); t.setVisible(vis).setAlpha(on ? 1 : 0.3); if (z.input) z.input.enabled = vis; } };
+    }
+
     // ================================================================ list menus
     openMenu(cfg) {
       this.closeModal();
@@ -602,19 +616,14 @@ window.LC = window.LC || {};
           rowsUI.push({ y: y, ic: ic, lb: lb, sb: sb, rt: rt });
         })(r);
       }
-      var up = this.txt(X + Wd / 2, listY - 18, '^  more  ^', 14, '#ffd166', { ox: 0.5 });
-      var dn = this.txt(X + Wd / 2, listY + VIS * RH - 6, 'v  more  v', 14, '#ffd166', { ox: 0.5 });
-      // tappable scroll zones (no mouse wheel or keyboard on phones)
-      var upZ = this.add.zone(X + Wd / 2 - 90, listY - 22, 180, 22).setOrigin(0).setInteractive({ useHandCursor: true });
-      var dnZ = this.add.zone(X + Wd / 2 - 90, listY + VIS * RH - 8, 180, 22).setOrigin(0).setInteractive({ useHandCursor: true });
-      upZ.on('pointerdown', function () { if (scroll > 0) { sel = scroll - 1; LC.Audio.sfx('click'); render(); } });
-      dnZ.on('pointerdown', function () { var n = cur().length; if (scroll + VIS < n) { sel = Math.min(n - 1, scroll + VIS); LC.Audio.sfx('click'); render(); } });
-      c.add([upZ, dnZ]);
+      // v1.8: big "more" buttons beside the list (easy to tap on a phone); each tap turns a page
+      var up = this.scrollBtn(c, X + Wd + 8, listY, 2 * RH - 6, true, function () { if (scroll > 0) { scroll = Math.max(0, scroll - (VIS - 1)); sel = scroll; LC.Audio.sfx('click'); render(); } });
+      var dn = this.scrollBtn(c, X + Wd + 8, listY + (VIS - 2) * RH, 2 * RH - 6, false, function () { var n = cur().length; if (scroll + VIS < n) { scroll = Math.min(n - VIS, scroll + VIS - 1); sel = scroll; LC.Audio.sfx('click'); render(); } });
       var empty = this.txt(X + Wd / 2, listY + 110, '', 18, '#a08a6a', { ox: 0.5, wrap: Wd - 100, align: 'center' });
       var foot = this.txt(X + Wd / 2, Y + Hd - 62, '', 14, '#cdb8a0', { ox: 0.5, wrap: Wd - 70, align: 'center' });
       var keys = this.txt(X + Wd / 2, Y + Hd - 22, this.touchOn ? 'Tap a row to choose' + (tabs.length > 1 ? '  ·  tap a tab to switch' : '') + '  ·  X (top) to close'
         : 'W/S choose  ·  E select' + (tabs.length > 1 ? '  ·  A/D switch tab' : '') + '  ·  Esc close', 12, '#8a7a6a', { ox: 0.5 });
-      c.add([up, dn, empty, foot, keys]);
+      c.add([empty, foot, keys]);
 
       function render() {
         var list = cur();
@@ -634,7 +643,8 @@ window.LC = window.LC || {};
           o.sb.setText(it.sub || '');
           o.rt.setText(it.right || '').setColor(dis ? '#7a6a5a' : '#f7dd8a');
         });
-        up.setVisible(scroll > 0); dn.setVisible(scroll + VIS < list.length);
+        var long = list.length > VIS;
+        up.show(long, scroll > 0); dn.show(long, scroll + VIS < list.length);
         tabT.forEach(function (t, k) { t.setColor(k === tab ? '#ffd166' : '#8a7a6a').setText(k === tab && tabs.length <= 5 ? '[ ' + tabs[k].label + ' ]' : tabs[k].label); });
         empty.setText(list.length ? '' : (tabs[tab].empty || 'Nothing here.'));
         if (coinT) coinT.setText(String(S.kepeng));
@@ -722,12 +732,13 @@ window.LC = window.LC || {};
           });
         } }, { label: 'Recipes', rows: function () {
           return LC.RECIPES.map(function (r) {
-            var it = LC.ITEMS[r.out], ok = LC.State.has(r.inp), fav = LC.LOVES.indexOf(r.out) >= 0 ? '  ♥' : '';
-            return { icon: it.icon, label: it.name + fav, sub: self.ingText(r.inp), right: 'x' + LC.State.count(r.out), enabled: ok && LC.State.canAdd(r.out), why: ok ? 'Your bag is full!' : 'Missing ingredients.',
+            var it = LC.ITEMS[r.out], ok = LC.State.has(r.inp), fav = LC.LOVES.indexOf(r.out) >= 0 ? '  ♥' : '', batch = (S.house || 0) >= 2 ? 5 : 1;   // v1.8: the bigger dapur
+            return { icon: it.icon, label: it.name + fav, sub: self.ingText(r.inp) + (batch > 1 ? '  (cooks up to 5 at once)' : ''), right: 'x' + LC.State.count(r.out), enabled: ok && LC.State.canAdd(r.out), why: ok ? 'Your bag is full!' : 'Missing ingredients.',
               action: function () {
-                LC.State.takeAll(r.inp); LC.State.add(r.out, 1);
+                var made = 0;
+                while (made < batch && LC.State.has(r.inp) && LC.State.canAdd(r.out)) { LC.State.takeAll(r.inp); LC.State.add(r.out, 1); made++; }
                 LC.Audio.sfx('cook'); self.world.cookFx(); S.flags.cooked = true;
-                self.toast('You cooked ' + it.name + '!', it.icon);
+                self.toast('You cooked ' + (made > 1 ? made + ' ' : '') + it.name + '!', it.icon);
               } };
           });
         } }]
@@ -912,7 +923,10 @@ window.LC = window.LC || {};
       var moodTxt = sum.mood === 'content' ? 'Pelita is content.' : sum.mood === 'neglected' ? 'Pelita feels neglected...' : 'Pelita is a little restless.';
       c.add(this.txt(X + 140, Y + 92, moodTxt, 22, sum.mood === 'neglected' ? '#ff8a7a' : '#e8dcff'));
       c.add(this.txt(X + 140, Y + 124, LC.STAGES[S.ghost.stage].name + '  ·  Bond ' + Math.floor(S.ghost.bond), 15, '#b8a8ff'));
-      c.add(this.txt(X + 40, Y + 180, sum.lines.map(function (l) { return '•  ' + l; }).join('\n'), 16, '#fbecc8', { wrap: Wd - 80, ls: 8 }));
+      var body = this.txt(X + 40, Y + 170, sum.lines.map(function (l) { return '•  ' + l; }).join('\n'), 16, '#fbecc8', { wrap: Wd - 80, ls: 8 });
+      c.add(body);
+      // v1.8: a busy night (helpers, a new house stage...) shrinks the text to fit above the kepeng line
+      [[15, 5], [14, 3], [13, 2], [12, 1]].forEach(function (f) { if (body.height > Hd - 270) body.setFontSize(f[0] + 'px').setLineSpacing(f[1]); });
       c.add(this.txt(X + 40, Y + Hd - 92, 'Kepeng earned today: ' + sum.earned, 17, '#f7dd8a'));
       var next = (this.touchOn ? 'Tap' : 'Press E') + ' to begin Day ' + S.day + ', ' + LC.State.weekday() + (LC.State.isHGN() ? '  (Hungry Ghost Night!)' : '');
       var ft = this.txt(480, Y + Hd - 44, next, 17, '#ffd166', { ox: 0.5 });

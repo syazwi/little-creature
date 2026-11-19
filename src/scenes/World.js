@@ -41,6 +41,7 @@ window.LC = window.LC || {};
       this.area = area; this.A = LC.AREAS[area];
       S.area = area; S.visited[area] = true;
       LC.syncLadang();   // v1.7: has Badang cleared the land south of the field?
+      LC.syncDesert();   // v1.8: is the brick path to the old tower restored?
       this.grid = LC.areaGrid(area);
       this.H = this.grid.length; this.W = this.grid[0].length;
       this.objects = LC.areaObjects(area);
@@ -72,6 +73,7 @@ window.LC = window.LC || {};
       this.createEnemies();    // v1.5: the shadows of the mine, v1.6: the wild places too (WorldCombat.js)
       this.createTanggang();   // v1.6: guiding Si Tanggang home to his mother (WorldTanggang.js)
       this.createBadang();     // v1.7: Badang at your side, the river hantu, your bubu (WorldBadang.js)
+      this.createHome();       // v1.8: Nenek's house as it has grown, and the helpers (WorldHome.js)
 
       var cam = this.cameras.main;
       cam.setBounds(0, 0, this.W * T, this.H * T);
@@ -319,6 +321,7 @@ window.LC = window.LC || {};
         var x = rnd.between(1, this.W - 3), y = rnd.between(2, this.H - 3);
         if (g[y][x] !== D.on || this.solid[y][x] || near(x, y)) continue;
         if (this.area === 'farm' && LC.inLadang(x, y)) continue;   // v1.7: Badang's land may become a field
+        if (this.area === 'farm' && x >= LC.HOUSE_ZONE.x0 && x <= LC.HOUSE_ZONE.x1 && y >= LC.HOUSE_ZONE.y0 && y <= LC.HOUSE_ZONE.y1) continue;   // v1.8: room for the house to grow
         var by = (y + 1) * T - 1;
         this.add.image(x * T + 8 + rnd.between(-3, 3), by, rnd.pick(D.types)).setOrigin(0.5, 1).setDepth(by);
         placed++;
@@ -545,7 +548,7 @@ window.LC = window.LC || {};
       this.ghost.setTexture('ghost_' + g.stage + '_' + expr);
       var n = this.nightF || 0;
       this.ghost.setAlpha(0.78 + 0.22 * n);
-      var legend = (g.level || 1) >= LC.MAX_LEVEL;
+      var legend = (g.level || 1) >= LC.LEGEND_LEVEL;
       this.ghostGlow.setPosition(gx, gy).setScale(0.45 + g.glow / 100 * 0.55 + g.stage * 0.08 + (legend ? 0.25 : 0)).setAlpha((0.18 + 0.55 * n) * (0.4 + g.glow / 160) + (legend ? 0.15 : 0));
       if (g.stage === 4) this.ghostGlow.setTint(0xffe08a);
       this.ghostShadow.setPosition(gx, Math.round(this.gpos.y + 19)).setAlpha(0.25 - 0.1 * n);
@@ -619,6 +622,8 @@ window.LC = window.LC || {};
           if (parts.offerings) { S.offerings = parts.offerings; self.refreshOfferings(); }
           if (parts.buildings) { S.buildings = parts.buildings; self.refreshPlots(); }
           if (parts.ladang !== undefined) S.ladang = parts.ladang;   // v1.7: Badang will clear the land tonight
+          if (parts.house !== undefined) { S.house = parts.house; S.houseBuild = parts.houseBuild || 0; LC.State.recalc(); self.refreshHouse(); }   // v1.8
+          if (parts.helpers) { S.helpers = parts.helpers; self.refreshHelpers(); }
           if (parts.spirits) { S.spirits = parts.spirits; LC.State.recalc(); self.refreshFolkSpirits(); }
           if (parts.chests) { S.chests = parts.chests; S.chestSeq = parts.chestSeq || S.chestSeq; self.refreshChests(); }
           if (parts.animals) { S.animals = parts.animals; S.animalSeq = parts.animalSeq || S.animalSeq; S.coop = parts.coop || S.coop; S.nest = parts.nest || S.nest; self.refreshAnimals(); }
@@ -658,6 +663,8 @@ window.LC = window.LC || {};
       else if (op === 'offer') this.refreshOfferings();
       else if (op === 'build') this.refreshPlots();
       else if (op === 'befriend') this.refreshFolkSpirits();
+      else if (op === 'house_up') { this.refreshHouse(); this.refreshChests(); }
+      else if (op === 'hire' || op === 'fire') this.refreshHelpers();
       if (ok && (op === 'feed' || op === 'pet')) this.followPid = pid;
       if (ok && pid !== 'me') {
         this.remoteFx(op, a);
@@ -922,6 +929,7 @@ window.LC = window.LC || {};
       this.updateEnemies(time, dt, blocked);
       this.updateTanggang(time, dt, blocked);
       this.updateBadang(time, dt, blocked);
+      this.updateHome(time, dt);
       this.updateLighting(time, dt);
 
       var act = blocked ? null : this.getAction();
@@ -968,7 +976,8 @@ window.LC = window.LC || {};
     objectAction(o, sl, it, isFood) {
       var S = this.S, self = this;
       switch (o.type) {
-        case 'house': return { label: 'Sleep', fn: function () { self.ui.confirmSleep(); } };
+        case 'house': case 'house_wing': return { label: 'Nenek\'s house', fn: function () { self.ui.openHouse(); } };   // v1.8: sleep, the pantry, helpers, building
+        case 'helper': return this.helperAction(o);
         case 'spirit':
           if (isFood) return { label: 'Offer ' + it.name + ' to Pelita', fn: function () { self.feedGhost(sl.id); } };
           return { label: 'Spirit house', fn: function () { self.ui.openSpirit(); } };
@@ -1273,7 +1282,7 @@ window.LC = window.LC || {};
         var sum = LC.State.endDay(fainted);
         if (LC.Net.isHost()) LC.Net.broadcast({ t: 'dayStart', sum: sum, world: LC.State.snapshot() });
         if (self.area !== 'farm') { LC.followPid = self.followPid; self.scene.restart({ area: 'farm', summary: sum }); return; }   // you are carried home
-        self.refreshLadang();
+        self.refreshLadang(); self.refreshHouse(); self.refreshHelpers();
         self.refreshAllTiles();
         self.refreshOfferings();
         self.refreshPlots(); self.refreshSeason(); self.refreshAnimals(); self.refreshChests();
@@ -1308,7 +1317,7 @@ window.LC = window.LC || {};
       S.stats.earned = 0;
       LC.State.save();
       if (this.area !== 'farm') { this.scene.restart({ area: 'farm', summary: sum }); return; }
-      this.refreshLadang();
+      this.refreshLadang(); this.refreshHouse(); this.refreshHelpers();
       this.refreshAllTiles();
       this.refreshOfferings();
       this.refreshPlots(); this.refreshSeason(); this.refreshAnimals(); this.refreshChests();

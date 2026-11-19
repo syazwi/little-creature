@@ -150,11 +150,11 @@ window.LC = window.LC || {};
       }
       var KEEP = { tool: 1, weapon: 1, vehicle: 1, wear: 1 };
       this.openMenu({
-        title: LC.ITEMS[(chest() || {}).kind || 'peti_kayu'].name, footer: function () { var c = chest(); return c ? c.items.length + ' / ' + LC.CHESTS[c.kind].slots + ' stacks used. Everyone on the farm shares the chests.' : 'The chest is gone.'; },
+        title: LC.ITEMS[(chest() || {}).kind || 'peti_kayu'].name, footer: function () { var c = chest(); return c ? c.items.length + ' / ' + LC.CHESTS[c.kind].slots + ' stacks used. ' + (c.fixed ? 'Your helpers put their work here, and the cook takes her ingredients from it.' : 'Everyone on the farm shares the chests.') : 'The chest is gone.'; },
         tabs: [
           { label: 'Take', empty: 'The chest is empty. Switch to the Store tab to put things in.', rows: function () {
             var c = chest(); if (!c) return [];
-            var rows = c.items.length ? [{ icon: 'ic_bond', label: 'Take everything', sub: 'Fill your bag with as much as fits.', action: function () { var seen = {}; c.items.forEach(function (s) { if (!seen[s.id]) { seen[s.id] = 1; take(s.id, 9999); } }); } }] : [{ icon: c.kind, iconScale: 2, label: 'Pick up the chest', sub: 'Only an empty chest can be moved.', action: function () {
+            var rows = c.items.length ? [{ icon: 'ic_bond', label: 'Take everything', sub: 'Fill your bag with as much as fits.', action: function () { var seen = {}; c.items.forEach(function (s) { if (!seen[s.id]) { seen[s.id] = 1; take(s.id, 9999); } }); } }] : c.fixed ? [] : [{ icon: c.kind, iconScale: 2, label: 'Pick up the chest', sub: 'Only an empty chest can be moved.', action: function () {
               if (!LC.State.canAdd(c.kind)) { self.toast('Your bag is full!'); return; }
               W.doShared('chest_pick', { id: cid }, function (res) { if (res && res.ok) { LC.State.add(res.kind, 1); LC.Audio.sfx('build'); self.closeModal(); } });
             } }];

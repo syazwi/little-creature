@@ -13,7 +13,7 @@ As Pelita levels up, its light opens the way to the wider land: a riverside vill
 - **Or:** download this whole repository (**Code → Download ZIP**), unzip it, and double-click **`index.html`**. (`index.html` needs the folders next to it, so to copy just one file, use `dist/LittleCreature.html`.)
 - The game fills the whole browser window at any size. Press **F** (or use the pause menu) to go fullscreen.
 - Saves are kept by the browser on that PC. A different PC or browser starts its own farm. There are **three save slots**: see [Saving and loading](#saving-and-loading).
-- **Testing build:** [`dist/LittleCreature_full.html`](dist/LittleCreature_full.html) starts with everything unlocked (Pelita Lv 20, every place, spirit, weapon and vehicle, 99,999 kepeng, max strength, Sumpahan Batu and Restu Ibu, Badang already strong, 3 bubu). It uses its own saves, so your real farm is never touched. Test keys: **]** next day, **[** next season, **\** next Pesta, **H** full health (and abilities ready), **T** replay Si Tanggang's story (switch between "before the reunion" and "reunited"), **B** replay Badang's story (switch between "skinny, on the night watch" and "the strongest man in the land").
+- **Testing build:** [`dist/LittleCreature_full.html`](dist/LittleCreature_full.html) starts with everything unlocked (Pelita Lv 30 with a 72-slot bag, Nenek's house fully grown, every place, spirit, weapon and vehicle, 99,999 kepeng, max strength, Sumpahan Batu and Restu Ibu, Badang already strong, 3 bubu). It uses its own saves, so your real farm is never touched. Test keys: **]** next day, **[** next season, **\** next Pesta, **H** full health (and abilities ready), **T** replay Si Tanggang's story (switch between "before the reunion" and "reunited"), **B** replay Badang's story (switch between "skinny, on the night watch" and "the strongest man in the land").
 - If double-clicking opens the file in something other than a browser, right-click it and choose **Open with → Microsoft Edge** (or Chrome or Firefox).
 
 ### On an Android phone
@@ -44,7 +44,7 @@ PC browsers and Android phones can all play together.
 | Fields, crops, trees, forage spots, the clock and the day | Bag, hotbar and kepeng |
 | Farm animals, eggs in the nest, storage chests and what is in them | Strength, health, the Bunian glasses, Pesta trophies, Si Tanggang's and Badang's stories, and your abilities |
 | Pelita (feeding, petting, offerings, bond, levels, growth) | Energy and watering can |
-| Houses built in the kampung, spirits befriended, the land Badang clears | Villager friendship and requests, your fish log, your bubu, your bike and car, Badang at your side |
+| Houses built in the kampung, spirits befriended, the land Badang clears, Nenek's house, the helpers and the pantry | Villager friendship and requests, your fish log, your bubu, your bike and car, Badang at your side |
 | | Cooking, crafting, fishing, and buying or selling |
 
 - Friends can explore different places at the same time. You see each other when you are in the same place.
@@ -62,7 +62,7 @@ PC browsers and Android phones can all play together.
 | Interact / use item | E / Space / Enter | **USE** button (glows gold when something can be done) |
 | Select hotbar slot | 1 – 9, mouse wheel | Tap a slot |
 | Eat the selected food | X | **EAT** button |
-| Bag | Tab / I | **BAG** button |
+| Bag (and **Throw away**) | Tab / I (T or Delete throws the selected item away) | **BAG** button |
 | Pause menu | Esc | **II** button (top), or Android **Back** |
 | Map (this place, and the whole land) | M | **MAP** button (top) |
 | Music on/off | N | Pause menu |
@@ -87,7 +87,7 @@ Touch controls switch on automatically on touch screens. You can toggle them in 
 - **Trade.** **Mak Ani's warung** on the east road (7 AM – 8 PM) sells seeds, colok and *air merah*, and buys your harvest.
 - **Nights.** If all three of Pelita's needs are 50 or more when you sleep, it rests content. If any is under 20, expect a prank.
 - **Ahad.** Every 7th day is **Hungry Ghost Night**. Pelita gets hungry twice as fast, but all bond counts double.
-- **Levels.** Every act of care gives Pelita bond. Pelita has **20 levels**. It evolves at Lv 3, 6, 9 and 12 (Flicker → Little Spirit → Lantern Spirit → Garden Spirit → Guardian), and most other levels bring a gift. Each evolution brings a blessing. The **Journal (J)** lists every level and its reward.
+- **Levels.** Every act of care gives Pelita bond. Pelita has **30 levels**. It evolves at Lv 3, 6, 9 and 12 (Flicker → Little Spirit → Lantern Spirit → Garden Spirit → Guardian), and most other levels bring a gift. Each evolution brings a blessing. The **Journal (J)** lists every level and its reward.
 
 ### The wider land (opens as Pelita levels up)
 | Place | Pelita level | How to get there | What's there |
@@ -102,7 +102,7 @@ Touch controls switch on automatically on touch screens. You can toggle them in 
 | **Lombong Puaka**, the haunted gold mine | Lv 9 | The old mine shaft in Gunung Kabus | Darkness, shadows that attack, gold seams, cave crystals, a blind cave fish, the stone guardian |
 | **Istana Laut Selatan**, the Palace of the Southern Sea | Lv 12 | The green arch at the south of Kampung Karang | Kanjeng Ratu Kidul, the Queen of the Southern Sea, and her lady-in-waiting |
 | **Kota Atlantis**, the sunken city | Lv 15 | The deep trench at the west of Kampung Karang | Poseidon on his throne, a scholar, marble ruins, amphorae and crystals |
-| **Bukit Pasir**, the red dunes | Lv 11 | Road east through the kampung | Dragon fruit, clay, buried old coins, an oasis, a Cham tower |
+| **Bukit Pasir**, the red dunes | Lv 11 | Road east through the kampung | Dragon fruit, clay, buried old coins, an oasis, a Cham tower, Mak Thuy the potter, Pak Tam the dragon-fruit farmer |
 
 Locked paths are blocked by vines, rockfall or sand until Pelita is strong enough. From Lv 7, wayside shrines take you home, and the spirit house sends you to any place you've visited.
 
@@ -158,6 +158,22 @@ Locked paths are blocked by vines, rockfall or sand until Pelita is strong enoug
   - **Kota Atlantis (Pelita Lv 15):** the sunken city of the old Greek tales, where **Poseidon** still sits on his throne. Bring him pearls, cave crystals and an *ikan emas* and he gives you his trident and +20 health.
 - **Krathong.** Craft a krathong (banana, marigold and colok) at the spirit house, or buy one from Mbak Dewi. Float it on any water after dark for a big boost to Pelita's glow and bond.
 
+### Nenek's house, helpers and a bigger bag (v1.8)
+- **Nenek's house** now opens a menu (USE on the house): **Sleep**, the **pantry**, **helpers** and **Expand the house**.
+- **Expand it in three stages.** Tukang Leong and the kampung build each one overnight (or at once, if Badang is strong):
+  - **Serambi** (2,000 kepeng, 20 kayu, 10 atap): a verandah and the **Almari Dapur** pantry. Room for 1 helper.
+  - **Rumah Tengah** (6,000 kepeng, 30 kayu, 15 batu, 15 atap): a middle room. The dapur cooks **up to 5 dishes at once**, +20 max energy. Room for 2 helpers.
+  - **Rumah Dapur** (15,000 kepeng, 40 kayu, 20 batu, 10 tanah liat, 2 tempayan from Mak Thuy): a grand kitchen wing and carved golden gables, a bigger pantry (48 stacks), +20 more max energy. Room for 3 helpers.
+- **Hire helpers.** Their wages come out of your kepeng every morning (a helper you can't pay takes the night off). Everything they make goes into the pantry:
+  - **Mak Som**, the cook (80 a day): cooks up to 5 dishes a night from the ingredients you leave in the pantry, the best ones she can.
+  - **Pak Hamid**, the farmhand (70 a day): waters the whole field every night, harvests what is ripe, and replants it with seeds you leave in the pantry.
+  - **Kak Nur**, the gatherer (50 a day): picks the ripe fruit on the farm and collects the eggs and milk from the reban.
+- **A bigger bag.** It grows by a row of 9 slots at Pelita Lv 5, 10, 15, 20, 25 and 30 (from 18 up to 72). It scrolls with the big **more** buttons, the mouse wheel or the arrow keys.
+- **Throw things away.** In the bag, select an item and press **Throw away** (or T / Delete). It asks first, and lets you throw away 1 or the whole stack. Your cangkul, gembor, fishing rod and special items can't be thrown away.
+- **Pelita can reach Lv 30.** Levels 21-30 bring kepeng, max energy, gold, Bunian lamps, golden fruit, crystals and two more bag rows. At Lv 30 Pelita becomes the Spirit of the Land.
+- **Menus on phones:** the **more** buttons beside every long list are now big and easy to tap, and each tap turns a whole page.
+- **Bukit Pasir has people now.** **Mak Thuy**, a Cham potter by the old tower, shapes pots by hand from your clay (*periuk tanah*, clay lamps for Pelita, and the big *tempayan* water jars Nenek's kitchen wing needs). Help her restore the **brick path to the old tower** (8 tanah liat, 4 kayu and 3 of the old coins you dig up, for the elders' little shelf of old things by the door). **Pak Tam**, a dragon-fruit farmer, sells **dragon-fruit cuttings** to grow on your farm (in the hot and planting seasons), sells *jus buah naga*, and pays well for dragon fruit.
+
 ### Saving and loading
 - There are **three save slots**. On the title screen, **Continue** opens the farm you played last, **Load Game** lets you pick a slot, and **New Game** asks which slot to start in (a slot that already has a farm asks twice before it is overwritten).
 - While playing, pause (Esc or **II**) and choose **Save game** to save into any slot, or **Load game** to go back to a saved farm.
@@ -195,11 +211,12 @@ Icons are generated by `node tools/make-icons.mjs`.
 index.html            the game (open this to play from the folder)
 dist/                 ready-to-play builds: LittleCreature.html (single file) and LittleCreature.apk, and version.json (what the update check reads)
 src/                  game code: data, areas (maps of every place), folk (villagers and spirits), state, sim (shared-world rules),
-                      net (co-op), lobby, procedural art (art.js ... art6.js) + audio, data2/areas2/undersea (v1.5 content),
+                      net (co-op), lobby, procedural art (art.js ... art7.js) + audio, data2/areas2/undersea (v1.5 content),
                       battle.js (v1.6: wild enemies, abilities, Mak Deruma), badang.js (v1.7: Badang, the hantu, bubu,
-                      Ladang Badang, Lempar Batu), cheats.js (test build only),
-                      scenes (World + WorldLife, WorldFarm, WorldCombat, WorldTanggang, WorldBadang;
-                      UI + UIMenus, UIGames, UISettings, UIBadang)
+                      Ladang Badang, Lempar Batu), home.js (v1.8: house stages, helpers, bigger bag,
+                      Lv 30, Mak Thuy and Pak Tam), version.js + update.js (update check), cheats.js (test build only),
+                      scenes (World + WorldLife, WorldFarm, WorldCombat, WorldTanggang, WorldBadang, WorldHome;
+                      UI + UIMenus, UIGames, UISettings, UIBadang, UIHome)
 lib/                  Phaser 3.80.1 (MIT), PeerJS 1.5.4 (MIT) and the Pixelify Sans font (SIL OFL 1.1), vendored
 icons/                app icons
 android/              Android wrapper app (WebView). It packages the web game from the root at build time.

@@ -194,6 +194,10 @@ src/
   art6.js           v1.7 textures: Badang (both), the river hantu, bubu, stumps and boulders, Batu Badang, the contest stone, icons
   scenes/WorldBadang.js    Badang at your side (fighting), the night watch and wish cutscene, bubu traps, clearing the land
   scenes/UIBadang.js       the grab game, Badang's Talk rows, the Lempar Batu game, Journal row
+  home.js           v1.8 data + night work: house stages, helpers (LC.Home dusk/dawn), bag sizes, Lv 21-30, Mak Thuy and Pak Tam, the tower path
+  art7.js           v1.8 textures: the house wings and carved gables, helpers, pottery yard, fruit stall, dragon-fruit crop, icons
+  scenes/WorldHome.js      the house as it grows, the helpers on the farm, the restored tower path
+  scenes/UIHome.js         the house menu, the scrolling bag with Throw away, Mak Thuy's pots and tower quest
   cheats.js         test build only (dist/LittleCreature_full.html)
   scenes/UIGames.js      map, chest, reban, Pesta and its contest games, strength training, quests, the journal's You page
   art.js            procedural pixel-art texture generation
@@ -316,6 +320,19 @@ From the tale in the *Sejarah Melayu*. The player does **not** become Badang: he
 
 ### Update check (v1.7.1)
 A sideloaded APK cannot update itself, so the game tells players when a newer build is on GitHub. `tools/build-web.mjs` reads `versionCode`/`versionName` from `android/app/build.gradle`, takes the build time, and writes `src/version.js` (`LC.VERSION`, `LC.UPDATE_URLS`, the repo taken from the git remote) and `dist/version.json` ({code, name, built}). `LC.Update` (`src/update.js`) fetches `raw.githubusercontent.com/<repo>/main/dist/version.json` (CORS is open, a cache-busting query, 9 s timeout, once per session unless forced). If `code` is higher: the title screen shows a box with the new version and its date and time (click, tap or U), the UI gives one reminder toast, and Pause → Updates has a "Get" row. Download: on Android `location.href` to the APK (the WebView hands outside links to the browser via `shouldOverrideUrlLoading`, which downloads it; the player taps Install, and the same signing key keeps the save); on a computer the HTML's GitHub page in a new tab (the test build points at `LittleCreature_full.html`). Dates show in the device's time zone (`en-GB`, 12-hour). Offline or on an error, the game just plays; the row says it could not reach GitHub.
+
+### Home, helpers, a bigger bag and the dunes' folk (v1.8)
+Players piled up kepeng with nothing big to spend it on, and full bags were a chore. Everything here is a money sink with a payoff.
+
+**Nenek's house** (shared `S.house` 0-3, `S.houseBuild` for a stage being built tonight; both in the snapshot). `Sim.house_up` (paid locally by whoever asked, refunded on failure; `quick` with Badang finishes at once). `LC.HOUSE_STAGES`: Serambi (2,000 k, room 1, pantry), Rumah Tengah (6,000 k, room 2, dapur cooks x5, +20 energy), Rumah Dapur (15,000 k incl. 2 tempayan, room 3, 48-stack pantry, +20 energy, carved gables). The new wing is an object (`h_wing`, type `house_wing`, x 7-8, `when: house >= 1`) with textures `wing_1..3`; the main house swaps to `house_ukir` at stage 3 (`World.refreshHouse`). The house object now opens `UI.openHouse` (Sleep, pantry, helpers, expand). The tiles beside the house are kept free of decor.
+
+**Helpers** (shared `S.helpers`; `Sim.hire`/`Sim.fire`, host or solo only; rooms = house stage). The pantry is a fixed chest `S.chests.pantry` (`fixed: true`, area `home`: never drawn, never picked up), opened with the normal chest menu. `endDay` calls `LC.Home.dusk` before the crops grow (wages from the host's kepeng; unpaid helpers skip the night; the farmhand wets every tilled tile) and `LC.Home.dawn` after the trees regrow (a finished house stage; the farmhand harvests ripe crops into the pantry and replants from pantry seeds; the gatherer runs `Sim.shake` on every ready farm tree and forage spot and empties `S.coop`; the cook makes up to 5 dishes, best `sell` first, at most 2 of each, from pantry ingredients). Each writes a summary line; a long summary shrinks its font to fit. Helpers stand at fixed farm spots (06:00-21:00), and their spots count as villager posts so chests are not placed there.
+
+**Bag and levels.** `LC.bagSize(lv)` = 18 + 9 per reached level in `LC.BAG_LEVELS` [5, 10, 15, 20, 25, 30]; `State.recalc` grows `S.inv` (never shrinks), and guests keep a bigger saved bag. `LC.LEVELS` runs to Lv 30 (`LC.MAX_LEVEL` 30); Lv 21-30 rewards in `home.js`; the legend glow stays at `LC.LEGEND_LEVEL` 20. The bag (`UI.openInventory`, rewritten in UIHome.js) shows the hotbar and 4 backpack rows at a time, with big scroll buttons, wheel and keys; **Throw away** (button, T or Delete) asks with "Keep it" first, then 1 or all; `LC.FIXED_ITEMS` can't be thrown away.
+
+**Menus.** `UI.scrollBtn` draws big tappable up/down buttons beside `openMenu` lists (and the bag); each tap turns a page. They show only when the list is longer than the view.
+
+**Bukit Pasir.** Mak Thuy (Cham potter, post 31,7, pottery yard object) makes pots from clay (`LC.POTS`: periuk tanah, pelita tanah (an offering), tempayan) and has the tower quest (`LC.TOWER_QUEST`, `quests.menaraAsked`/`menara`): it restores the brick path (`LC.syncDesert` turns x 34-35, y 6-11 into stone path, live via `World.refreshDesertPath`). The Cham tower is treated as a place of memory and heritage, not of worship. Pak Tam (dragon-fruit farmer, post 15,13, stall object) sells `seed_buahnaga` (crop `buahnaga`, 6 days, 3 fruit, kemarau and menanam) and `jus_buah_naga` (also a dapur recipe), and buys fruit at x1.4. Co-op protocol 7.
 
 ## 8. Milestones
 

@@ -64,6 +64,28 @@ window.LC = window.LC || {};
       if (a.quick) { var vid = LC.State.moveIn(a.plot); return { ok: true, quick: true, vid: vid }; }   // v1.7: Badang raises it at once
       return { ok: true };
     },
+    // v1.8: Nenek's house grows a stage (built overnight, or at once with Badang; paid by whoever asked)
+    house_up: function (a) {
+      var S = LC.State.s, next = (S.house || 0) + 1;
+      if (S.houseBuild || !LC.HOUSE_STAGES[next]) return { ok: false };
+      if (a && a.quick) { S.house = next; LC.Home.applyStage(next); return { ok: true, quick: true, stage: next }; }
+      S.houseBuild = next;
+      return { ok: true, stage: next };
+    },
+    // v1.8: hire or let go of a helper (their wages come out of the host's kepeng every morning)
+    hire: function (a) {
+      var S = LC.State.s;
+      S.helpers = S.helpers || {};
+      if (!LC.HELPERS[a.k] || S.helpers[a.k] || LC.Home.hiredCount() >= LC.Home.rooms()) return { ok: false };
+      S.helpers[a.k] = { since: S.day };
+      return { ok: true };
+    },
+    fire: function (a) {
+      var S = LC.State.s;
+      if (!S.helpers || !S.helpers[a.k]) return { ok: false };
+      delete S.helpers[a.k];
+      return { ok: true };
+    },
     // v1.7: Badang clears the stumps and boulders south of Nenek's field overnight (the feast is paid by whoever asked)
     ladang: function () {
       var S = LC.State.s;
@@ -132,7 +154,7 @@ window.LC = window.LC || {};
     },
     chest_pick: function (a) {
       var S = LC.State.s, c = S.chests[a.id];
-      if (!c || c.items.length) return { ok: false };
+      if (!c || c.items.length || c.fixed) return { ok: false };   // (the pantry stays put)
       delete S.chests[a.id];
       return { ok: true, kind: c.kind };
     },
@@ -218,6 +240,8 @@ window.LC = window.LC || {};
     if (op === 'shake') { var tr = {}; tr[a.id] = S.trees[a.id]; return { trees: tr }; }
     if (op === 'build') return { buildings: S.buildings };
     if (op === 'ladang') return { ladang: S.ladang };
+    if (op === 'house_up') return { house: S.house || 0, houseBuild: S.houseBuild || 0, chests: S.chests, chestSeq: S.chestSeq };
+    if (op === 'hire' || op === 'fire') return { helpers: S.helpers || {} };
     if (op === 'befriend' || op === 'play') return { ghost: S.ghost, spirits: S.spirits };
     return { ghost: S.ghost, offerings: S.offerings };
   };
