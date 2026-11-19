@@ -184,6 +184,13 @@ window.LC = window.LC || {};
       an.groomDay = S.day; an.love = Math.min(20, an.love + 1);
       return { ok: true, name: an.name };
     },
+    animal_sell: function (a) {   // v2.3.2: a farm animal goes off to a new home
+      var S = LC.State.s, i = -1;
+      S.animals.forEach(function (an, k) { if (an.id === a.id) i = k; });
+      if (i < 0) return { ok: false };
+      var an = S.animals.splice(i, 1)[0];
+      return { ok: true, kind: an.kind, name: an.name };
+    },
     coop_collect: function () {
       var c = LC.State.s.coop, got = { telur: c.telur || 0, telur_itik: c.telur_itik || 0, susu: c.susu || 0 };
       c.telur = 0; c.telur_itik = 0; c.susu = 0;

@@ -720,7 +720,7 @@ window.LC = window.LC || {};
                 action: function () { S.kepeng -= price; LC.State.add(id, 1); LC.Audio.sfx('buy'); } };
             });
           } },
-          { label: 'Sell', empty: 'Nothing to sell yet. Bring crops, fruit, flowers or cooking!', rows: function () {
+          { label: 'Sell', empty: 'Nothing to sell yet. Bring crops, fruit, flowers, eggs or cooking (or a farm animal)!', rows: function () {
             var seen = {}, rows = [];
             S.inv.forEach(function (sl) {
               if (!sl || seen[sl.id]) return;
@@ -730,7 +730,7 @@ window.LC = window.LC || {};
               rows.push({ icon: it.icon, label: it.name + '  x' + LC.State.count(sl.id), sub: it.desc, right: '+' + price + ' k',
                 action: function () { LC.State.remove(sl.id, 1); S.kepeng += price; S.stats.earned += price; LC.Audio.sfx('coin'); } });
             });
-            return rows;
+            return rows.concat(self.animalSellRows('ani'));   // v2.3.2: your chickens and other farm animals
           } }
         ]
       });

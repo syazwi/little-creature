@@ -182,7 +182,7 @@ window.LC = window.LC || {};
           rows.push({ icon: it.icon, label: it.name + '  x' + LC.State.count(sl.id), sub: it.desc, right: '+' + price + ' k',
             action: function () { LC.State.remove(sl.id, 1); S.kepeng += price; S.stats.earned += price; LC.Audio.sfx('coin'); } });
         });
-        return rows;
+        return v.animals ? rows.concat(self.animalSellRows('lah')) : rows;   // v2.3.2: Pak Lah buys farm animals back
       } });
       this.openMenu({ title: v.name, coins: !!(v.shop || v.buys), tabs: tabs, footer: function () { return v.role + ' · ' + heartStr(LC.State.hearts(vid)) + (v.buys ? ' · buys at a better price than the warung' : ''); } });
     },

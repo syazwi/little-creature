@@ -399,6 +399,8 @@ The user picked this continuation: the exiled admiral makes a pact with an origi
 
 **v2.3.1: Mak Lampir.** The user asked for Mak Lampir, "the black magic witch influencing the attack". She is a character of the Indonesian radio play and TV series *Misteri Gunung Merapi* (not a documented folk legend), so the game uses only her name and the witch archetype: its own art, words and story, nothing else from the series, and no religion. She whispered in the admiral's ear since Barunai (a hint in Chapter 4's king scene; he says so in the finale), holds Si Kelam's leash, and is the second phase on Pulau Kelam (`quests.c5witch`, saved): she watches from the crag (`lampir5`), then fights as `maklampir` (blinks around `C5.witch.zone`, snuffs a lit torch every 13 s with a violet bolt; shielded while any torch is dark). Beaten, she turns into a bat and flies off; the rewards come first. Co-op protocol 13.
 
+**v2.3.2: selling chickens and eggs.** The user asked that chickens and eggs can be sold in the shop. Eggs already sold at the warung (and to Pak Lah), so this adds: Mak Ani sells eggs (telur 20 k, telur itik 28 k), and farm animals can be sold at the warung's Sell tab or Pak Lah's (`animalSellRows`, the shared `animal_sell` op, `LC.animalSellPrice`: half the price, chicks 30% of the grown price, +2 k per love). Sold animals go "to a good home on another farm" (no slaughter, as agreed in v1.5). Selling asks twice. Co-op protocol 14.
+
 **Also in v2.3:** Pixelify Sans drew the "fi" ligature like an "A" ("first" came out as "Arst"), so every Text object now renders with `textRendering = 'optimizeSpeed'` (no ligatures).
 
 ## 8. Milestones

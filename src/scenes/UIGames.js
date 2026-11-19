@@ -184,7 +184,7 @@ window.LC = window.LC || {};
       var self = this, S = this.S, W = this.world;
       function unfed() { return S.animals.filter(function (a) { return a.fedDay !== S.day; }).length; }
       this.openMenu({
-        title: 'Nenek\'s Reban', footer: function () { return 'Birds ' + (LC.ANIMAL_ROOM.coop - LC.State.animalRoom('coop')) + ' / ' + LC.ANIMAL_ROOM.coop + '  ·  Goats ' + (LC.ANIMAL_ROOM.pen - LC.State.animalRoom('pen')) + ' / ' + LC.ANIMAL_ROOM.pen + '  ·  Pak Lah in Kampung Tepian sells more animals.'; },
+        title: 'Nenek\'s Reban', footer: function () { return 'Birds ' + (LC.ANIMAL_ROOM.coop - LC.State.animalRoom('coop')) + ' / ' + LC.ANIMAL_ROOM.coop + '  ·  Goats ' + (LC.ANIMAL_ROOM.pen - LC.State.animalRoom('pen')) + ' / ' + LC.ANIMAL_ROOM.pen + '  ·  Pak Lah sells more animals. Sell yours at the warung or to Pak Lah.'; },
         tabs: [
           { label: 'Reban', rows: function () {
             var rows = [], u = unfed(), dk = LC.State.count('dedak'), pd = LC.State.count('padi'), cp = S.coop || {};
@@ -236,6 +236,29 @@ window.LC = window.LC || {};
             });
           } }
         ]
+      });
+    },
+    // v2.3.2: sell your farm animals (Mak Ani's warung or Pak Lah). Choose twice: the first time asks "really?"
+    animalSellRows: function (who) {
+      var self = this, S = this.S, W = this.world;
+      var home = who === 'ani' ? 'Mak Ani\'s cousin in Kampung Hulu is starting a farm, and will take good care of it.' : 'Pak Lah will find it a good home on another farm.';
+      return S.animals.map(function (a) {
+        var D = LC.ANIMALS[a.kind], tex = (a.kind.indexOf('anak_') === 0 ? 'anak' : D.tex) + '_0', price = LC.animalSellPrice(a);
+        var p = self.sellPending, sure = !!p && p.id === a.id && Date.now() - p.t < 8000;
+        return { icon: tex, iconScale: 2, label: (sure ? 'Really sell ' : 'Sell ') + a.name + ' the ' + D.name + (sure ? '?' : ''),
+          sub: (sure ? 'Choose again to say goodbye to ' + a.name + '. ' : '') + home + '  (' + hearts(a.love) + ': a well-loved animal fetches more)',
+          right: (sure ? 'Yes! ' : '') + '+' + price + ' k',
+          action: function () {
+            if (!sure) { self.sellPending = { id: a.id, t: Date.now() }; LC.Audio.sfx('click'); return; }
+            self.sellPending = null;
+            W.doShared('animal_sell', { id: a.id }, function (res) {
+              if (!res || !res.ok) { self.toast(a.name + ' is not at the farm any more.'); return; }
+              S.kepeng += price; S.stats.earned += price;
+              LC.Audio.sfx('coin'); LC.Audio.sfx(D.sfx);
+              self.toast(res.name + ' the ' + D.name + ' is off to a new home. (+' + price + ' kepeng)', tex);
+              if (self.modal && self.modal.render) self.modal.render();
+            });
+          } };
       });
     },
     animalShopRows: function (v) {

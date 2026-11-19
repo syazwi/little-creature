@@ -37,8 +37,8 @@ window.LC = window.LC || {};
     duku:     { name: 'Duku', kind: 'fruit', sell: 22, food: { full: 6, joy: 8 }, desc: 'Little round duku in bunches. Peel and pop!' },
     cempedak: { name: 'Cempedak', kind: 'fruit', sell: 45, food: { full: 14, joy: 8 }, desc: 'A cousin of the jackfruit, fragrant and golden.' },
     // farm animals give
-    telur:      { name: 'Telur', kind: 'produce', sell: 12, desc: 'A fresh egg from your hens. Cook it, or let a hen hatch it in the nest.' },
-    telur_itik: { name: 'Telur Itik', kind: 'produce', sell: 18, desc: 'A big duck egg. Perfect for telur masin, or for hatching.' },
+    telur:      { name: 'Telur', kind: 'produce', price: 20, sell: 12, desc: 'A fresh egg from your hens. Cook it, or let a hen hatch it in the nest.' },
+    telur_itik: { name: 'Telur Itik', kind: 'produce', price: 28, sell: 18, desc: 'A big duck egg. Perfect for telur masin, or for hatching.' },
     susu:       { name: 'Susu Kambing', kind: 'drink', sell: 30, food: { full: 8, joy: 6 }, desc: 'Fresh goat milk.' },
     dedak:      { name: 'Dedak', kind: 'feed', price: 6, sell: 2, desc: 'Rice-bran feed for your animals. Use it at the reban, or hold it and face an animal.' },
     sikat:      { name: 'Sikat', kind: 'tool', price: 40, desc: 'A soft grooming brush. Groom your Serama at the reban before a show.' },
@@ -121,7 +121,7 @@ window.LC = window.LC || {};
     { out: 'baja', inp: { cendawan: 1, kangkung: 2 } }
   ];
   // warung stock: seasonal seeds in their season, and Mak Ani's new stall from Pelita Lv 10
-  LC.SHOP = LC.SHOP.concat(['dedak', 'daging_ayam', 'peti_kayu']);
+  LC.SHOP = LC.SHOP.concat(['dedak', 'daging_ayam', 'peti_kayu', 'telur', 'telur_itik']);   // (v2.3.2: eggs too)
   LC.SHOP_SEASON = { menanam: ['seed_jagung', 'seed_kangkung'], buah: ['seed_nanas'], kemarau: ['seed_jagung', 'seed_tembikai'], tengkujuh: ['seed_kangkung'] };
   LC.SHOP_LV10 = ['peti_ukir', 'baja', 'ais_kacang', 'malai', 'canang', 'krathong'];
   LC.LEVEL_REWARDS[9].unlock = 'lombong';
@@ -139,6 +139,13 @@ window.LC = window.LC || {};
     anak_serama: { name: 'Anak Serama', home: 'coop', grows: 'serama', days: 3, tex: 'anak', sfx: 'cluck', desc: 'A tiny Serama chick. Grows up proud in 3 days.' }
   };
   LC.ANIMAL_ROOM = { coop: 10, pen: 4 };
+  // v2.3.2: selling a farm animal (it goes to a good home on another farm): half its price, a chick a little less,
+  // and a well-loved animal fetches more
+  LC.animalSellPrice = function (a) {
+    var D = LC.ANIMALS[a.kind]; if (!D) return 0;
+    var base = D.price ? D.price * 0.5 : ((LC.ANIMALS[D.grows] || {}).price || 100) * 0.3;
+    return Math.round(base + (a.love || 0) * 2);
+  };
   LC.ANIMAL_NAMES = ['Tompok', 'Comel', 'Bulat', 'Kiki', 'Gebu', 'Manja', 'Si Merah', 'Labu', 'Kuning', 'Bintang', 'Mochi', 'Pandan', 'Belang', 'Jambu', 'Cik Puteh', 'Ondeh', 'Bobo', 'Lenggang', 'Jebat', 'Cempaka'];
   LC.CHESTS = { peti_kayu: { slots: 24 }, peti_ukir: { slots: 48 } };
 
