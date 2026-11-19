@@ -6,7 +6,8 @@
  *   K  Chapter 2: jump to its next step
  *   L  Chapter 3: jump to its next step (finishes Chapter 2 first; parts 1 and 2)
  *   O  Chapter 4: jump to its next step or wave (finishes Chapters 2 and 3 first)
- *   P  Chapter 5: jump to its next step (finishes Chapters 2, 3 and 4 first) */
+ *   P  Chapter 5: jump to its next step (finishes Chapters 2, 3 and 4 first)
+ *   Y  Chapter 6: jump to its next step (finishes Chapters 2 to 5 first) */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -110,6 +111,17 @@ window.LC = window.LC || {};
         this.toast('Chapter 5, step ' + Q5.ch5 + ': ' + (LC.ch5Goal() || 'complete').replace(/^Chapter 5: /, '') + ' (Re-enter the place to see it. The jong at Nenek\'s jetty sails to Java and Pulau Kelam.)', 'ic_glow');
         return;
       }
+      case 'KeyY': {   // v2.4: jump to the next step of Chapter 6
+        var Q6 = S.quests, s6 = Q6.ch6 || 0;
+        if ((Q6.ch5 || 0) < 5) { Q6.ch2 = 8; Q6.ch3 = 13; Q6.kaStage = 3; Q6.asmara = 1; Q6.jinn = 1; Q6.ch3day = S.day - 3; Q6.ch4 = 4; Q6.c4wave = 5; Q6.ch4day = S.day - 2; Q6.ch5 = 5; Q6.ch5day = S.day - 1; if (!State.count('keris_majapahit')) State.add('keris_majapahit', 1); Q6.ch6 = 1; Q6.c6day = S.day; }
+        else if (s6 < 4) { Q6.ch6 = s6 + 1; if (Q6.ch6 === 1) Q6.c6day = S.day; if (Q6.ch6 === 2 && !State.count('diari_nenek')) State.add('diari_nenek', 1); }
+        else if (s6 === 4) { Q6.c6asked = 1; Q6.c6tears = { penghulu: 1, mat: 1, lah: 1, leong: 1 }; Q6.c6bridge = 1; LC.syncLedang(); Q6.ch6 = 5; }
+        else if (s6 === 5) { delete Q6.c6fight; Q6.ch6 = 6; if (!State.count('bunga_ledang')) State.add('bunga_ledang', 1); }
+        else if (s6 === 6) Q6.ch6 = 7;
+        State.recalc();
+        this.toast('Chapter 6, step ' + Q6.ch6 + ': ' + (LC.ch6Goal() || 'complete').replace(/^Chapter 6: /, '') + ' (Re-enter the place to see it. The jong at the farm jetty sails to Gunung Ledang.)', 'ic_glow');
+        return;
+      }
       case 'KeyB': {   // v1.7: replay Badang's story (skinny, by the forest pool) or make him strong again
         var strong = (S.quests.badang || 0) >= 3;
         S.quests.badang = strong ? 2 : 3; S.buddy = null;
@@ -123,6 +135,6 @@ window.LC = window.LC || {};
   LC.UIScene.prototype.create = function () {
     create.apply(this, arguments);
     var self = this;
-    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story, B replay the Badang story, K next Chapter 2 step, L next Chapter 3 step, O next Chapter 4 step, P next Chapter 5 step.', 'ic_glow'); });
+    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story, B replay the Badang story, K next Chapter 2 step, L next Chapter 3 step, O next Chapter 4 step, P next Chapter 5 step, Y next Chapter 6 step.', 'ic_glow'); });
   };
 })(window.LC);

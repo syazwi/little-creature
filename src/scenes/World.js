@@ -43,6 +43,7 @@ window.LC = window.LC || {};
       LC.syncLadang();   // v1.7: has Badang cleared the land south of the field?
       LC.syncDesert();   // v1.8: is the brick path to the old tower restored?
       LC.syncBarunai();  // v1.9: has Barunai been founded (its walkways over the river)?
+      if (LC.syncLedang) LC.syncLedang();   // v2.4: has the bridge of gold and silver been built on Gunung Ledang?
       this.grid = LC.areaGrid(area);
       this.H = this.grid.length; this.W = this.grid[0].length;
       this.objects = LC.areaObjects(area);
@@ -989,6 +990,7 @@ window.LC = window.LC || {};
         case 'hero': case 'vision': case 'vision_back': case 'tour': case 'meriam': case 'api': case 'keluarga': return this.kampongObjAction(o);   // v2.1
         case 'ally': case 'api4': case 'jong_dagang': return this.kampongObjAction(o);   // v2.2
         case 'jong5': case 'pasar5': case 'obor5': case 'damar': case 'raja5': case 'kebo5': case 'lampir5': return this.kampongObjAction(o);   // v2.3
+        case 'nenek6': case 'pinang6': case 'bunga6': case 'ally6': return this.kampongObjAction(o);   // v2.4
         case 'spirit':
           if (isFood) return { label: 'Offer ' + it.name + ' to Pelita', fn: function () { self.feedGhost(sl.id); } };
           return { label: 'Spirit house', fn: function () { self.ui.openSpirit(); } };

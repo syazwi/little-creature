@@ -51,6 +51,7 @@ window.LC = window.LC || {};
     p.line(17, 4 - s, 18, 27, '#5a3a20', 1); p.line(16, 4 - s, 18, 3 - s, '#5a3a20', 1);                           // the crooked stick
     p.disc(17, 3 - s, 1.6, '#9a5aff'); p.px(17, 3 - s, '#e8d0ff');
   }
+  Art.drawLampir = drawLampir;   // (v2.4: Chapter 6 draws her again)
   function drawLampirFace(p) {   // 24x26 for the dialogue box
     var H = '#ecebe4', H2 = '#c8c6bc', SK = '#a88a6a', SK2 = '#86684c';
     p.poly([[2, 4], [21, 2], [23, 24], [17, 20], [12, 25], [7, 20], [1, 24]], H2);

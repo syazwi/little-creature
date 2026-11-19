@@ -274,7 +274,7 @@ window.LC = window.LC || {};
       if (q.ch5 !== 4) return;
       this.cutscene = true; LC.Audio.setBattle(false);
       // the reward comes first, so a dialogue closed early can never lose it
-      q.ch5 = 5; S.kepeng += LC.C5.reward; S.stats.earned += LC.C5.reward;
+      q.ch5 = 5; q.ch5day = S.day; S.kepeng += LC.C5.reward; S.stats.earned += LC.C5.reward;
       LC.State.recalc(); S.hp = S.maxHp;
       this.doShared('kind', { n: 25 }, function () {});
       this.enemies.forEach(function (x) {

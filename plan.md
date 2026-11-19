@@ -216,6 +216,10 @@ src/
   art12.js          v2.3 textures: the shadows, Si Kelam, Pelita Purnama (ghost_5_*), Juragan Wira, the guard lamps, the damar tree, the stone torches, the pendopo, the split gate, Javanese houses, market stalls, icons
   scenes/WorldBayang.js    the night the lamps go out, Pelita growing pale, the torches failing, wilted crops, the voyages, the king, the damar tree, the stone torches, Si Kelam's shield, the finale
   scenes/UIBayang.js       Chapter 5 Talk rows (the Penghulu, Leong, Tok Batin, Empu Lintang), the jong's voyage menu, the market of Majapahit, the goal line and Journal
+  ledang.js         v2.4 Chapter 6 data: Gunung Ledang (map, the bridge sync), Hang Tuah, Hang Jebat, the princess, Nenek, Nek Lampir, the duels and the last fight, story text
+  art13.js          v2.4 textures: Nenek asleep on the pangkin, areca palms, the waterfall, the princess's pavilion, the Bunga Ledang, the duellists, Mak Lampir again, icons
+  scenes/WorldLedang.js    Nenek's homecoming and the curse, the voyage, the silat duels (three touches), the areca palms, the bridge rails, the last fight (curse circles, stolen light, Hang Tuah), waking Nenek
+  scenes/UILedang.js       Chapter 6 Talk rows (Tuah, Jebat, the princess, the tears, Leong's bridge), the jong's new destination, the goal line and Journal
   scenes/UIMajapahit.js    Chapter 4 Talk rows (Pak Mat, the Penghulu, Leong, Kemala, Semaun, Badang), the trading jong's shop, the goal line and Journal
   scenes/UIKampong.js      Berbai's building rows, the craftspeople's services, the padian and pilings menus, the training and cockfight games, Chapter 3 in the Journal and goal line
   cheats.js         test build only (dist/LittleCreature_full.html)
@@ -402,6 +406,13 @@ The user picked this continuation: the exiled admiral makes a pact with an origi
 **v2.3.2: selling chickens and eggs.** The user asked that chickens and eggs can be sold in the shop. Eggs already sold at the warung (and to Pak Lah), so this adds: Mak Ani sells eggs (telur 20 k, telur itik 28 k), and farm animals can be sold at the warung's Sell tab or Pak Lah's (`animalSellRows`, the shared `animal_sell` op, `LC.animalSellPrice`: half the price, chicks 30% of the grown price, +2 k per love). Sold animals go "to a good home on another farm" (no slaughter, as agreed in v1.5). Selling asks twice. Co-op protocol 14.
 
 **Also in v2.3:** Pixelify Sans drew the "fi" ligature like an "A" ("first" came out as "Arst"), so every Text object now renders with `textRendering = 'optimizeSpeed'` (no ligatures).
+
+### Chapter 6: Puteri Gunung Ledang (v2.4)
+The user asked how Puteri Gunung Ledang and Hang Tuah could fit, wanted the story tied to Nenek and Mak Lampir, asked for fights, and said "proceed" without choosing the witch's fate, so the recommended ending was used: the princess takes her magic away and she becomes an ordinary old woman (Nek Lampir, a herb seller on the mountain). The optional Hang Jebat spar was included. Nenek's lore stays consistent: she fell sick and left (Chapter 1's letter), her father travelled by sea (Chapter 2's letter), and Pelita's flame floated away from Empu Lintang's workshop (Chapter 5) and found her on Gunung Ledang. The Sultan of Melaka is unnamed and never a villain; the demand for blood is never named; Hang Jebat lives (they made peace).
+
+**Progress** (`quests.ch6`): 0 waits for a day after Chapter 5 (`ch5day`) in the daytime on the farm; 1 Nenek is home (a figure at `C6.home`, `c6day`); 2 the curse that night, or the next morning if you slept (Nenek on the pangkin, `diari_nenek`); sailing to Gunung Ledang (a row added to the jong's menu through `LC.jongExtraRows`) sets 3 before the place is built (`c6arrive`); 3 Hang Tuah's duel; 4 the princess (`c6asked`), the tears (`c6tears`), the bridge (`c6bridge`, `LC.syncLedang` turns the stream tiles into planks, called from World.create), the areca nuts (`c6pinang` per palm per day); 5 the Bunga Ledang (`c6fight`, saved); 6 home with the flower (`c6bungaOwed` if the bag was full); 7 Nenek wakes (a villager from now on; +20 max energy in `recalc`).
+
+**The duels** use enemy kinds `pendekar_hangtuah`/`pendekar_jebat` with 999 health: each drop is a touch (health restored), each drop in your own health is a touch on you, three wins or loses, your health is given back, and the villager is hidden while his duellist fights. **The last fight**: `lampir6` (80 health) blinks around the garden, casts a curse circle under you every 6.5 s (9 damage if you are still in it after 1.3 s), drinks the light every 16 s (a dark overlay), and Hang Tuah strikes every 2.4 s. Rewards always come before the dialogue. Co-op protocol 15.
 
 ## 8. Milestones
 

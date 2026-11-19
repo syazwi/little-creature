@@ -81,6 +81,7 @@ window.LC = window.LC || {};
           if (where !== 'kelam' && st === 4) rows.push({ icon: 'ic_moon', label: 'Sail to Pulau Kelam', right: 'Sail', sub: 'The black rock where Si Kelam waits. Bring the Pelita Purnama.',
             enabled: !!LC.State.count('pelita_purnama'), why: 'You need the Pelita Purnama from Empu Lintang first.', action: sail('kelam') });
           if (where !== 'farm') rows.push({ icon: 'ic_bond', label: 'Sail home', right: 'Sail', sub: 'Back across the sea to Nenek\'s jetty.', action: sail('farm') });
+          rows = rows.concat(LC.jongExtraRows ? LC.jongExtraRows.call(self, where) : []);   // (v2.4: Gunung Ledang)
           rows.push({ icon: 'i_kain_batik', label: 'Trade', right: 'Shop', sub: 'Batik, celengan and jamu from Java. The sailors buy Bornean goods.', action: function () { self.openJong(); } });
           return rows;
         } }] });

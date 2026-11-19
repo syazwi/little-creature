@@ -296,6 +296,7 @@ window.LC = window.LC || {};
       if (this.friend('kenyalang')) e += 30;
       for (var hs = 1; hs <= (s.house || 0); hs++) if (LC.HOUSE_STAGES[hs] && LC.HOUSE_STAGES[hs].energy) e += LC.HOUSE_STAGES[hs].energy;   // v1.8: a bigger house
       if (s.quests && s.quests.asmara) e += 15;   // v2.0: Asmara's dawn crow
+      if (s.quests && (s.quests.ch6 || 0) >= 7) e += 20;   // v2.4: Nenek is home
       s.maxEnergy = e;
       if (s.inv) { var bag = LC.bagSize(lv); while (s.inv.length < bag) s.inv.push(null); }   // v1.8: the bag grows with Pelita's level
       s.maxWater = 20 + (lv >= 10 ? 10 : 0) + (s.quests && s.quests.gembor ? 10 : 0);   // v2.0: Dang Kemala's brass gembor
