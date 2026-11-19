@@ -76,6 +76,7 @@ window.LC = window.LC || {};
       this.createBadang();     // v1.7: Badang at your side, the river hantu, your bubu (WorldBadang.js)
       this.createHome();       // v1.8: Nenek's house as it has grown, and the helpers (WorldHome.js)
       this.createBarunai();    // v1.9: Chapter 2 (WorldBarunai.js)
+      this.createKampong();    // v2.0: Chapter 3 (WorldKampong.js)
 
       var cam = this.cameras.main;
       cam.setBounds(0, 0, this.W * T, this.H * T);
@@ -239,6 +240,7 @@ window.LC = window.LC || {};
         } else if (o.type === 'sampan') {
           var bt = self.add.image(bx, by - 2, 'sampan').setOrigin(0.5, 1).setDepth(by - 8);
           self.boats.push({ spr: bt, y0: by - 2 });
+          if (o.id) self.objImgs[o.id] = bt;   // (so a boat that appears later in the story is never drawn twice)
         } else {
           var im = self.add.image(bx, by, o.type === 'portal' && !LC.State.isOpen(o.to) ? 'lombong_tutup' : o.tex).setOrigin(0.5, 1).setDepth(by);
           if (o.id) self.objImgs[o.id] = im;
@@ -933,6 +935,7 @@ window.LC = window.LC || {};
       this.updateBadang(time, dt, blocked);
       this.updateHome(time, dt);
       this.updateBarunai(time, dt, blocked);
+      this.updateKampong(time, dt);
       this.updateLighting(time, dt);
 
       var act = blocked ? null : this.getAction();
@@ -982,6 +985,7 @@ window.LC = window.LC || {};
         case 'house': case 'house_wing': return { label: 'Nenek\'s house', fn: function () { self.ui.openHouse(); } };   // v1.8: sleep, the pantry, helpers, building
         case 'helper': return this.helperAction(o);
         case 'jejak': case 'tembadau': case 'bulu': case 'pinggai': case 'salvage': case 'vase': return this.barunaiObjAction(o);   // v1.9
+        case 'kplot': case 'padian': case 'hop': case 'ghost_ayam': case 'batu_ayam': return this.kampongObjAction(o);   // v2.0
         case 'spirit':
           if (isFood) return { label: 'Offer ' + it.name + ' to Pelita', fn: function () { self.feedGhost(sl.id); } };
           return { label: 'Spirit house', fn: function () { self.ui.openSpirit(); } };

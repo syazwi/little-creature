@@ -202,6 +202,10 @@ src/
   art8.js           v1.9 textures: stilt houses, the Balai, the camp, hoofprints, feathers, the tembadau, the pinggai bird, the magic tempayan
   scenes/WorldBarunai.js   the letter, trails, the founding scene, the bird, the chest, the vase, Langkah Semaun (dash)
   scenes/UIBarunai.js      the brothers' Talk rows, the kenduri, the Journal Chapters page, the goal line, the dash button
+  kampong.js        v2.0 Chapter 3 data: nibong and belian, the building stages, workshops, house pilings, the padian, Teluk Barunai, the craftspeople, Senuai, the King of Majapahit, story text
+  art9.js           v2.0 textures: workshops, pilings, a third stilt house, padian boats, the roosters (and the ghost and the stone one), the Majapahit jong, the little perahu, icons
+  scenes/WorldKampong.js   the village growing (reloads the place), the water taxi hop, padian boats, the cockfight scene, the stone rooster, the ghost of Asmara
+  scenes/UIKampong.js      Berbai's building rows, the craftspeople's services, the padian and pilings menus, the training and cockfight games, Chapter 3 in the Journal and goal line
   cheats.js         test build only (dist/LittleCreature_full.html)
   scenes/UIGames.js      map, chest, reban, Pesta and its contest games, strength training, quests, the journal's You page
   art.js            procedural pixel-art texture generation
@@ -348,6 +352,15 @@ The user asked for Chapter 1 (everything before) to stay exactly as it was, with
 **The brothers** are villagers with `chapter2: true`. `LC.villager` hides them (area `none`) until Chapter 2 begins (`hideIf`), so Chapter 1 is unchanged. Twelve wait in their mothers' places with a `find` request; once found, `aliveIf` moves them to their Barunai posts. Every spot was checked to be free and walkable. Hapu Awang sells ambuyat and kelupis; Pateh Berbai buys treasures.
 
 **Langkah Semaun** (`LC.LANGKAH` 4 s, 56 px): Shift or the footprints button. A 4 px step-wise dash that stops at anything solid, with 0.45 s of invulnerability, golden afterimages and dust. The Restu Ibu chip moved above the stone slot to make room. Co-op protocol 8.
+
+### Chapter 3: Kampong Ayer, part 1 (v2.0)
+Continues on the same save after Chapter 2 (`quests.ch2` 8). Sources: the history of Kampong Ayer (nibong and belian pilings, craft villages such as the blacksmiths' and brassmiths', the *padian* women's floating market) and the Brunei Bay legend of Raden Angsuka Dewa of Majapahit and the cockfight between his Asmara and Awang Senuai's Mutiara (Asmara flees and becomes Pulau Pilong-Pilongan; Mutiara, cursed, becomes Lumut Lunting, which is said never to sink). The ghost of Asmara is our own addition. The fight is shown without blood (feints, wing-beats, a crow). The wars (part 2, v2.1) are not built yet.
+
+**Progress** (personal `quests.ch3`, `LC.ch3Step()`): 0 talk to Pateh Berbai; 1-3 build stage n (`quests.kaStage`, `LC.KA_STAGES` costs: nibong, belian, atap, rotan, kepeng); 4 the fleet (talk to Alak Betatar); 5 training (`ch3train` 0-3, `ch3trainDay`); 6 the cockfight; 7 Teluk Barunai (`buluMutiara`, the ghost needs `pinggan_emas` + `bulu_mutiara`, after 19:00); 8 part 1 done (`asmara`: +15 max energy in `recalc`, a 25% extra egg in `endDay`). `LC.ch3Goal()` feeds the goal line (via the `LC.ch2Goal` wrapper) and the Journal. Other flags: `tempered` (+1 weapon damage in `WorldCombat.attack`), `gembor` (+10 max water), `perahu` (free water taxi), `kaPlots` {plot id: house texture}, `kaHomes` (the 1000-kepeng thank-you).
+
+**Barunai grows** through `LC.syncBarunai` (wrapped): the `KA_WALKS` of each built stage become jetty tiles. Workshops, pilings (`kplot`), the jong (ch3 4-6) and the Teluk perahu (ch3 7+) are `when` objects. A new stage or the fleet reloads Barunai around the player (`World.applyKampong` → `goArea` to the same place), so the new villagers appear. The craftspeople and Senuai/the king use `hideIf` (generalised for non-chapter2 villagers in kampong.js). The padian boats appear at stage 2+ from 06:00 to 14:00, with 4 items a day picked from `LC.PADIAN_POOL` by a day-seeded generator. The water taxi (`World.hopTo`) fades and moves the player within the place (20 kepeng, free with your own perahu).
+
+**Teluk Barunai** (`LC.AREAS.teluk`, 44x32): Pulau Pilong-Pilongan (sand, rock and a cliff), its jetty, and the Lumut Lunting sandbank, joined by two little `hop` boats. The ghost rooster (`LC.GHOST_SPOT`) is placed by `updateKampong` at night while ch3 is 7. Co-op protocol 9.
 
 ## 8. Milestones
 

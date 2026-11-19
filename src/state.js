@@ -295,9 +295,10 @@ window.LC = window.LC || {};
       Object.keys(LC.LEVEL_REWARDS).forEach(function (k) { if (lv >= +k && LC.LEVEL_REWARDS[k].energy) e += LC.LEVEL_REWARDS[k].energy; });
       if (this.friend('kenyalang')) e += 30;
       for (var hs = 1; hs <= (s.house || 0); hs++) if (LC.HOUSE_STAGES[hs] && LC.HOUSE_STAGES[hs].energy) e += LC.HOUSE_STAGES[hs].energy;   // v1.8: a bigger house
+      if (s.quests && s.quests.asmara) e += 15;   // v2.0: Asmara's dawn crow
       s.maxEnergy = e;
       if (s.inv) { var bag = LC.bagSize(lv); while (s.inv.length < bag) s.inv.push(null); }   // v1.8: the bag grows with Pelita's level
-      s.maxWater = 20 + (lv >= 10 ? 10 : 0);
+      s.maxWater = 20 + (lv >= 10 ? 10 : 0) + (s.quests && s.quests.gembor ? 10 : 0);   // v2.0: Dang Kemala's brass gembor
       if (s.energy > s.maxEnergy) s.energy = s.maxEnergy;
       s.maxHp = LC.maxHpFor(s.str || 10) + (s.flags && s.flags.poseidon ? 20 : 0);
       if (s.hp === undefined || s.hp > s.maxHp) s.hp = s.maxHp;
@@ -474,7 +475,7 @@ window.LC = window.LC || {};
         var D = LC.ANIMALS[an.kind];
         if (an.fedDay !== s.day) { if (an.born !== s.day) { hungry++; an.love = Math.max(0, an.love - 1); } return; }
         if (D.produce && (s.day - an.born) % D.every === 0) {
-          var n = 1 + (an.love >= 10 && Math.random() < 0.3 ? 1 : 0);
+          var n = 1 + (an.love >= 10 && Math.random() < 0.3 ? 1 : 0) + (D.produce === 'telur' && s.quests && s.quests.asmara && Math.random() < 0.25 ? 1 : 0);   // v2.0: Asmara's blessing
           s.coop[D.produce] = (s.coop[D.produce] || 0) + n; made[D.produce] += n;
         }
         if (D.grows && s.day - an.born >= D.days - 1) {

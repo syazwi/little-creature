@@ -174,7 +174,7 @@ window.LC = window.LC || {};
       if (keris || sl.id === 'trisula') arc.setTint(keris ? 0xffe8a0 : 0x8fe8ff).setBlendMode(Phaser.BlendModes.ADD);
       this.tweens.add({ targets: arc, alpha: 0, scale: 1.25, duration: 180, onComplete: function () { arc.destroy(); } });
       this.tweens.add({ targets: p, x: p.x + d[0] * 2, y: p.y + d[1] * 2, scaleY: 0.92, duration: 60, yoyo: true });
-      var dmg = wp.dmg + Math.floor((S.str || 0) / 25), hit = false;
+      var dmg = wp.dmg + Math.floor((S.str || 0) / 25) + (S.quests && S.quests.tempered ? 1 : 0), hit = false;   // v2.0: Wak Juru's tempering
       this.enemies.forEach(function (e) {
         if (e.dead || e.away) return;
         var ex = e.spr.x - p.x, ey = (e.spr.y - e.spr.height / 2) - (p.y - 8), dist = Math.hypot(ex, ey);

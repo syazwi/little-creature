@@ -770,5 +770,6 @@ window.LC = window.LC || {};
     if (Art.generate6) Art.generate6(scene);
     if (Art.generate7) Art.generate7(scene);
     if (Art.generate8) Art.generate8(scene);
+    if (Art.generate9) Art.generate9(scene);
   };
 })(window.LC);
