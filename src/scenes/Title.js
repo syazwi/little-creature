@@ -66,7 +66,8 @@ LC.TitleScene = class extends Phaser.Scene {
     this.add.text(W - 10, H - 8, 'Made with Phaser 3 · art & music generated in code', { fontFamily: LC.FONT, fontSize: '12px', color: '#8a7a9a' }).setOrigin(1, 1);
     // v1.7.1: this version and when it was built, and a button when a newer one is on GitHub
     this.add.text(10, H - 8, LC.Update.versionLine(), { fontFamily: LC.FONT, fontSize: '13px', color: '#b8a8c8', stroke: '#1a120c', strokeThickness: 3 }).setOrigin(0, 1);
-    this.updBox = null; this.updHint = null;
+    this.updBox = null; this.updHint = null; this.iosBox = null;
+    if (LC.installHint && LC.installHint()) this.showInstall();   // v2.4.2: iPhone Safari, before Add to Home Screen
     if (LC.Update.newer()) this.showUpdate();
     else LC.Update.check(function () { if (self.sys && self.sys.isActive()) self.showUpdate(); });
 
@@ -152,12 +153,24 @@ LC.TitleScene = class extends Phaser.Scene {
   choose() { if (!this.starting) this.options[this.sel].fn(); }
 
   // v1.7.1: "a new version is ready", with its date and time, between the title and Pelita
+  // v2.4.2: on an iPhone or iPad in Safari, how to put the game on the Home Screen (where it plays like an app)
+  showInstall() {
+    var st = function (size, color) { return { fontFamily: LC.FONT, fontSize: size + 'px', color: color, stroke: '#1a120c', strokeThickness: 3 }; };
+    var t1 = this.add.text(0, 6, 'Play it like an app: put it on your Home Screen', st(19, '#ffd166')).setOrigin(0.5, 0);
+    var t2 = this.add.text(0, 31, 'In Safari, tap Share (or the ... button first), then Add to Home Screen, and open it from there', st(16, '#9be15d')).setOrigin(0.5, 0);
+    var w = Math.max(t1.width, t2.width) + 32, h = 56, bg = this.add.graphics();
+    bg.fillStyle(0x1e1510, 0.88); bg.fillRoundedRect(-w / 2, 0, w, h, 8);
+    bg.lineStyle(2, 0x9be15d, 1); bg.strokeRoundedRect(-w / 2, 0, w, h, 8);
+    this.iosBox = this.add.container(this.cx, 176 + this.dy, [bg, t1, t2]).setDepth(49).setAlpha(0);
+    this.tweens.add({ targets: this.iosBox, alpha: 1, duration: 500 });
+  }
   showUpdate() {
     if (this.updBox || !LC.Update.newer()) return;
+    if (this.iosBox) { this.iosBox.destroy(); this.iosBox = null; }   // (the update news takes its place)
     var self = this, v = LC.Update.info, cx = this.cx, y = 176 + this.dy, touch = this.sys.game.device.input.touch || LC.PLATFORM === 'android';
     var st = function (size, color) { return { fontFamily: LC.FONT, fontSize: size + 'px', color: color, stroke: '#1a120c', strokeThickness: 3 }; };
     var t1 = this.add.text(0, 6, 'New version ' + v.name + ' is ready!  (updated ' + LC.Update.when(v.built) + ')', st(17, '#ffd166')).setOrigin(0.5, 0);
-    var t2 = this.add.text(0, 28, (touch ? 'Tap here' : 'Click here or press U') + ' to download it  ·  you have ' + LC.Update.current().name, st(14, '#9be15d')).setOrigin(0.5, 0);
+    var t2 = this.add.text(0, 28, (touch ? 'Tap here' : 'Click here or press U') + ' to ' + LC.Update.verb() + ' it  ·  you have ' + LC.Update.current().name, st(14, '#9be15d')).setOrigin(0.5, 0);
     var w = Math.max(t1.width, t2.width) + 32, h = 50;
     var bg = this.add.graphics();
     bg.fillStyle(0x1e1510, 0.88); bg.fillRoundedRect(-w / 2, 0, w, h, 8);

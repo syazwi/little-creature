@@ -146,7 +146,7 @@ window.LC = window.LC || {};
     updateRow: function () {
       var self = this, U = LC.Update, cur = U.current(), v = U.info;
       if (U.newer()) return { icon: 'ic_glow', label: 'Update available: v' + v.name, right: 'Get',
-        sub: 'Updated ' + U.when(v.built) + ' (you have v' + cur.name + ', ' + U.when(cur.built) + '). Tap to download it.',
+        sub: 'Updated ' + U.when(v.built) + ' (you have v' + cur.name + ', ' + U.when(cur.built) + '). Tap to ' + U.verb() + ' it.',
         action: function () { if (U.download()) self.toast(U.howTo(), 'ic_glow'); } };
       var state = U.state === 'checking' ? 'Checking GitHub...' : U.state === 'fail' ? 'Could not reach GitHub. Tap to try again.'
         : U.state === 'ok' ? 'This is the newest version. Tap to check again.' : 'Tap to check for a newer version.';
@@ -157,7 +157,7 @@ window.LC = window.LC || {};
           if (self.modal === menu && menu && menu.render) menu.render();
           if (U.state === 'fail') self.toast('Could not reach GitHub. Check your internet and try again.', 'ic_moon');
           else if (!nw) self.toast('You have the newest version: v' + cur.name + '.', 'ic_glow');
-          else self.toast('Version ' + U.info.name + ' is ready (updated ' + U.when(U.info.built) + '). Tap the row again to download it.', 'ic_glow');
+          else self.toast('Version ' + U.info.name + ' is ready (updated ' + U.when(U.info.built) + '). Tap the row again to ' + U.verb() + ' it.', 'ic_glow');
         }, true);
       } };
     },

@@ -24,13 +24,29 @@ As Pelita levels up, its light opens the way to the wider land: a riverside vill
 > Android may warn that the app isn't from the Play Store. That's normal for apps you install yourself.
 > If you already have an older version installed, installing the new APK updates it and keeps your save.
 
+### On an iPhone or iPad (v2.4.2)
+Apple does not let iPhones install an app file the way Android installs an APK, so on an iPhone the game is a **Home Screen web app**. It plays like the Android app: its own icon, fullscreen, landscape, offline, and the screen stays on.
+
+**Once, for whoever owns this repo:** in GitHub, open the repo's **Settings → Pages**, under "Build and deployment" choose **Deploy from a branch**, pick **`main`** and **`/ (root)`**, and **Save**. After a minute or two the game is online at `https://<your-username>.github.io/little-creature/` (for this repo, https://syazwi.github.io/little-creature/).
+
+**On the iPhone:**
+1. Open that link in **Safari**, with internet. The title screen shows a green box with these steps.
+2. Tap **Share** (on newer iPhones it is under the **⋯** button first), then **Add to Home Screen**, then **Add**.
+3. Open **Little Creature** from the Home Screen. Wait for the title screen once with internet: after that it starts straight away and plays offline.
+
+> - The farm in the Home Screen app is its own save, separate from Safari's (always play from the icon). Deleting the icon deletes its save, just as uninstalling the Android app does.
+> - If it stays upright, turn off **Portrait Orientation Lock** in Control Center (swipe down from the top-right corner). A web app cannot turn itself sideways while the lock is on.
+> - No sound? Check the ring/silent switch (or Action button): iPhones mute game sound in silent mode.
+> - Co-op works between iPhones, Android phones and computers, as long as everyone has the same version.
+
 ### Updates
 From v1.7.1 the game checks GitHub for a newer version whenever it starts with internet. The title screen shows your version and the date and time it was made (bottom-left).
 - **When a newer version is out,** the title screen shows **"New version … is ready! (updated …)"** with that version's date and time, you get one reminder in the game, and **Pause → Updates** offers the download. Pause → Updates can also check again at any time.
 - **On Android,** tapping it downloads the new APK in your browser. Open it and tap **Install**: it installs over the old app and keeps your farm. (Android always asks you to confirm an install, so updates can't happen completely by themselves.)
+- **On an iPhone** (the Home Screen app), the new version downloads by itself in the background and is used from the next start. If the title screen says one is ready, tap it: the game restarts on the new version, and your farm is kept.
 - **On a computer,** it opens the new HTML file's GitHub page. Download it and put it in place of the old file (same name, same folder) so your saves carry over.
 - Without internet, nothing changes: the game just plays as usual.
-- For whoever publishes: `tools/build.ps1` writes the version (from `android/app/build.gradle`) and the build time into `src/version.js` and `dist/version.json`. Bump `versionCode`, build, and push: players see the update once `dist/version.json` is on GitHub.
+- For whoever publishes: `tools/build.ps1` writes the version (from `android/app/build.gradle`) and the build time into `src/version.js` and `dist/version.json`, and stamps `sw.js` with the build and the list of files. Bump `versionCode`, build, and push: players see the update once `dist/version.json` is on GitHub (iPhones: once GitHub Pages has published it, a minute or two later).
 
 ### With friends (co-op, up to 4 players)
 PC browsers and Android phones can all play together.
@@ -307,11 +323,12 @@ icons/                app icons
 android/              Android wrapper app (WebView). It packages the web game from the root at build time.
 tools/                build-web.mjs (single-file HTML, and the version stamp), make-icons.mjs, build.ps1
 manifest.webmanifest  web-app metadata for hosted play
-sw.js                 offline service worker for hosted play
+sw.js                 offline copy for hosted play (the iPhone Home Screen app); its file list is stamped by build-web.mjs
+.nojekyll             tells GitHub Pages to serve the files as they are
 plan.md               design document
 ```
 
-**Optional: play in a browser from anywhere.** In this repo's GitHub settings, go to **Settings → Pages**, choose **Deploy from a branch → `main` / root**, and save. The game will then be playable, and installable as an app, at `https://<your-username>.github.io/little-creature/`.
+**Play in a browser from anywhere (and on iPhones).** In this repo's GitHub settings, go to **Settings → Pages**, choose **Deploy from a branch → `main` / root**, and save. The game will then be playable, and installable as an app, at `https://<your-username>.github.io/little-creature/`. See "On an iPhone or iPad" above.
 
 ## Credits and licences
 

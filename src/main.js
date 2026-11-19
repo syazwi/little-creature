@@ -26,10 +26,48 @@
   };
 
   // Installable / offline web version when hosted (e.g. GitHub Pages). Not needed for file:// or the Android app.
-  if (/^https?:$/.test(location.protocol) && LC.PLATFORM === 'web') {
+  // v2.4.2: this is how iPhones play it, as a Home Screen app. sw.js keeps one complete copy of the game and starts
+  // from it (like an installed app); a new version downloads in the background and is used from the next start.
+  LC.HOSTED = /^https?:$/.test(location.protocol) && LC.PLATFORM === 'web';
+  if (LC.HOSTED) {
     var link = document.createElement('link'); link.rel = 'manifest'; link.href = 'manifest.webmanifest';
     document.head.appendChild(link);
     if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+    // keep the save even when the phone is low on space (a Home Screen app is granted this)
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {}); } catch (e) { /* not supported */ }
+  }
+  // "Update" on the hosted version: save, fetch the new copy, and restart on it.
+  LC.applyUpdate = function () {
+    var sw = navigator.serviceWorker, done = false;
+    LC.autoSave();
+    function restart() { if (!done) { done = true; location.reload(); } }
+    if (!sw || !sw.getRegistration) { restart(); return; }
+    sw.addEventListener('controllerchange', restart);   // the new copy is complete and in charge
+    setTimeout(restart, 30000);                         // a very slow connection: try again from the restart
+    sw.getRegistration().then(function (reg) {
+      if (!reg) { restart(); return; }
+      return reg.update().then(function () {
+        var nw = reg.installing || reg.waiting;
+        if (!nw) { restart(); return; }                 // it was already downloaded in the background
+        nw.addEventListener('statechange', function () { if (nw.state === 'redundant') restart(); });
+      });
+    }).catch(restart);
+  };
+
+  // ---- iPhone and iPad (Safari). iPads say they are Macs, but Macs have no touch screen.
+  var ua = navigator.userAgent || '';
+  LC.IOS = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  LC.STANDALONE = navigator.standalone === true || !!(window.matchMedia &&
+    (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches));
+  // In Safari itself (not yet on the Home Screen) the title screen explains how to install it.
+  LC.installHint = function () { return LC.HOSTED && LC.IOS && !LC.STANDALONE; };
+  if (LC.IOS) {
+    // A web app cannot turn itself sideways while the iPhone's rotation lock is on: say how to turn the lock off.
+    var rot = document.getElementById('rotate');
+    if (rot) rot.insertAdjacentHTML('beforeend', '<small style="max-width:80vw;color:#cdb8a0">Still upright? Swipe down from the top-right corner ' +
+      'to open Control Center and turn off Portrait Orientation Lock.</small>');
+    // no pinch-zooming the page (Safari ignores user-scalable=no)
+    document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
   }
 
   // ---- Fill the screen. The layout is designed at 960 x 640 (3:2). Instead of letterboxing other screen shapes
@@ -110,6 +148,26 @@
     LC.setFullscreen(on);
   };
   if (mobileWeb) window.addEventListener('pointerup', function () { if (wantFs && LC.canFullscreen()) LC.setFullscreen(true); }, true);
+
+  // ---- v2.4.2: keep the screen on while playing on a phone browser (the Android app does this itself).
+  var wake = null;
+  function keepAwake() {
+    if (!mobileWeb || wake || document.hidden || !navigator.wakeLock) return;
+    wake = 'asking';
+    navigator.wakeLock.request('screen').then(function (l) {
+      wake = l; l.addEventListener('release', function () { wake = null; });
+    }).catch(function () { wake = null; });
+  }
+  // ---- Sound on iPhones: Safari only lets sound start when a tap ENDS, and can leave it "interrupted" after a call
+  // or the lock screen. Every tap (and key) gently wakes it up again.
+  function wakeSound() {
+    var c = LC.Audio && LC.Audio.ctx;
+    if (c && c.state !== 'running' && c.state !== 'closed' && !document.hidden) { try { c.resume(); } catch (e) { /* not now */ } }
+  }
+  ['pointerup', 'touchend', 'keydown'].forEach(function (ev) {
+    window.addEventListener(ev, function () { wakeSound(); keepAwake(); }, true);
+  });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) keepAwake(); });
   document.addEventListener('fullscreenchange', queueRefit);
   document.addEventListener('webkitfullscreenchange', queueRefit);
 

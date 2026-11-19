@@ -38,7 +38,7 @@ window.LC = window.LC || {};
   };
 
   A.init = function () {
-    if (A.ctx) { if (A.ctx.state === 'suspended' && !document.hidden) A.ctx.resume(); return; }
+    if (A.ctx) { if (A.ctx.state !== 'running' && A.ctx.state !== 'closed' && !document.hidden) A.ctx.resume(); return; }
     var AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     try { A.ctx = new AC(); } catch (e) { return; }
@@ -356,7 +356,7 @@ window.LC = window.LC || {};
     return A.ambienceOn;
   };
   A.suspend = function () { if (A.ctx && A.ctx.state === 'running') A.ctx.suspend(); };
-  A.resume = function () { if (A.ctx && A.ctx.state === 'suspended') A.ctx.resume(); };
+  A.resume = function () { if (A.ctx && A.ctx.state !== 'running' && A.ctx.state !== 'closed') A.ctx.resume(); };   // (Safari also has 'interrupted')
 
   // ------------------------------------------------------------- sound effects (soft and short)
   A.sfx = function (name) {

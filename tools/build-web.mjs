@@ -48,10 +48,30 @@ function stampVersion() {
   mkdirSync(join(ROOT, 'dist'), { recursive: true });
   writeFileSync(join(ROOT, 'dist/version.json'), JSON.stringify(v, null, 2) + '\n');
   console.log(`version ${name} (${code}), built ${built}`);
+  return v;
 }
-stampVersion();
-
+const ver = stampVersion();
 const page = read('index.html').toString('utf8');
+
+// 0b) v2.4.2: stamp sw.js (the hosted web version, how iPhones play it) with this build and the full list of files
+//     index.html loads, so a new build always reaches phones and no file is ever left out of the offline copy.
+function stampServiceWorker() {
+  const files = ['./', 'index.html', 'manifest.webmanifest'];
+  const add = (p) => { if (!files.includes(p)) files.push(p); };
+  for (const m of page.matchAll(/<script src="([^":]+)"><\/script>/g)) add(m[1]);
+  for (const m of page.matchAll(/url\((lib\/fonts\/[^)]+\.woff2)\)/g)) add(m[1]);
+  for (const m of page.matchAll(/href="(icons\/[^"]+)"/g)) add(m[1]);
+  for (const i of JSON.parse(read('manifest.webmanifest').toString('utf8')).icons || []) add(i.src.replace(/^\.\//, ''));
+  for (const f of files) if (f !== './') read(f);   // (throws if a file is missing)
+  const stamp = `var CACHE = 'little-creature-${ver.code}-${ver.built.replace(/[^0-9]/g, '').slice(0, 14)}';\n` +
+    `var FILES = [\n  ${files.map((f) => `'${f}'`).join(', ').replace(/(.{100,}?), /g, '$1,\n  ')}\n];\n`;
+  const sw = read('sw.js').toString('utf8');
+  const re = /var CACHE = [^\n]*\nvar FILES = \[[\s\S]*?\];\n/;
+  if (!re.test(sw)) throw new Error('could not find the stamp in sw.js');
+  writeFileSync(join(ROOT, 'sw.js'), sw.replace(re, stamp));
+  console.log(`sw.js  ${files.length} files`);
+}
+stampServiceWorker();
 bundle(page, 'dist/LittleCreature.html');
 const full = page
   .replace('<script src="src/main.js"></script>', '<script src="src/cheats.js"></script>\n  <script src="src/main.js"></script>')
