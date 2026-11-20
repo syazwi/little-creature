@@ -4,13 +4,14 @@
  *   T  replay Si Tanggang's story (switch between "before he meets his mother" and "reunited")
  *   -  replay Badang's story (switch between "skinny, on the night watch" and "the strongest man in the land"; B was this key until v2.5)
  *   K  Chapter 2: jump to its next step
- *   L  Chapter 3: jump to its next step (finishes Chapter 2 first; parts 1 and 2)
+ *   ;  Chapter 3: jump to its next step (finishes Chapter 2 first; parts 1 and 2; L was this key until v2.7)
  *   O  Chapter 4: jump to its next step or wave (finishes Chapters 2 and 3 first)
  *   P  Chapter 5: jump to its next step (finishes Chapters 2, 3 and 4 first)
  *   Y  Chapter 6: jump to its next step (finishes Chapters 2 to 5 first)
  *   Z  Nek Lampir the helper: switch between "unlocked (press C)" and "10 hearts, ready to make peace with Nenek" (finishes Chapter 6 first)
  *   0  Chapter 7: jump to its next step (finishes Chapters 2 to 6 first); at the end, Sang Bualang (B) and Angin Bualang (U)
- *   =  Chapter 8: jump to its next step (finishes Chapters 2 to 7 first); at the end, riding Naga Kecil (the Seruling Naga) */
+ *   =  Chapter 8: jump to its next step (finishes Chapters 2 to 7 first); at the end, riding Naga Kecil (the Seruling Naga)
+ *   `  Chapter 9: jump to its next step (finishes Chapters 2 to 8 first); at the end, Lagu Mayang (L) */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -78,7 +79,7 @@ window.LC = window.LC || {};
         this.toast('Chapter 2, step ' + Q.ch2 + ': ' + (LC.ch2Goal() || 'complete') + ' (Re-enter Barunai to see it.)', 'ic_glow');
         return;
       }
-      case 'KeyL': {   // v2.0: jump to the next step of Chapter 3
+      case 'Semicolon': {   // v2.0: jump to the next step of Chapter 3 (L until v2.7: L sings Lagu Mayang)
         var Q3 = S.quests, s3 = Q3.ch3 || 0;
         if ((Q3.ch2 || 0) < 8) { Q3.ch2 = 8; s3 = -1; }
         if (s3 === 5) Q3.ch3train = 3;
@@ -172,6 +173,27 @@ window.LC = window.LC || {};
         this.toast('Chapter 8, step ' + (Q8.ch8 || 0) + ': ' + ((Q8.ch8 || 0) >= 9 ? 'complete! Hold the Seruling Naga and press USE (or R) to ride Naga Kecil.' : (LC.ch8Goal() || '').replace(/^Chapter 8: /, '')) + ' (Re-enter the place to see it.)', 'ic_glow');
         return;
       }
+      case 'Backquote': {   // v2.7: jump to the next step of Chapter 9 (finishes Chapter 8 first)
+        var Q9 = S.quests, s9 = Q9.ch9 || 0;
+        if ((Q9.ch8 || 0) < 9) {
+          Q9.ch2 = 8; Q9.ch3 = 13; Q9.kaStage = 3; Q9.asmara = 1; Q9.jinn = 1; Q9.ch3day = S.day - 6; Q9.ch4 = 4; Q9.c4wave = 5; Q9.ch4day = S.day - 5; Q9.ch5 = 5; Q9.ch5day = S.day - 4; Q9.ch6 = 7; Q9.c6day = S.day - 3; Q9.ch7 = 10; Q9.bualang = 1; Q9.pelitaSun = 1;
+          Q9.c8wait = S.day - 2; Q9.ch8 = 9; Q9.c8floodDay = S.day - 2; Q9.c8duel = 'done'; Q9.nagaRide = 1; Q9.c8sealed = 6; Q9.c9wait = S.day - 1;
+          if (!State.count('keris_majapahit')) State.add('keris_majapahit', 1);
+          if (!State.count('seruling_naga')) State.add('seruling_naga', 1);
+        }
+        else if (s9 === 0) Q9.ch9 = 1;
+        else if (s9 === 1) { Q9.c9boat = 1; Q9.c9arrive = 1; Q9.ch9 = 2; }
+        else if (s9 === 2) { Q9.c9enter = 1; Q9.c9find = 3; Q9.ch9 = 3; }
+        else if (s9 === 3 && !Q9.c9pawang) Q9.c9pawang = 1;
+        else if (s9 === 3 && !(State.count('mayang_pinang') && State.count('nasi_kunyit'))) { Q9.c9chased = 1; if (!State.count('mayang_pinang')) State.add('mayang_pinang', 1); if (!State.count('nasi_kunyit')) State.add('nasi_kunyit', 1); }
+        else if (s9 === 3) { State.remove('mayang_pinang', 1); State.remove('nasi_kunyit', 1); Q9.ch9 = 4; }
+        else if (s9 === 4) Q9.ch9 = 5;
+        else if (s9 === 5) { Q9.ch9 = 6; Q9.c9cave = 1; if (!State.count('semangat_awang')) State.add('semangat_awang', 1); }
+        else if (s9 === 6) { Q9.ch9 = 7; Q9.laguMayang = 1; if (State.count('semangat_awang')) State.remove('semangat_awang', State.count('semangat_awang')); }
+        State.recalc();
+        this.toast('Chapter 9, step ' + (Q9.ch9 || 0) + ': ' + ((Q9.ch9 || 0) >= 7 ? 'complete! L sings Lagu Mayang.' : (LC.ch9Goal() || '').replace(/^Chapter 9: /, '')) + ' (Re-enter the place to see it. The jong at the farm jetty sails to Kampung Pantai Kabus.)', 'ic_glow');
+        return;
+      }
       case 'Minus': {   // v1.7: replay Badang's story (moved from B in v2.5: B calls Sang Bualang) (skinny, by the forest pool) or make him strong again
         var strong = (S.quests.badang || 0) >= 3;
         S.quests.badang = strong ? 2 : 3; S.buddy = null;
@@ -185,6 +207,6 @@ window.LC = window.LC || {};
   LC.UIScene.prototype.create = function () {
     create.apply(this, arguments);
     var self = this;
-    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story, - replay the Badang story, K next Chapter 2 step, L next Chapter 3 step, O next Chapter 4 step, P next Chapter 5 step, Y next Chapter 6 step, Z Nek Lampir the helper, 0 next Chapter 7 step.', 'ic_glow'); });
+    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story, - replay the Badang story, K next Chapter 2 step, ; next Chapter 3 step, O next Chapter 4 step, P next Chapter 5 step, Y next Chapter 6 step, Z Nek Lampir the helper, 0 next Chapter 7 step, = next Chapter 8 step, ` next Chapter 9 step.', 'ic_glow'); });
   };
 })(window.LC);

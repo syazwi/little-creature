@@ -1058,6 +1058,7 @@ window.LC = window.LC || {};
         case 'nenek6': case 'pinang6': case 'bunga6': case 'ally6': return this.kampongObjAction(o);   // v2.4
         case 'batu7': case 'rumah7': case 'perahu7': case 'pewarna7': case 'karang7': case 'tenun7': case 'lesung7': return this.kampongObjAction(o);   // v2.5
         case 'arus8': case 'balang8': case 'serpih8': case 'jar8': case 'arusgate8': case 'nek8': return this.kampongObjAction(o);   // v2.6
+        case 'hanyut9': case 'tidur9': case 'awang9': case 'cari9': case 'lampu9': case 'pinang9': case 'pawang9': case 'dive9': case 'naik9': case 'kima9': return this.kampongObjAction(o);   // v2.7
         case 'spirit':
           if (isFood) return { label: 'Offer ' + it.name + ' to Pelita', fn: function () { self.feedGhost(sl.id); } };
           return { label: 'Spirit house', fn: function () { self.ui.openSpirit(); } };

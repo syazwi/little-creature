@@ -154,6 +154,7 @@ Stilt house (bed), spirit house + frangipani, dapur (stove), well (perigi), fenc
 | B | Call Sang Bualang (after Chapter 7; he takes 10-20 s on the wind); in a fight with him beside you, a spin at once |
 | U | Angin Bualang: blow back every enemy around you (after Chapter 7) |
 | R | Also rides Naga Kecil (after Chapter 8): always under the sea; on land when holding the Seruling Naga (or with no bike or car) |
+| L | Lagu Mayang: every enemy around you sways in a trance (after Chapter 9) |
 
 Mouse clicks also work on all menus.
 
@@ -240,6 +241,11 @@ src/
   scenes/WorldGelora.js the flood, the dark water, the battlefield, the dragons, the rulers' duel, the truth, the peace under the arch, the clean-up
   scenes/WorldNaga.js   riding Naga Kecil and its water jet; livelier fights everywhere
   scenes/UIGelora.js    goal line, Journal page, Talk rows (Tok Duyung, the rulers, Nek Lampir and her cure, the Naga Mother, Nenek)
+  mayang.js         v2.7 Chapter 9: items, Kampung Pantai Kabus, Pantai Bakau, Gua Puteri Tujuh, the villagers and Puteri Bongsu, LC.C9 tuning, the story (LC.CH9TEXT)
+  art17.js          v2.7 textures: Terengganu houses, the hut, boats, the sleepers, the mangrove, the palm, the well, the swing, lamps, clams, mirrors, the seven princesses, faces, the jump-scare face, the vignette, icons
+  lagu.js           v2.7 sound: LC.Singer (the singing voices), LC.SING, the horror drone, new sound effects
+  scenes/WorldMayang.js the dark, finding the song, the chase, the ritual, the cave of clams, the dawn; Lagu Mayang (L) and the trance
+  scenes/UIMayang.js    goal line, Journal page, Talk rows, the jong to Pantai Kabus, the Ulek Mayang minigame, jump scares, the vignette and song light, the Lagu Mayang button
   scenes/UIMajapahit.js    Chapter 4 Talk rows (Pak Mat, the Penghulu, Leong, Kemala, Semaun, Badang), the trading jong's shop, the goal line and Journal
   scenes/UIKampong.js      Berbai's building rows, the craftspeople's services, the padian and pilings menus, the training and cockfight games, Chapter 3 in the Journal and goal line
   cheats.js         test build only (dist/LittleCreature_full.html)
@@ -448,6 +454,13 @@ The user asked whether the game plays on an iPhone, then wanted it "to work just
 
 ### Give a friend (v2.4.3)
 The user asked whether they can share items with friends (only through shared chests before) and then asked for a direct way. Bags stay on each device, so a gift is a message, not an `LC.Sim` op: the giver takes it out of their bag first (`World.giveItem`; `LC.FIXED_ITEMS` cannot be given), `LC.Net.give` sends `gift{gid,to,id,n}` to the host, which passes it on (or takes it itself) with the giver's name; the receiver keeps what fits (`World.bagRoom`) and answers `giftRes{took}`, routed back through the host; the giver gets the rest back. A friend who left answers 0, and no answer in 10 s gives everything back. Reach: friends in the same place within 64 px (`World.friendsNear`). UI: a green **Give a friend** button under Throw away in the bag (only with friends), key G, then "who" (up to 3 names) and "how many" choices. The icon flies between the two players. Co-op protocol 17.
+
+### Chapter 9: Ulek Mayang (v2.7)
+The user asked for the Terengganu legend of Ulek Mayang (a singing lady), as horror: "dark, a chase, small jump scares, spooky", a scene where the song is sung and the player must find where it comes from, the source being Pak Awang singing in the sea (their pick), and Lagu Mayang as the reward (they turned down Pelita's healing song). Legend researched first (fisherman possessed in a storm, a healer sings the Ulek Mayang on the beach, the princesses come one after another, the eldest settles it). The verses and the melody are the game's own; the one traditional line used is "Yang laut balik ke laut, yang darat balik ke darat". No gore, no religion, no worship (the rice is food for guests).
+
+**Steps** (`quests.ch9`): 0 the night after Ch8 (`c9wait`, farm after 8 PM: `c9Hook`, the song and the empty boat `f_perahu9` in `LC.OBJECTS`) · 1 the jong (`LC.jongExtraRows`) to `kabus` (`c9arrive`), Mak Som · 2 `bakau`: find the song (`c9find` 0-3: boat, well, swing, Pak Awang; `findEvent9`, `c9Found`) · 3 Tok Pawang (`c9pawang`), the mayang (`pinang9` → `c9ChaseStart`, `c9chased`) and Nasi Kunyit (Mak Som's craftRow) · 4 the Ulek Mayang (`pawang9` → `c9Ritual`, `UI.openUlek` per verse, `c9AfterVerse`) · 5 `guatujuh` under the whirlpool (`dive9`): seven `kima9`, the right one is `c9right`, wrong ones in `c9open`; `c9Spirit` · 6 give the spirit to Pak Awang (`awang9` → `c9Finale`, `c9Dawn`) · 7 complete (`laguMayang`). Test key: ` (Backquote); the Chapter 3 test key moved from L to ; because L now sings.
+
+**Horror** (`LC.horror9(area)`: the three places while ch9 is 1-6): `updateLighting` is forced to night with the cave tint and a small light (Pelita's daylight is off there), Pelita is frightened (`updateGhost`), extra fog, `UI.drawHorror9` (a vignette, and the light at the screen edge towards `W.c9.src`), `LC.Audio.horror` (the calm music is muted, a drone, whispers, creaks). Jump scares are `UI.scare9('face'|'flash')`; Pause > Jump scares: Gentle (`flags.noScare9`) never shows the face. **Sound** (`lagu.js`): `LC.Singer` is a formant-filtered voice with its own volume and stereo position, set every frame from the source (`LC.SING.her/him/pawang/me`); `quiet(sec)` cuts it dead (the chase's "freeze"). **Chase** (`updateChase9`, `LC.C9.chase`): she glides at 58 px/s (100 when far; you walk 74), quiet every 6-9 s for 2.4 s (moving then = caught), lamps (`LC.C9.lamps`, radius 46) hold her at the edge, caught = 10 damage and back to the last lamp. **Lagu Mayang** (`laguKey`, `LC.C9.lagu`): `tranceT` on enemies; the `updateEnemies` wrapper holds them in place and stops their attacks.
 
 ### Chapter 8: Air Pasang (v2.6)
 The user designed it: a flood at Nenek's place that rises day by day; the player investigates and finds Nyi Roro Kidul (Kanjeng Ratu Kidul) and Poseidon at war, with soldiers and dragons fighting, both rulers with their egos, the cause being ocean pollution that Nek Lampir caused by mistake. They chose riding the Naga as the reward, a fight against two dragons, Nek Lampir helping to clean up (not punished), and more animation and effects in the war and fights. Then they added: you watch an epic one-against-one fight between Poseidon and Nyi Roro Kidul, you fight the Queen and then Poseidon to calm them down, and only after winning both do you explain what happened. (Kept respectful: the duel wears out their anger, nobody is harmed, and both stay dignified; the pride is theirs, the magic only made it bigger.)

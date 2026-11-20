@@ -778,5 +778,6 @@ window.LC = window.LC || {};
     if (Art.generate14) Art.generate14(scene);   // v2.4.1: Nek Lampir the helper
     if (Art.generate15) Art.generate15(scene);   // v2.5: Chapter 7, Puteri Santubong, and Sang Bualang
     if (Art.generate16) Art.generate16(scene);   // v2.6: Chapter 8, Air Pasang, and riding Naga Kecil
+    if (Art.generate17) Art.generate17(scene);   // v2.7: Chapter 9, Ulek Mayang
   };
 })(window.LC);
