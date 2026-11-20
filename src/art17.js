@@ -257,8 +257,64 @@ window.LC = window.LC || {};
     mayang: function (p) { p.ell(5, 9, 2.4, 6, '#f4ecd8'); for (var i = 0; i < 4; i++) p.line(6, 10, 8 + i, 3 + i * 2, '#fff8e8'); p.disc(12, 12, 2, '#9ae8e0'); p.line(13, 12, 13, 4, '#9ae8e0', 2); p.line(13, 4, 15, 6, '#9ae8e0', 2); }
   };
 
+  // v2.7.3: icons for the pause menu's tiles (12x12, outlined), so every tile has its own picture
+  function chest(p, arrow, col) {
+    p.str(arrow, { g: col }, 1, 1);
+    p.str(['wwwwwwww', 'wbbbbbbw', 'wbbyybbw', 'wbbbbbbw', 'wwwwwwww'], { w: '#7b5030', b: '#b07a40', y: '#ffd166' }, 2, 6);
+  }
+  var MENU_IC = {
+    ic_play: function (p) { p.str(['#', '##', '###', '####', '#####', '#####', '####', '###', '##', '#'], { '#': '#ffd166' }, 4, 1); p.line(4, 2, 4, 9, '#fff3b0'); },
+    ic_book: function (p) {
+      p.str(['ccbbbbbb.', 'ccbbbbbbp', 'ccbyyyybp', 'ccbbbbbbp', 'ccbbbbbbp', 'ccbbbbbbp', 'ccbbbbbbp', 'ccbbbbbbp', '.pppppppp'],
+        { c: '#7a3a1a', b: '#c0602a', y: '#ffd166', p: '#f2e6c8' }, 1, 1);
+    },
+    ic_save: function (p) { chest(p, ['....gg....', '....gg....', '..gggggg..', '...gggg...', '....gg....'], '#9be15d'); },
+    ic_load: function (p) { chest(p, ['....gg....', '...gggg...', '..gggggg..', '....gg....', '....gg....'], '#6fb2dc'); },
+    ic_sound: function (p) {
+      p.str(['....s.....', '...ss...w.', '..sss.w..w', 'ssss..w..w', 'ssss..w..w', 'ssss..w..w', '..sss.w..w', '...ss...w.', '....s.....'],
+        { s: '#e8dcc0', w: '#ffd166' }, 1, 1);
+    },
+    ic_note: function (p) {
+      p.str(['..nnnnnnn', '..nnnnnnn', '..n.....n', '..n.....n', '..n.....n', '.nn....nn', 'nnn...nnn', 'nnn...nnn', '.n.....n.'],
+        { n: '#ffd166' }, 1, 1);
+    },
+    ic_phone: function (p) {
+      p.str(['pppppp', 'pssssp', 'pssssp', 'pssssp', 'pssssp', 'pssssp', 'pssssp', 'pppppp', 'ppbbpp', 'pppppp'],
+        { p: '#5a5a6c', s: '#6fb2dc', b: '#cfd8e0' }, 3, 1);
+      p.px(4, 2, '#bfe6f8');
+    },
+    ic_fullscr: function (p) {
+      p.str(['fff....fff', 'f........f', 'f........f', '..........', '..........', '..........', 'f........f', 'f........f', 'fff....fff'],
+        { f: '#e8dcc0' }, 1, 1);
+      p.rect(4, 4, 4, 3, '#6fb2dc');
+    },
+    ic_update: function (p) {
+      p.str(['...gggg...', '..g....g.g', '.g......gg', '.g.....ggg', '..........', 'ggg.....g.', 'gg......g.', 'g.g....g..', '...gggg...'],
+        { g: '#9be15d' }, 1, 1);
+    },
+    ic_list: function (p) {
+      p.rect(2, 1, 8, 10, '#f2e6c8');
+      [3, 6].forEach(function (y) { p.px(3, y, '#4f9a3a'); p.px(4, y + 1, '#4f9a3a'); p.px(5, y, '#4f9a3a'); p.px(6, y - 1, '#4f9a3a'); p.rect(7, y, 2, 1, '#a89878'); });
+      p.rect(3, 8, 2, 2, '#c8b898'); p.px(3, 8, '#f2e6c8'); p.rect(6, 9, 3, 1, '#a89878');
+    },
+    ic_pad: function (p) {
+      p.str(['.pppppppp.', 'pppppppprp', 'pdpppppbpg', 'dddpppppyp', 'pdpppppppp', 'pppppppppp', 'ppp....ppp', 'pp......pp'],
+        { p: '#8a8aa0', d: '#2a2a3a', r: '#e05050', g: '#5aba4a', b: '#6fb2dc', y: '#ffd166' }, 1, 2);
+    },
+    ic_door: function (p) {
+      p.str(['ffffffff', 'fddddddf', 'fddddddf', 'fddddddf', 'fdddddkf', 'fddddddf', 'fddddddf', 'fddddddf', 'fddddddf', 'ffffffff'],
+        { f: '#5a3a20', d: '#a0683a', k: '#ffd166' }, 2, 1);
+      p.rect(4, 2, 1, 7, '#b87a48');
+    },
+    ic_scare: function (p) {
+      p.str(['..hhhhhh..', '.hhhhhhhh.', 'hhwwwwwwhh', 'hwbbwwbbwh', 'hwbbwwbbwh', 'hwwwwwwwwh', 'hwwwbbwwwh', 'hhwwwwwwhh', 'hh.wwww.hh', 'h........h'],
+        { h: '#5a4a6a', w: '#e4e0ee', b: '#1a1424' }, 1, 1);
+    }
+  };
+
   Art.generate17 = function (scene) {
     var make = Art.make;
+    Object.keys(MENU_IC).forEach(function (k) { make(scene, k, 12, 12, MENU_IC[k], true); });
     make(scene, 'rumah9', 64, 48, function (p) { drawRumah(p, true); });
     make(scene, 'rumah9b', 64, 48, function (p) { drawRumah(p, false); });
     make(scene, 'pondok9', 48, 48, drawPondok);

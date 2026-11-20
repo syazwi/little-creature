@@ -104,6 +104,7 @@ Touch controls switch on automatically on touch screens. You can toggle them in 
 
 ## How to play
 
+- **The pause menu is a grid (v2.7.3).** Esc (or II on a phone) opens tiles, four to a row, each with its own picture: Resume, Journal, Map, friends, Save, Load, sound, music, touch controls, fullscreen, updates, story settings, Controls and Quit. A switch shows its setting on the tile (On / Off); the chosen tile is explained in the box below. Choose with WASD or the arrow keys, or tap a tile.
 - **What to do next (v2.7.2).** The goal line at the top-left always shows your current story task, with a short checklist under it of the parts still to do (have / need). The full checklist, with what opens the next chapter, is at the top of **Journal > Chapters**. In Chapter 2 a yellow arrow also points the way. Switch the arrow and the short checklist off in the pause menu (**Story helper**).
 - **Farm.** Till the fenced field with the **Cangkul**, plant seeds, and water them with the **Gembor**. Refill it at the well or the river. Watered crops grow one stage per night. **Padi** grows only in the flooded sawah and needs no water.
 - **Gather.** Banana trees, coconut palms and the mango tree regrow fruit every few days.
