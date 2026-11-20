@@ -10,12 +10,13 @@
  *   host -> guest : welcome{id,color,hostName,code,world} · reject{why} · tick{m,d,g,gs,p} · res{rid,res}
  *                   sync{op,a,by,parts} · toast{msg,icon} · event{ev,st} · sleepStart · dayStart{sum,world} · bye{why}
  *                   reload{world,by} (the host loaded a saved farm) · saved{by} (the host saved: guests save their bags too)
+ *   v2.7.1 shared looks (worldview.js): prog{q} -> prog{id,q} to everyone; progGone{id} when a friend leaves
  *   v2.4.3 gifts, through the host:  gift{gid,to,id,n} -> gift{gid,from,fromName,id,n} -> giftRes{gid,to,took} -> giftRes{gid,took}
  */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
-  var PROTO = 21, MAX_PLAYERS = 4, PREFIX = 'littlecreature-';
+  var PROTO = 22, MAX_PLAYERS = 4, PREFIX = 'littlecreature-';
   var ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   var NAME_KEY = 'littleCreature.name';
 
@@ -97,6 +98,7 @@ window.LC = window.LC || {};
       safeSend(conn, { t: 'welcome', id: id, color: color, hostName: N.myName, code: N.code, world: LC.State.snapshot(), v: PROTO });
       N.emit('toast', g.name + ' arrived at your farm!', 'ic_joy');
       N.broadcast({ t: 'toast', msg: g.name + ' arrived at the farm!', icon: 'ic_joy' }, id);
+      if (N.progSnapshot) N.progSnapshot().forEach(function (pm) { safeSend(conn, pm); });   // v2.7.1: how far everyone has built
       return;
     }
     if (!g) return;
@@ -109,12 +111,14 @@ window.LC = window.LC || {};
         break;
       case 'sleepy': N.emit('toast', g.name + ' is sleepy. Sleep in the house to end the day for everyone.', 'ic_moon'); break;
       case 'gift': case 'giftRes': routeGift(id, m); break;
+      case 'prog': if (N.gotProg) N.gotProg(id, m.q); N.broadcast({ t: 'prog', id: id, q: m.q }, id); break;   // v2.7.1
     }
   }
   function dropGuest(id) {
     var g = N.guests[id];
     if (!g) return;
     delete N.guests[id]; delete N.others[id];
+    if (N.dropProg) { N.dropProg(id); N.broadcast({ t: 'progGone', id: id }); }
     N.emit('toast', g.name + ' went home.', 'ic_moon');
     N.broadcast({ t: 'toast', msg: g.name + ' went home.', icon: 'ic_moon' });
   }
@@ -186,6 +190,8 @@ window.LC = window.LC || {};
       case 'bye': var why = m.why; N.leave(); N.emit('closed', why || 'Your friend closed their farm.'); break;
       case 'gift': receiveGift(m); break;
       case 'giftRes': giftAnswered(m); break;
+      case 'prog': if (N.gotProg) N.gotProg(m.id, m.q); break;   // v2.7.1
+      case 'progGone': if (N.dropProg) N.dropProg(m.id); break;
     }
   }
 
@@ -243,6 +249,7 @@ window.LC = window.LC || {};
     if (N.role === 'guest' && N.hostConn) { try { N.hostConn.close(); } catch (e) { /* ignore */ } }
     N.role = null; N.peer = null; N.guests = {}; N.others = {}; N.hostConn = null; N.reqs = {}; N.code = '';
     N.myColor = 0; N.myId = 'host';
+    if (N.resetProgs) N.resetProgs();
     if (p) setTimeout(function () { try { p.destroy(); } catch (e) { /* ignore */ } }, 400);   // let 'bye' go out first
   };
   window.addEventListener('pagehide', function () { if (N.role) N.leave(); });

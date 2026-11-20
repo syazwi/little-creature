@@ -200,7 +200,7 @@ window.LC = window.LC || {};
   LC.TOWER_QUEST = { tanah_liat: 8, kayu: 4, duit_lama: 3 };
   LC.TOWER_PATH = { x0: 34, y0: 6, x1: 35, y1: 11 };
   LC.syncDesert = function () {
-    var S = LC.State.s, g = LC.areaGrid('desert'), P = LC.TOWER_PATH, ch = S && S.quests && S.quests.menara ? 'k' : 'd';
+    var S = LC.worldS ? LC.worldS() : LC.State.s, g = LC.areaGrid('desert'), P = LC.TOWER_PATH, ch = S && S.quests && S.quests.menara ? 'k' : 'd';   // (v2.7.1: shared looks)
     for (var y = P.y0; y <= P.y1; y++) for (var x = P.x0; x <= P.x1; x++) g[y][x] = ch;
   };
   LC.THUY = {

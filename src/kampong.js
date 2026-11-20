@@ -43,7 +43,7 @@ window.LC = window.LC || {};
   var baseSync = LC.syncBarunai;
   LC.syncBarunai = function () {
     baseSync();
-    var g = LC.areaGrid('barunai'), st = LC.kaStage();
+    var g = LC.areaGrid('barunai'), st = (LC.worldQuests ? LC.worldQuests() : LC.State.s.quests).kaStage || 0;   // (v2.7.1: shared looks)
     for (var n = 1; n < LC.KA_WALKS.length; n++) LC.KA_WALKS[n].forEach(function (r) { for (var y = r[1]; y <= r[3]; y++) for (var x = r[0]; x <= r[2]; x++) g[y][x] = st >= n ? 'j' : 'w'; });
   };
   var stage = function (n) { return function (S) { return (S.quests.kaStage || 0) >= n; }; };
@@ -52,10 +52,10 @@ window.LC = window.LC || {};
    ['b_tenun', 21, 'bengkel_tenun', 'The weavers\' house. A wooden loom clacks inside, weaving kain tenunan with gold thread.'],
    ['b_perahu', 27, 'bengkel_perahu', 'The boat builders\' shed, with a half-finished perahu on trestles.'],
    ['b_emas', 33, 'kedai_emas', 'The goldsmith\'s house. Through the window: tiny hammers, gold leaf, and a very careful old man.']].forEach(function (w) {
-    LC.AREAS.barunai.objects.push({ id: w[0], type: 'bldg', x: w[1], y: 30, w: 3, h: 2, tex: w[2], keep: true, when: stage(1), text: w[3] });
+    LC.AREAS.barunai.objects.push({ id: w[0], type: 'bldg', x: w[1], y: 30, w: 3, h: 2, tex: w[2], keep: true, shared: true, when: stage(1), text: w[3] });
   });
   LC.KA_PLOTS = [{ id: 'kp0', x: 9 }, { id: 'kp1', x: 14 }, { id: 'kp2', x: 19 }, { id: 'kp3', x: 28 }, { id: 'kp4', x: 33 }];
-  LC.KA_PLOTS.forEach(function (p) { LC.AREAS.barunai.objects.push({ id: p.id, type: 'kplot', x: p.x, y: 18, w: 3, h: 2, tex: 'tiang_kosong', when: stage(3) }); });
+  LC.KA_PLOTS.forEach(function (p) { LC.AREAS.barunai.objects.push({ id: p.id, type: 'kplot', x: p.x, y: 18, w: 3, h: 2, tex: 'tiang_kosong', shared: true, when: stage(3) }); });
   LC.KA_HOUSES = { rumah_air: 'Rumah Atap Nipah (a palm-thatched house)', rumah_air2: 'Rumah Atap Hijau (a house with a green roof)', rumah_air3: 'Rumah Papan Biru (a blue plank house)' };
   LC.KA_HOUSE_COST = { nibong: 4, atap: 3 }; LC.KA_HOUSE_KEPENG = 300;
   LC.AREAS.barunai.objects.push(
@@ -181,7 +181,7 @@ window.LC = window.LC || {};
   var vbase = LC.villager;
   LC.villager = function (vid) {
     var v = vbase(vid), S = LC.State.s;
-    if (v && S && v.hideIf && !v.chapter2 && v.hideIf(S)) return Object.assign({}, v, { area: 'none' });
+    if (v && S && v.hideIf && !v.chapter2 && v.hideIf(v.craft && LC.worldS ? LC.worldS() : S)) return Object.assign({}, v, { area: 'none' });   // (v2.7.1: the craftspeople live in the shared craft quarter)
     return v;
   };
 })(window.LC);

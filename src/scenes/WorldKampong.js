@@ -62,7 +62,7 @@ window.LC = window.LC || {};
       delete this.npcs[vid];
     },
     refreshKPlots: function () {
-      var self = this, plots = Q().kaPlots || {};
+      var self = this, plots = (LC.worldQuests ? LC.worldQuests() : Q()).kaPlots || {};   // (v2.7.1: in co-op, friends' houses show too)
       LC.KA_PLOTS.forEach(function (p) { var im = self.objImgs[p.id]; if (im) im.setTexture(plots[p.id] || 'tiang_kosong'); });
     },
 

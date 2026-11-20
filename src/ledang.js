@@ -60,7 +60,7 @@ window.LC = window.LC || {};
   }
   // the bridge of gold and silver: once Tukang Leong has built it, the stream can be crossed (called before a place is built)
   LC.syncLedang = function () {
-    var S = LC.State.s, g = LC.areaGrid('ledang'), ch = q(S).c6bridge ? 'j' : 'w';
+    var S = LC.worldS ? LC.worldS() : LC.State.s, g = LC.areaGrid('ledang'), ch = q(S).c6bridge ? 'j' : 'w';   // (v2.7.1: shared looks)
     LC.C6.bridgeTiles.forEach(function (t) { g[t[1]][t[0]] = ch; });
   };
   var L_OBJ = [

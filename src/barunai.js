@@ -40,20 +40,20 @@ window.LC = window.LC || {};
   LC.ch2Step = function () { var S = LC.State.s; return (S && S.quests && S.quests.ch2) || 0; };
   LC.ch2Founded = function () { return LC.ch2Step() >= 5; };
   LC.syncBarunai = function () {
-    var g = LC.areaGrid('barunai'), on = LC.ch2Founded();
+    var g = LC.areaGrid('barunai'), on = ((LC.worldQuests ? LC.worldQuests() : LC.State.s.quests).ch2 || 0) >= 5;   // (v2.7.1: in co-op, built if anyone here has built it)
     LC.BARUNAI_WALKS.forEach(function (r) { for (var y = r[1]; y <= r[3]; y++) for (var x = r[0]; x <= r[2]; x++) g[y][x] = on ? 'j' : (y === 15 ? 'S' : 'w'); });
   };
   var founded = function (S) { return (S.quests.ch2 || 0) >= 5; };
   var OBJ = [
     { id: 'b_perahu', type: 'sampan', x: 7, y: 19, w: 2, h: 1, to: 'farm' },
     { id: 'b_khemah', type: 'bldg', x: 21, y: 11, w: 3, h: 2, tex: 'khemah', keep: true, text: 'The brothers\' camp: a lean-to of nipah fronds, a few mats, and a fire that is never allowed to go out.' },
-    { id: 'b_balai', type: 'bldg', x: 20, y: 3, w: 5, h: 3, tex: 'balai', keep: true, when: founded, text: 'The Balai, the great hall of Barunai, where the fourteen brothers meet. Its carved roof can be seen from the river mouth.' },
+    { id: 'b_balai', type: 'bldg', x: 20, y: 3, w: 5, h: 3, tex: 'balai', keep: true, shared: true, when: founded, text: 'The Balai, the great hall of Barunai, where the fourteen brothers meet. Its carved roof can be seen from the river mouth.' },
     { type: 'torch', x: 4, y: 11 }, { type: 'torch', x: 19, y: 8 }, { type: 'torch', x: 26, y: 8 }, { type: 'torch', x: 41, y: 11 },
     // v2.7.1: the brothers' guest house on the hill, where you can sleep and wake up in Barunai
     { id: 'b_tamu', type: 'tamu2', x: 13, y: 5, w: 3, h: 2, tex: 'rumah_air', keep: true, light: 0xffc070 }
   ];
   [[9, 'rumah_air'], [13, 'rumah_air2'], [17, 'rumah_air2'], [21, 'rumah_air'], [25, 'rumah_air'], [29, 'rumah_air2'], [33, 'rumah_air2'], [37, 'rumah_air']].forEach(function (h, i) {
-    OBJ.push({ id: 'b_rumah' + i, type: 'bldg', x: h[0], y: 23, w: 3, h: 2, tex: h[1], when: founded, text: ['A house on stilts above the river. Washing flaps on the line and a little boat is tied at the steps.', 'A family\'s house over the water. Someone is grilling fish on the veranda.', 'A stilt house with a brass gong hanging by the door.', 'A house over the river, its walls woven from nipah. Children dive from the steps.'][i % 4] });
+    OBJ.push({ id: 'b_rumah' + i, type: 'bldg', x: h[0], y: 23, w: 3, h: 2, tex: h[1], shared: true, when: founded, text: ['A house on stilts above the river. Washing flaps on the line and a little boat is tied at the steps.', 'A family\'s house over the water. Someone is grilling fish on the veranda.', 'A stilt house with a brass gong hanging by the door.', 'A house over the river, its walls woven from nipah. Children dive from the steps.'][i % 4] });
   });
   LC.AREAS.barunai = {
     name: 'Barunai', sub: 'the river of the fourteen brothers', lvl: 20, build: buildBarunai, objects: OBJ,

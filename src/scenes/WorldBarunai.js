@@ -46,7 +46,7 @@ window.LC = window.LC || {};
       var self = this, S = this.S;
       this.objects.forEach(function (o) {
         if (!o.when || !o.id) return;
-        var on = o.when(S), im = self.objImgs[o.id], w = o.w || 1, h = o.h || 1;
+        var on = o.when(o.shared && LC.worldS ? LC.worldS() : S), im = self.objImgs[o.id], w = o.w || 1, h = o.h || 1;
         if (on && !im) {
           var bx = (o.x + w / 2) * T, by = (o.y + h) * T;
           im = self.objImgs[o.id] = o.type === 'sampan' ? self.add.image(bx, by - 2, 'sampan').setOrigin(0.5, 1).setDepth(by - 8) : self.add.image(bx, by, o.tex).setOrigin(0.5, 1).setDepth(by);

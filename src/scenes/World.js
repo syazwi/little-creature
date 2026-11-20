@@ -206,7 +206,7 @@ window.LC = window.LC || {};
       this.trees = {}; this.torches = []; this.plots = {}; this.boats = []; this.hiddenObjs = []; this.objLights = []; this.objImgs = {};
       this.warungImgs = null; this.portalImg = null;   // (v1.7 fix: these belong to one place; a level-up elsewhere must not touch the old ones)
       this.objects.forEach(function (o) {
-        if (o.when && !o.when(S)) return;   // v1.7: things that come and go (Badang's stumps, Batu Badang)
+        if (o.when && !o.when(o.shared && LC.worldS ? LC.worldS() : S)) return;   // v1.7: things that come and go (Badang's stumps, Batu Badang); v2.7.1: shared looks
         var w = o.w || 1, h = o.h || 1, bx = (o.x + w / 2) * T, by = (o.y + h) * T;
         if (o.hidden) {   // only seen through the Bunian glasses (WorldFarm.refreshHidden)
           self.hiddenObjs.push({ o: o, img: self.add.image(bx, by, o.tex).setOrigin(0.5, 1).setDepth(by).setVisible(false) });

@@ -65,6 +65,7 @@ PC browsers and Android phones can all play together.
 
 - **Give a friend something (v2.4.3).** Stand next to a friend, open your **Bag**, pick the item and press **Give a friend** (or **G**). Choose who (when several friends are close) and how many: 1 or the whole stack. It flies over to their bag. If their bag is full, it comes back to you. Tools you need (cangkul, gembor, joran and the like) stay with you. Storage chests are shared too, for friends who are far away.
 - Friends can explore different places at the same time. You see each other when you are in the same place.
+- **Places you have built look the same for everyone (v2.7.2).** Each player's story is their own, but what a story builds shows for everyone playing together: the water village of Barunai and its walkways, the Kampong Ayer workshops, new homes and craftspeople, the golden bridge on Gunung Ledang, and the brick path to the old tower. If any player here has built it, everyone sees it (and nobody walks on water any more). A house plot only a friend has opened is theirs: you can look, but not build.
 - Pelita follows whoever fed or petted it last, even into another place. Your spirit companion is visible to friends too.
 - **Only the host ends the day.** When the host sleeps, everyone sleeps (wherever they are, they wake up at the farm) and sees the day summary. A friend can use the house to tell the host they're sleepy.
 - The host's farm is saved on the host's device, in the slot it was opened from. A friend's bag (with kepeng, strength and quests) goes home with them, so they can bring it to the next session and carry on.
@@ -103,6 +104,7 @@ Touch controls switch on automatically on touch screens. You can toggle them in 
 
 ## How to play
 
+- **What to do next (v2.7.2).** The goal line at the top-left always shows your current story task, with a short checklist under it of the parts still to do (have / need). The full checklist, with what opens the next chapter, is at the top of **Journal > Chapters**. In Chapter 2 a yellow arrow also points the way. Switch the arrow and the short checklist off in the pause menu (**Story helper**).
 - **Farm.** Till the fenced field with the **Cangkul**, plant seeds, and water them with the **Gembor**. Refill it at the well or the river. Watered crops grow one stage per night. **Padi** grows only in the flooded sawah and needs no water.
 - **Gather.** Banana trees, coconut palms and the mango tree regrow fruit every few days.
 - **Cook.** Use **Nenek's Dapur** (the clay stove). Dishes fill Pelita far more than raw crops. Favourites are marked with a heart.
