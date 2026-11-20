@@ -213,6 +213,7 @@ Everything above is **Chapter 1**, and it stays exactly as it was. **Chapter 2**
 - **A secret of the river.** On some quiet nights, a magic *tempayan* floats in the river of Barunai, with a treasure inside.
 - The **Journal** has a new **Chapters** page that shows your progress, and the goal line at the top-left shows the current task.
 - Left out on purpose, out of respect: the old wars of conquest, religion, and any present-day royal titles.
+- **New in v2.7.1:** the brothers' **guest house** on the hill west of the camp: sleep there and you wake up in Barunai, not at home (handy while Awang Semaun is away in Johor). A yellow **guide arrow** points to the next thing to do (the next brother, the next hoofprint, the feathers, the chest, the guest house, Nenek's dapur for the kenduri...), and the goal line says which brother to find next and where to get what he asks for. The chapter's task now always shows in the goal line, even if you skipped the kampung's optional tasks (Pak Mat's fishing, Pak Lah's hen, building a house). Switch the arrow off in the pause menu.
 
 ### Chapter 3: Kampong Ayer, part 1 (v2.0)
 **Chapter 3** begins once Chapter 2 is complete. It follows the history of **Kampong Ayer**, the water village of Brunei, and the Brunei Bay legend of the two roosters.

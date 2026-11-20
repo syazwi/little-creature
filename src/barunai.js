@@ -48,7 +48,9 @@ window.LC = window.LC || {};
     { id: 'b_perahu', type: 'sampan', x: 7, y: 19, w: 2, h: 1, to: 'farm' },
     { id: 'b_khemah', type: 'bldg', x: 21, y: 11, w: 3, h: 2, tex: 'khemah', keep: true, text: 'The brothers\' camp: a lean-to of nipah fronds, a few mats, and a fire that is never allowed to go out.' },
     { id: 'b_balai', type: 'bldg', x: 20, y: 3, w: 5, h: 3, tex: 'balai', keep: true, when: founded, text: 'The Balai, the great hall of Barunai, where the fourteen brothers meet. Its carved roof can be seen from the river mouth.' },
-    { type: 'torch', x: 4, y: 11 }, { type: 'torch', x: 19, y: 8 }, { type: 'torch', x: 26, y: 8 }, { type: 'torch', x: 41, y: 11 }
+    { type: 'torch', x: 4, y: 11 }, { type: 'torch', x: 19, y: 8 }, { type: 'torch', x: 26, y: 8 }, { type: 'torch', x: 41, y: 11 },
+    // v2.7.1: the brothers' guest house on the hill, where you can sleep and wake up in Barunai
+    { id: 'b_tamu', type: 'tamu2', x: 13, y: 5, w: 3, h: 2, tex: 'rumah_air', keep: true, light: 0xffc070 }
   ];
   [[9, 'rumah_air'], [13, 'rumah_air2'], [17, 'rumah_air2'], [21, 'rumah_air'], [25, 'rumah_air'], [29, 'rumah_air2'], [33, 'rumah_air2'], [37, 'rumah_air']].forEach(function (h, i) {
     OBJ.push({ id: 'b_rumah' + i, type: 'bldg', x: h[0], y: 23, w: 3, h: 2, tex: h[1], when: founded, text: ['A house on stilts above the river. Washing flaps on the line and a little boat is tied at the steps.', 'A family\'s house over the water. Someone is grilling fish on the veranda.', 'A stilt house with a brass gong hanging by the door.', 'A house over the river, its walls woven from nipah. Children dive from the steps.'][i % 4] });
@@ -75,8 +77,25 @@ window.LC = window.LC || {};
     trail2: [{ x: 11, y: 22 }, { x: 21, y: 26 }, { x: 27, y: 26 }], bird: { x: 40, y: 22 },   // feathers, along the walkways
     ship: { x: 41, y: 17 }, vase: { x: 26, y: 18 },
     feast: { dish: 5 },
-    lines: ['', 'nenek', 'gather', 'trail', 'found', 'voyage', 'pinggai', 'feast', 'done']
+    lines: ['', 'nenek', 'gather', 'trail', 'found', 'voyage', 'pinggai', 'feast', 'done'],
+    tamu: { x: 14, y: 7 },   // v2.7.1: where you wake up, outside the guest house
+    // v2.7.1: where to find what each brother asks for (shown in the goal line and his Talk row)
+    findHow: {
+      kayu: 'gather fallen branches in Hutan Rimba, or buy it from Tukang Leong in Kampung Tepian',
+      ikan_keli: 'fish in a river or pond; it bites best after dark',
+      nasi_lemak: 'cook it at Nenek\'s dapur (padi, cili and kelapa)',
+      rotan: 'cut rattan vines in Hutan Rimba',
+      madu_tualang: 'collect it from the wild bees\' nests on the giant tualang trees in Hutan Rimba',
+      herba: 'pick wild herbs in Hutan Rimba',
+      kerang: 'collect seashells on the beaches of Pulau Mutiara',
+      kelapa: 'pick it from the coconut palms in Kampung Tepian or on Pulau Mutiara',
+      daun_teh: 'pluck it from the tea bushes on Gunung Kabus',
+      strawberi: 'pick it from the strawberry patches on Gunung Kabus',
+      buah_naga: 'pick it from the dragon fruit cacti in Bukit Pasir (Kak Mai sells it too)',
+      padi: 'grow it in the flooded sawah on your farm (5 days)'
+    }
   };
+  LC.TEXT.tamu2 = 'The brothers\' guest house: a little stilt house on the hill, with a woven mat, a pillow and a mosquito net. "For our friend from across the sea," Awang Alak Betatar says. "Stay as long as you like."';
   LC.AREAS.barunai.clear = LC.CH2.trail1.concat([LC.CH2.temb, LC.CH2.home]).map(function (p) { return { x: p.x, y: p.y, r: 1 }; });
   LC.LANGKAH = { cd: 4, dist: 56 };
   LC.hasLangkah = function () { return LC.ch2Step() >= 8; };

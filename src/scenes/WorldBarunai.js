@@ -137,6 +137,9 @@ window.LC = window.LC || {};
           });
         } };
         case 'vase': return { label: 'Reach into the magic tempayan', fn: function () { self.openVase(); } };
+        case 'tamu2': return { label: 'Sleep in the guest house', fn: function () {   // v2.7.1: wake up here, in Barunai
+          self.ui.confirmSleep({ area: 'barunai', x: CH.tamu.x, y: CH.tamu.y, name: 'the brothers\' guest house', text: LC.TEXT.tamu2 });
+        } };
       }
       return undefined;
     },

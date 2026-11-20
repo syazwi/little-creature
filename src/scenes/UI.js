@@ -331,6 +331,7 @@ window.LC = window.LC || {};
       else if (!f.harvested) t = 'Water your crops each day until they are ready to harvest.';
       else if (!f.cooked) t = 'Cook a dish at the dapur. Cooked food fills Pelita far more.';
       else if (!f.metAni) t = 'Visit Mak Ani\'s warung on the east road to sell and buy.';
+      else if ((S.quests.ch2 || 0) >= 1 && LC.ch2Goal && LC.ch2Goal()) t = LC.ch2Goal();   // v2.7.1: an open chapter comes before the kampung's optional tasks (they come back afterwards)
       else if (LC.State.isOpen('kampung') && !S.visited.kampung) t = 'The road east is open! Visit Kampung Tepian and meet the villagers.';
       else if (S.visited.kampung && !LC.State.count('joran') && !f.fished) t = 'Visit Pak Mat at the kampung jetty to learn fishing.';
       else if (S.visited.kampung && !f.lahHen) t = 'Meet Pak Lah in Kampung Tepian. He has a gift for Nenek\'s empty reban.';
@@ -555,7 +556,7 @@ window.LC = window.LC || {};
       next();
     }
 
-    confirmSleep() {
+    confirmSleep(stay) {   // stay (v2.7.1): sleep away from home, e.g. the guest house in Barunai, and wake up there
       var self = this, N = LC.Net, early = this.S.minutes < 18 * 60;
       if (N.isGuest()) {
         this.say([{ text: 'Only ' + N.hostName + ' (the host) can end the day. On a shared farm everyone sleeps together.' }],
@@ -564,8 +565,10 @@ window.LC = window.LC || {};
       }
       var friends = N.isHost() ? N.count() - 1 : 0;
       var q = friends ? 'End the day for everyone? (' + friends + ' friend' + (friends > 1 ? 's are' : ' is') + ' on your farm.)'
+        : stay ? (early ? 'It\'s still early. Sleep in ' + stay.name + ' anyway, and wake up here tomorrow?' : 'Sleep in ' + stay.name + ', and wake up here tomorrow?')
         : early ? 'It\'s still early. Go to sleep and end the day anyway?' : 'Climb the tangga and go to sleep?';
-      this.say([{ text: q }], { choices: [{ label: 'Sleep', fn: function () { self.world.sleep(false); } }, { label: 'Not yet' }] });
+      var lines = stay && stay.text ? [{ text: stay.text }, { text: q }] : [{ text: q }];
+      this.say(lines, { choices: [{ label: 'Sleep', fn: function () { self.world.sleep(false, stay); } }, { label: 'Not yet' }] });
     }
 
     // a big tappable scroll button (v1.8): x, y, height; up or down; fn on tap. show(visible, active) dims it at the end.
@@ -845,6 +848,7 @@ window.LC = window.LC || {};
             self.updateRow(),
             LC.pauseExtraRow ? LC.pauseExtraRow.call(self) : null,   // v2.5: Pelita's daylight
             LC.pauseExtraRow2 ? LC.pauseExtraRow2.call(self) : null,   // v2.7: jump scares on or gentle
+            LC.pauseExtraRow3 ? LC.pauseExtraRow3.call(self) : null,   // v2.7.1: the guide arrow on or off
             { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact (and swing a weapon) · tap the stone by the hotbar for the stone curse · MAP · II pauses' : 'WASD/Arrows move · E use/swing · V stone curse · 1-9/wheel select · Q tool · X eat · R ride · G glasses · Tab bag · J journal · M map · N music · F fullscreen' },
             { icon: 'ic_moon', label: 'Quit to title', sub: LC.Net.role ? 'Also ends the co-op session.' : 'Anything since your last sleep (or save) is lost.', action: function () { self.quitToTitle(); } }
           ]).filter(Boolean);

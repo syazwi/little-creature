@@ -14,16 +14,27 @@ window.LC = window.LC || {};
     var S = LC.State.s, Q = S.quests, st = Q.ch2 || 0;
     if (!st) return null;
     switch (st) {
-      case 1: return 'Chapter 2: take Nenek\'s perahu at the farm jetty, across the sea to Barunai.';
-      case 2: return 'Chapter 2: find Awang Alak Betatar\'s brothers across the land (' + foundCount() + ' / ' + LC.BROTHERS.length + ').';
-      case 3: return 'Chapter 2: follow the tembadau\'s hoofprints in Barunai, starting east of the camp.';
-      case 4: return 'Chapter 2: tell Awang Alak Betatar what the tembadau found by the river.';
-      case 5: return 'Chapter 2: talk to Awang Semaun in Barunai. He has a voyage in mind.';
-      case 6: return S.day > (Q.ch2day || 0) ? 'Chapter 2: help Tuan Puteri: find Si Pinggai' + (Q.ch2bird ? ' (done)' : '') + ' and dive for her chest' + (Q.ch2ship ? ' (done)' : '') + '.' : 'Chapter 2: Awang Semaun is away in Johor. He will be back tomorrow.';
-      case 7: return 'Chapter 2: bring 5 cooked dishes to Awang Alak Betatar for the wedding kenduri (' + Math.min(5, dishes()) + ' / 5).';
+      case 1: return S.area === 'barunai' ? 'Chapter 2: talk to Awang Alak Betatar at the brothers\' camp (follow the arrow).' : 'Chapter 2: take Nenek\'s perahu at the farm jetty, across the sea to Barunai. Then talk to Awang Alak Betatar at the camp.';
+      case 2: {   // v2.7.1: say which brother to find next, where he is, and where to get what he asks for
+        var miss = LC.BROTHERS.filter(function (b) { return !(Q.ch2found && Q.ch2found[b]); });
+        if (!miss.length) return 'Chapter 2: all twelve brothers are on their way! Tell Awang Alak Betatar in Barunai.';
+        var vid = miss.filter(function (b) { return LC.VILLAGERS[b].area === S.area; })[0] || miss.filter(function (b) { var f = LC.VILLAGERS[b].find; return LC.State.count(f[0]) >= f[1]; })[0] || miss[0];
+        var v = LC.VILLAGERS[vid], f = v.find, have = LC.State.count(f[0]), it = LC.ITEMS[f[0]];
+        return 'Chapter 2: find the brothers (' + foundCount() + ' / ' + LC.BROTHERS.length + '). Next: ' + v.name + ' ' + FOUND_AREA[v.area] + ' wants ' + f[1] + ' ' + it.name + ' (you have ' + have + ')' + (have < f[1] && LC.CH2.findHow[f[0]] ? ': ' + LC.CH2.findHow[f[0]] : '') + '.';
+      }
+      case 3: return 'Chapter 2: follow the tembadau\'s hoofprints in Barunai (' + Math.min(Q.ch2t1 || 0, LC.CH2.trail1.length) + ' / ' + LC.CH2.trail1.length + '). The arrow shows the next one; face it and press ' + use() + '.';
+      case 4: return 'Chapter 2: tell Awang Alak Betatar at the camp what the tembadau found by the river.';
+      case 5: return 'Chapter 2: talk to Awang Semaun at the camp in Barunai. He has a voyage in mind.';
+      case 6:
+        if (S.day <= (Q.ch2day || 0)) return 'Chapter 2: Awang Semaun is away in Johor until tomorrow. Sleep in the brothers\' guest house (on the hill west of the camp) or at home, and he will be back in the morning.';
+        if (Q.ch2bird && Q.ch2ship) return 'Chapter 2: tell Tuan Puteri (by the camp) that her bird and her chest are safe.';
+        return 'Chapter 2: help Tuan Puteri: ' + (Q.ch2bird ? 'Si Pinggai is found' : 'follow Si Pinggai\'s feathers along the walkways') + ', and ' + (Q.ch2ship ? 'the chest is saved' : 'dive for her chest where the bubbles rise, off the old landing (east)') + '.';
+      case 7: return dishes() >= 5 ? 'Chapter 2: bring the 5 cooked dishes to Awang Alak Betatar in Barunai for the wedding kenduri.'
+        : 'Chapter 2: cook 5 dishes for the wedding kenduri at Nenek\'s dapur on the farm (any cooked dishes; you have ' + dishes() + '), then bring them to Awang Alak Betatar.';
     }
     return null;
   };
+  function use() { var U = LC.game && LC.game.scene.getScene('UI'); return U && U.touchOn ? 'USE' : 'E'; }
 
   Object.assign(LC.UIScene.prototype, {
     // ================================================================ the brothers, Semaun and the princess
@@ -33,8 +44,8 @@ window.LC = window.LC || {};
       if (v.brother && !(Q.ch2found && Q.ch2found[vid])) {   // a brother still in his mother's village
         var f = v.find, it = LC.ITEMS[f[0]], have = LC.State.count(f[0]);
         if (st < 2) rows.push({ icon: 'ic_moon', label: 'Brothers?', sub: 'He wonders about the brothers he has never met. (Visit Barunai to learn more.)' });
-        else rows.push({ icon: it.icon, label: 'Ask him to come to Barunai', right: have >= f[1] ? 'Give' : have + '/' + f[1], sub: '"Barunai? My brothers?! I will come. But let me bring something from home for them: ' + f[1] + ' ' + it.name + '."',
-          enabled: have >= f[1], why: 'He would like to bring ' + f[1] + ' ' + it.name + ' (you have ' + have + ').',
+        else rows.push({ icon: it.icon, label: 'Ask him to come to Barunai', right: have >= f[1] ? 'Give' : have + '/' + f[1], sub: '"Barunai? My brothers?! I will come. But let me bring something from home for them: ' + f[1] + ' ' + it.name + '."' + (have < f[1] && LC.CH2.findHow[f[0]] ? ' (Where to find it: ' + LC.CH2.findHow[f[0]] + '.)' : ''),
+          enabled: have >= f[1], why: 'He would like to bring ' + f[1] + ' ' + it.name + ' (you have ' + have + ').' + (LC.CH2.findHow[f[0]] ? ' Where to find it: ' + LC.CH2.findHow[f[0]] + '.' : ''),
           action: function () {
             LC.State.remove(f[0], f[1]);
             (Q.ch2found = Q.ch2found || {})[vid] = 1;

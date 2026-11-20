@@ -246,6 +246,7 @@ src/
   lagu.js           v2.7 sound: LC.Singer (the singing voices), LC.SING, the horror drone, new sound effects
   scenes/WorldMayang.js the dark, finding the song, the chase, the ritual, the cave of clams, the dawn; Lagu Mayang (L) and the trance
   scenes/UIMayang.js    goal line, Journal page, Talk rows, the jong to Pantai Kabus, the Ulek Mayang minigame, jump scares, the vignette and song light, the Lagu Mayang button
+  scenes/UIGuide.js     v2.7.1 the guide arrow (LC.GUIDES; Chapter 2's targets) and its pause-menu switch
   scenes/UIMajapahit.js    Chapter 4 Talk rows (Pak Mat, the Penghulu, Leong, Kemala, Semaun, Badang), the trading jong's shop, the goal line and Journal
   scenes/UIKampong.js      Berbai's building rows, the craftspeople's services, the padian and pilings menus, the training and cockfight games, Chapter 3 in the Journal and goal line
   cheats.js         test build only (dist/LittleCreature_full.html)
@@ -394,6 +395,8 @@ The user asked for Chapter 1 (everything before) to stay exactly as it was, with
 **The brothers** are villagers with `chapter2: true`. `LC.villager` hides them (area `none`) until Chapter 2 begins (`hideIf`), so Chapter 1 is unchanged. Twelve wait in their mothers' places with a `find` request; once found, `aliveIf` moves them to their Barunai posts. Every spot was checked to be free and walkable. Hapu Awang sells ambuyat and kelupis; Pateh Berbai buys treasures.
 
 **Langkah Semaun** (`LC.LANGKAH` 4 s, 56 px): Shift or the footprints button. A 4 px step-wise dash that stops at anything solid, with 0.45 s of invulnerability, golden afterimages and dust. The Restu Ibu chip moved above the stone slot to make room. Co-op protocol 8.
+
+**v2.7.1 (the user: "add a house to sleep", "sometimes the game feels stuck, please guide the player"):** the guest house `b_tamu` (type `tamu2`) calls `UI.confirmSleep(stay)` → `World.sleep(false, stay)`, which restarts into the same place with `spawn` and the day summary (fainting still carries you home). `UIGuide.js`: `LC.GUIDES` providers return `{ x, y, label }` in the current place; `drawGuide` (from `drawSkills`) bounces an arrow over it, or points from the screen edge (kept below the HUD); Pause > Guide arrow (`flags.noGuide`). Chapter 2 has a provider; other chapters can add one. `UI.goalText` now puts an open chapter before the kampung's optional tasks (fishing, the hen, the first house), which used to hide the chapter goal forever if skipped. `LC.CH2.findHow` says where each brother's item comes from.
 
 ### Chapter 3: Kampong Ayer, part 1 (v2.0)
 Continues on the same save after Chapter 2 (`quests.ch2` 8). Sources: the history of Kampong Ayer (nibong and belian pilings, craft villages such as the blacksmiths' and brassmiths', the *padian* women's floating market) and the Brunei Bay legend of Raden Angsuka Dewa of Majapahit and the cockfight between his Asmara and Awang Senuai's Mutiara (Asmara flees and becomes Pulau Pilong-Pilongan; Mutiara, cursed, becomes Lumut Lunting, which is said never to sink). The ghost of Asmara is our own addition. The fight is shown without blood (feints, wing-beats, a crow). The wars (part 2, v2.1) are not built yet.

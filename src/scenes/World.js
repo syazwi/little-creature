@@ -1050,7 +1050,7 @@ window.LC = window.LC || {};
       switch (o.type) {
         case 'house': case 'house_wing': return { label: 'Nenek\'s house', fn: function () { self.ui.openHouse(); } };   // v1.8: sleep, the pantry, helpers, building
         case 'helper': return this.helperAction(o);
-        case 'jejak': case 'tembadau': case 'bulu': case 'pinggai': case 'salvage': case 'vase': return this.barunaiObjAction(o);   // v1.9
+        case 'jejak': case 'tembadau': case 'bulu': case 'pinggai': case 'salvage': case 'vase': case 'tamu2': return this.barunaiObjAction(o);   // v1.9 (tamu2: v2.7.1)
         case 'kplot': case 'padian': case 'hop': case 'ghost_ayam': case 'batu_ayam': return this.kampongObjAction(o);   // v2.0
         case 'hero': case 'vision': case 'vision_back': case 'tour': case 'meriam': case 'api': case 'keluarga': return this.kampongObjAction(o);   // v2.1
         case 'ally': case 'api4': case 'jong_dagang': return this.kampongObjAction(o);   // v2.2
@@ -1350,7 +1350,7 @@ window.LC = window.LC || {};
     }
 
     // ---------------------------------------------------------------- day cycle
-    sleep(fainted) {
+    sleep(fainted, stay) {   // stay (v2.7.1): { area, x, y } to wake up there instead of at home (a guest house)
       if (this.sleeping) return;
       var self = this;
       this.sleeping = true;
@@ -1362,6 +1362,7 @@ window.LC = window.LC || {};
       this.cameras.main.once('camerafadeoutcomplete', function () {
         var sum = LC.State.endDay(fainted);
         if (LC.Net.isHost()) LC.Net.broadcast({ t: 'dayStart', sum: sum, world: LC.State.snapshot() });
+        if (stay && !fainted && stay.area === self.area && self.area !== 'farm') { LC.followPid = self.followPid; self.scene.restart({ area: stay.area, spawn: self.tilePx(stay), dir: 'down', summary: sum }); return; }   // you wake up where you slept
         if (self.area !== 'farm') { LC.followPid = self.followPid; self.scene.restart({ area: 'farm', summary: sum }); return; }   // you are carried home
         self.refreshLadang(); self.refreshHouse(); self.refreshHelpers();
         self.refreshAllTiles();
