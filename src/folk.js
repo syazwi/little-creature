@@ -113,12 +113,11 @@ window.LC = window.LC || {};
       look: { skin: '#a8714a', shirt: '#3a6a9a', shirt2: '#2a4e74', bottom: '#3a6a9a', bottom2: '#2a4e74', hair: '#1a1210', hat: 'cap' },
       intro: [
         'Yo! Abang Zul. I fix bicycles, motorbikes, water pumps... anything with a spanner-shaped problem.',
-        'A farmer who travels this much needs a basikal! Ride it on the road, in the forest, even on the beach. Kring kring!',
-        'And see that old car under the tarp? My late father\'s. I restored it myself. I only sell it to a friend, okay?'
+        'A farmer who travels this much needs a basikal! Ride it on the road, in the forest, even on the beach. Kring kring!'
       ],
-      chat: ['Oil the chain once a week and a basikal lasts forever.', 'My father drove this car to every kenduri in the district.', 'The dune road is bumpy, but the car can take it. Slowly, slowly!', 'Bicycles are the best way to feel the kampung breeze.'],
+      chat: ['Oil the chain once a week and a basikal lasts forever.', 'My father rode his basikal to every kenduri in the district.', 'The dune road is bumpy. Push the basikal up the steep bits, slowly, slowly!', 'Bicycles are the best way to feel the kampung breeze.'],
       tasks: [['kelapa', 2, 3], ['teh_o', 1, 2], ['nasi_lemak', 1, 1], ['batu', 3, 5], ['kayu', 4, 6]],
-      taskText: 'for the workshop', shop: ['basikal', 'kereta'], shopNeeds: { kereta: 3 },
+      taskText: 'for the workshop', shop: ['basikal'],
       gifts: { 3: ['kepeng', 150], 6: ['jamu', 3], 10: ['kepeng', 500] }
     },
 

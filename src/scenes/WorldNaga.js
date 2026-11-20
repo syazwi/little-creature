@@ -24,7 +24,7 @@ window.LC = window.LC || {};
     var S = this.S;
     if (!kind && !S.riding && LC.hasNagaRide() && LC.State.count('seruling_naga') && !this.sleeping && !this.leaving && !this.fishing) {
       var sel = LC.State.selItem(), held = !!(sel && sel.id === 'seruling_naga');
-      var wheels = (LC.State.count('kereta') && canRide.call(this, 'car')) || (LC.State.count('basikal') && canRide.call(this, 'bike'));
+      var wheels = LC.State.count('basikal') && canRide.call(this, 'bike');
       if (held || this.A.underwater || !wheels) {
         if (this.canRide('naga')) { this.setRide('naga'); return; }
         this.toast(NOPE, 'i_seruling_naga'); LC.Audio.sfx('error'); return;
@@ -59,7 +59,7 @@ window.LC = window.LC || {};
   proto.toolAction = function (sl, it) {
     var self = this, S = this.S;
     if (it && it.kind === 'vehicle' && (it.ride === 'naga' || S.riding === 'naga')) {
-      if (S.riding) return { label: S.riding === 'naga' ? 'Climb off Naga Kecil' : S.riding === 'car' ? 'Get out of the car' : 'Hop off the basikal', ride: true, fn: function () { self.setRide(null); } };
+      if (S.riding) return { label: S.riding === 'naga' ? 'Climb off Naga Kecil' : 'Hop off the basikal', ride: true, fn: function () { self.setRide(null); } };
       if (!this.canRide('naga')) return { label: '', tile: true, fn: function () { self.toast(NOPE, 'i_seruling_naga'); LC.Audio.sfx('error'); } };
       return { label: 'Play the flute: ride Naga Kecil', ride: true, fn: function () { self.setRide('naga'); } };
     }

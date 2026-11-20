@@ -44,7 +44,7 @@ window.LC = window.LC || {};
       folk: {},           // personal: villagerId -> { met, pts, chatDay, task: { item, n, reward }, taskDay, done, gifts }
       fishLog: {},        // personal: itemId -> count
       companion: null,    // personal: a befriended spirit following you
-      riding: null,       // personal (v1.4): 'bike' | 'car' while riding
+      riding: null,       // personal (v1.4): 'bike' | 'naga' while riding (v2.7.4: no car)
       // v1.5 shared: storage chests, farm animals and what they made, eggs in the nest
       chests: {}, chestSeq: 0,
       animals: [], animalSeq: 0, coop: { telur: 0, telur_itik: 0, susu: 0 }, nest: [],
@@ -167,6 +167,14 @@ window.LC = window.LC || {};
         if (!data.wear || typeof data.wear !== 'object') data.wear = {};
         if (data.flags.metAni) data.visited.kampung = data.visited.kampung || false;
         while (data.inv.length < LC.INV_SIZE) data.inv.push(null);
+        // v2.7.4: the car left the game. Abang Zul buys his father's kereta back (1200 kepeng each), from the bag and every chest.
+        var cars = 0;
+        data.inv.forEach(function (sl, i) { if (sl && sl.id === 'kereta') { cars += sl.n; data.inv[i] = null; } });
+        Object.keys(data.chests || {}).forEach(function (k) {
+          var ch = data.chests[k];
+          if (ch && ch.items) ch.items = ch.items.filter(function (sl) { if (sl && sl.id === 'kereta') { cars += sl.n; return false; } return true; });
+        });
+        if (cars) { data.kepeng = (data.kepeng || 0) + 1200 * cars; data.flags.carBack = cars; }
         // v2.5.1: Chapter 6's princess used Chapter 2's villager id ('puteri') and replaced Tuan Puteri. She has her own
         // id now, and keeps the friendship made under the old one (moved if Tuan Puteri was never met, copied if she was).
         var fk = data.folk || {}, q0 = data.quests || {};

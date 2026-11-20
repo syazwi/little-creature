@@ -53,15 +53,19 @@ window.LC = window.LC || {};
   LC.AREAS.forest.clear = LC.HANTU_SPOTS.map(function (p) { return { x: p.x, y: p.y, r: 1 }; });   // no trees on these spots
 
   // ================================================================ Ladang Badang: the land south of Nenek's field
-  LC.LADANG = { x0: 6, y0: 23, x1: 17, y1: 25, cost: { nasi_lemak: 3 }, kepeng: 300 };
+  // (v2.7.4: as wide as the bigger field, and its first row is the field's south fence, which comes down once he clears it)
+  LC.LADANG = { x0: 4, y0: 22, x1: 18, y1: 25, cost: { nasi_lemak: 3 }, kepeng: 300 };
   var notCleared = function (S) { return S.ladang !== 2; };
   [['l_tunggul1', 'tunggul', 6, 23], ['l_batu1', 'batu_besar', 9, 25], ['l_batu2', 'batu_kecil', 11, 23, 1], ['l_tunggul2', 'tunggul', 13, 24], ['l_batu3', 'batu_besar', 16, 23], ['l_tunggul3', 'tunggul', 15, 25]]
     .forEach(function (s) { LC.OBJECTS.push({ id: s[0], type: 'tunggul', x: s[2], y: s[3], w: s[4] || 2, h: 1, tex: s[1], when: notCleared }); });
   LC.inLadang = function (x, y) { var L = LC.LADANG; return x >= L.x0 && x <= L.x1 && y >= L.y0 && y <= L.y1; };
   // the farm map knows whether Badang has cleared the land (called whenever the world is built or a day begins)
   LC.syncLadang = function () {
-    var S = LC.State.s, g = LC.areaGrid('farm'), L = LC.LADANG, ch = S && S.ladang === 2 ? 'f' : '.';
-    for (var y = L.y0; y <= L.y1; y++) for (var x = L.x0; x <= L.x1; x++) g[y][x] = ch;
+    var S = LC.State.s, g = LC.areaGrid('farm'), L = LC.LADANG, done = !!(S && S.ladang === 2);
+    for (var y = L.y0; y <= L.y1; y++) {
+      for (var x = L.x0; x <= L.x1; x++) g[y][x] = done ? 'f' : y === L.y0 ? 'F' : '.';
+      if (y > L.y0) g[y][L.x0 - 1] = g[y][L.x1 + 1] = done ? 'F' : '.';   // one big field: the side fences run on down
+    }
   };
 
   // ================================================================ Batu Badang: the stone he threw into the river

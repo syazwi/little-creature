@@ -147,13 +147,13 @@ Stilt house (bed), spirit house + frangipani, dapur (stove), well (perigi), fenc
 | N | Toggle music |
 | Esc | Close menu |
 | J | Journal (requests, places, spirits, fish, levels) |
-| R | Ride / get off the bicycle or car |
+| R | Ride / get off the bicycle |
 | G | Put on / take off the Bunian glasses |
 | F | Fullscreen |
 | C | Call Nek Lampir (after Chapter 6); in a fight with her beside you, her green circle |
 | B | Call Sang Bualang (after Chapter 7; he takes 10-20 s on the wind); in a fight with him beside you, a spin at once |
 | U | Angin Bualang: blow back every enemy around you (after Chapter 7) |
-| R | Also rides Naga Kecil (after Chapter 8): always under the sea; on land when holding the Seruling Naga (or with no bike or car) |
+| R | Also rides Naga Kecil (after Chapter 8): always under the sea; on land when holding the Seruling Naga (or with no bike) |
 | L | Lagu Mayang: every enemy around you sways in a trance (after Chapter 9) |
 
 Mouse clicks also work on all menus.
@@ -248,6 +248,10 @@ src/
   scenes/UIMayang.js    goal line, Journal page, Talk rows, the jong to Pantai Kabus, the Ulek Mayang minigame, jump scares, the vignette and song light, the Lagu Mayang button
   scenes/UIGuide.js     v2.7.1 the guide arrow (LC.GUIDES; Chapter 2's targets) and its pause-menu switch
   scenes/UIChecklist.js v2.7.2 the story checklist (every chapter: steps, the parts of the current step, what opens the next chapter)
+  masjid.js         v2.7.4 the masjid of Kampung Tepian: the five prayer times, the masjid object and its path, the texts
+  art18.js          v2.7.4 the masjid and its map icon
+  scenes/WorldMasjid.js v2.7.4 the beduk and prayer reminders, praying with the jemaah, the lighter day after all five
+  scenes/UIMasjid.js v2.7.4 the masjid on the maps, Journal > You, Pause > Prayer times
   worldview.js      v2.7.2 co-op shared looks: everyone's building progress (prog messages), LC.worldQuests / LC.worldS
   scenes/WorldShared.js v2.7.2 sends your progress, redraws a place live when a friend's arrives, friends' house plots
   scenes/UIMajapahit.js    Chapter 4 Talk rows (Pak Mat, the Penghulu, Leong, Kemala, Semaun, Badang), the trading jong's shop, the goal line and Journal
@@ -323,7 +327,7 @@ Slow pads, sparse bells, a soft bass pulse and a distant gong through a generate
 **Culture, drawn with respect:** gotong-royong and the kenduri, wau kites, batik and jamu, tea terraces, Mũi Né-style red dunes with dragon fruit and a Cham tower, rafflesia and tualang trees, Sang Kancil, sea turtles, and the five folk spirits, each with a short lore line in the game.
 
 ### Getting around, and the village beneath the waves (v1.4)
-**Vehicles.** `basikal` (×1.75) and `kereta` (×2.4) are `vehicle` items sold by Abang Zul, the kampung mechanic. The car needs 3 ♥ with him (`shopNeeds`). `S.riding` is personal. Press R, or use the item, to toggle. `A.ride` lists the vehicles each place allows; on arrival anywhere else you dismount automatically, as you do when sleeping. Actions marked `tile`/`work` (farming, fishing, gathering) make you hop off first. `World.drawRider` draws a bicycle under the rider, or a car (in the player's outfit colour) instead of them, for you and for co-op friends (protocol 3 adds `rd` to `pos`/`tick`).
+**Vehicles.** `basikal` (×1.75) is a `vehicle` item sold by Abang Zul, the kampung mechanic. (v2.7.4: the user asked to remove the car: `kereta`, its textures and its code are gone; `State.load` takes any kereta out of the bag and every chest and pays 1,200 kepeng each, `flags.carBack` shows the note.) `S.riding` is personal. Press R, or use the item, to toggle. `A.ride` lists the vehicles each place allows; on arrival anywhere else you dismount automatically, as you do when sleeping. Actions marked `tile`/`work` (farming, fishing, gathering) make you hop off first. `World.drawRider` draws a bicycle under the rider, for you and for co-op friends (protocol 3 adds `rd` to `pos`/`tick`).
 
 **Kampung Karang** (`laut`) needs Lv 5 and the Naga's friendship (`A.needs`, checked by `State.isOpen`). It is entered from the dive ring on Pulau Mutiara and left through the light column. Underwater: a permanent blue multiply tint, light rays, rising bubbles, a diving mask on the player, 0.8× swimming speed, a muffled music low-pass and a deep-water ambience. Sea folk: Tok Duyung (reef clean-up: rubbish hand-in at 8 kepeng a piece, gifts at 10/25/50 in `LC.CLEAN_GIFTS`), Nila (buys treasures ×1.3) and Pak Ketam (sea shop, buys sea produce ×1.3). Villagers now have an `area` (default kampung), and sea folk use their own sprites (`sprite: true`, drawn in art3.js). Forage: seaweed, sea cucumber, giant clam (20% pearl), rubbish, and the shipwreck chest (40% porcelain). A one-time turtle rescue runs `Sim.kind {n: 10}`. New dishes: kerabu rumpai and agar-agar (loved).
 
@@ -400,6 +404,8 @@ The user asked for Chapter 1 (everything before) to stay exactly as it was, with
 **Langkah Semaun** (`LC.LANGKAH` 4 s, 56 px): Shift or the footprints button. A 4 px step-wise dash that stops at anything solid, with 0.45 s of invulnerability, golden afterimages and dust. The Restu Ibu chip moved above the stone slot to make room. Co-op protocol 8.
 
 **v2.7.1 (the user: "add a house to sleep", "sometimes the game feels stuck, please guide the player"):** the guest house `b_tamu` (type `tamu2`) calls `UI.confirmSleep(stay)` → `World.sleep(false, stay)`, which restarts into the same place with `spawn` and the day summary (fainting still carries you home). `UIGuide.js`: `LC.GUIDES` providers return `{ x, y, label }` in the current place; `drawGuide` (from `drawSkills`) bounces an arrow over it, or points from the screen edge (kept below the HUD); Pause > Guide arrow (`flags.noGuide`). Chapter 2 has a provider; other chapters can add one. `UI.goalText` now puts an open chapter before the kampung's optional tasks (fishing, the hen, the first house), which used to hide the chapter goal forever if skipped. `LC.CH2.findHow` says where each brother's item comes from.
+
+**v2.7.4 (the user: "on the map include mosque, if he went to mosque there should be reward. Muslim prays 5 times a day. remove car from the game, increase the space of the farming"):** `masjid.js`: `LC.SOLAT` (Subuh 6:00-7:15, Zohor 13:00-16:30, Asar 16:30-19:15, Maghrib 19:15-20:30, Isyak 20:30-24:00: a Malaysian day that fits the game's 6 AM start), `LC.solatNow/solatNext/solatQ` (`quests.solat`: today's `done`, `total`, `full`, `berkat`, personal), the masjid object `k_masjid` (type `masjid`, kampung x 2-7, y 21-23; a path down x = 1 and a stone courtyard on row 24 via a `build` wrapper; `clear` keeps trees off it; the banana tree moved). `art18.js`: the masjid (tiered Malay roof, menara, beduk) and `ic_masjid`. `WorldMasjid.js`: the beduk sfx, `solatTick` (a reminder once per prayer, once Kampung Tepian is open, not in Chapter 9's fog; `flags.noSolat`), `masjidAction`, `solatBerjemaah` (reward first: 40% energy, full health; Jumaat Zohor = Solat Jumaat + nasi lemak; time +15 / +40 min playing alone; camera fade + a few quiet lines; Pelita waits on the steps), and the `useEnergy` wrapper (the day after all five, every 4th energy point is free). `UIMasjid.js`: Journal > You row, the masjid on both maps, `LC.pauseExtraRow4` (Prayer times). Kept respectful: no prayer movements animated, no Arabic text, no synthesised azan. Farm: the fenced field is x 4-18, y 13-21 (135 tiles; the gate torches stand on the fence); `LC.LADANG` is x 4-18, y 22-25 and `syncLadang` turns the old south fence into field and runs the side fences down once Badang clears it (195 tiles in all); bananas, two Ch5 lamps and Pak Hamid's spot moved off it. Co-op protocol 23.
 
 **v2.7.3 (the user: "instead of menu by row, make it grid"):** `UI.openGrid(cfg)` (in UI.js after openMenu): tiles 4 to a row (up to 5 rows; fewer tiles are taller and centred; more than 20 page with the side buttons), a picture, the name, and for a "Name: Value" label the value under it (On green, Off grey); a `right` badge (Update: Get); the chosen tile's label and description in a box under the grid; WASD / arrows move in 2D, E selects, wheel steps; modal `{ type: menu, grid: true, render, sel(k) }`. `openPause` uses it; its tiles get their own icons by name (`gridIcon`; new 12x12 icons in art17.js: ic_play, ic_book, ic_save, ic_load, ic_sound, ic_note, ic_phone, ic_fullscr, ic_update, ic_list, ic_pad, ic_door, ic_scare). The other menus are still lists.
 

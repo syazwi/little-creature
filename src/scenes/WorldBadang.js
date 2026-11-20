@@ -382,6 +382,13 @@ window.LC = window.LC || {};
         if (im) { im.destroy(); delete self.objImgs[o.id]; }
         for (var y = o.y; y < o.y + (o.h || 1); y++) for (var x = o.x; x < o.x + (o.w || 1); x++) if (self.objAt[y][x] === o) { self.solid[y][x] = false; self.objAt[y][x] = null; }
       });
+      // v2.7.4: the old south fence becomes field, and the side fences run on down (field tiles are redrawn by the caller)
+      var L = LC.LADANG;
+      for (var y = L.y0; y <= L.y1; y++) for (var x = L.x0 - 1; x <= L.x1 + 1; x++) {
+        var ch = this.grid[y][x];
+        if (ch === 'F') this.ground.putTileAt(this.fenceIdx(x, y), x, y);
+        if (!this.objAt[y][x]) this.solid[y][x] = !!LC.SOLID_TILES[ch];
+      }
     },
     // after the Pesta: his last stone lands in the river
     refreshBatuBadang: function () {

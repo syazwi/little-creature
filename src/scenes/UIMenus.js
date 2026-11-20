@@ -167,7 +167,7 @@ window.LC = window.LC || {};
             enabled: afford && room && friendOk && !owned, why: owned ? 'You already have one!' : !friendOk ? v.name + ' only sells it to a friend (' + need + ' ♥).' : afford ? 'Your bag is full!' : 'Not enough kepeng.',
             action: function () {
               S.kepeng -= it.price; LC.State.add(id, 1); LC.Audio.sfx('buy');
-              if (it.kind === 'vehicle') self.toast('The ' + it.name + ' is yours! Press R (or select it and press USE) to ' + (it.ride === 'car' ? 'drive.' : 'ride.'), it.icon);
+              if (it.kind === 'vehicle') self.toast('The ' + it.name + ' is yours! Press R (or select it and press USE) to ' + 'ride.', it.icon);
             } };
         }));
       } });

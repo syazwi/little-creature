@@ -205,12 +205,12 @@ window.LC = window.LC || {};
       name: 'Nenek\'s Farm', sub: 'home by the river', lvl: 1, build: function () { return LC.buildMap(); },
       objects: null,   // LC.OBJECTS (data.js)
       pond: 'river', amb: 'river', decor: { n: 55, types: ['rock', 'bush', 'hibiscus', 'lalang', 'lalang', 'bush'], on: '.' },
-      critters: [{ kind: 'chicken', n: 3, zone: { x0: 6, y0: 8, x1: 18, y1: 12 } }, { kind: 'kerbau', n: 1, zone: { x0: 37, y0: 13, x1: 45, y1: 24 } }],
+      critters: [{ kind: 'chicken', n: 3, zone: { x0: 6, y0: 8, x1: 18, y1: 11 } }, { kind: 'kerbau', n: 1, zone: { x0: 37, y0: 13, x1: 45, y1: 24 } }],
       exits: [
         { x0: 29, y0: 0, x1: 30, y1: 0, to: 'forest', sx: 21.5, sy: 31.5, dir: 'up', gate: { x: 29, y: 3, w: 2, h: 1, tex: 'gate_vines' } },
         { x0: 47, y0: 10, x1: 47, y1: 11, to: 'kampung', sx: 1.5, sy: 10.5, dir: 'right', gate: { x: 46, y: 10, w: 1, h: 2, tex: 'barrier' } }
       ],
-      home: { x: 4.5, y: 8 }, ride: { bike: 1, car: 1 }
+      home: { x: 4.5, y: 8 }, ride: { bike: 1 }
     },
     kampung: {
       name: 'Kampung Tepian', sub: 'the riverside village', lvl: 2, build: buildKampung, objects: KAMPUNG_OBJECTS,
@@ -220,7 +220,7 @@ window.LC = window.LC || {};
         { x0: 0, y0: 10, x1: 0, y1: 11, to: 'farm', sx: 44.5, sy: 10.5, dir: 'left' },
         { x0: 45, y0: 10, x1: 45, y1: 11, to: 'desert', sx: 1.5, sy: 10.5, dir: 'right', gate: { x: 43, y: 10, w: 1, h: 2, tex: 'gate_dune' } }
       ],
-      kites: true, home: { x: 2.5, y: 10.5 }, ride: { bike: 1, car: 1 },
+      kites: true, home: { x: 2.5, y: 10.5 }, ride: { bike: 1 },
       trees: { n: 6, on: '.', tex: ['jtree'], text: 'A shady tree. Children climb it after school.' }
     },
     forest: {
@@ -259,7 +259,7 @@ window.LC = window.LC || {};
       pond: 'oasis', amb: 'wind', decor: { n: 45, types: ['dunegrass', 'dunegrass', 'pebbles', 'rock', 'deadbush'], on: 'd' },
       critters: [{ kind: 'biawak', n: 2, zone: { x0: 4, y0: 4, x1: 42, y1: 28 } }],
       exits: [{ x0: 0, y0: 10, x1: 0, y1: 11, to: 'kampung', sx: 43.5, sy: 10.5, dir: 'left' }],
-      warm: true, home: { x: 1.5, y: 10.5 }, ride: { bike: 1, car: 1 }
+      warm: true, home: { x: 1.5, y: 10.5 }, ride: { bike: 1 }
     }
   };
   LC.AREA_ORDER = ['farm', 'kampung', 'forest', 'island', 'laut', 'mountain', 'desert'];

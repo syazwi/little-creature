@@ -56,7 +56,7 @@ window.LC = window.LC || {};
     witch: { zone: { x0: 13, y0: 7, x1: 26, y1: 17 }, blink: 4.5, snuff: 13 }   // she vanishes and reappears; her magic snuffs a torch
   };
   // Tukang Leong's guard lamps on Nenek's farm, and the old damar tree in Hutan Rimba
-  [{ x: 19, y: 12 }, { x: 37, y: 12 }, { x: 4, y: 23 }, { x: 24, y: 26 }].forEach(function (t, i) {
+  [{ x: 22, y: 12 }, { x: 37, y: 12 }, { x: 2, y: 25 }, { x: 24, y: 26 }].forEach(function (t, i) {   // (v2.7.4: two moved off the bigger field)
     LC.OBJECTS.push({ id: 'c5_lampu' + i, type: 'bldg', x: t.x, y: t.y, tex: 'tiang_pelita', light: 0xffc870, when: function (S) { return !!q(S).c5lamps; },
       text: 'One of Tukang Leong\'s guard lamps: a brass lantern on a post of belian wood. It burns all night, and the shadows keep away.' });
   });

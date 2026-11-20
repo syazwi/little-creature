@@ -29,7 +29,7 @@ window.LC = window.LC || {};
     ubur: { walk: 'ubur_swim', speed: 5, w: 3, near: 8, r: 9, sfx: 'pet' }
   };
   var TILE_PATHY = { p: 1, f: 1, F: 1, b: 1, j: 1, k: 1, v: 1 };
-  var RIDE_ITEM = { bike: 'basikal', car: 'kereta', naga: 'seruling_naga' };   // (v2.6: Naga Kecil)
+  var RIDE_ITEM = { bike: 'basikal', naga: 'seruling_naga' };   // (v2.6: Naga Kecil; v2.7.4: no car)
 
   LC.WorldScene = class extends Phaser.Scene {
     constructor() { super('World'); }
@@ -115,7 +115,7 @@ window.LC = window.LC || {};
       if (data.loaded) this.time.delayedCall(500, function () {
         self.ui.toast(data.loaded > 0 ? 'Loaded slot ' + data.loaded + ': Day ' + S.day + ', ' + LC.State.weekday() + '.' : (data.by || 'Your friend') + ' loaded a saved farm. Day ' + S.day + '!', 'ic_bond');
       });
-      if (parked) this.time.delayedCall(500, function () { self.toast(parked === 'car' ? 'The car can\'t go here. You park it at the edge and walk on.' : 'You leave the basikal by the path.', parked === 'car' ? 'i_kereta' : 'i_basikal'); });
+      if (parked) this.time.delayedCall(500, function () { self.toast('You leave the basikal by the path.', 'i_basikal'); });
     }
 
     tilePx(t) { return { x: (t.x + 0.5) * T, y: (t.y + 0.8) * T }; }
@@ -412,40 +412,35 @@ window.LC = window.LC || {};
       p.setDepth(p.y);
       this.pShadow.setPosition(Math.round(p.x), Math.round(p.y - 1));
       this.drawRider(p, this.S.riding, this.dir, this.moving, this.veh, this.pc);
-      if (this.specs) this.specs.setVisible(LC.State.wearing('glasses') && this.dir !== 'up' && this.S.riding !== 'car' && !this.A.underwater).setPosition(Math.round(p.x + (this.dir === 'left' ? -1 : this.dir === 'right' ? 1 : 0)), Math.round(p.y - 9 - (this.S.riding === 'bike' ? 5 : this.S.riding === 'naga' ? 8 : 0))).setFlipX(this.dir === 'left').setDepth(p.y + 0.3);
+      if (this.specs) this.specs.setVisible(LC.State.wearing('glasses') && this.dir !== 'up' && !this.A.underwater).setPosition(Math.round(p.x + (this.dir === 'left' ? -1 : this.dir === 'right' ? 1 : 0)), Math.round(p.y - 9 - (this.S.riding === 'bike' ? 5 : this.S.riding === 'naga' ? 8 : 0))).setFlipX(this.dir === 'left').setDepth(p.y + 0.3);
       if (this.A.underwater) this.mask.setVisible(this.dir !== 'up').setPosition(Math.round(p.x + (this.dir === 'left' ? -1 : this.dir === 'right' ? 1 : 0)), Math.round(p.y - 9 - (this.S.riding === 'naga' ? 8 : 0))).setFlipX(this.dir === 'left').setDepth(p.y + 0.2);
     }
-    // a bicycle under the rider, or a car instead of them. Used for you and for co-op friends.
+    // a bicycle under the rider. Used for you and for co-op friends.
     drawRider(spr, ride, dir, moving, veh, color) {
       var side = dir === 'left' || dir === 'right', key = side ? 'side' : dir, f = moving && Math.floor(this.time.now / 140) % 2 ? 1 : 0;
       if (!ride) { if (veh.visible) { veh.setVisible(false); spr.setVisible(true).setOrigin(0.5, 1); } return; }
-      if (ride === 'car') {
-        spr.setVisible(false);
-        veh.setVisible(true).setTexture('car' + (color || 0) + '_' + key + '_' + f).setPosition(Math.round(spr.x), Math.round(spr.y + 3)).setFlipX(dir === 'left').setDepth(spr.y + 0.5);
-      } else {
-        spr.setVisible(true).setOrigin(0.5, 1.3);
-        if (spr.anims && spr.anims.isPlaying) spr.stop();
-        spr.setTexture(LC.Art.plKey(color || 0) + '_' + key + '_0');
-        veh.setVisible(true).setTexture('bike_' + key + '_' + f).setPosition(Math.round(spr.x), Math.round(spr.y + 2)).setFlipX(dir === 'left').setDepth(spr.y + (dir === 'up' ? -0.5 : 0.5));
-      }
+      spr.setVisible(true).setOrigin(0.5, 1.3);
+      if (spr.anims && spr.anims.isPlaying) spr.stop();
+      spr.setTexture(LC.Art.plKey(color || 0) + '_' + key + '_0');
+      veh.setVisible(true).setTexture('bike_' + key + '_' + f).setPosition(Math.round(spr.x), Math.round(spr.y + 2)).setFlipX(dir === 'left').setDepth(spr.y + (dir === 'up' ? -0.5 : 0.5));
     }
     canRide(kind) { return !!(this.A.ride && this.A.ride[kind]); }
     toggleRide(kind) {
       var S = this.S;
       if (S.riding) { this.setRide(null); return; }
       if (this.sleeping || this.leaving || this.fishing) return;
-      if (!kind) kind = LC.State.count('kereta') && this.canRide('car') ? 'car' : LC.State.count('basikal') && this.canRide('bike') ? 'bike' : null;
+      if (!kind) kind = LC.State.count('basikal') && this.canRide('bike') ? 'bike' : null;
       if (!kind) {
-        var has = LC.State.count('kereta') || LC.State.count('basikal');
+        var has = LC.State.count('basikal');
         this.toast(!has ? 'You have nothing to ride yet. Abang Zul sells bicycles in the kampung.' : this.A.underwater ? 'Not under the sea!' : 'You can\'t ride here.'); LC.Audio.sfx('error'); return;
       }
-      if (!this.canRide(kind)) { this.toast(kind === 'car' ? 'The car can\'t go here: the farm, the kampung and the dunes only.' : 'You can\'t ride here.'); LC.Audio.sfx('error'); return; }
+      if (!this.canRide(kind)) { this.toast('You can\'t ride here.'); LC.Audio.sfx('error'); return; }
       this.setRide(kind);
     }
     setRide(kind) {
       var S = this.S, was = S.riding;
       S.riding = kind || null;
-      if (kind) { LC.Audio.sfx(kind === 'car' ? 'honk' : 'bell'); this.fx.dirt.explode(4, this.player.x, this.player.y); }
+      if (kind) { LC.Audio.sfx('bell'); this.fx.dirt.explode(4, this.player.x, this.player.y); }
       else if (was) LC.Audio.sfx('click');
       this.drawRider(this.player, S.riding, this.dir, false, this.veh, this.pc);
     }
@@ -1059,6 +1054,7 @@ window.LC = window.LC || {};
         case 'batu7': case 'rumah7': case 'perahu7': case 'pewarna7': case 'karang7': case 'tenun7': case 'lesung7': return this.kampongObjAction(o);   // v2.5
         case 'arus8': case 'balang8': case 'serpih8': case 'jar8': case 'arusgate8': case 'nek8': return this.kampongObjAction(o);   // v2.6
         case 'hanyut9': case 'tidur9': case 'awang9': case 'cari9': case 'lampu9': case 'pinang9': case 'pawang9': case 'dive9': case 'naik9': case 'kima9': return this.kampongObjAction(o);   // v2.7
+        case 'masjid': return this.masjidAction(o);   // v2.7.4 (WorldMasjid.js)
         case 'spirit':
           if (isFood) return { label: 'Offer ' + it.name + ' to Pelita', fn: function () { self.feedGhost(sl.id); } };
           return { label: 'Spirit house', fn: function () { self.ui.openSpirit(); } };
@@ -1108,9 +1104,9 @@ window.LC = window.LC || {};
       function hint(m) { return { label: '', tile: true, fn: function () { self.toast(m); LC.Audio.sfx('error'); } }; }
       if (it.kind === 'vehicle') {
         var rk = it.ride;
-        if (S.riding) return { label: S.riding === 'car' ? 'Get out of the car' : 'Hop off the basikal', ride: true, fn: function () { self.setRide(null); } };
-        if (!this.canRide(rk)) return hint(this.A.underwater ? 'Not under the sea!' : rk === 'car' ? 'The car can\'t go here: the farm, the kampung and the dunes only.' : 'You can\'t ride here.');
-        return { label: rk === 'car' ? 'Drive the kereta' : 'Ride the basikal', ride: true, fn: function () { self.setRide(rk); } };
+        if (S.riding) return { label: 'Hop off the basikal', ride: true, fn: function () { self.setRide(null); } };
+        if (!this.canRide(rk)) return hint(this.A.underwater ? 'Not under the sea!' : 'You can\'t ride here.');
+        return { label: 'Ride the basikal', ride: true, fn: function () { self.setRide(rk); } };
       }
       var v15 = this.toolAction15(sl, it, ch, t, tx, ty, hint);   // v1.5 items (WorldFarm.js)
       if (v15) return v15;

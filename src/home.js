@@ -60,7 +60,7 @@ window.LC = window.LC || {};
       look: { skin: '#a8714a', shirt: '#c8506a', shirt2: '#a03a52', bottom: '#5a3a5a', bottom2: '#42283a', hair: '#1a1210', hat: 'tudung', hatColor: '#f2d0a0' },
       does: 'Every night she cooks up to 5 dishes from the ingredients in the pantry (the best ones she can make) and leaves them there.',
       chat: ['Put rice, eggs, fish and chilli in the almari, and I will do the rest!', 'Nenek\'s recipes are written in pencil inside the almari door. I follow them exactly.', 'A kitchen with no one cooking is the saddest room in a house.'] },
-    ladang: { name: 'Pak Hamid', role: 'Pekerja Ladang (farmhand)', wage: 70, spot: { x: 19, y: 17 },
+    ladang: { name: 'Pak Hamid', role: 'Pekerja Ladang (farmhand)', wage: 70, spot: { x: 22, y: 16 },
       look: { skin: '#8e5c3a', shirt: '#4a7a8a', shirt2: '#3a5e6a', bottom: '#5a4a3a', bottom2: '#40342a', hair: '#3a3a3a', hat: 'terendak' },
       does: 'Every night he waters the whole field, harvests whatever is ripe into the pantry, and replants it with seeds from the pantry.',
       chat: ['Leave seeds in the almari and I will replant what I harvest.', 'Your soil is good. Nenek looked after it for fifty years.', 'Early to bed, early to the field!'] },

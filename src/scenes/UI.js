@@ -407,7 +407,7 @@ window.LC = window.LC || {};
       var s = '', bright = false;
       if (this.modal) s = '';
       else if (label) { s = (this.touchOn ? '' : '[E] ') + label; bright = true; }
-      else if (this.S.riding) s = (this.S.riding === 'car' ? 'Driving the kereta' : this.S.riding === 'naga' ? 'Riding Naga Kecil' : 'Riding the basikal') + (this.touchOn ? '  (select it and press USE to get off)' : '   ·   R to get off');
+      else if (this.S.riding) s = (this.S.riding === 'naga' ? 'Riding Naga Kecil' : 'Riding the basikal') + (this.touchOn ? '  (select it and press USE to get off)' : '   ·   R to get off');
       else {
         var sl = LC.State.selItem();
         if (sl) {
@@ -970,6 +970,7 @@ window.LC = window.LC || {};
             LC.pauseExtraRow ? LC.pauseExtraRow.call(self) : null,   // v2.5: Pelita's daylight
             LC.pauseExtraRow2 ? LC.pauseExtraRow2.call(self) : null,   // v2.7: jump scares on or gentle
             LC.pauseExtraRow3 ? LC.pauseExtraRow3.call(self) : null,   // v2.7.1: the guide arrow on or off
+            LC.pauseExtraRow4 ? LC.pauseExtraRow4.call(self) : null,   // v2.7.4: the prayer-time reminders on or off
             { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact (and swing a weapon) · tap the stone by the hotbar for the stone curse · MAP · II pauses' : 'WASD/Arrows move · E use/swing · V stone curse · 1-9/wheel select · Q tool · X eat · R ride · G glasses · Tab bag · J journal · M map · N music · F fullscreen' },
             { icon: 'ic_moon', label: 'Quit to title', sub: LC.Net.role ? 'Also ends the co-op session.' : 'Anything since your last sleep (or save) is lost.', action: function () { self.quitToTitle(); } }
           ]).filter(Boolean).map(gridIcon);

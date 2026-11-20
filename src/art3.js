@@ -46,27 +46,6 @@ window.LC = window.LC || {};
     else { p.rect(4, 5, 4, 1, '#3a2a20'); p.px(6, 9, '#e83a3a'); }
     p.px(0, 3, '#3a3a40'); p.px(11, 3, '#3a3a40');
   }
-  function carSide(p, col, col2, f) {   // 34x22, facing right
-    var b = f ? 1 : 0;
-    p.rect(2, 9 + b, 30, 7, col); p.rect(2, 15 + b, 30, 1, col2);
-    p.poly([[8, 9 + b], [12, 2 + b], [24, 2 + b], [28, 9 + b]], col);
-    p.poly([[11, 9 + b], [13, 4 + b], [17, 4 + b], [17, 9 + b]], '#a8d8f0'); p.poly([[19, 9 + b], [19, 4 + b], [23, 4 + b], [26, 9 + b]], '#a8d8f0');
-    p.rect(18, 3 + b, 1, 6, col2);
-    [[20, 4], [19, 5], [21, 5], [18, 6], [22, 6]].forEach(function (c) { p.px(c[0], c[1] + b, '#ecd28a'); });   // the driver's conical hat
-    p.rect(31, 10 + b, 2, 2, '#fff3b0'); p.rect(1, 10 + b, 2, 2, '#e83a3a'); p.rect(2, 13 + b, 30, 1, '#e8e8f0');
-    p.disc(9, 17, 3.4, TYRE); p.disc(9, 17, 1.6, '#b8b8c0'); p.disc(26, 17, 3.4, TYRE); p.disc(26, 17, 1.6, '#b8b8c0');
-  }
-  function carFront(p, col, col2, f, back) {   // 24x24
-    var b = f ? 1 : 0;
-    p.rect(2, 11 + b, 20, 8, col); p.rect(2, 18 + b, 20, 1, col2);
-    p.poly([[5, 11 + b], [7, 3 + b], [17, 3 + b], [19, 11 + b]], col);
-    p.poly([[7, 10 + b], [8, 5 + b], [16, 5 + b], [17, 10 + b]], back ? '#88b8d0' : '#a8d8f0');
-    [[12, 6], [11, 7], [13, 7], [10, 8], [14, 8], [9, 9], [15, 9]].forEach(function (c) { p.px(c[0], c[1] + b, '#ecd28a'); });
-    if (!back) { p.disc(5, 14 + b, 1.6, '#fff3b0'); p.disc(19, 14 + b, 1.6, '#fff3b0'); p.rect(8, 15 + b, 8, 2, '#3a3a40'); for (var x = 9; x < 16; x += 2) p.px(x, 15 + b, '#9aa0a8'); }
-    else { p.rect(4, 13 + b, 3, 2, '#e83a3a'); p.rect(17, 13 + b, 3, 2, '#e83a3a'); p.rect(9, 15 + b, 6, 2, '#f5f0e1'); }
-    p.rect(1, 19, 4, 4, TYRE); p.rect(19, 19, 4, 4, TYRE); p.rect(2, 19 + b, 20, 1, '#e8e8f0');
-  }
-
   // ================================================================== UNDERWATER BUILDINGS
   function drawKedai(p) {   // Abang Zul's bicycle shop, 64x48
     p.rect(2, 40, 60, 6, 'rgba(30,20,12,0.35)');
@@ -180,7 +159,6 @@ window.LC = window.LC || {};
   // ================================================================== ICONS
   var IC = {};
   IC.basikal = function (p) { p.disc(4, 11, 3.4, '#26222a'); p.disc(4, 11, 2, '#00000000'); p.disc(12, 11, 3.4, '#26222a'); p.line(4, 11, 7, 6, '#c8323a', 2); p.line(7, 6, 11, 6, '#c8323a', 2); p.line(11, 6, 12, 11, '#c8323a'); p.line(7, 6, 8, 11, '#c8323a'); p.rect(6, 4, 3, 1, '#3a2a20'); p.rect(11, 3, 3, 1, '#9aa0a8'); p.rect(12, 4, 3, 2, '#c9a46a'); p.disc(4, 11, 1.2, '#b8b8c0'); p.disc(12, 11, 1.2, '#b8b8c0'); };
-  IC.kereta = function (p) { p.rect(1, 7, 14, 5, '#c8323a'); p.poly([[4, 7], [6, 3], [11, 3], [13, 7]], '#c8323a'); p.rect(6, 4, 2, 3, '#a8d8f0'); p.rect(9, 4, 2, 3, '#a8d8f0'); p.disc(4, 12, 2, '#26222a'); p.disc(12, 12, 2, '#26222a'); p.rect(14, 8, 1, 1, '#fff3b0'); p.rect(1, 10, 14, 1, '#8a1e24'); };
   IC.rumpai_laut = function (p) { for (var i = 0; i < 5; i++) p.line(3 + i * 2.5, 15, 4 + i * 2.5 + Math.sin(i * 2) * 2, 2 + (i % 2) * 3, i % 2 ? '#3f8a5a' : '#5aa86a', 2); };
   IC.gamat = function (p) { p.ell(8, 9, 7, 3.4, '#6a3a2a'); p.ell(8, 8, 6, 2.2, '#8a5a3a'); p.speck(2, 6, 12, 6, '#e8c060', 8); p.px(14, 9, '#4a2414'); };
   IC.pinggan_lama = function (p) { p.ell(8, 9, 7, 5, '#e8eef5'); p.ell(8, 9, 5.6, 3.8, '#f5f8fc'); p.ell(8, 9, 3, 2, '#3a6ab8'); p.px(8, 9, '#f5f8fc'); for (var i = 0; i < 8; i++) { var a = i / 8 * Math.PI * 2; p.px(8 + Math.cos(a) * 6, 9 + Math.sin(a) * 4.3, '#3a6ab8'); } };
@@ -191,21 +169,11 @@ window.LC = window.LC || {};
   // ================================================================== GENERATE
   Art.generate3 = function (scene) {
     var make = Art.make;
-    // vehicles: one bicycle, and a car in each player's outfit colour
+    // vehicles: the bicycle (v2.7.4: the car was taken out of the game)
     ['', '_1'].forEach(function (s, f) {
       make(scene, 'bike_side_' + f, 24, 14, function (p) { bikeSide(p, f); });
       make(scene, 'bike_down_' + f, 12, 14, function (p) { bikeFront(p, f, false); });
       make(scene, 'bike_up_' + f, 12, 14, function (p) { bikeFront(p, f, true); });
-    });
-    var CAR = [['#c8323a', '#8a1e24'], ['#2a9d8f', '#1f7a70'], ['#e9b949', '#c4922f'], ['#8e5cc4', '#6c4398']];
-    CAR.forEach(function (c, i) {
-      for (var f = 0; f < 2; f++) {
-        (function (f) {
-          make(scene, 'car' + i + '_side_' + f, 34, 22, function (p) { carSide(p, c[0], c[1], f); }, true);
-          make(scene, 'car' + i + '_down_' + f, 24, 24, function (p) { carFront(p, c[0], c[1], f, false); }, true);
-          make(scene, 'car' + i + '_up_' + f, 24, 24, function (p) { carFront(p, c[0], c[1], f, true); }, true);
-        })(f);
-      }
     });
     // buildings and things under the sea
     make(scene, 'kedai_basikal', 64, 48, drawKedai, true);

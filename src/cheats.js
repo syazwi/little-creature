@@ -38,7 +38,7 @@ window.LC = window.LC || {};
     S.quests.tanggang = 4; S.quests.stoneTold = 1;   // v1.6: Sumpahan Batu and Restu Ibu
     S.quests.badang = 3;                              // v1.7: Badang is already strong (B replays his story)
     S.house = 3; LC.Home.applyStage(3);               // v1.8: Nenek's house fully grown (hire the helpers to test them)
-    var inv = ['hoe', 'can', 'joran', 'keris', 'trisula', 'basikal', 'kereta', 'cermin_mata', 'peti_ukir',
+    var inv = ['hoe', 'can', 'joran', 'keris', 'trisula', 'basikal', 'cermin_mata', 'peti_ukir',
       'wau_bulan', 'gasing_uri', 'sikat', 'dedak', 'baja', 'nasi_lemak', 'pulut_mangga', 'jamu_kuat', 'canang', 'bubu'];
     var many = { dedak: 99, baja: 99, nasi_lemak: 99, pulut_mangga: 99, jamu_kuat: 20, canang: 20, bubu: 3 };
     S.inv = inv.map(function (id) { return { id: id, n: many[id] || 1 }; });

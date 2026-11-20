@@ -96,7 +96,6 @@ window.LC = window.LC || {};
 
     // ---- v1.4: getting around, and the village beneath the waves
     basikal: { name: 'Basikal', kind: 'vehicle', ride: 'bike', price: 250, speed: 1.75, desc: 'A sturdy kampung bicycle with a basket and a bell. Hold it and press USE (or R) to ride.' },
-    kereta:  { name: 'Kereta', kind: 'vehicle', ride: 'car', price: 1200, speed: 2.4, desc: 'Abang Zul\'s old car, lovingly restored. Drive it (R) on the farm, in the kampung and across the dunes.' },
     rumpai_laut:  { name: 'Rumpai Laut', kind: 'forage', price: 12, sell: 14, food: { full: 4, joy: 2 }, desc: 'Seaweed from the reef. Crunchy, salty, good for you.' },
     gamat:        { name: 'Gamat', kind: 'forage', sell: 45, desc: 'A sea cucumber. Langkawi folk make a famous healing oil from it.' },
     pinggan_lama: { name: 'Pinggan Lama', kind: 'treasure', sell: 180, desc: 'Blue-and-white porcelain from a trading junk that sank centuries ago.' },
@@ -269,10 +268,10 @@ window.LC = window.LC || {};
     fill(20, 12, 21, 27, 'p');
     fill(39, 9, 42, 9, 'p');
     fill(29, 0, 30, 9, 'p');      // v1.3: the north trail into Hutan Rimba
-    // fenced farm field
-    fill(5, 13, 18, 13, 'F'); fill(5, 22, 18, 22, 'F'); fill(5, 13, 5, 22, 'F'); fill(18, 13, 18, 22, 'F');
-    fill(11, 13, 12, 13, 'p');
-    fill(6, 14, 17, 21, 'f');
+    // fenced farm field (v2.7.4: bigger, 15 x 9 = 135 tiles, was 12 x 8 = 96; the torches by the gate stand on the fence)
+    fill(3, 12, 19, 12, 'F'); fill(3, 22, 19, 22, 'F'); fill(3, 12, 3, 22, 'F'); fill(19, 12, 19, 22, 'F');
+    fill(11, 12, 12, 12, 'p');
+    fill(4, 13, 18, 21, 'f');
     // sawah (rice paddy) with bunds
     fill(23, 13, 36, 22, 'b'); fill(24, 14, 35, 21, 'r');
     fill(24, 17, 35, 17, 'b'); fill(29, 14, 30, 21, 'b'); fill(29, 12, 30, 12, 'b');
@@ -294,9 +293,9 @@ window.LC = window.LC || {};
     { id: 'sign_north', type: 'signpost', x: 31, y: 4, w: 1, h: 1, tex: 'sign', text: 'HUTAN RIMBA (the old rainforest) ^  The trail north is overgrown. Pelita at Lv 3 could light the way.' },
 
     { id: 'banana1', type: 'tree', kind: 'banana', x: 2, y: 14, w: 1, h: 1 },
-    { id: 'banana2', type: 'tree', kind: 'banana', x: 3, y: 17, w: 1, h: 1 },
+    { id: 'banana2', type: 'tree', kind: 'banana', x: 2, y: 17, w: 1, h: 1 },   // (v2.7.4: one step west, for the bigger field)
     { id: 'banana3', type: 'tree', kind: 'banana', x: 2, y: 20, w: 1, h: 1 },
-    { id: 'banana4', type: 'tree', kind: 'banana', x: 3, y: 23, w: 1, h: 1 },
+    { id: 'banana4', type: 'tree', kind: 'banana', x: 2, y: 23, w: 1, h: 1 },
     { id: 'palm1', type: 'tree', kind: 'palm', x: 4, y: 26, w: 1, h: 1 },
     { id: 'palm2', type: 'tree', kind: 'palm', x: 10, y: 26, w: 1, h: 1 },
     { id: 'palm3', type: 'tree', kind: 'palm', x: 15, y: 26, w: 1, h: 1 },
@@ -312,7 +311,7 @@ window.LC = window.LC || {};
   ];
 
   LC.ZONES = {
-    chickens: { x0: 6, y0: 8, x1: 18, y1: 12 },
+    chickens: { x0: 6, y0: 8, x1: 18, y1: 11 },
     kerbau: { x0: 37, y0: 13, x1: 45, y1: 24 }
   };
 
