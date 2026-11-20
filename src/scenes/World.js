@@ -29,7 +29,7 @@ window.LC = window.LC || {};
     ubur: { walk: 'ubur_swim', speed: 5, w: 3, near: 8, r: 9, sfx: 'pet' }
   };
   var TILE_PATHY = { p: 1, f: 1, F: 1, b: 1, j: 1, k: 1, v: 1 };
-  var RIDE_ITEM = { bike: 'basikal', car: 'kereta' };
+  var RIDE_ITEM = { bike: 'basikal', car: 'kereta', naga: 'seruling_naga' };   // (v2.6: Naga Kecil)
 
   LC.WorldScene = class extends Phaser.Scene {
     constructor() { super('World'); }
@@ -391,7 +391,7 @@ window.LC = window.LC || {};
         }
       }
       if (vx || vy) {
-        var ride = this.S.riding, mult = ride ? LC.ITEMS[RIDE_ITEM[ride]].speed : this.A.underwater ? 0.8 : 1;
+        var ride = this.S.riding, mult = (ride ? LC.ITEMS[RIDE_ITEM[ride]].speed : this.A.underwater ? 0.8 : 1) * (this.wadeMult ? this.wadeMult() : 1);   // (v2.6: wading through the flood)
         var len = Math.hypot(vx, vy), sp = (this.S.energy <= 0 && !ride ? 48 : 74) * mult * dt * analog;
         var nx = p.x + vx / len * sp, ny = p.y + vy / len * sp;
         if (!this.blockedAt(nx, p.y)) p.x = nx;
@@ -412,8 +412,8 @@ window.LC = window.LC || {};
       p.setDepth(p.y);
       this.pShadow.setPosition(Math.round(p.x), Math.round(p.y - 1));
       this.drawRider(p, this.S.riding, this.dir, this.moving, this.veh, this.pc);
-      if (this.specs) this.specs.setVisible(LC.State.wearing('glasses') && this.dir !== 'up' && this.S.riding !== 'car' && !this.A.underwater).setPosition(Math.round(p.x + (this.dir === 'left' ? -1 : this.dir === 'right' ? 1 : 0)), Math.round(p.y - 9 - (this.S.riding === 'bike' ? 5 : 0))).setFlipX(this.dir === 'left').setDepth(p.y + 0.3);
-      if (this.A.underwater) this.mask.setVisible(this.dir !== 'up').setPosition(Math.round(p.x + (this.dir === 'left' ? -1 : this.dir === 'right' ? 1 : 0)), Math.round(p.y - 9)).setFlipX(this.dir === 'left').setDepth(p.y + 0.2);
+      if (this.specs) this.specs.setVisible(LC.State.wearing('glasses') && this.dir !== 'up' && this.S.riding !== 'car' && !this.A.underwater).setPosition(Math.round(p.x + (this.dir === 'left' ? -1 : this.dir === 'right' ? 1 : 0)), Math.round(p.y - 9 - (this.S.riding === 'bike' ? 5 : this.S.riding === 'naga' ? 8 : 0))).setFlipX(this.dir === 'left').setDepth(p.y + 0.3);
+      if (this.A.underwater) this.mask.setVisible(this.dir !== 'up').setPosition(Math.round(p.x + (this.dir === 'left' ? -1 : this.dir === 'right' ? 1 : 0)), Math.round(p.y - 9 - (this.S.riding === 'naga' ? 8 : 0))).setFlipX(this.dir === 'left').setDepth(p.y + 0.2);
     }
     // a bicycle under the rider, or a car instead of them. Used for you and for co-op friends.
     drawRider(spr, ride, dir, moving, veh, color) {
@@ -1057,6 +1057,7 @@ window.LC = window.LC || {};
         case 'jong5': case 'pasar5': case 'obor5': case 'damar': case 'raja5': case 'kebo5': case 'lampir5': return this.kampongObjAction(o);   // v2.3
         case 'nenek6': case 'pinang6': case 'bunga6': case 'ally6': return this.kampongObjAction(o);   // v2.4
         case 'batu7': case 'rumah7': case 'perahu7': case 'pewarna7': case 'karang7': case 'tenun7': case 'lesung7': return this.kampongObjAction(o);   // v2.5
+        case 'arus8': case 'balang8': case 'serpih8': case 'jar8': case 'arusgate8': case 'nek8': return this.kampongObjAction(o);   // v2.6
         case 'spirit':
           if (isFood) return { label: 'Offer ' + it.name + ' to Pelita', fn: function () { self.feedGhost(sl.id); } };
           return { label: 'Spirit house', fn: function () { self.ui.openSpirit(); } };

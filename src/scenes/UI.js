@@ -406,7 +406,7 @@ window.LC = window.LC || {};
       var s = '', bright = false;
       if (this.modal) s = '';
       else if (label) { s = (this.touchOn ? '' : '[E] ') + label; bright = true; }
-      else if (this.S.riding) s = (this.S.riding === 'car' ? 'Driving the kereta' : 'Riding the basikal') + (this.touchOn ? '  (select it and press USE to get off)' : '   ·   R to get off');
+      else if (this.S.riding) s = (this.S.riding === 'car' ? 'Driving the kereta' : this.S.riding === 'naga' ? 'Riding Naga Kecil' : 'Riding the basikal') + (this.touchOn ? '  (select it and press USE to get off)' : '   ·   R to get off');
       else {
         var sl = LC.State.selItem();
         if (sl) {
@@ -502,6 +502,7 @@ window.LC = window.LC || {};
         if (hasP) {
           pg.fillStyle(0x3b2f5c, 1); pg.fillRoundedRect(84, 452, 112, 116, 8);
           por.setTexture(L.portrait === 'ghost' ? LC.ghostTex(S.ghost.stage, L.expr || 'normal') : L.portrait);
+          por.setScale(Math.min(4, 104 / por.frame.width, 108 / por.frame.height));   // (v2.6: a big portrait, like a dragon, fits its frame)
           tx = 218; ww = 650;
         }
         name.setPosition(tx, 448).setText(L.name || '');
@@ -655,7 +656,7 @@ window.LC = window.LC || {};
           var on = scroll + r === sel, dis = it.enabled === false;
           rg.fillStyle(on ? 0x4a3520 : 0x2b1f17, 1); rg.fillRoundedRect(X + 20, o.y, Wd - 40, RH - 6, 8);
           if (on) { rg.lineStyle(2, 0xffd166, 1); rg.strokeRoundedRect(X + 20, o.y, Wd - 40, RH - 6, 8); }
-          o.ic.setVisible(!!it.icon); if (it.icon) o.ic.setTexture(it.icon).setScale(it.iconScale || 2).setAlpha(dis ? 0.45 : 1);
+          o.ic.setVisible(!!it.icon); if (it.icon) { o.ic.setTexture(it.icon); var fw = o.ic.frame.width, fh = o.ic.frame.height; o.ic.setScale(it.iconScale || Math.min(2, 40 / fw, 40 / fh)).setAlpha(dis ? 0.45 : 1); }   // (v2.6: big pictures, like the dragons, fit the row)
           o.rt.setText(it.right || '').setColor(dis ? '#7a6a5a' : '#f7dd8a');
           fitLabel(o, it.label || '', it.right ? o.rt.width : 0);
           o.lb.setColor(dis ? '#7a6a5a' : '#fbecc8');

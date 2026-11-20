@@ -9,7 +9,8 @@
  *   P  Chapter 5: jump to its next step (finishes Chapters 2, 3 and 4 first)
  *   Y  Chapter 6: jump to its next step (finishes Chapters 2 to 5 first)
  *   Z  Nek Lampir the helper: switch between "unlocked (press C)" and "10 hearts, ready to make peace with Nenek" (finishes Chapter 6 first)
- *   0  Chapter 7: jump to its next step (finishes Chapters 2 to 6 first); at the end, Sang Bualang (B) and Angin Bualang (U) */
+ *   0  Chapter 7: jump to its next step (finishes Chapters 2 to 6 first); at the end, Sang Bualang (B) and Angin Bualang (U)
+ *   =  Chapter 8: jump to its next step (finishes Chapters 2 to 7 first); at the end, riding Naga Kecil (the Seruling Naga) */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -152,6 +153,23 @@ window.LC = window.LC || {};
         LC.bualangRestAt = LC.bualangDueAt = LC.anginAt = 0;
         State.recalc();
         this.toast('Chapter 7, step ' + (QZ.ch7 || 0) + ': ' + ((QZ.ch7 || 0) >= 10 ? 'complete! B calls Sang Bualang, U is Angin Bualang.' : (LC.ch7Goal() || '').replace(/^Chapter 7: /, '')) + ' (Re-enter the place to see it. The jong at the farm jetty sails to Gunung Ledang and Santubong.)', 'ic_glow');
+        return;
+      }
+      case 'Equal': {   // v2.6: jump to the next step of Chapter 8 (finishes Chapter 7 first)
+        var Q8 = S.quests, s8 = Q8.ch8 || 0;
+        if ((Q8.ch7 || 0) < 10) { Q8.ch2 = 8; Q8.ch3 = 13; Q8.kaStage = 3; Q8.asmara = 1; Q8.jinn = 1; Q8.ch3day = S.day - 5; Q8.ch4 = 4; Q8.c4wave = 5; Q8.ch4day = S.day - 4; Q8.ch5 = 5; Q8.ch5day = S.day - 3; Q8.ch6 = 7; Q8.c6day = S.day - 2; Q8.ch7 = 10; Q8.bualang = 1; Q8.pelitaSun = 1; Q8.c8wait = S.day - 1; if (!State.count('keris_majapahit')) State.add('keris_majapahit', 1); }
+        else if (s8 === 0) { Q8.ch8 = 1; Q8.c8floodDay = S.day; }
+        else if (s8 === 1) Q8.ch8 = 2;
+        else if (s8 === 2) { Q8.c8ratu = Q8.c8pos = 1; Q8.ch8 = 3; }
+        else if (s8 === 3) { Q8.c8sh = { 0: 1, 1: 1, 2: 1 }; Q8.ch8 = 4; if (!State.count('serpihan_balang')) State.add('serpihan_balang', 1); }
+        else if (s8 === 4 && !Q8.c8confess) Q8.c8confess = 1;
+        else if (s8 === 4) { Q8.ch8 = 5; if (!State.count('air_penawar')) State.add('air_penawar', 2); }
+        else if (s8 === 5) { Q8.ch8 = 6; delete Q8.c8boss; Q8.c8calmN = Q8.c8calmK = 1; }
+        else if (s8 === 6) { Q8.c8duel = 'done'; Q8.ch8 = 7; }
+        else if (s8 === 7) { Q8.ch8 = 8; Q8.nagaRide = 1; Q8.c8jar = {}; Q8.c8sealed = 0; ['serpihan_balang', 'air_penawar'].forEach(function (id) { if (State.count(id)) State.remove(id, State.count(id)); }); if (!State.count('seruling_naga')) State.add('seruling_naga', 1); }
+        else if (s8 === 8) { Q8.ch8 = 9; Q8.c8sealed = 6; Q8.c8silt = LC.C8.silt; if (State.count('balang_hitam')) State.remove('balang_hitam', State.count('balang_hitam')); }
+        State.recalc();
+        this.toast('Chapter 8, step ' + (Q8.ch8 || 0) + ': ' + ((Q8.ch8 || 0) >= 9 ? 'complete! Hold the Seruling Naga and press USE (or R) to ride Naga Kecil.' : (LC.ch8Goal() || '').replace(/^Chapter 8: /, '')) + ' (Re-enter the place to see it.)', 'ic_glow');
         return;
       }
       case 'Minus': {   // v1.7: replay Badang's story (moved from B in v2.5: B calls Sang Bualang) (skinny, by the forest pool) or make him strong again

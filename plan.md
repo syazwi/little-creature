@@ -153,6 +153,7 @@ Stilt house (bed), spirit house + frangipani, dapur (stove), well (perigi), fenc
 | C | Call Nek Lampir (after Chapter 6); in a fight with her beside you, her green circle |
 | B | Call Sang Bualang (after Chapter 7; he takes 10-20 s on the wind); in a fight with him beside you, a spin at once |
 | U | Angin Bualang: blow back every enemy around you (after Chapter 7) |
+| R | Also rides Naga Kecil (after Chapter 8): always under the sea; on land when holding the Seruling Naga (or with no bike or car) |
 
 Mouse clicks also work on all menus.
 
@@ -234,6 +235,11 @@ src/
   scenes/WorldBualang.js   calling Bualang (the wind takes time), his spin, Angin Bualang, catching up after travel, Pelita's daylight
   scenes/UISantubong.js    goal line, Journal page, the jong to Santubong, Talk rows, the rice-pounding game
   scenes/UIBualang.js      the wau and gust buttons (B, U), the edge arrow, Journal rows, the daylight switch
+  gelora.js         v2.6 Chapter 8: items, the Selat Gelora, the jars, both armies, the two dragons and the two rulers as foes, the Naga Mother and Ketos, the river silt, LC.C8 tuning, the story (LC.CH8TEXT)
+  art16.js          v2.6 textures: soldiers, ink, the dragons (furious, calm, faces), the rulers in the duel, Naga Kecil to ride, the strait, the jars, Nek's pot, spears, wave, whirlpool, jet, flood water, icons
+  scenes/WorldGelora.js the flood, the dark water, the battlefield, the dragons, the rulers' duel, the truth, the peace under the arch, the clean-up
+  scenes/WorldNaga.js   riding Naga Kecil and its water jet; livelier fights everywhere
+  scenes/UIGelora.js    goal line, Journal page, Talk rows (Tok Duyung, the rulers, Nek Lampir and her cure, the Naga Mother, Nenek)
   scenes/UIMajapahit.js    Chapter 4 Talk rows (Pak Mat, the Penghulu, Leong, Kemala, Semaun, Badang), the trading jong's shop, the goal line and Journal
   scenes/UIKampong.js      Berbai's building rows, the craftspeople's services, the padian and pilings menus, the training and cockfight games, Chapter 3 in the Journal and goal line
   cheats.js         test build only (dist/LittleCreature_full.html)
@@ -442,6 +448,13 @@ The user asked whether the game plays on an iPhone, then wanted it "to work just
 
 ### Give a friend (v2.4.3)
 The user asked whether they can share items with friends (only through shared chests before) and then asked for a direct way. Bags stay on each device, so a gift is a message, not an `LC.Sim` op: the giver takes it out of their bag first (`World.giveItem`; `LC.FIXED_ITEMS` cannot be given), `LC.Net.give` sends `gift{gid,to,id,n}` to the host, which passes it on (or takes it itself) with the giver's name; the receiver keeps what fits (`World.bagRoom`) and answers `giftRes{took}`, routed back through the host; the giver gets the rest back. A friend who left answers 0, and no answer in 10 s gives everything back. Reach: friends in the same place within 64 px (`World.friendsNear`). UI: a green **Give a friend** button under Throw away in the bag (only with friends), key G, then "who" (up to 3 names) and "how many" choices. The icon flies between the two players. Co-op protocol 17.
+
+### Chapter 8: Air Pasang (v2.6)
+The user designed it: a flood at Nenek's place that rises day by day; the player investigates and finds Nyi Roro Kidul (Kanjeng Ratu Kidul) and Poseidon at war, with soldiers and dragons fighting, both rulers with their egos, the cause being ocean pollution that Nek Lampir caused by mistake. They chose riding the Naga as the reward, a fight against two dragons, Nek Lampir helping to clean up (not punished), and more animation and effects in the war and fights. Then they added: you watch an epic one-against-one fight between Poseidon and Nyi Roro Kidul, you fight the Queen and then Poseidon to calm them down, and only after winning both do you explain what happened. (Kept respectful: the duel wears out their anger, nobody is harmed, and both stay dignified; the pride is theirs, the magic only made it bigger.)
+
+**Steps** (`quests.ch8`): 0 a day after Ch7 (`c8wait`), the flood (`c8floodDay`; one row a day from the bank, 5 at most, `wadeMult` 0.62, drawn on the farm only) · 1 Tok Duyung · 2 both rulers (`c8ratu`, `c8pos`) · 3 the Selat Gelora (`gelora` area, the `arusgate8` in Kampung Karang): 3 shards (`c8sh`) · 4 Nek Lampir confesses (`c8confess`), Air Penawar (craftRow, 3 rumpai laut + a pearl) · 5 the current opens; entering the deep starts `c8boss`: `nagaibu8` + `ketos8` at once (`c8calmN`, `c8calmK`; `calmDragon` throws the cure, the other gets `rage`) · 6 the rulers' duel: `c8DuelShow` (you watch), then `c8duel` = `kidul` (`ratu8`), `pos` (`poseidon8`), `done` (`c8Truth`); the rulers are hidden at home during step 6 · 7 the Naga Mother fetches Nek Lampir (`c8Fetch`, `c8Finale`; rewards first: `nagaRide`, the Seruling Naga, or `c8fluteOwed`) · 8 six jars (`c8jar`, `LC.C8.jarSpots`) to Nek's pot at the farm jetty (`c8sealed`) · 9 complete (`c8silt`: `LC.Home.dusk` waters the field for 7 nights). Battlefield: ambient soldier pairs, the dragons beyond the current, ink murk, volleys of spears. Boss moves are shared (`dragonWave/Pool/Beam/Slam`, with the Ch7 `bossBolt`). Test key: = (Equal).
+
+**Naga Kecil** (`WorldNaga.js`): the Seruling Naga is a vehicle item (`ride: 'naga'`, speed 2.1; `RIDE_ITEM.naga`); `canRide('naga')` = underwater or wherever a bike may go (never across water, so story bridges stay meaningful); `drawRider` draws `naga_ride_side/down/up_0/1` under the rider (co-op friends too); swings while riding fire `nagaJet`. Livelier fights (all chapters): `fightFx` after each swing, a ring on beaten foes and on blows you take, "!" on wind-ups. Dialogue portraits and menu icons now scale down to fit (big dragons). Co-op protocol 20.
 
 ### Chapter 7: Puteri Santubong (v2.5)
 The user picked the Sarawak legend of Puteri Santubong and Puteri Sejinjang (researched first: the common core is two sky princesses, a weaver and a rice-pounder, who quarrelled over Putera Serapi and became Gunung Santubong and Bukit Sejinjang; Pasir Kuning/Pasir Putih and Sang Bualang come from one less-documented telling). They asked for Puteri Gunung Ledang to be part of it, for Sang Bualang to be the villain who becomes a friend, unlocks a new power and fights beside the player, for him to take time to arrive "because he is riding the wind", and for Pelita's "bright as day" power as the reward. Nenek is from Santubong (her name, Minah, and her father the trader who ordered the brass lamp are this game's own story).
