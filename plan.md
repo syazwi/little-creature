@@ -179,6 +179,7 @@ index.html          canvas host, loads scripts
 plan.md             this document
 README.md           how to run, controls, credits
 lib/phaser.min.js   vendored engine
+music/ulek-mayang.mp3  a recording of the Chapter 9 songs, made from lagu.js offline (OfflineAudioContext + lamejs, 192 kbps): the woman's song twice (0:00), Pak Awang's hum (0:51), Lagu Mayang twice (1:12). For listening only; the game never loads it, the APK leaves it out
 src/
   data.js           items, crops, recipes, offerings, stages, levels, forage, fishing tables, houses, farm map, dialogue
   areas.js          every place: tile maps, objects, exits/gates, critters, ambience (v1.3)
