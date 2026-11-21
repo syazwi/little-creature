@@ -57,7 +57,7 @@ window.LC = window.LC || {};
         return;
       }
       var by = (t.y + 1) * T, o = { type: 'khemah' };
-      this.tentSpr = { img: this.add.image((t.x + 1) * T, by, 'khemah').setOrigin(0.5, 1).setDepth(by), x: t.x, y: t.y };
+      this.tentSpr = { img: this.add.image((t.x + 1) * T, by, 'khemah_tent').setOrigin(0.5, 1).setDepth(by), x: t.x, y: t.y };
       for (var d = 0; d < 2; d++) { this.solid[t.y][t.x + d] = true; this.objAt[t.y][t.x + d] = o; }
     },
     pitchTent: function (x, y) {

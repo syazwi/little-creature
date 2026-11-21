@@ -27,7 +27,7 @@ window.LC = window.LC || {};
       gifts: { 3: ['canang', 2], 6: ['kepeng', 300], 10: ['mutiara', 2] }
     },
     mat: {
-      name: 'Pak Mat', role: 'Fisherman', post: { x: 26, y: 24 },
+      name: 'Pak Mat', role: 'Fisherman', post: { x: 27, y: 24 },   // (v2.7.6: was x 26, behind a torch)
       look: { skin: '#9a6440', shirt: '#d9d0b4', shirt2: '#b8ae90', bottom: '#3e5fa8', bottom2: '#2c4583', hair: '#3a2a20', hat: 'terendak' },
       intro: [
         'Heh! A new face at my jetty. I am Pak Mat. Forty years I have fished this river.',
@@ -109,7 +109,7 @@ window.LC = window.LC || {};
 
     // ---- v1.4: getting around
     zul: {
-      name: 'Abang Zul', role: 'Mechanic', post: { x: 40, y: 13 },
+      name: 'Abang Zul', role: 'Mechanic', post: { x: 40, y: 16 },   // (v2.7.6: in front of his shop, not behind its roof)
       look: { skin: '#a8714a', shirt: '#3a6a9a', shirt2: '#2a4e74', bottom: '#3a6a9a', bottom2: '#2a4e74', hair: '#1a1210', hat: 'cap' },
       intro: [
         'Yo! Abang Zul. I fix bicycles, motorbikes, water pumps... anything with a spanner-shaped problem.',
@@ -163,7 +163,7 @@ window.LC = window.LC || {};
   LC.MOVE_IN = ['siti', 'lai', 'dewi', 'mai'];
   LC.CLEAN_GIFTS = { 10: ['mutiara', 1], 25: ['kepeng', 400], 50: ['pinggan_lama', 2] };   // Tok Duyung, for rubbish handed in
   // where each plot's villager stands (in front of the house)
-  LC.PLOT_POSTS = { plotA: { x: 29, y: 7 }, plotB: { x: 36, y: 7 }, plotC: { x: 6, y: 13 }, plotD: { x: 13, y: 13 } };
+  LC.PLOT_POSTS = { plotA: { x: 29, y: 7 }, plotB: { x: 36, y: 7 }, plotC: { x: 6, y: 17 }, plotD: { x: 13, y: 17 } };   // (v2.7.6: C and D stood behind their roofs at y 13)
 
   // ------------------------------------------------------------------ spirits of the land
   LC.SPIRITS = {

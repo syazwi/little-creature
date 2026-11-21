@@ -261,10 +261,13 @@ window.LC = window.LC || {};
       if (!Tr) return;
       var keep = {}, g = this.grid;
       function mark(x, y, r) { for (var dy = -r; dy <= r; dy++) for (var dx = -r; dx <= r; dx++) keep[(x + dx) + ',' + (y + dy)] = 1; }
-      LC.SPIRIT_ORDER.forEach(function (sid) { var sp = LC.SPIRITS[sid]; if (sp.area === self.area) mark(sp.x, sp.y, 2); });
-      LC.villagerPosts(this.area).forEach(function (p) { mark(p.x, p.y, 2); });
+      // v2.7.6: a tree is drawn up to 3 rows above its trunk, so keep 3 rows below anyone standing still clear too
+      function markWho(x, y) { mark(x, y, 2); for (var dx = -2; dx <= 2; dx++) keep[(x + dx) + ',' + (y + 3)] = 1; }
+      LC.SPIRIT_ORDER.forEach(function (sid) { var sp = LC.SPIRITS[sid]; if (sp.area === self.area) markWho(sp.x, sp.y); });
+      LC.villagerPosts(this.area).forEach(function (p) { markWho(p.x, p.y); });
       (this.A.clear || []).forEach(function (c) { mark(c.x, c.y, c.r); });   // v1.7: e.g. where the river hantu sits
-      Object.keys(LC.PLOT_POSTS).forEach(function (k) { if (self.area === 'kampung') mark(LC.PLOT_POSTS[k].x, LC.PLOT_POSTS[k].y, 2); });
+      Object.keys(LC.PLOT_POSTS).forEach(function (k) { if (self.area === 'kampung') markWho(LC.PLOT_POSTS[k].x, LC.PLOT_POSTS[k].y); });
+      Object.keys(this.S.chests || {}).forEach(function (cid) { var c = self.S.chests[cid]; if (c.area === self.area) keep[c.x + ',' + c.y] = 1; });   // (never grow a tree through your chest)
       mark(Math.floor(this.A.home.x), Math.floor(this.A.home.y), 3);
       this.objects.forEach(function (o) {   // never hide a building or a house plot behind a tree
         if (o.type !== 'plot' && o.type !== 'bldg' && !o.keep) return;

@@ -80,7 +80,7 @@ window.LC = window.LC || {};
     var make = Art.make;
     make(scene, 'masjid', 96, 96, drawMasjid, true);
     make(scene, 'ic_masjid', 12, 12, iconMasjid, true);
-    make(scene, 'khemah', 32, 28, drawKhemah, true);
+    make(scene, 'khemah_tent', 32, 28, drawKhemah, true);   // (v2.7.6: not 'khemah', which is the brothers' camp in Barunai)
     make(scene, 'i_khemah', 16, 16, iconKhemah, true);
   };
 })(window.LC);

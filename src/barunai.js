@@ -109,7 +109,7 @@ window.LC = window.LC || {};
     ['berbai', 'Pateh Berbai', 'the thoughtful brother', 'barunai', [6, 5], [9, 12], look('#3a6a4a', 'tanjak', { beard: '#5a5a5a' }), ['kayu', 5], 'They say I think too much. I say someone has to.'],
     ['sari', 'Damang Sari', 'the quiet fisherman', 'barunai', [41, 12], [12, 12], look('#6a4a8a', 'headband'), ['ikan_keli', 2], 'I would rather fish than talk. But here I am, talking.'],
     ['mambang', 'Pateh Mambang', 'the cheerful trader', 'kampung', [31, 15], [15, 12], look('#8a6a2a', 'tanjak'), ['nasi_lemak', 1], 'I trade a little, cook a little, and sing a lot.'],
-    ['sindayong', 'Pateh Sindayong', 'the boat mender', 'kampung', [22, 23], [26, 7], look('#3a3a6a', 'tanjak'), ['rotan', 2], 'I mend boats. One day I will build a big one.'],
+    ['sindayong', 'Pateh Sindayong', 'the boat mender', 'kampung', [22, 23], [25, 7], look('#3a3a6a', 'tanjak'), ['rotan', 2], 'I mend boats. One day I will build a big one.'],
     ['tuba', 'Pateh Tuba', 'the honey gatherer', 'forest', [16, 10], [28, 12], look('#2a6a6a', 'headband'), ['madu_tualang', 1], 'The forest is my house, and the bees are my neighbours.'],
     ['lebar', 'Damang Lebar Daun', 'the herbalist', 'forest', [24, 20], [31, 12], look('#4a7a3a', 'leaf'), ['herba', 3], 'I know every leaf in the forest, and which ones heal.'],
     ['sangkuna', 'Pateh Sangkuna', 'the tide reader', 'island', [20, 19], [34, 12], look('#3a5a8a', 'terendak'), ['kerang', 3], 'I read the tides the way other people read letters.'],
@@ -117,7 +117,7 @@ window.LC = window.LC || {};
     ['manggurun', 'Pateh Manggurun', 'the patient one', 'mountain', [24, 16], [40, 12], look('#5a5a6a', 'tanjak_red'), ['daun_teh', 3], 'The mountain wind taught me to be patient.'],
     ['laila', 'Pateh Laila Langgong', 'the singer', 'mountain', [8, 18], [28, 7], look('#7a3a5a', 'tanjak_gold'), ['strawberi', 3], 'I sing to the mist, and sometimes it sings back.'],
     ['malakai', 'Pateh Malakai', 'the dune walker', 'desert', [20, 9], [17, 7], look('#a8843a', 'headband'), ['buah_naga', 2], 'The dunes are hot, but the people here are warm.'],
-    ['pahit', 'Pateh Pahit', 'the farmer', 'farm', [24, 24], [19, 7], look('#5a7a3a', 'terendak'), ['padi', 3], 'Pahit means bitter. I am not bitter! Only my coffee is.']
+    ['pahit', 'Pateh Pahit', 'the farmer', 'farm', [24, 24], [20, 7], look('#5a7a3a', 'terendak'), ['padi', 3], 'Pahit means bitter. I am not bitter! Only my coffee is.']
   ];
   LC.BROTHERS = BRO.map(function (b) { return b[0]; });
   BRO.forEach(function (b) {
