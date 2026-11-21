@@ -351,8 +351,6 @@ The soundtrack is a slow, chill, gamelan-inspired lo-fi piece: warm pads, soft m
 
 In a fight, a **battle song** crossfades in: a kendang drum groove, a gong every two bars, a low ostinato and a pelog-flavoured saron tune. It is made of tuned tones rather than noise, so it never turns into hiss, and it fades back to the calm music a few seconds after the fight. **Pause → Sound & music** has a volume slider for each part (music, battle music, sound effects, nature and rain); the battle-music row plays a preview while you adjust it. Setting battle music to 0% keeps the calm music playing during fights.
 
-**Listen to the Ulek Mayang songs:** [`music/ulek-mayang.mp3`](music/ulek-mayang.mp3) (1:25) is a recording of the singing voices from Chapter 9, made from the game's own sound code. It plays the woman's song you follow through the fog (twice, from 0:00), then Pak Awang's hum from the sea (0:51), then **Lagu Mayang**, the song you learn (twice, from 1:12). The melody and verses are the game's own, not the traditional tune. The game does not use this file; it still makes every sound live.
-
 ## Building it yourself
 
 Everything that ships comes from the same web code at the repository root.
@@ -387,7 +385,6 @@ src/                  game code: data, areas (maps of every place), folk (villag
                       UISettings, UIBadang, UIHome, UIBarunai, UIKampong, UIKampong2, UIMajapahit, UIBayang, UILedang, UINek, UISantubong, UIBualang, UIGelora, UIMayang)
 lib/                  Phaser 3.80.1 (MIT), PeerJS 1.5.4 (MIT) and the Pixelify Sans font (SIL OFL 1.1), vendored
 icons/                app icons
-music/                ulek-mayang.mp3, a recording of the Chapter 9 songs (to listen to; the game does not load it)
 android/              Android wrapper app (WebView). It packages the web game from the root at build time.
 tools/                build-web.mjs (single-file HTML, and the version stamp), make-icons.mjs, build.ps1
 manifest.webmanifest  web-app metadata for hosted play
