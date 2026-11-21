@@ -38,14 +38,15 @@ window.LC = window.LC || {};
   };
 
   A.init = function () {
-    if (A.ctx) { if (A.ctx.state !== 'running' && A.ctx.state !== 'closed' && !document.hidden) A.ctx.resume(); return; }
+    if (A.ctx) { A.resume(); return; }
     var AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     try { A.ctx = new AC(); } catch (e) { return; }
     var c = A.ctx;
     A.master = c.createGain(); A.master.gain.value = 0.75; A.master.connect(c.destination);
     // generated hall reverb
-    A.verb = c.createConvolver(); A.verb.buffer = makeImpulse(c, 3.4, 2.4);
+    A.verb = c.createConvolver();
+    A.verb.buffer = makeImpulse(c, LC.MOBILE ? 0.8 : 3.4, 2.4, LC.MOBILE ? 1 : 2);
     A.verbIn = c.createGain(); A.verbIn.gain.value = 1;
     A.verbIn.connect(A.verb); A.verb.connect(A.master);
     // buses
@@ -68,12 +69,13 @@ window.LC = window.LC || {};
     for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
     A.noiseBuf = buf;
     A.startRiver();
+    c.addEventListener('statechange', syncMusicTimer);
     A.startMusic();
   };
 
-  function makeImpulse(c, seconds, decay) {
-    var rate = c.sampleRate, len = Math.floor(rate * seconds), ir = c.createBuffer(2, len, rate);
-    for (var ch = 0; ch < 2; ch++) {
+  function makeImpulse(c, seconds, decay, channels) {
+    var rate = c.sampleRate, len = Math.floor(rate * seconds), ir = c.createBuffer(channels, len, rate);
+    for (var ch = 0; ch < channels; ch++) {
       var d = ir.getChannelData(ch);
       for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay) * (i < rate * 0.012 ? i / (rate * 0.012) : 1);
     }
@@ -171,12 +173,23 @@ window.LC = window.LC || {};
   A.setRain = function (on) {
     A.rainOn = !!on;
     if (!A.ctx || !A.noiseBuf) return;
-    if (!A.rain) {
-      var c = A.ctx, s = c.createBufferSource(), hp = c.createBiquadFilter(), g = c.createGain();
-      s.buffer = A.noiseBuf; s.loop = true; hp.type = 'highpass'; hp.frequency.value = 1800; g.gain.value = 0;
-      s.connect(hp); hp.connect(g); g.connect(A.amb); s.start(); A.rain = g;
+    var c = A.ctx, t = c.currentTime;
+    if (!A.rainOn) {
+      if (A.rain) {
+        A.rain.g.gain.setTargetAtTime(0, t, 0.2);
+        A.rain.source.stop(t + 1);
+        A.rain = null;
+      }
+      return;
     }
-    A.rain.gain.setTargetAtTime(A.rainOn ? 0.13 : 0, A.ctx.currentTime, 0.8);
+    if (!A.rain) {
+      var s = c.createBufferSource(), hp = c.createBiquadFilter(), g = c.createGain();
+      s.buffer = A.noiseBuf; s.loop = true; hp.type = 'highpass'; hp.frequency.value = 1800; g.gain.value = 0;
+      s.connect(hp); hp.connect(g); g.connect(A.amb);
+      s.onended = function () { s.disconnect(); hp.disconnect(); g.disconnect(); };
+      s.start(); A.rain = { source: s, g: g };
+    }
+    A.rain.g.gain.setTargetAtTime(0.13, t, 0.8);
   };
   A.drip = function (t) {
     var d = pan(A.amb, rnd(-0.8, 0.8)), f = rnd(900, 1500);
@@ -233,11 +246,16 @@ window.LC = window.LC || {};
   };
 
   // ------------------------------------------------------------- sequencer
+  function syncMusicTimer() {
+    var active = A.ctx && A.ctx.state === 'running' && !document.hidden;
+    if (active && !A.timer) A.timer = setInterval(A.tick, 100);
+    else if (!active && A.timer) { clearInterval(A.timer); A.timer = null; }
+  }
+
   A.startMusic = function () {
     A.step = 0; A.next = A.ctx.currentTime + 0.4;
     A.nextBird = A.ctx.currentTime + 1.5; A.nextCricket = A.ctx.currentTime + 0.5; A.nextFrog = A.ctx.currentTime + 3;
-    if (A.timer) clearInterval(A.timer);
-    A.timer = setInterval(A.tick, 60);
+    syncMusicTimer();
   };
   A.tick = function () {
     var c = A.ctx; if (!c || c.state !== 'running') return;
@@ -245,7 +263,7 @@ window.LC = window.LC || {};
     if (A.next < now - 0.5) A.next = now + 0.05;     // tab was asleep
     var song = A.night ? NIGHT : DAY, spb = 60 / song.bpm, ducked = A.battleDucks();
     while (A.next < now + 0.35) {
-      if (A.musicOn && !ducked) A.playStep(song, A.step, A.next, spb);
+      if (A.musicOn && A.vol.music > 0 && !ducked) A.playStep(song, A.step, A.next, spb);
       A.next += spb; A.step++;
     }
     // v1.6: the battle song (it plays on for a few seconds after a fight, while it fades out)
@@ -256,7 +274,7 @@ window.LC = window.LC || {};
       var bs = 60 / BATTLE.bpm / 2;
       while (A.bNext < now + 0.3) { A.battleStep(A.bStep, A.bNext, bs); A.bNext += bs; A.bStep++; }
     }
-    if (A.ambienceOn) {
+    if (A.ambienceOn && A.vol.amb > 0) {
       if (!A.night && now >= A.nextBird) { A.bird(now + 0.05); A.nextBird = now + rnd(2.5, 7) / A.areaSound.birds; }
       if (A.night && now >= A.nextCricket) { A.cricket(now + 0.05); A.nextCricket = now + rnd(0.5, 1.4); }
       if (A.night && now >= A.nextFrog && !A.areaSound.drips) { A.frog(now + 0.05); A.nextFrog = now + rnd(3, 8); }
@@ -355,12 +373,19 @@ window.LC = window.LC || {};
     A.applyVolumes();
     return A.ambienceOn;
   };
-  A.suspend = function () { if (A.ctx && A.ctx.state === 'running') A.ctx.suspend(); };
-  A.resume = function () { if (A.ctx && A.ctx.state !== 'running' && A.ctx.state !== 'closed') A.ctx.resume(); };   // (Safari also has 'interrupted')
+  A.suspend = function () {
+    if (A.timer) { clearInterval(A.timer); A.timer = null; }
+    if (A.ctx && A.ctx.state === 'running') A.ctx.suspend().catch(function () {});
+  };
+  A.resume = function () {
+    if (!A.ctx || document.hidden || A.ctx.state === 'closed') return;
+    if (A.ctx.state !== 'running') A.ctx.resume().catch(function () {});   // Safari can also be 'interrupted'
+    else syncMusicTimer();
+  };
 
   // ------------------------------------------------------------- sound effects (soft and short)
   A.sfx = function (name) {
-    if (!A.ctx || A.ctx.state !== 'running') return;
+    if (!A.ctx || A.ctx.state !== 'running' || !A.vol.sfx) return;
     var t = A.ctx.currentTime + 0.01, i;
     switch (name) {
       case 'till': A.noise(t, 0.12, 0.3, 'lowpass', 700); A.tone(t, 'sine', 110, 55, 0.12, 0.25); break;

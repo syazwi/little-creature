@@ -57,6 +57,8 @@
   // ---- iPhone and iPad (Safari). iPads say they are Macs, but Macs have no touch screen.
   var ua = navigator.userAgent || '';
   LC.IOS = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  LC.MOBILE = LC.PLATFORM === 'android' || LC.IOS || /Android|Mobile/i.test(ua) ||
+    !!(navigator.maxTouchPoints && window.matchMedia && matchMedia('(pointer: coarse)').matches);
   LC.STANDALONE = navigator.standalone === true || !!(window.matchMedia &&
     (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches));
   // In Safari itself (not yet on the Home Screen) the title screen explains how to install it.
@@ -161,8 +163,7 @@
   // ---- Sound on iPhones: Safari only lets sound start when a tap ENDS, and can leave it "interrupted" after a call
   // or the lock screen. Every tap (and key) gently wakes it up again.
   function wakeSound() {
-    var c = LC.Audio && LC.Audio.ctx;
-    if (c && c.state !== 'running' && c.state !== 'closed' && !document.hidden) { try { c.resume(); } catch (e) { /* not now */ } }
+    LC.Audio.resume();
   }
   ['pointerup', 'touchend', 'keydown'].forEach(function (ev) {
     window.addEventListener(ev, function () { wakeSound(); keepAwake(); }, true);
@@ -189,6 +190,9 @@
       backgroundColor: '#120d0a',
       pixelArt: true,
       roundPixels: true,
+      // A little headroom above 30 keeps the cap aligned with every other 60 Hz display frame.
+      fps: LC.MOBILE ? { limit: 31, smoothStep: false } : {},
+      render: { powerPreference: LC.MOBILE ? 'low-power' : 'default' },
       input: { activePointers: 3 },
       scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
       scene: [LC.BootScene, LC.TitleScene, LC.WorldScene, LC.UIScene]
