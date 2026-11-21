@@ -535,6 +535,7 @@ The user picked the Sarawak legend of Puteri Santubong and Puteri Sejinjang (res
 ---
 
 ## 9. Out of scope (future ideas)
+- **More weapons (agreed, not built yet):** the five today (Tongkat Rotan 1, Parang 2, Keris Lok Tujuh 4, Keris Majapahit 5, Trisula Laut 5) differ only in damage, reach and speed, and nothing new comes after Chapter 4. Add two, each a new way to fight: a **Sumpit** (blowpipe, the first ranged weapon, a Borneo fit) and a **late reward** such as a gold keris from the Puaka Emas (6-7 damage with a small special effect). Five plus these two is enough; more would only be bigger numbers.
 - Interiors, and upgrading your own house and farm buildings.
 - A night market (pasar malam), wayang kulit nights, sepak takraw with the villagers.
 - Saving a co-op guest's villager friendships and fish log with their bag.
