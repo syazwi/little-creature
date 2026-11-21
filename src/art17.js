@@ -306,6 +306,13 @@ window.LC = window.LC || {};
         { f: '#5a3a20', d: '#a0683a', k: '#ffd166' }, 2, 1);
       p.rect(4, 2, 1, 7, '#b87a48');
     },
+    ic_stats: function (p) {   // v2.8: three bars
+      p.rect(1, 7, 2, 4, '#ff8a7a'); p.rect(4, 4, 2, 7, '#ffd166'); p.rect(7, 1, 2, 10, '#9be15d'); p.rect(0, 11, 11, 1, '#e8dcc0');
+    },
+    ic_comp: function (p) {   // v2.8: you and a little spirit, hand in hand
+      p.str(['..hh......', '..hh...ss.', '.bbbb.ssss', 'b.bb.bsees', '..bb..ssss', '..bb..s.s.', '.b..b.....', '.b..b.....'],
+        { h: '#e0b48a', b: '#6fb2dc', s: '#e8f0ff', e: '#2a2a3a' }, 1, 2);
+    },
     ic_font: function (p) {   // v2.7.8: "Aa"
       p.str(['..A.......', '.A.A......', '.A.A......', 'A...A..aa.', 'AAAAA....a', 'A...A..aaa', 'A...A.a..a', 'A...A..aaa'],
         { A: '#ffd166', a: '#e8dcc0' }, 1, 2);

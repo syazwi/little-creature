@@ -653,7 +653,7 @@ window.LC = window.LC || {};
     openMenu(cfg) {
       this.closeModal();
       // v1.8.1: roomier cards (5 to a page) whose text always fits: a long description shrinks, then is shortened
-      var self = this, S = this.S, tab = 0, sel = 0, scroll = 0, VIS = 5, m;
+      var self = this, S = this.S, tab = cfg.tab > 0 && cfg.tab < cfg.tabs.length ? cfg.tab : 0, sel = 0, scroll = 0, VIS = 5, m;   // (v2.8: cfg.tab, the tab to start on)
       var X = 90, Y = 46, Wd = 780, Hd = 578, RH = 84;
       var c = this.modalC(90, 0x000000, 0.45);
       var bg = this.add.graphics(); this.panel(bg, X, Y, Wd, Hd); c.add(bg);
@@ -1064,7 +1064,7 @@ window.LC = window.LC || {};
     openPause() {
       var self = this;
       // v2.7.3: every tile its own picture (the rows from other files too), matched by the start of its name
-      var ICONS = [['Resume', 'ic_play'], ['Journal', 'ic_book'], ['Save', 'ic_save'], ['Load', 'ic_load'], ['Sound', 'ic_sound'], ['Music', 'ic_note'],
+      var ICONS = [['Resume', 'ic_play'], ['Journal', 'ic_book'], ['My stats', 'ic_stats'], ['Companions', 'ic_comp'], ['Save', 'ic_save'], ['Load', 'ic_load'], ['Sound', 'ic_sound'], ['Music', 'ic_note'],
         ['Touch', 'ic_phone'], ['Fullscreen', 'ic_fullscr'], ['Font', 'ic_font'], ['Update', 'ic_update'], ['Jump scares', 'ic_scare'], ['Story helper', 'ic_list'],
         ['Guide arrow', 'ic_list'], ['Controls', 'ic_pad'], ['Quit', 'ic_door'], ['Leave', 'ic_door']];
       function gridIcon(r) {
@@ -1088,7 +1088,12 @@ window.LC = window.LC || {};
           return [
             { icon: 'ic_sun', label: 'Resume', sub: 'Back to the kampung.', action: function () { return 'close'; } },
             { icon: 'ic_bond', label: 'Journal', sub: 'Villager requests, places, spirits, fish and Pelita\'s levels. Press J anytime.', action: function () { self.openJournal(); } },
-            { icon: 'ic_map', label: 'Map', sub: 'This place, and the whole land. Press M anytime' + (self.touchOn ? ' (or tap MAP).' : '.'), action: function () { self.openMap(); } }
+            { icon: 'ic_map', label: 'Map', sub: 'This place, and the whole land. Press M anytime' + (self.touchOn ? ' (or tap MAP).' : '.'), action: function () { self.openMap(); } },
+            { icon: 'ic_stats', label: 'My stats', sub: 'Health, energy, strength, attack, speed, kepeng, Pelita\'s level, abilities and records.', action: function () { self.openStats(0); } },   // v2.8
+            (function () {
+              var n = self.world.companionCount ? self.world.companionCount() : 0;
+              return { icon: 'ic_comp', label: 'Companions: ' + (n ? n + ' with you' : 'None'), sub: 'Who travels with you and what each one does for you. Send them home, or bring a spirit friend along.', action: function () { self.openStats(1); } };
+            })()
           ].concat(coop, [
             N.isGuest() ? { icon: 'ic_bond', label: 'Save my bag', sub: 'Your bag, kepeng, strength and quests are kept on this device. ' + N.hostName + ' saves the farm itself.', action: function () { self.toast(LC.State.save() ? 'Your bag is saved.' : 'Could not save: browser storage is blocked.', 'ic_bond'); return 'close'; } }
               : { icon: 'ic_bond', label: 'Save game', sub: 'Choose a slot (1-' + LC.SAVE_SLOTS + '). You are playing slot ' + LC.State.slot + '.', action: function () { self.openSaves('save'); } },

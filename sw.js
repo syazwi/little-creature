@@ -6,7 +6,7 @@
  * dist/ (the version news and the downloads) always comes from the internet. */
 
 // ---- stamped by tools/build-web.mjs on every build (do not edit by hand): the version, and every file the game needs
-var CACHE = 'little-creature-35-20261121081710';
+var CACHE = 'little-creature-36-20261121090118';
 var FILES = [
   './', 'index.html', 'manifest.webmanifest', 'lib/phaser.min.js', 'lib/peerjs.min.js', 'src/version.js',
   'src/update.js', 'src/data.js', 'src/areas.js', 'src/folk.js', 'src/data2.js', 'src/areas2.js', 'src/undersea.js',
@@ -27,8 +27,9 @@ var FILES = [
   'src/scenes/UIKampong2.js', 'src/scenes/UIMajapahit.js', 'src/scenes/UIBayang.js', 'src/scenes/UILedang.js',
   'src/scenes/UINek.js', 'src/scenes/UISantubong.js', 'src/scenes/UIBualang.js', 'src/scenes/UIGelora.js',
   'src/scenes/UIMayang.js', 'src/scenes/UIGuide.js', 'src/scenes/UIChecklist.js', 'src/scenes/UIMasjid.js',
-  'src/scenes/WorldField.js', 'src/scenes/WorldKhemah.js', 'src/main.js', 'lib/fonts/PixelifySans-latin.woff2',
-  'lib/fonts/PixelifySans-latin-ext.woff2', 'icons/icon-192.png', 'icons/icon-512.png'
+  'src/scenes/UICompanions.js', 'src/scenes/WorldField.js', 'src/scenes/WorldKhemah.js', 'src/main.js',
+  'lib/fonts/PixelifySans-latin.woff2', 'lib/fonts/PixelifySans-latin-ext.woff2', 'icons/icon-192.png',
+  'icons/icon-512.png'
 ];
 // ---- end of stamp
 

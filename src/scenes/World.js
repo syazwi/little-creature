@@ -394,7 +394,7 @@ window.LC = window.LC || {};
         }
       }
       if (vx || vy) {
-        var ride = this.S.riding, mult = (ride ? LC.ITEMS[RIDE_ITEM[ride]].speed : this.A.underwater ? 0.8 : 1) * (this.wadeMult ? this.wadeMult() : 1);   // (v2.6: wading through the flood)
+        var ride = this.S.riding, mult = (ride ? LC.ITEMS[RIDE_ITEM[ride]].speed : this.A.underwater ? 0.8 : 1) * (this.wadeMult ? this.wadeMult() : 1) * (this.compSpeed ? this.compSpeed() : 1);   // (v2.6: wading through the flood; v2.8: the Kenyalang or Si Tanggang beside you)
         var len = Math.hypot(vx, vy), sp = (this.S.energy <= 0 && !ride ? 48 : 74) * mult * dt * analog;
         var nx = p.x + vx / len * sp, ny = p.y + vy / len * sp;
         if (!this.blockedAt(nx, p.y)) p.x = nx;
@@ -1174,11 +1174,11 @@ window.LC = window.LC || {};
 
     // Personal costs (energy, water, seeds) are paid here; the shared world changes via doShared/LC.Sim.
     till(tx, ty) {
-      var S = this.S;
+      var S = this.S, self = this;
       if (!this.useEnergy(2)) return;
       this.fx.dirt.explode(7, tx * T + 8, ty * T + 10);
       LC.Audio.sfx('till'); this.bump(); S.flags.tilled = true;
-      this.doShared('till', { x: tx, y: ty }, function (ok) { if (!ok) S.energy += 2; });
+      this.doShared('till', { x: tx, y: ty }, function (ok) { if (!ok) S.energy += 2; else if (self.companionTill) self.companionTill(); });
     }
     water(tx, ty) {
       var S = this.S;
@@ -1207,7 +1207,8 @@ window.LC = window.LC || {};
       this.doShared('harvest', { x: tx, y: ty }, function (res) {
         if (!res || !res.item) { self.toast('Too slow! A friend already harvested that one.'); return; }
         LC.State.add(res.item, res.count);
-        self.toast('+' + res.count + ' ' + LC.ITEMS[res.item].name + (def.paddy && LC.State.friend('semangat') ? '  (blessed by the Semangat Padi)' : ''), 'i_' + res.item);
+        var cb = self.companionBonus ? self.companionBonus('harvest', res.item) : '';   // v2.8
+        self.toast('+' + res.count + ' ' + LC.ITEMS[res.item].name + (def.paddy && LC.State.friend('semangat') ? '  (blessed by the Semangat Padi)' : '') + cb, 'i_' + res.item);
         self.S.flags.harvested = true;
       });
     }
@@ -1235,7 +1236,7 @@ window.LC = window.LC || {};
         if (res.days) { noFruit(res.days); return; }
         LC.State.add(res.item, res.count);
         self.fx.leaf.explode(10, spr.x, spr.y - spr.height * 0.6);
-        self.toast('+' + res.count + ' ' + LC.ITEMS[res.item].name, 'i_' + res.item);
+        self.toast('+' + res.count + ' ' + LC.ITEMS[res.item].name + (self.companionBonus ? self.companionBonus('tree', res.item) : ''), 'i_' + res.item);
       });
     }
     forage(o) {
@@ -1250,7 +1251,8 @@ window.LC = window.LC || {};
         (o.kind === 'boulder' || o.kind === 'clay' || o.kind === 'goldvein' ? self.fx.dirt : self.fx.leaf).explode(8, spr.x, spr.y - 6);
         if (o.kind === 'goldvein' || o.kind === 'crystal') { LC.Audio.sfx('mine'); self.fx.sparkle.explode(6, spr.x, spr.y - 8); S.stats.gold = (S.stats.gold || 0) + res.count; }
         var strUp = o.kind === 'boulder' || o.kind === 'goldvein' ? (Math.random() < 0.3 ? LC.State.gainStr(1) : 0) : 0;
-        self.toast('+' + (res.count + bonus) + ' ' + LC.ITEMS[res.item].name + (bonus ? '  (the Queen\'s blessing)' : '') + (strUp ? '  +1 strength' : ''), 'i_' + res.item);
+        var cb = self.companionBonus ? self.companionBonus('forage', res.item, o) : '';   // v2.8: the Orang Bunian
+        self.toast('+' + (res.count + bonus) + ' ' + LC.ITEMS[res.item].name + (bonus ? '  (the Queen\'s blessing)' : '') + (strUp ? '  +1 strength' : '') + cb, 'i_' + res.item);
         if (res.extra && LC.State.add(res.extra, 1)) {
           LC.Audio.sfx('chime'); self.fx.sparkle.explode(12, spr.x, spr.y - 6);
           self.toast('Something special! You found a ' + LC.ITEMS[res.extra].name + '!', 'i_' + res.extra);

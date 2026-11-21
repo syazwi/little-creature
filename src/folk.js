@@ -173,7 +173,8 @@ window.LC = window.LC || {};
       meet: 'A tiny golden glow is resting on the bund between the rice plots. It hums like wind through ripe grain.',
       wish: { padi: 5, marigold: 1 }, wishText: 'It looks hungrily at the empty paddy... it wishes for 5 padi and a marigold, to know this field is loved.',
       thanks: 'The Semangat Padi spins with joy. From now on, every rice harvest gives 2 extra padi.',
-      blessing: '+2 padi from every rice harvest', color: 0xffe08a
+      blessing: '+2 padi from every rice harvest', color: 0xffe08a,
+      perk: '+1 extra from every crop you harvest'   // v2.8: only while it travels with you (UICompanions.js)
     },
     bunian: {
       name: 'Orang Bunian', title: 'the hidden folk of the forest', area: 'forest', x: 20, y: 17,
@@ -181,7 +182,8 @@ window.LC = window.LC || {};
       meet: 'Leaves rustle with no wind. A small green figure in a leaf hat peeks out from behind a fern!',
       wish: { cendawan: 3, kuih_pandan: 1 }, wishText: 'The little one points at the mushrooms, then at your bag... it wishes for 3 cendawan and a kuih pandan.',
       thanks: 'The Bunian bows politely. Each morning it will leave forest gifts on your doorstep.',
-      blessing: 'Leaves 2 forest gifts on your doorstep each morning', color: 0x9be15d
+      blessing: 'Leaves 2 forest gifts on your doorstep each morning', color: 0x9be15d,
+      perk: '+1 extra from every forage plant and fruit tree'   // v2.8: only while it travels with you (UICompanions.js)
     },
     naga: {
       name: 'Naga Kecil', title: 'a young river serpent', area: 'island', x: 40, y: 17,
@@ -189,7 +191,8 @@ window.LC = window.LC || {};
       meet: 'Something blue and gold coils in the shallows. A young naga lifts its crested head and blinks at you.',
       wish: { ikan_kembung: 2, sotong: 1, kerang: 3 }, wishText: 'It sniffs your fishing rod and shell basket... it wishes for 2 ikan kembung, 1 sotong and 3 kerang.',
       thanks: 'The naga swirls the water into rainbows. Fish now bite faster, the reeling zone is wider, and rare fish come more often. And with its blessing you can breathe underwater: dive at the bubbles off the north-east shore to visit Kampung Karang, the village beneath the waves!',
-      blessing: 'Breathe underwater, faster bites, easier reeling, more rare fish', color: 0x6fd6e8
+      blessing: 'Breathe underwater, faster bites, easier reeling, more rare fish', color: 0x6fd6e8,
+      perk: 'A 1 in 3 chance of a second fish with every catch'   // v2.8: only while it travels with you (UICompanions.js)
     },
     kenyalang: {
       name: 'Kenyalang', title: 'the hornbill messenger', area: 'mountain', x: 36, y: 15,
@@ -197,7 +200,8 @@ window.LC = window.LC || {};
       meet: 'A great black-and-white hornbill with a glowing orange casque is perched on the rocks. Its wingbeats sound like rushing wind.',
       wish: { strawberi: 3, mangga: 2 }, wishText: 'The kenyalang clacks its big beak at your fruit... it wishes for 3 strawberi and 2 mangga.',
       thanks: 'The kenyalang spreads its wings over you. You feel light as a feather: +30 max energy.',
-      blessing: '+30 max energy', color: 0xffa040
+      blessing: '+30 max energy', color: 0xffa040,
+      perk: 'You walk 15% faster'   // v2.8: only while it travels with you (UICompanions.js)
     },
     nuno: {
       name: 'Nuno sa Punso', title: 'the old one of the mound', area: 'desert', x: 22, y: 18,
@@ -205,7 +209,8 @@ window.LC = window.LC || {};
       meet: 'A tiny old man with a very long white beard sits on a mound of red sand, frowning at you.',
       wish: { buah_naga: 2, nasi: 1, colok: 1 }, wishText: 'The nuno taps his walking stick... he wishes for 2 buah naga, a bowl of nasi and a stick of colok. Respect your elders!',
       thanks: 'The nuno nods (almost smiling). The soil remembers his blessing: unwatered crops still have a 50% chance to grow overnight.',
-      blessing: 'Unwatered crops still have a 50% chance to grow', color: 0xe8b07a, polite: true
+      blessing: 'Unwatered crops still have a 50% chance to grow', color: 0xe8b07a, polite: true,
+      perk: 'Tilling the soil sometimes turns up kepeng'   // v2.8: only while it travels with you (UICompanions.js)
     }
   };
   LC.SPIRIT_ORDER = ['semangat', 'bunian', 'naga', 'kenyalang', 'nuno'];

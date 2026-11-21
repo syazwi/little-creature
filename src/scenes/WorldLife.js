@@ -298,7 +298,9 @@ window.LC = window.LC || {};
       if (it.kind === 'junk') { LC.Audio.sfx('sad'); this.toast('You fished up an old selipar. Somebody lost a flip-flop!', it.icon); return; }
       LC.Audio.sfx('catch');
       if ((it.diff || 1) >= 3) { this.fx.sparkle.explode(16, this.player.x, this.player.y - 16); this.cameras.main.flash(200, 255, 250, 220); }
-      this.toast('You caught ' + (it.kind === 'fish' ? 'a ' : '') + it.name + '!' + (first ? '  (New!)' : '') + ((it.diff || 1) >= 3 ? '  A rare one!' : ''), it.icon);
+      var cb = it.kind === 'fish' && this.companionBonus ? this.companionBonus('fish', id) : '';   // v2.8: the Naga Kecil
+      if (cb) { S.fishLog[id]++; S.stats.fish = (S.stats.fish || 0) + 1; }
+      this.toast('You caught ' + (it.kind === 'fish' ? 'a ' : '') + it.name + '!' + (first ? '  (New!)' : '') + ((it.diff || 1) >= 3 ? '  A rare one!' : '') + cb, it.icon);
     },
 
     // ================================================================ krathong
