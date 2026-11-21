@@ -88,6 +88,7 @@ PC browsers and Android phones can all play together.
 | Music on/off | N | Pause menu |
 | Volume of the music, battle music, sound effects and nature | Pause menu → **Sound & music** | Same |
 | Save / load (3 slots) | Pause menu → **Save game** / **Load game** | Same |
+| Font: the pixel font or a modern one | Pause menu → **Font** | Same |
 | Fullscreen | F | Automatic (Android app, and phone browsers on the first tap) |
 | Journal | J | Pause menu → Journal |
 | Ride / get off (bicycle) | R | Select it in the hotbar and press **USE** |
@@ -119,6 +120,7 @@ Touch controls switch on automatically on touch screens. You can toggle them in 
 - **How many? (v2.7.5).** Buying in any shop asks how many first: **−** and **+** (A / D), **±10** (W / S), **Max** (as many as your kepeng and bag allow, up to 99), then **Buy**.
 - **The khemah (tent, v2.7.5).** From Pelita **Lv 6**, Mak Ani sells a **Khemah** (450 kepeng, one each). Hold it, face open ground two tiles wide and press USE to pitch it anywhere outdoors (not in the field, caves or under the sea). Use it to **sleep** and you wake up right there the next morning, or to **pack it up** back into your bag. Journal > You says where it is. On a friend's farm only the host ends the day, so guests can't pitch it there.
 - **Everyone in plain sight (v2.7.6).** Mbak Dewi and Kak Mai now stand in front of their houses (not behind the roofs), Abang Zul in front of his bicycle shop, and Pak Mat and two of the brothers in Barunai beside the torches, not behind them. Trees no longer grow just in front of a villager. A chest that was on one of their new spots moves one step aside.
+- **Two fonts (v2.7.8).** Pause menu → **Font**: the pixel font that matches the art (the default), or a clean **Modern** font (your device's own). It switches at once and is remembered on this device.
 - **Conversations with choices (v2.7.7).** When someone asks you something (Badang asking you to keep watch, sleeping in the guest house, saving over a slot...), the answers are **buttons** under the words: tap or click one, or press its number. The box grows to fit long speeches, so words never run into the buttons, and messages that pop up meanwhile appear above it. Menus, the bag and the map have a big **X** in the top-right corner to close them.
 - **Nights.** If all three of Pelita's needs are 50 or more when you sleep, it rests content. If any is under 20, expect a prank.
 - **Ahad.** Every 7th day is **Hungry Ghost Night**. Pelita gets hungry twice as fast, but all bond counts double.

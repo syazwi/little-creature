@@ -12,7 +12,13 @@ window.LC = window.LC || {};
   LC.SHOP_OPEN = 7 * 60;
   LC.SHOP_CLOSE = 20 * 60;
   LC.INV_SIZE = 18;         // first 9 = hotbar
-  LC.FONT = '"Pixelify Sans", "Courier New", monospace';
+  // v2.7.8: two fonts (pause menu > Font): the pixel font (the default), or the device's own modern font
+  // (Segoe UI on Windows, Roboto on Android, San Francisco on iPhones). Kept on this device. LC.setFont is in UISettings.js.
+  LC.FONTS = { pixel: '"Pixelify Sans", "Courier New", monospace', modern: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' };
+  LC.fontKey = 'pixel';
+  try { if (localStorage.getItem('littleCreature.font') === 'modern') LC.fontKey = 'modern'; } catch (e) { /* storage blocked: the default */ }
+  LC.FONT = LC.FONTS[LC.fontKey];
+  if (LC.fontKey === 'modern') document.documentElement.classList.add('font-modern');
   LC.SAVE_KEY = 'littleCreature.save.v1';
   LC.WEEKDAYS = ['Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu', 'Ahad'];
 

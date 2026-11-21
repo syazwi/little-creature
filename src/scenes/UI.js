@@ -1065,7 +1065,7 @@ window.LC = window.LC || {};
       var self = this;
       // v2.7.3: every tile its own picture (the rows from other files too), matched by the start of its name
       var ICONS = [['Resume', 'ic_play'], ['Journal', 'ic_book'], ['Save', 'ic_save'], ['Load', 'ic_load'], ['Sound', 'ic_sound'], ['Music', 'ic_note'],
-        ['Touch', 'ic_phone'], ['Fullscreen', 'ic_fullscr'], ['Update', 'ic_update'], ['Jump scares', 'ic_scare'], ['Story helper', 'ic_list'],
+        ['Touch', 'ic_phone'], ['Fullscreen', 'ic_fullscr'], ['Font', 'ic_font'], ['Update', 'ic_update'], ['Jump scares', 'ic_scare'], ['Story helper', 'ic_list'],
         ['Guide arrow', 'ic_list'], ['Controls', 'ic_pad'], ['Quit', 'ic_door'], ['Leave', 'ic_door']];
       function gridIcon(r) {
         for (var i = 0; i < ICONS.length; i++) if ((r.label || '').indexOf(ICONS[i][0]) === 0 && self.textures.exists(ICONS[i][1])) return Object.assign({}, r, { icon: ICONS[i][1] });
@@ -1097,6 +1097,9 @@ window.LC = window.LC || {};
             { icon: 'ic_glow', label: 'Music: ' + (LC.Audio.musicOn ? 'On' : 'Off'), sub: 'Chill gamelan-style music (and battle drums), generated live. Press N anytime.', action: function () { LC.Audio.toggleMusic(); } },
             { icon: 'ic_joy', label: 'Touch controls: ' + (self.touchOn ? 'On' : 'Off'), sub: 'On-screen joystick and USE / EAT / BAG buttons for phones and tablets.', action: function () { self.setTouch(!self.touchOn); } },
             LC.canFullscreen() ? { icon: 'ic_sun', label: 'Fullscreen: ' + (LC.isFullscreen() ? 'On' : 'Off'), sub: 'Fill the whole screen with the kampung' + (self.touchOn ? '.' : '. Press F anytime.'), action: function () { LC.toggleFullscreen(); } } : null,
+            { icon: 'ic_font', label: 'Font: ' + (LC.fontKey === 'modern' ? 'Modern' : 'Default'),   // v2.7.8
+              sub: LC.fontKey === 'modern' ? 'A clean, modern font (your device\'s own). ' + (self.touchOn ? 'Tap' : 'Select') + ' to go back to the pixel font.' : 'The pixel font that matches the art. ' + (self.touchOn ? 'Tap' : 'Select') + ' for a clean, modern font instead.',
+              action: function () { LC.setFont(LC.fontKey === 'modern' ? 'pixel' : 'modern'); } },
             self.updateRow(),
             LC.pauseExtraRow ? LC.pauseExtraRow.call(self) : null,   // v2.5: Pelita's daylight
             LC.pauseExtraRow2 ? LC.pauseExtraRow2.call(self) : null,   // v2.7: jump scares on or gentle

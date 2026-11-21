@@ -12,6 +12,24 @@ window.LC = window.LC || {};
     { k: 'amb', label: 'Nature & rain', sub: 'River, birds, waves, wind, rain.' }
   ];
 
+  // v2.7.8: switch the font ('pixel' or 'modern'), saved on this device. Every text already on screen changes at once
+  // (texts inside menus and dialogs too); new ones are made with LC.FONT.
+  LC.setFont = function (k) {
+    if (!LC.FONTS[k]) return;
+    var old = LC.FONT, nw = LC.FONTS[k];
+    LC.fontKey = k; LC.FONT = nw;
+    try { localStorage.setItem('littleCreature.font', k); } catch (e) { /* storage blocked: this session only */ }
+    document.documentElement.classList.toggle('font-modern', k === 'modern');
+    if (old === nw || !LC.game) return;
+    function walk(list) {
+      list.forEach(function (o) {
+        if (o.type === 'Text' && o.style && o.style.fontFamily === old) o.setFontFamily(nw);
+        if (o.list) walk(o.list);
+      });
+    }
+    LC.game.scene.getScenes(true).forEach(function (sc) { walk(sc.children.list); });
+  };
+
   Object.assign(LC.UIScene.prototype, {
     // ================================================================ ability slots beside the hotbar
     buildSkills: function () {

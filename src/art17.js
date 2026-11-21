@@ -306,6 +306,10 @@ window.LC = window.LC || {};
         { f: '#5a3a20', d: '#a0683a', k: '#ffd166' }, 2, 1);
       p.rect(4, 2, 1, 7, '#b87a48');
     },
+    ic_font: function (p) {   // v2.7.8: "Aa"
+      p.str(['..A.......', '.A.A......', '.A.A......', 'A...A..aa.', 'AAAAA....a', 'A...A..aaa', 'A...A.a..a', 'A...A..aaa'],
+        { A: '#ffd166', a: '#e8dcc0' }, 1, 2);
+    },
     ic_scare: function (p) {
       p.str(['..hhhhhh..', '.hhhhhhhh.', 'hhwwwwwwhh', 'hwbbwwbbwh', 'hwbbwwbbwh', 'hwwwwwwwwh', 'hwwwbbwwwh', 'hhwwwwwwhh', 'hh.wwww.hh', 'h........h'],
         { h: '#5a4a6a', w: '#e4e0ee', b: '#1a1424' }, 1, 1);
