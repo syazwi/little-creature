@@ -45,6 +45,18 @@ window.LC = window.LC || {};
       p.poly([[0, 4], [16, 4], [11, 9], [4, 9]], STONE);
       p.rect(1, 4, 13, 2, EDGE); p.line(5, 2, 11, 2, JADE);
     });
+    Art.make(scene, 'gema_merchant', 26, 26, function (p) {
+      p.ell(13, 24, 12, 2, '#332731');
+      p.rect(8, 12, 10, 9, '#397175'); p.rect(8, 15, 3, 6, '#5ea397');
+      p.ell(13, 9, 4.5, 5, '#a1664e'); p.rect(10, 7, 6, 4, '#d6a16c');
+      p.px(11, 8, '#3a2a35'); p.px(15, 8, '#3a2a35');
+      p.poly([[4, 7], [13, 1], [22, 7]], '#b18a5c');
+      p.line(7, 6, 13, 2, '#edd093'); p.line(4, 7, 22, 7, '#754831');
+      p.rect(1, 18, 24, 3, '#94664f'); p.rect(3, 21, 20, 4, '#644634');
+      p.rect(3, 14, 5, 4, '#b87659'); p.rect(4, 13, 3, 2, '#efcf9a');
+      p.rect(17, 14, 6, 4, '#6e976a'); p.line(18, 15, 21, 16, JADE);
+      p.rect(11, 21, 4, 3, '#bd854d');
+    }, true);
     Art.make(scene, 'gema_seam', 16, 16, function (p) {
       p.poly([[0, 14], [3, 7], [7, 9], [10, 4], [15, 8], [16, 15]], STONE);
       p.line(2, 13, 7, 11, JADE); p.line(7, 11, 10, 8, JADE);

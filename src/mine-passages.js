@@ -6,6 +6,10 @@ window.LC = window.LC || {};
   var ID = 'laluan', MINE = LC.AREAS.lombong;
   var ARENA = { x0: 13, y0: 2, x1: 30, y1: 11 };
   var EXIT = { x0: 21, y0: 37, x1: 22, y1: 37, to: 'lombong', sx: 23, sy: 48, dir: 'down' };
+  var MEALS = [
+    { id: 'ikan_bakar', price: 90 }, { id: 'bubur_ubi', price: 95 },
+    { id: 'nasi_lemak', price: 135 }, { id: 'ayam_goreng', price: 130 }
+  ];
   var cached;
 
   LC.MINE_PASSAGES = { id: ID, arena: ARENA, health: 5, costs: [2, 3, 4] };
@@ -19,7 +23,7 @@ window.LC = window.LC || {};
   function generate(seed, season) {
     var random = new Phaser.Math.RandomDataGenerator(['laluan-gema', String(seed), String(season)]);
     var grid = Array.from({ length: 38 }, function () { return new Array(44).fill('X'); });
-    var objects = [], enemies = [{ kind: 'sang_kelembai', n: 1, fixed: { x: 21.5, y: 5 } }];
+    var objects = [], stalls = [], enemies = [{ kind: 'sang_kelembai', n: 1, fixed: { x: 21.5, y: 5 } }];
 
     function fill(x0, y0, x1, y1, tile) {
       for (var y = Math.min(y0, y1); y <= Math.max(y0, y1); y++) {
@@ -39,6 +43,7 @@ window.LC = window.LC || {};
     fill(ARENA.x0, ARENA.y0, ARENA.x1, ARENA.y1);
     fill(16, 3, 27, 10, 'k');
     objects.push({ id: 'gema_anvil', type: 'mine_anvil', x: 18, y: 33, tex: 'gema_anvil' });
+    objects.push({ id: 'gema_bed', type: 'mine_bed', x: 24, y: 33, w: 2, tex: 'khemah_tent' });
     objects.push({ id: 'gema_cache', type: 'mine_cache', x: 27, y: 3, w: 2, tex: 'peti_harta' });
     [[17, 7], [25, 7], [19, 9], [24, 9]].forEach(function (p) {
       objects.push({ type: 'mine_pillar', x: p[0], y: p[1], tex: 'tiang_rahsia' });
@@ -58,13 +63,14 @@ window.LC = window.LC || {};
       fill(upperX, upperY, upperX + 1, bend);
       fill(Math.min(upperX, lowerX), bend, Math.max(upperX, lowerX) + 1, bend + 1);
       fill(lowerX, bend, lowerX + 1, 31); fill(lowerX, 31, 21, 32);
-      sign(west ? 17 : 26, 30, safe ? 'Crystal gallery. The quieter route leads past a pool and a crystal ledge.' : 'Gold workings. Keep a weapon handy. Bats and scorpions roam these tunnels.');
+      sign(west ? 17 : 26, 30, safe ? 'Crystal gallery. The travelling merchant sets up somewhere along this route.' : 'Gold workings. Keep a weapon handy. Bats and scorpions roam these tunnels.');
 
       var rooms = safe ? ['ledge', 'pool'] : ['rails', 'nest'];
       if (random.frac() < 0.5) rooms.reverse();
       rooms.forEach(function (room, i) {
         var x = i ? lowerX : upperX, y = i ? lowerY : upperY;
         fill(x - 4, y - 2, x + 4, y + 2);
+        if (safe) stalls.push({ x: x + 3, y: y - 2 }, { x: x - 2, y: y + 2 });
         if (room === 'ledge') {
           fill(x - 3, y - 1, x - 2, y + 1, 'k');
           deposit('gema_crystal_ledge', x - 3, y, 'fg_crystal', { kristal: 2 });
@@ -85,12 +91,18 @@ window.LC = window.LC || {};
         }
       });
     });
+    var stall = random.pick(stalls);
+    var stock = [MEALS[(seed + season) % MEALS.length]];
+    [random.pick(['tongkat', 'parang']), random.pick(['jamu', 'jamu_kuat', 'air_merah'])].forEach(function (id) {
+      stock.push({ id: id, price: LC.ITEMS[id].price });
+    });
+    objects.push({ id: 'gema_merchant', type: 'mine_merchant', x: stall.x, y: stall.y, tex: 'gema_merchant', stock: stock });
     return { seed: seed, season: season, grid: grid, objects: objects, enemies: enemies };
   }
 
   LC.AREAS[ID] = {
     name: 'Laluan Gema', sub: 'the echo passages under Lombong Puaka', lvl: MINE.lvl,
-    cave: true, daylit: true, amb: 'cave', ride: {}, home: { x: 21.5, y: 33 }, exits: [EXIT],
+    cave: true, naturalLight: true, amb: 'cave', ride: {}, home: { x: 21.5, y: 33 }, exits: [EXIT],
     decor: { n: 52, types: ['rubble', 'crystal_s', 'rubble'], on: 'c' },
     layout: function (s) {
       var seed = s ? s.mineSeed >>> 0 : 0, season = Math.floor(((s ? s.day : 1) - 1) / LC.SEASON_DAYS);

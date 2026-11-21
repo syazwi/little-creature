@@ -48,6 +48,10 @@ window.LC = window.LC || {};
           work: ready, fn: function () { self.mineDeposit(o); } };
       }
       case 'mine_anvil': return { label: 'Use the Echo Forge', fn: function () { self.openEchoForge(); } };
+      case 'mine_bed': return { label: 'Rest at the Laluan Gema camp', fn: function () {
+        self.ui.confirmSleep({ area: M.id, x: o.x + 0.5, y: o.y + 1, name: 'the Laluan Gema camp' });
+      } };
+      case 'mine_merchant': return { label: 'Shop at the travelling merchant', fn: function () { self.openMineMerchant(o); } };
       case 'mine_cache': return { label: 'Open the stone chest', fn: function () {
         if (!self.claimEchoStone()) self.toast(LC.mineProgress(self.S).owed ? 'Make room in your bag. The Batu Gema will wait here.' : 'The stone chest is empty.', 'i_batu_gema');
       } };
@@ -124,6 +128,23 @@ window.LC = window.LC || {};
       LC.State.save();
       this.toast('Found ' + n + ' Batu Gema. Use it at the Echo Forge.', 'i_batu_gema');
       return true;
+    },
+
+    openMineMerchant: function (merchant) {
+      var S = this.S;
+      this.ui.openMenu({ title: 'Travelling Merchant', coins: true, tabs: [{ label: 'Buy', rows: function () {
+        return merchant.stock.map(function (offer) {
+          var item = LC.ITEMS[offer.id], afford = S.kepeng >= offer.price, room = LC.State.canAdd(offer.id);
+          return { icon: item.icon, label: item.name, sub: item.desc, right: offer.price + ' k',
+            enabled: afford && room, why: afford ? 'Your bag is full!' : 'Not enough kepeng.',
+            qty: { id: offer.id, price: offer.price, buy: function (n) {
+              S.kepeng -= n * offer.price;
+              LC.State.add(offer.id, n);
+              LC.Audio.sfx('buy');
+              LC.State.save();
+            } } };
+        });
+      } }] });
     },
 
     openEchoForge: function () {

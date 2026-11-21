@@ -873,10 +873,10 @@ window.LC = window.LC || {};
       return SKY[SKY.length - 1][1];
     }
     updateLighting(time, dt) {
-      var S = this.S, A = this.A, col = A.daylit ? 0xffffff : this.skyColor(S.minutes);
+      var S = this.S, A = this.A, col = this.skyColor(S.minutes);
       var lum = ((col >> 16 & 255) * 0.3 + (col >> 8 & 255) * 0.59 + (col & 255) * 0.11) / 255;
       var n = Phaser.Math.Clamp((1 - lum - 0.06) / 0.45, 0, 1);
-      if (A.cave && !A.daylit) { col = 0x2e2638; n = 1; }
+      if (A.cave && !A.naturalLight) { col = 0x2e2638; n = 1; }
       this.nightF = n;
       var tint = col, sea = LC.State.season().id, outdoors = !A.cave && !A.underwater;
       if (A.dim) tint = mulColor(tint, A.underwater ? 0xb8c8d8 : 0xd2e2d0);   // shade under the canopy (or inside the wreck)
