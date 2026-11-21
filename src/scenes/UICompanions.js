@@ -118,9 +118,9 @@ window.LC = window.LC || {};
       rows.push({ icon: 'ic_str', label: 'Strength', right: Math.floor(S.str || 0) + ' / ' + LC.STR_MAX, sub: 'Lift the batu angkat in Kampung Tepian, train silat with the Bunian (once a day each) and eat home-cooked dishes. It raises your health and your blows.' });
       var best = null;
       S.inv.forEach(function (sl) { var it = sl && LC.ITEMS[sl.id]; if (it && it.kind === 'weapon' && (!best || it.dmg > best.dmg)) best = it; });
-      var strB = Math.floor((S.str || 0) / 25), temp = S.quests && S.quests.tempered ? 1 : 0;
-      rows.push({ icon: best ? best.icon : 'i_tongkat', label: 'Attack', right: best ? String(best.dmg + strB + temp) : '-',
-        sub: best ? 'Your best weapon: ' + best.name + ' (' + best.dmg + ')' + (strB ? ' + strength (' + strB + ')' : '') + (temp ? ' + tempered (1)' : '') + '. Hold it and press ' + (this.touchOn ? 'USE' : 'E') + ' to swing.'
+      var strB = Math.floor((S.str || 0) / 25), temp = S.quests && S.quests.tempered ? 1 : 0, forge = LC.State.forgeBonus();
+      rows.push({ icon: best ? best.icon : 'i_tongkat', label: 'Attack', right: best ? String(LC.State.weaponDamage(best)) : '-',
+        sub: best ? 'Your best weapon: ' + best.name + ' (' + best.dmg + ')' + (strB ? ' + strength (' + strB + ')' : '') + (temp ? ' + tempered (1)' : '') + (forge ? ' + Echo Forge (' + forge + ')' : '') + '. Hold it and press ' + (this.touchOn ? 'USE' : 'E') + ' to attack.'
           : 'No weapon in your bag yet. Pak Wan in Kampung Tepian sells a rattan staff.' });
       var why = [];
       if (S.companion === 'kenyalang' && LC.State.friend('kenyalang')) why.push('the Kenyalang +' + Math.round(LC.COMP.kenyalang * 100) + '%');

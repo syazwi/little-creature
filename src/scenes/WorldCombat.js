@@ -20,7 +20,8 @@ window.LC = window.LC || {};
     createEnemies: function () {
       var self = this, S = this.S;
       this.enemies = []; this.invuln = 0; this.swingCd = 0; this.battleT = 0; this.hitStop = 0; this.groupCheck = 0;
-      (this.A.enemies || []).forEach(function (g) {
+      var groups = this.areaLayout ? this.areaLayout.enemies : this.A.enemies;
+      (groups || []).forEach(function (g) {
         for (var i = 0; i < g.n; i++) self.spawnEnemy(g, true);
       });
       this.events.once('shutdown', function () { LC.Audio.setBattle(false); });
@@ -33,8 +34,8 @@ window.LC = window.LC || {};
       return true;
     },
     spawnEnemy: function (g, first, e) {
-      var D = LC.ENEMIES[g.kind], p = this.randomFree(g.zone), pl = this.player;
-      for (var k = 0; k < 8 && !first && Math.hypot(p.x - pl.x, p.y - pl.y) < 110; k++) p = this.randomFree(g.zone);
+      var D = LC.ENEMIES[g.kind], p = g.fixed ? this.tilePx(g.fixed) : this.randomFree(g.zone), pl = this.player;
+      for (var k = 0; k < 8 && !g.fixed && !first && Math.hypot(p.x - pl.x, p.y - pl.y) < 110; k++) p = this.randomFree(g.zone);
       if (!e) {
         e = { kind: g.kind, def: D, zone: g.zone, g: g };
         e.spr = this.add.sprite(p.x, p.y, g.kind + '_0').setOrigin(0.5, 1);
@@ -43,7 +44,7 @@ window.LC = window.LC || {};
         this.enemies.push(e);
       }
       var on = this.groupOn(g);
-      e.spr.setPosition(p.x, p.y).setVisible(on).setAlpha(first ? 1 : 0).clearTint().setScale(1);
+      e.spr.setPosition(p.x, p.y).setDepth(p.y).setVisible(on).setAlpha(first ? 1 : 0).clearTint().setScale(1);
       if (e.spr.anims.isPaused) e.spr.anims.resume();
       if (!first && on) this.tweens.add({ targets: e.spr, alpha: 1, duration: 600 });
       e.hp = D.hp; e.dead = false; e.away = !on; e.respawn = 0; e.kx = 0; e.ky = 0; e.hurtT = 0; e.tx = p.x; e.ty = p.y; e.wait = Math.random() * 2; e.ph = Math.random() * 6;
@@ -103,6 +104,7 @@ window.LC = window.LC || {};
           if (e.stoneT <= 0) self.unstone(e);
           return;
         }
+        if (e.g.fixed) return;
         var vx = 0, vy = 0, sp = D.speed, mv = true;
         e.atkCd -= dt;
         if (e.windT > 0) {            // the wind-up: shiver and flash, then lunge
@@ -156,7 +158,7 @@ window.LC = window.LC || {};
 
     // ---------------------------------------------------------------- your swing
     attack: function () {
-      var self = this, S = this.S, sl = LC.State.selItem(), wp = this.weaponOf(sl);
+      var self = this, sl = LC.State.selItem(), wp = this.weaponOf(sl);
       if (!wp || this.swingCd > 0) return;
       this.swingCd = wp.cd;
       var p = this.player, d = DIRV[this.dir], cx = p.x + d[0] * 12, cy = p.y - 8 + d[1] * 12, keris = sl.id === 'keris';
@@ -174,7 +176,7 @@ window.LC = window.LC || {};
       if (keris || sl.id === 'trisula') arc.setTint(keris ? 0xffe8a0 : 0x8fe8ff).setBlendMode(Phaser.BlendModes.ADD);
       this.tweens.add({ targets: arc, alpha: 0, scale: 1.25, duration: 180, onComplete: function () { arc.destroy(); } });
       this.tweens.add({ targets: p, x: p.x + d[0] * 2, y: p.y + d[1] * 2, scaleY: 0.92, duration: 60, yoyo: true });
-      var dmg = wp.dmg + Math.floor((S.str || 0) / 25) + (S.quests && S.quests.tempered ? 1 : 0), hit = false;   // v2.0: Wak Juru's tempering
+      var dmg = LC.State.weaponDamage(wp), hit = false;
       this.enemies.forEach(function (e) {
         if (e.dead || e.away) return;
         var ex = e.spr.x - p.x, ey = (e.spr.y - e.spr.height / 2) - (p.y - 8), dist = Math.hypot(ex, ey);

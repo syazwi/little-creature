@@ -453,8 +453,7 @@ window.LC = window.LC || {};
     },
     fadeOut10: function (im) { this.tweens.add({ targets: im, alpha: 0, duration: 160, onComplete: function () { im.destroy(); } }); },
     dartHit: function (e, D) {
-      var S = this.S, wp = D.wp, stone = e.stoneT > 0;
-      var dmg = wp.dmg + Math.floor((S.str || 0) / 25) + (S.quests && S.quests.tempered ? 1 : 0), n = stone ? dmg * 2 : dmg;
+      var stone = e.stoneT > 0, dmg = LC.State.weaponDamage(D.wp), n = stone ? dmg * 2 : dmg;
       e.hp -= n; e.hurtT = 0.1; e.spr.setTintFill(0xffffff);
       if (!stone) { var k = e.def.boss ? 30 : 90; e.kx = D.dx * k; e.ky = D.dy * k; e.windT = 0; }
       var hx = D.img.x, hy = D.img.y;

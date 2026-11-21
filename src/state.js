@@ -22,6 +22,7 @@ window.LC = window.LC || {};
     return {
       version: 1,
       day: 1,
+      mineSeed: Math.floor(Math.random() * 0x100000000),
       minutes: LC.DAY_START,
       kepeng: 100,
       energy: 120, maxEnergy: 120,
@@ -116,12 +117,12 @@ window.LC = window.LC || {};
     // -------------------------------------------------------------- co-op
     snapshot: function () {
       var s = this.s;
-      return JSON.parse(JSON.stringify({ day: s.day, minutes: s.minutes, tiles: s.tiles, trees: s.trees, ghost: s.ghost, offerings: s.offerings, buildings: s.buildings, spirits: s.spirits,
+      return JSON.parse(JSON.stringify({ day: s.day, mineSeed: s.mineSeed, minutes: s.minutes, tiles: s.tiles, trees: s.trees, ghost: s.ghost, offerings: s.offerings, buildings: s.buildings, spirits: s.spirits,
         chests: s.chests, chestSeq: s.chestSeq, animals: s.animals, animalSeq: s.animalSeq, coop: s.coop, nest: s.nest, ladang: s.ladang || 0, house: s.house || 0, houseBuild: s.houseBuild || 0, helpers: s.helpers || {}, flags: { penunggu: s.flags.penunggu || 0 } }));
     },
     applySnapshot: function (w) {
       var s = this.s;
-      s.day = w.day; s.minutes = w.minutes; s.tiles = w.tiles || {}; s.trees = w.trees || {};
+      s.day = w.day; s.mineSeed = w.mineSeed >>> 0; s.minutes = w.minutes; s.tiles = w.tiles || {}; s.trees = w.trees || {};
       s.offerings = w.offerings || [];
       s.buildings = w.buildings || {}; s.spirits = w.spirits || {};
       s.chests = w.chests || {}; s.chestSeq = w.chestSeq || 0; s.animals = w.animals || []; s.animalSeq = w.animalSeq || 0;
@@ -155,6 +156,7 @@ window.LC = window.LC || {};
         var raw = localStorage.getItem(this.slotKey(n));
         if (!raw) return false;
         var data = JSON.parse(raw), base = newState();
+        if (data.mineSeed === undefined) data.mineSeed = data.savedAt >>> 0;
         Object.keys(base).forEach(function (k) { if (data[k] === undefined) data[k] = base[k]; });
         Object.keys(base.ghost).forEach(function (k) { if (data.ghost[k] === undefined) data.ghost[k] = base.ghost[k]; });
         Object.keys(base.trees).forEach(function (k) { if (data.trees[k] === undefined) data.trees[k] = 0; });
@@ -309,6 +311,16 @@ window.LC = window.LC || {};
     },
     hasSerama: function () { return this.s.animals.some(function (a) { return a.kind === 'serama'; }); },
 
+    forgeBonus: function () {
+      var progress = this.s.quests && this.s.quests.minePassages;
+      return progress ? progress.forge : 0;
+    },
+    weaponDamage: function (weapon) {
+      var s = this.s;
+      return weapon.dmg + Math.floor((s.str || 0) / 25) + (s.quests && s.quests.tempered ? 1 : 0)
+        + (weapon.improvised ? 0 : this.forgeBonus());
+    },
+
     // personal limits that grow with Pelita's level and spirit blessings
     recalc: function () {
       var s = this.s, lv = this.level(), e = 120;
@@ -322,6 +334,7 @@ window.LC = window.LC || {};
       s.maxWater = 20 + (lv >= 10 ? 10 : 0) + (s.quests && s.quests.gembor ? 10 : 0);   // v2.0: Dang Kemala's brass gembor
       if (s.energy > s.maxEnergy) s.energy = s.maxEnergy;
       s.maxHp = LC.maxHpFor(s.str || 10) + (s.flags && s.flags.poseidon ? 20 : 0) + (s.quests && s.quests.jinn ? 20 : 0) + (s.quests && (s.quests.ch5 || 0) >= 5 ? 20 : 0);   // v2.1: Gelang Jerambak; v2.3: Pelita Purnama
+      if (s.quests && s.quests.minePassages && s.quests.minePassages.blessed) s.maxHp += LC.MINE_PASSAGES.health;
       if (s.hp === undefined || s.hp > s.maxHp) s.hp = s.maxHp;
     },
     // a level's personal gifts (every player on the farm gets them). Returns a line for the celebration.

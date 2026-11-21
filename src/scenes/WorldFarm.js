@@ -156,7 +156,10 @@ window.LC = window.LC || {};
         h.on = on;
         h.img.setVisible(on);
         if (on && !h.tw) { h.tw = self.tweens.add({ targets: h.img, alpha: 0.75, duration: 1200, yoyo: true, repeat: -1 }); }
-        for (var y = o.y; y < o.y + (o.h || 1); y++) for (var x = o.x; x < o.x + (o.w || 1); x++) { self.solid[y][x] = on; self.objAt[y][x] = on ? o : null; }
+        for (var y = o.y; y < o.y + (o.h || 1); y++) for (var x = o.x; x < o.x + (o.w || 1); x++) {
+          if (!o.passable) self.solid[y][x] = on;
+          self.objAt[y][x] = on ? o : null;
+        }
         if (on && self.fx) self.fx.sparkle.explode(12, h.img.x, h.img.y - 16);
       });
     },

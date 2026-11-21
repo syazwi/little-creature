@@ -44,9 +44,10 @@ window.LC = window.LC || {};
       LC.syncDesert();   // v1.8: is the brick path to the old tower restored?
       LC.syncBarunai();  // v1.9: has Barunai been founded (its walkways over the river)?
       if (LC.syncLedang) LC.syncLedang();   // v2.4: has the bridge of gold and silver been built on Gunung Ledang?
-      this.grid = LC.areaGrid(area);
+      this.areaLayout = this.A.layout ? this.A.layout(S) : null;
+      this.grid = this.areaLayout ? this.areaLayout.grid : LC.areaGrid(area);
       this.H = this.grid.length; this.W = this.grid[0].length;
-      this.objects = LC.areaObjects(area);
+      this.objects = this.areaLayout ? this.areaLayout.objects : LC.areaObjects(area);
       this.solid = []; this.objAt = [];
       for (var y = 0; y < this.H; y++) { this.solid.push(new Array(this.W).fill(false)); this.objAt.push(new Array(this.W).fill(null)); }
       this.sleeping = !!data.summary; this.leaving = false;

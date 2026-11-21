@@ -274,8 +274,17 @@ window.LC = window.LC || {};
   };
 
   var grids = {};
-  LC.areaGrid = function (id) { if (!grids[id]) grids[id] = LC.AREAS[id].build(); return grids[id]; };
-  LC.areaObjects = function (id) { return id === 'farm' ? LC.OBJECTS : LC.AREAS[id].objects; };
+  LC.areaGrid = function (id) {
+    var area = LC.AREAS[id];
+    if (area.layout) return area.layout(LC.State.s).grid;
+    if (!grids[id]) grids[id] = area.build();
+    return grids[id];
+  };
+  LC.areaObjects = function (id) {
+    if (id === 'farm') return LC.OBJECTS;
+    var area = LC.AREAS[id];
+    return area.layout ? area.layout(LC.State.s).objects : area.objects;
+  };
   LC.areaOpen = function (id, level) { return level >= LC.AREAS[id].lvl; };
 
   // every object with an id, across all places (trees and forage share S.trees by id)
