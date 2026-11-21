@@ -58,7 +58,7 @@ window.LC = window.LC || {};
       fill(upperX, upperY, upperX + 1, bend);
       fill(Math.min(upperX, lowerX), bend, Math.max(upperX, lowerX) + 1, bend + 1);
       fill(lowerX, bend, lowerX + 1, 31); fill(lowerX, 31, 21, 32);
-      sign(west ? 17 : 26, 30, safe ? 'Crystal gallery. An old trail of lamps marks the quieter way.' : 'Gold workings. Keep a weapon handy. The shadows belong to bats and scorpions.');
+      sign(west ? 17 : 26, 30, safe ? 'Crystal gallery. The quieter route leads past a pool and a crystal ledge.' : 'Gold workings. Keep a weapon handy. Bats and scorpions roam these tunnels.');
 
       var rooms = safe ? ['ledge', 'pool'] : ['rails', 'nest'];
       if (random.frac() < 0.5) rooms.reverse();
@@ -90,7 +90,7 @@ window.LC = window.LC || {};
 
   LC.AREAS[ID] = {
     name: 'Laluan Gema', sub: 'the echo passages under Lombong Puaka', lvl: MINE.lvl,
-    cave: true, amb: 'cave', ride: {}, home: { x: 21.5, y: 33 }, exits: [EXIT],
+    cave: true, daylit: true, amb: 'cave', ride: {}, home: { x: 21.5, y: 33 }, exits: [EXIT],
     decor: { n: 52, types: ['rubble', 'crystal_s', 'rubble'], on: 'c' },
     layout: function (s) {
       var seed = s ? s.mineSeed >>> 0 : 0, season = Math.floor(((s ? s.day : 1) - 1) / LC.SEASON_DAYS);
