@@ -10,18 +10,29 @@ window.LC = window.LC || {};
   'use strict';
   var H = 60;
 
+  // v2.8.3: each prayer also brings its own blessing (the user: "example subuh prayer give you rezqi"):
+  // gift = its name, does = what it does in the game, feel = a quiet line as you come out
   LC.SOLAT = [
-    { id: 'subuh', name: 'Subuh', from: 6 * H, to: 7 * H + 15 },
-    { id: 'zohor', name: 'Zohor', from: 13 * H, to: 16 * H + 30 },
-    { id: 'asar', name: 'Asar', from: 16 * H + 30, to: 19 * H + 15 },
-    { id: 'maghrib', name: 'Maghrib', from: 19 * H + 15, to: 20 * H + 30 },
-    { id: 'isyak', name: 'Isyak', from: 20 * H + 30, to: 24 * H }
+    { id: 'subuh', short: 'rezeki, +15% kepeng today', name: 'Subuh', from: 6 * H, to: 7 * H + 15, gift: 'Rezeki pagi', does: '+15% kepeng from everything you earn today',
+      feel: 'The early morning air is fresh and full of promise.' },
+    { id: 'zohor', short: 'all energy back', name: 'Zohor', from: 13 * H, to: 16 * H + 30, gift: 'Rehat', does: 'all your energy back',
+      feel: 'The midday rest lifts the tiredness from your arms.' },
+    { id: 'asar', short: 'health refills till midnight', name: 'Asar', from: 16 * H + 30, to: 19 * H + 15, gift: 'Sihat', does: 'your health slowly comes back until midnight',
+      feel: 'The afternoon light is soft. You feel well.' },
+    { id: 'maghrib', short: 'half damage till Subuh', name: 'Maghrib', from: 19 * H + 15, to: 20 * H + 30, gift: 'Dilindungi', does: 'enemies and night creatures do half damage until Subuh',
+      feel: 'Dusk settles over the kampung, and you feel safe.' },
+    { id: 'isyak', short: 'crops may grow extra tonight', name: 'Isyak', from: 20 * H + 30, to: 24 * H, gift: 'Berkat malam', does: 'tonight your crops may grow an extra day',
+      feel: 'The night is quiet. You will sleep soundly.' }
   ];
   LC.MASJID = {
     energy: 0.4,          // each prayer: this share of your energy comes back, and all your health
     berkat: 0.25,         // the day after all five: this share of every energy cost is spared
     minutes: 15, jumaatMinutes: 40,   // how long you are inside (playing alone; in co-op the clock never stops)
-    jumaatGift: 'nasi_lemak'
+    jumaatGift: 'nasi_lemak',
+    rezeki: 0.15,         // Subuh: this share again of all kepeng earned (S.stats.earned) for the rest of the day
+    sihatEvery: 2,        // Asar: 1 health every this many seconds, until midnight
+    lindung: 0.5,         // Maghrib: damage taken until you wake (the next day)
+    isyakGrow: 0.3        // Isyak: the chance that a crop which grew tonight grows one more day
   };
 
   LC.solatNow = function (m) {
@@ -62,7 +73,9 @@ window.LC = window.LC || {};
       'Children are reading together on the serambi, softly. A cat sleeps on the cool tiles.'
     ],
     already: function (p) { return 'You have prayed ' + p.name + ' with the jemaah already. The serambi is peaceful.'; },
-    next: function (p, m) { return 'The next prayer is ' + p.name + ' at ' + LC.clockText(p.from) + (p.from <= m ? ' tomorrow' : '') + '.'; },
+    next: function (p, m) { return 'The next prayer is ' + p.name + ' at ' + LC.clockText(p.from) + (p.from <= m ? ' tomorrow' : '') + '. Its blessing: ' + p.gift + ', ' + p.does + '.'; },
+    rezeki: function (n) { return 'Rezeki pagi: +' + n + ' kepeng on what you earned.'; },
+    isyakGrew: function (n) { return 'After Isyak, ' + n + ' crop' + (n > 1 ? 's' : '') + ' grew an extra day overnight.'; },
     wuduk: 'You take wuduk at the taps beside the serambi. The water is cool.',
     jumaat: 'It is Jumaat, and the whole kampung is here. In the khutbah, Tok Imam reminds everyone to be kind to their neighbours and to care for the land.',
     pray: function (p, jum) { return 'Tok Imam leads Solat ' + (jum ? 'Jumaat' : p.name) + '. You stand in the saf with the villagers, shoulder to shoulder.'; },

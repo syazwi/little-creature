@@ -469,6 +469,7 @@ window.LC = window.LC || {};
 
       // crops grow
       var grown = 0, blessed = 0, ready = 0, lanternWater = g.stage >= 2 && g.glow >= 50, nuno = this.friend('nuno'), resting = 0;
+      var sq = s.quests && s.quests.solat, isyak = !!(sq && sq.isyak === s.day && LC.MASJID), isyakN = 0;   // v2.8.3: prayed Isyak tonight
       Object.keys(s.tiles).forEach(function (k) {
         var t = s.tiles[k];
         if (t.crop) {
@@ -478,6 +479,7 @@ window.LC = window.LC || {};
           if (watered && t.crop.g < def.days) {
             t.crop.g++; grown++;
             if (g.stage >= 3 && !neglected && t.crop.g < def.days && Math.random() < 0.3) { t.crop.g++; blessed++; }
+            if (isyak && t.crop.g < def.days && Math.random() < LC.MASJID.isyakGrow) { t.crop.g++; isyakN++; }
           }
           if (t.crop.g >= def.days) ready++;
         }
@@ -486,6 +488,7 @@ window.LC = window.LC || {};
       });
       if (grown) lines.push(grown + ' crop' + (grown > 1 ? 's' : '') + ' grew overnight.' + (ready ? ' ' + ready + ' ready to harvest!' : ''));
       if (blessed) lines.push('Pelita\'s blessing made ' + blessed + ' crop' + (blessed > 1 ? 's' : '') + ' grow extra fast!');
+      if (isyakN) lines.push(LC.MASJID_TEXT.isyakGrew(isyakN));
       if (lanternWater) lines.push('Pelita\'s lantern bobbed over the field all night. Your crops are already watered!');
       if (resting) lines.push(resting + ' crop' + (resting > 1 ? 's are' : ' is') + ' resting until ' + (resting > 1 ? 'their' : 'its') + ' season comes round again.');
 

@@ -33,6 +33,14 @@ window.LC = window.LC || {};
     return useEnergy.call(this, n);
   };
 
+  // v2.8.3, Maghrib (Dilindungi): until you wake the next day, every hit does half damage
+  var playerHurt = proto.playerHurt;
+  proto.playerHurt = function (dmg, e) {
+    var q = this.S.quests.solat;
+    if (q && q.lindung === this.S.day && dmg > 0) dmg = Math.max(1, Math.ceil(dmg * M.lindung));
+    return playerHurt.call(this, dmg, e);
+  };
+
   var updateKampong = proto.updateKampong;
   proto.updateKampong = function (time, dt) {
     updateKampong.apply(this, arguments);
@@ -46,6 +54,7 @@ window.LC = window.LC || {};
       if ((this.solatT = (this.solatT || 0) - dt) > 0) return;
       this.solatT = 1;
       if (!this.ui || this.sleeping || this.leaving || this.cutscene || this.ui.isBlocking()) return;
+      if (this.solatBless()) return;
       if (S.flags.carBack) { this.toast(X.carBack(S.flags.carBack), 'i_basikal'); delete S.flags.carBack; return; }
       if (!LC.State.isOpen('kampung')) return;
       var q = LC.solatQ();
@@ -56,6 +65,26 @@ window.LC = window.LC || {};
       q.told = S.day + p.id;
       LC.Audio.sfx(this.area === 'kampung' ? 'beduk' : 'beduk_far');
       this.toast(X.time(p), 'ic_masjid');
+    },
+
+    // v2.8.3: Asar (Sihat) brings health back slowly until midnight; Subuh (Rezeki pagi) adds a share of everything
+    // earned today (S.stats.earned, which every sale and reward adds to, and which starts again at 0 each morning)
+    solatBless: function () {
+      var S = this.S, q = S.quests.solat;
+      if (!q) return false;
+      if (q.sihat === S.day && S.hp > 0 && S.hp < S.maxHp && (this.sihatT = (this.sihatT || 0) + 1) >= M.sihatEvery) { this.sihatT = 0; S.hp = Math.min(S.maxHp, S.hp + 1); }
+      var e = S.stats.earned || 0;
+      if (q.rezeki === S.day) {
+        if (!(q.seen <= e)) q.seen = e;   // (a new day, or an old save)
+        q.pend = (q.pend || 0) + (e - q.seen) * M.rezeki; q.seen = e;
+      }
+      if ((q.pend || 0) >= 1) {
+        var n = Math.floor(q.pend); q.pend -= n;
+        S.kepeng += n; S.stats.earned = e + n; if (q.rezeki === S.day) q.seen = e + n;
+        LC.Audio.sfx('coin'); this.toast(X.rezeki(n), 'ic_masjid');
+        return true;
+      }
+      return false;
     },
 
     masjidAction: function (o) {
@@ -76,13 +105,18 @@ window.LC = window.LC || {};
       var e0 = S.energy;
       S.energy = Math.min(S.maxEnergy, S.energy + Math.round(S.maxEnergy * M.energy));
       S.hp = S.maxHp;
+      if (p.id === 'subuh') { q.rezeki = S.day; q.seen = S.stats.earned || 0; }
+      else if (p.id === 'zohor') S.energy = S.maxEnergy;
+      else if (p.id === 'asar') q.sihat = S.day;
+      else if (p.id === 'maghrib') q.lindung = S.day;
+      else if (p.id === 'isyak') q.isyak = S.day;
       var gift = jum && LC.State.add(M.jumaatGift, 1);
       if (!LC.Net.active()) S.minutes = Math.min(LC.DAY_END - 10, S.minutes + (jum ? M.jumaatMinutes : M.minutes));
       var lines = [{ text: X.wuduk }];
       if (jum) lines.push({ text: X.jumaat });
       lines.push({ text: X.pray(p, jum) }, { text: X.pelita });
       if (gift) lines.push({ text: X.jamuan });
-      lines.push({ text: X.calm + (full ? ' ' + X.full : '') });
+      lines.push({ text: p.feel + ' ' + X.calm + (full ? ' ' + X.full : '') });
       var cam = this.cameras.main, ended = false, gain = Math.round(S.energy - e0);
       this.cutscene = true;
       function end() {
@@ -90,6 +124,7 @@ window.LC = window.LC || {};
         ended = true; self.cutscene = false;
         cam.fadeIn(700, 14, 12, 22);
         self.toast('Solat ' + (jum ? 'Jumaat' : p.name) + ' berjemaah: ' + (gain > 0 ? 'energy +' + gain + ', ' : '') + 'health full.', 'ic_masjid');
+        self.toast(p.gift + ': ' + p.does + '.', 'ic_masjid');
       }
       cam.fadeOut(450, 14, 12, 22);
       this.time.delayedCall(500, function () {

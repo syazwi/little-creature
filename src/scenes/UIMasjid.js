@@ -13,7 +13,21 @@ window.LC = window.LC || {};
     var marks = LC.SOLAT.map(function (s) { return (q.done[s.id] ? '✓ ' : '· ') + s.name; }).join('   ');
     rows.unshift({ icon: 'ic_masjid', label: 'Solat at the masjid today: ' + LC.solatCount() + ' / 5',
       sub: marks + '.  Next: ' + nx.name + ' at ' + LC.clockText(nx.from) + (nx.from <= S.minutes ? ' tomorrow' : '') + '. With the jemaah ' + (q.total || 0) + ' times' + (q.full ? ', all five on ' + q.full + ' day' + (q.full > 1 ? 's' : '') : '') + '. (The masjid is at the west end of Kampung Tepian.)' });
+    // v2.8.3: what each prayer brings, and which blessings are with you now
+    var on = LC.solatBlessings();
+    rows.splice(1, 0, { icon: 'ic_masjid', label: 'Prayer blessings' + (on.length ? ': ' + on.join(', ') : ''), right: on.length ? on.length + ' now' : '',
+      sub: LC.SOLAT.map(function (p) { return p.name + ': ' + p.short; }).join(' · ') + '. Every prayer: energy +40% and full health.' });
     return rows;
+  };
+  // the blessings with you right now (Subuh, Asar and Isyak last the day; Maghrib until you wake)
+  LC.solatBlessings = function () {
+    var S = LC.State.s, q = S.quests.solat || {}, out = [];
+    if (q.rezeki === S.day) out.push('Rezeki pagi');
+    if (q.sihat === S.day) out.push('Sihat');
+    if (q.lindung === S.day) out.push('Dilindungi');
+    if (q.isyak === S.day) out.push('Berkat malam');
+    if (q.berkat === S.day) out.push('Berkat (all five yesterday)');
+    return out;
   };
 
   var drawLocalMap = proto.drawLocalMap;
@@ -44,7 +58,7 @@ window.LC = window.LC || {};
     var S = LC.State.s;
     if (!S || !LC.State.isOpen('kampung')) return null;
     return { icon: 'ic_masjid', label: 'Prayer times: ' + (S.flags.noSolat ? 'Off' : 'On'),
-      sub: 'The beduk and a reminder at Subuh, Zohor, Asar, Maghrib and Isyak. Pray at the masjid in Kampung Tepian: energy and health come back.',
+      sub: 'The beduk and a reminder at each prayer time. At the masjid in Kampung Tepian, every prayer brings energy, health and its own blessing (Journal > You).',
       action: function () { S.flags.noSolat = !S.flags.noSolat; } };
   };
 })(window.LC);
