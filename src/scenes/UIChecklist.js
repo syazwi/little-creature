@@ -37,7 +37,9 @@ window.LC = window.LC || {};
     { n: 8, key: 'ch8', end: 9, name: 'Air Pasang', steps: ['Rest at the farm', 'Ask Tok Duyung', 'Ask both rulers', 'The Selat Gelora', 'Nek Lampir\'s cure', 'The two dragons', 'Queen against King', 'Peace under the arch', 'Clean up the jars'],
       next: 'When Chapter 8 is complete, be at Nenek\'s farm after 8 PM the next night: Chapter 9 begins.' },
     { n: 9, key: 'ch9', end: 7, name: 'Ulek Mayang', steps: ['Wait for the night', 'The empty boat', 'Find the song', 'The mayang and the rice', 'Ulek Mayang', 'Gua Puteri Tujuh', 'Take the spirit home'],
-      next: 'Chapter 9 is the latest chapter. More are on the way!' }
+      next: 'When Chapter 9 is complete, be at Nenek\'s farm between 6 AM and 8 PM the next day: Chapter 10 begins.' },
+    { n: 10, key: 'ch10', end: 8, name: 'Nujum Pak Belalang', steps: ['Rest at the farm', 'The glowing grasshoppers', 'Hide-and-seek in Tanjung Bunga', 'Belalang\'s chores', 'The stolen chest', 'Back to the Sultan', 'The riddle contest', 'The truth'],
+      next: 'Chapter 10 is the latest chapter. More are on the way!' }
   ];
 
   // the parts of the current step (only steps with more than one part, or with things to bring)
@@ -107,6 +109,17 @@ window.LC = window.LC || {};
       if (st === 3) return [c(Q.c9pawang, 'Talk to Tok Pawang at his hut'), c(cnt('mayang_pinang'), 'The mayang from the old pinang palm (north-west Pantai Bakau)'),
         c(cnt('nasi_kunyit'), 'Nasi Kunyit from Mak Som (' + Object.keys(C9.nasi).map(function (id) { return it(id) + ' ' + Math.min(cnt(id), C9.nasi[id]) + ' / ' + C9.nasi[id]; }).join(', ') + ')'), c(false, 'Bring both to Tok Pawang')];
       if (st === 5) return [c(false, 'Dive into the whirlpool off Pantai Bakau'), c(false, 'Find the clam where Pak Awang\'s spirit hums')];
+      return null;
+    },
+    10: function (st, Q) {
+      var C10 = LC.C10, hops = C10.hops.length;
+      if (st === 1) return [c((Q.c10hop || 0) >= hops, 'Follow the glowing grasshopper across the farm (' + Math.min(Q.c10hop || 0, hops) + ' / ' + hops + ' hops)'), c(Q.c10clue, 'Look at what it left at the end of the farm jetty')];
+      if (st === 2) return [c(Q.c10arrive, 'Sail on the jong to Negeri Tanjung Bunga'), c(false, 'Find Pelita and the boy (' + Math.min(Q.c10seek || 0, 3) + ' / 3 hiding places)')];
+      if (st === 3) return [c(Q.c10chores, 'Ask Belalang about his chores (by his father\'s hut)'), c((Q.c10air || 0) >= C10.water, 'Water from the town well into the tempayan: ' + Math.min(Q.c10air || 0, C10.water) + ' / ' + C10.water),
+        c(Q.c10give, 'Firewood and coconuts for Belalang (' + Object.keys(C10.give).map(function (id) { return it(id) + ' ' + Math.min(cnt(id), C10.give[id]) + ' / ' + C10.give[id]; }).join(', ') + ')'), c(false, 'Tell Belalang it is all done')];
+      if (st === 4) return [c(Q.c10sultan, 'Go to the Sultan, in front of the palace'), c(Q.c10with || Q.c10won, 'Take Belalang and Pelita along (talk to Belalang)'),
+        c(Q.c10won, 'Follow the tracks west through Hutan Merbau, and beat the Kerengga gang' + (Q.c10sultan && !Q.c10won ? ' (' + LC.ch10DaysLeft() + ' days until Ahad)' : '')), c(false, 'Take the Peti Pusaka Diraja')];
+      if (st === 6) return [c(Q.c10heard, 'After dark, hide in the sampan under the foreign ship (by the jetty)'), c(false, 'The riddle contest (talk to the Sultan)')];
       return null;
     }
   };

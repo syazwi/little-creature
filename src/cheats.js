@@ -11,7 +11,8 @@
  *   Z  Nek Lampir the helper: switch between "unlocked (press C)" and "10 hearts, ready to make peace with Nenek" (finishes Chapter 6 first)
  *   0  Chapter 7: jump to its next step (finishes Chapters 2 to 6 first); at the end, Sang Bualang (B) and Angin Bualang (U)
  *   =  Chapter 8: jump to its next step (finishes Chapters 2 to 7 first); at the end, riding Naga Kecil (the Seruling Naga)
- *   `  Chapter 9: jump to its next step (finishes Chapters 2 to 8 first); at the end, Lagu Mayang (L) */
+ *   `  Chapter 9: jump to its next step (finishes Chapters 2 to 8 first); at the end, Lagu Mayang (L)
+ *   '  Chapter 10: jump to its next step (finishes Chapters 2 to 9 first); at the end, Pelita comes home with the Sumpit */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -38,7 +39,7 @@ window.LC = window.LC || {};
     S.quests.tanggang = 4; S.quests.stoneTold = 1;   // v1.6: Sumpahan Batu and Restu Ibu
     S.quests.badang = 3;                              // v1.7: Badang is already strong (B replays his story)
     S.house = 3; LC.Home.applyStage(3);               // v1.8: Nenek's house fully grown (hire the helpers to test them)
-    var inv = ['hoe', 'can', 'joran', 'keris', 'trisula', 'basikal', 'cermin_mata', 'peti_ukir',
+    var inv = ['hoe', 'can', 'joran', 'keris', 'trisula', 'sumpit', 'basikal', 'cermin_mata', 'peti_ukir',
       'wau_bulan', 'gasing_uri', 'sikat', 'dedak', 'baja', 'nasi_lemak', 'pulut_mangga', 'jamu_kuat', 'canang', 'bubu'];
     var many = { dedak: 99, baja: 99, nasi_lemak: 99, pulut_mangga: 99, jamu_kuat: 20, canang: 20, bubu: 3 };
     S.inv = inv.map(function (id) { return { id: id, n: many[id] || 1 }; });
@@ -194,6 +195,30 @@ window.LC = window.LC || {};
         this.toast('Chapter 9, step ' + (Q9.ch9 || 0) + ': ' + ((Q9.ch9 || 0) >= 7 ? 'complete! L sings Lagu Mayang.' : (LC.ch9Goal() || '').replace(/^Chapter 9: /, '')) + ' (Re-enter the place to see it. The jong at the farm jetty sails to Kampung Pantai Kabus.)', 'ic_glow');
         return;
       }
+      case 'Quote': {   // v3.0: jump to the next step of Chapter 10 (finishes Chapter 9 first)
+        var Qa = S.quests, sa = Qa.ch10 || 0, G = S.ghost;
+        if ((Qa.ch9 || 0) < 7) {
+          Qa.ch2 = 8; Qa.ch3 = 13; Qa.kaStage = 3; Qa.asmara = 1; Qa.jinn = 1; Qa.ch3day = S.day - 7; Qa.ch4 = 4; Qa.c4wave = 5; Qa.ch4day = S.day - 6; Qa.ch5 = 5; Qa.ch5day = S.day - 5; Qa.ch6 = 7; Qa.c6day = S.day - 4; Qa.ch7 = 10; Qa.bualang = 1; Qa.pelitaSun = 1;
+          Qa.c8wait = S.day - 3; Qa.ch8 = 9; Qa.c8floodDay = S.day - 3; Qa.c8duel = 'done'; Qa.nagaRide = 1; Qa.c8sealed = 6; Qa.c9wait = S.day - 2; Qa.ch9 = 7; Qa.laguMayang = 1; Qa.c10wait = S.day - 1;
+          if (!State.count('keris_majapahit')) State.add('keris_majapahit', 1);
+          if (!State.count('seruling_naga')) State.add('seruling_naga', 1);
+        }
+        else if (sa === 0) { Qa.ch10 = 1; Qa.c10hop = 0; Qa.c10needs = { full: G.full, joy: G.joy, glow: G.glow }; }
+        else if (sa === 1) { Qa.c10hop = LC.C10.hops.length; Qa.c10clue = 1; Qa.ch10 = 2; if (!State.count('belalang_anyam')) State.add('belalang_anyam', 1); }
+        else if (sa === 2) { Qa.c10arrive = 1; Qa.c10seek = 3; Qa.ch10 = 3; S.visited.tanjung = true; }
+        else if (sa === 3 && !((Qa.c10air || 0) >= 3 && Qa.c10give)) { Qa.c10chores = 1; Qa.c10air = 3; Qa.c10give = 1; }
+        else if (sa === 3) Qa.ch10 = 4;
+        else if (sa === 4 && !Qa.c10sultan) { Qa.c10sultan = 1; Qa.c10due = S.day + LC.C10.days; }
+        else if (sa === 4 && !Qa.c10won) { Qa.c10won = 1; Qa.c10with = 0; }
+        else if (sa === 4) { Qa.ch10 = 5; if (!State.count('peti_diraja')) State.add('peti_diraja', 1); }
+        else if (sa === 5) { if (State.count('peti_diraja')) State.remove('peti_diraja', State.count('peti_diraja')); Qa.ch10 = 6; }
+        else if (sa === 6 && !Qa.c10heard) Qa.c10heard = 1;
+        else if (sa === 6) Qa.ch10 = 7;
+        else if (sa === 7) { var nd = Qa.c10needs; if (nd) { G.full = nd.full; G.joy = Math.max(nd.joy, 80); G.glow = nd.glow; } delete Qa.c10needs; delete Qa.c10with; Qa.ch10 = 8; if (!State.count('sumpit')) State.add('sumpit', 1); if (State.count('belalang_anyam')) State.remove('belalang_anyam', State.count('belalang_anyam')); }
+        State.recalc();
+        this.toast('Chapter 10, step ' + (Qa.ch10 || 0) + ': ' + ((Qa.ch10 || 0) >= 8 ? 'complete! Pelita is home, and the Sumpit shoots darts (USE).' : (LC.ch10Goal() || '').replace(/^Chapter 10: /, '')) + ' (Re-enter the place to see it. The jong at the farm jetty sails to Tanjung Bunga.)', 'ic_glow');
+        return;
+      }
       case 'Minus': {   // v1.7: replay Badang's story (moved from B in v2.5: B calls Sang Bualang) (skinny, by the forest pool) or make him strong again
         var strong = (S.quests.badang || 0) >= 3;
         S.quests.badang = strong ? 2 : 3; S.buddy = null;
@@ -207,6 +232,6 @@ window.LC = window.LC || {};
   LC.UIScene.prototype.create = function () {
     create.apply(this, arguments);
     var self = this;
-    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story, - replay the Badang story, K next Chapter 2 step, ; next Chapter 3 step, O next Chapter 4 step, P next Chapter 5 step, Y next Chapter 6 step, Z Nek Lampir the helper, 0 next Chapter 7 step, = next Chapter 8 step, ` next Chapter 9 step.', 'ic_glow'); });
+    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story, - replay the Badang story, K next Chapter 2 step, ; next Chapter 3 step, O next Chapter 4 step, P next Chapter 5 step, Y next Chapter 6 step, Z Nek Lampir the helper, 0 next Chapter 7 step, = next Chapter 8 step, ` next Chapter 9 step, \' next Chapter 10 step.', 'ic_glow'); });
   };
 })(window.LC);

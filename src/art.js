@@ -781,5 +781,6 @@ window.LC = window.LC || {};
     if (Art.generate17) Art.generate17(scene);   // v2.7: Chapter 9, Ulek Mayang
     if (Art.generate18) Art.generate18(scene);   // v2.7.4: the masjid
     if (Art.generate19) Art.generate19(scene);   // v2.9: the deep of Lombong Puaka
+    if (Art.generate20) Art.generate20(scene);   // v3.0: Chapter 10, Nujum Pak Belalang
   };
 })(window.LC);
