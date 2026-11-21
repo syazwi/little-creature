@@ -724,6 +724,11 @@ window.LC = window.LC || {};
           var on = scroll + r === sel, dis = it.enabled === false;
           rg.fillStyle(on ? 0x4a3520 : 0x2b1f17, 1); rg.fillRoundedRect(X + 20, o.y, Wd - 40, RH - 6, 8);
           if (on) { rg.lineStyle(2, 0xffd166, 1); rg.strokeRoundedRect(X + 20, o.y, Wd - 40, RH - 6, 8); }
+          if (typeof it.bar === 'number') {   // v2.8.2: a progress bar (0 to 1) under the right-hand text
+            var bw = 120, bx = X + Wd - 36 - bw, by = o.y + RH / 2 + 12, f = Math.max(0, Math.min(1, it.bar));
+            rg.fillStyle(0x140e0a, 1); rg.fillRoundedRect(bx, by, bw, 8, 4);
+            if (f > 0) { rg.fillStyle(f >= 1 ? 0x9be15d : 0xffd166, 1); rg.fillRoundedRect(bx, by, Math.max(8, Math.round(bw * f)), 8, 4); }
+          }
           o.ic.setVisible(!!it.icon); if (it.icon) { o.ic.setTexture(it.icon); var fw = o.ic.frame.width, fh = o.ic.frame.height; o.ic.setScale(it.iconScale || Math.min(2, 40 / fw, 40 / fh)).setAlpha(dis ? 0.45 : 1); }   // (v2.6: big pictures, like the dragons, fit the row)
           o.rt.setText(it.right || '').setColor(dis ? '#7a6a5a' : '#f7dd8a');
           fitLabel(o, it.label || '', it.right ? o.rt.width : 0);
@@ -1106,6 +1111,7 @@ window.LC = window.LC || {};
           ];
           return [
             { icon: 'ic_sun', label: 'Resume', sub: 'Back to the kampung.', action: function () { return 'close'; } },
+            self.chapterTile ? self.chapterTile() : null,   // v2.8.2: how far along this chapter is
             { icon: 'ic_bond', label: 'Journal', sub: 'Villager requests, places, spirits, fish and Pelita\'s levels. Press J anytime.', action: function () { self.openJournal(); } },
             { icon: 'ic_map', label: 'Map', sub: 'This place, and the whole land. Press M anytime' + (self.touchOn ? ' (or tap MAP).' : '.'), action: function () { self.openMap(); } },
             { icon: 'ic_stats', label: 'My stats', sub: 'Health, energy, strength, attack, speed, kepeng, Pelita\'s level, abilities and records.', action: function () { self.openStats(0); } },   // v2.8

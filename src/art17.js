@@ -313,6 +313,10 @@ window.LC = window.LC || {};
       p.str(['..hh......', '..hh...ss.', '.bbbb.ssss', 'b.bb.bsees', '..bb..ssss', '..bb..s.s.', '.b..b.....', '.b..b.....'],
         { h: '#e0b48a', b: '#6fb2dc', s: '#e8f0ff', e: '#2a2a3a' }, 1, 2);
     },
+    ic_chap: function (p) {   // v2.8.2: a flag on a hill (how far along the chapter you are)
+      p.str(['pyyyyyy', 'pyyyyy.', 'pyyyyyy', 'p......', 'p......', 'p......', 'p......', 'p......', 'p......'], { p: '#a0683a', y: '#ffd166' }, 3, 1);
+      p.rect(1, 10, 10, 2, '#5aba4a'); p.rect(3, 9, 6, 1, '#5aba4a');
+    },
     ic_font: function (p) {   // v2.7.8: "Aa"
       p.str(['..A.......', '.A.A......', '.A.A......', 'A...A..aa.', 'AAAAA....a', 'A...A..aaa', 'A...A.a..a', 'A...A..aaa'],
         { A: '#ffd166', a: '#e8dcc0' }, 1, 2);

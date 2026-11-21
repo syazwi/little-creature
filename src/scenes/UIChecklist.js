@@ -133,15 +133,64 @@ window.LC = window.LC || {};
     };
   };
 
+  // ---------------------------------------------------------------- v2.8.2: how far along the chapter is, in percent
+  // Every step of a chapter counts the same; the step you are on counts for the share of its parts already done (✓).
+  // Chapter 1 is Pelita's bond on the way to Lv 20. A chapter shows 100% only once it is complete.
+  var ONE = { n: 1, key: 'ch1', end: 1, name: 'Little Creature', steps: ['Pelita becomes a Legend of the Kampung'] };
+  LC.chapterProgress = function () {
+    var S = LC.State.s, Q = S.quests, L = LC.checklist(), total = LC.CHAPTER_LIST.length + 1;
+    if ((Q.ch2 || 0) < 1) {
+      var need = LC.LEVELS[LC.LEGEND_LEVEL - 1] || 1, bond = Math.max(0, (S.ghost && S.ghost.bond) || 0);
+      return { n: 1, name: ONE.name, pct: Math.min(99, Math.floor(bond / need * 100)), done: 0, total: total, L: L };
+    }
+    if (!L.n) return { n: 0, name: '', pct: 100, done: total, total: total, L: L };
+    var ch = LC.CHAPTER_LIST.filter(function (x) { return x.n === L.n; })[0], st = Q[ch.key] || 0;
+    var ok = L.items.filter(function (x) { return x.ok; }).length, part = L.items.length ? ok / L.items.length : 0;
+    return { n: L.n, name: ch.name, pct: Math.max(0, Math.min(99, Math.floor((st + part) / ch.end * 100))), done: L.n - 1, total: total, L: L };
+  };
+  function noDot(s) { return String(s || '').replace(/[.!]\s*$/, ''); }
+
   Object.assign(LC.UIScene.prototype, {
-    // the top of the Journal's Chapters page
+    // the top of the Journal's Chapters page (and the first tab of Chapter Progress)
     checklistRows: function () {
-      var L = LC.checklist(), rows = [];
-      rows.push({ icon: 'ic_glow', label: 'To do now: ' + L.title + (L.total ? ' (step ' + L.step + ' of ' + L.total + ')' : ''), sub: (L.stepName ? L.stepName + ': ' : '') + L.now });
+      var P = LC.chapterProgress(), L = P.L, rows = [];
+      rows.push({ icon: 'ic_chap', label: 'To do now: ' + L.title + (L.total ? ' (step ' + L.step + ' of ' + L.total + ')' : ''), sub: (L.stepName ? L.stepName + ': ' : '') + L.now,
+        right: P.pct + '%', bar: P.pct / 100 });
       L.items.forEach(function (x) { rows.push({ icon: x.ok ? 'ic_bond' : 'ic_moon', label: (x.ok ? '✓ ' : '· ') + x.t, right: x.ok ? 'Done' : '' }); });
       if (L.left) rows.push({ icon: 'ic_moon', label: L.left + ' more step' + (L.left > 1 ? 's' : '') + ' after this one in ' + L.title + '.' });
-      rows.push({ icon: 'ic_sun', label: 'What opens the next chapter', sub: L.next });
+      rows.push({ icon: 'ic_sun', label: P.n && P.n < P.total ? 'How to reach Chapter ' + (P.n + 1) : 'What opens the next chapter', sub: L.next });
       return rows;
+    },
+    // every chapter, with how much of it is done (the names of chapters not reached yet stay a secret)
+    chapterListRows: function () {
+      var P = LC.chapterProgress(), all = [ONE].concat(LC.CHAPTER_LIST);
+      return all.map(function (ch, i) {
+        var done = !P.n || ch.n < P.n, now = ch.n === P.n, prev = all[i - 1];
+        if (done) return { icon: 'ic_bond', label: '✓ Chapter ' + ch.n + ': ' + ch.name, right: '100%', bar: 1,
+          sub: ch.n === 1 ? 'Pelita became a Legend of the Kampung.' : 'All ' + ch.end + ' steps done: ' + ch.steps.slice(0, ch.end).join(', ') + '.' };
+        if (now) return { icon: 'ic_chap', label: 'Chapter ' + ch.n + ': ' + ch.name + '  (now)', right: P.pct + '%', bar: P.pct / 100,
+          sub: (ch.n === 1 ? noDot(P.L.now) + '. ' : 'Step ' + P.L.step + ' of ' + ch.end + ': ' + P.L.stepName + '. ') + P.L.next };
+        return { icon: 'ic_moon', label: 'Chapter ' + ch.n + ': ???', right: 'Locked',
+          sub: ch.n === P.n + 1 ? P.L.next : 'Opens after Chapter ' + prev.n + '.' };
+      });
+    },
+    // the pause menu's tile: "Chapter 3: 42%"
+    chapterTile: function () {
+      var self = this, S = this.S;
+      if (!S || S.guest) return null;
+      var P = LC.chapterProgress(), L = P.L, tap = this.touchOn ? 'Tap' : 'Select';
+      if (!P.n) return { icon: 'ic_chap', label: 'Story: Complete', sub: 'Every chapter is complete! ' + L.now, action: function () { self.openChapter(); } };
+      return { icon: 'ic_chap', label: 'Chapter ' + P.n + ': ' + P.pct + '%',
+        sub: P.name + (L.total > 1 ? ', step ' + L.step + ' of ' + L.total : '') + ': ' + noDot(L.stepName || L.now) + '. ' + tap + ' to see what to do now, and ' + (P.n < P.total ? 'how to reach Chapter ' + (P.n + 1) : 'what comes next') + '.',
+        action: function () { self.openChapter(); } };
+    },
+    openChapter: function () {
+      var self = this;
+      this.openMenu({
+        title: 'Chapter Progress',
+        footer: function () { var P = LC.chapterProgress(); return 'The whole story: ' + P.done + ' of ' + P.total + ' chapters complete. What happened so far is in the Journal (J) > Chapters.'; },
+        tabs: [{ label: 'To do now', rows: function () { return self.checklistRows(); } }, { label: 'All chapters', rows: function () { return self.chapterListRows(); } }]
+      });
     },
     // a few small lines under the goal line: only the parts of this step still to do
     drawChecklist: function () {
