@@ -87,7 +87,9 @@ window.LC = window.LC || {};
     { id: 'tj_jong', type: 'jong5', x: 29, y: 34, w: 5, h: 3, tex: 'jong_majapahit' },
     // the ship from Negeri Antah Berantah, and the little sampan tied up under it
     { id: 'tj_kapal', type: 'bldg', x: 18, y: 33, w: 7, h: 3, tex: 'kapal10', keep: true, when: function (S) { var s = c10(S); return s === 6 || s === 7; }, text: 'The ship from Negeri Antah Berantah: tall, with black and red sails and a carved hornbill at the bow. Sailors in striped sarongs are polishing everything.' },
-    { id: 'tj_sampan', type: 'sampan10', x: 25, y: 34, w: 2, h: 1, tex: 'sampan10', keep: true, when: function (S) { var s = c10(S); return s === 6 || s === 7; } }
+    { id: 'tj_sampan', type: 'sampan10', x: 25, y: 34, w: 2, h: 1, tex: 'sampan10', keep: true, when: function (S) { var s = c10(S); return s === 6 || s === 7; } },
+    // v3.0.1: Nek Lampir, come for a reading (once the town calls Pak Belalang a great nujum; also after the chapter)
+    { id: 'tj_nek', type: 'nek10', x: 14, y: 11, tex: 'npc_lampir_0', keep: true, when: function (S) { return c10(S) >= 5 && !q(S).c10nek && (q(S).ch6 || 0) >= 7; } }
   ];
   [[4, 26], [15, 27], [36, 26], [48, 27], [20, 22], [44, 23], [52, 16], [38, 16]].forEach(function (t, i) { TJ_OBJ.push({ id: 'tj_palm' + i, type: 'bldg', x: t[0], y: t[1], tex: 'palm', text: 'A coconut palm, leaning towards the sea. The children of Tanjung Bunga weave grasshoppers from its leaves.' }); });
   LC.AREAS.tanjung = {
@@ -140,6 +142,9 @@ window.LC = window.LC || {};
     pencuri10: { name: 'Kerengga thief', hp: 12, speed: 34, dmg: 7, sight: 135, w: 6, drop: [['kepeng', 0.8, 30, 80]] },
     ketua10: { name: 'Si Kerengga', hp: 46, speed: 30, dmg: 10, sight: 170, w: 8, charge: true, drop: [] }
   });
+
+  // v3.0.1: the stray cat that followed Nek Lampir home from Tanjung Bunga, by her herbs on Gunung Ledang
+  LC.AREAS.ledang.objects.push({ id: 'ld_kucing10', type: 'kucing10', x: 7, y: 31, tex: 'kucing10', when: function (S) { return !!q(S).c10nek; } });
 
   // on the farm: the glowing grasshoppers, and the woven one at the end of the jetty
   LC.OBJECTS.push({ id: 'f_anyam10', type: 'anyam10', x: 21, y: 29, tex: 'anyam10', keep: true, when: function (S) { return c10(S) === 1 && (q(S).c10hop || 0) >= LC.C10.hops.length; } });
@@ -347,6 +352,76 @@ window.LC = window.LC || {};
     night: 'Pelita\'s spirit house stays dark tonight. Somewhere down the coast, a little light is keeping a boy called Belalang company.',
     nenekLost: ['Pelita will come home, cucu. Spirits always know the way home. Sometimes they just take the long way round.', 'I keep turning round to talk to it. Then I remember. Aduh.', 'A child who can see spirits... I knew a girl like that once, in Santubong. She grew up to be your Nenek.', 'Bring Pelita home, cucu. And bring that boy some kuih from me. Anyone Pelita loves that much must be a good child.'],
     nenekAfter: ['Pelita has been glued to your shoulder all day. I think it missed you more than it will admit.', 'A fortune teller who tells the truth! Now THAT is a wonder.', 'The Sultan made the lazy one keeper of the royal orchards? Hah! That Sultan is wiser than he looks.', 'Belalang sent a letter. He has learned to write! It says: PELITA IS MY SECOND BEST FRIEND. Underlined three times.'],
-    shoot: ['Phoo!', 'Thwip!', 'Pfft!']
+    shoot: ['Phoo!', 'Thwip!', 'Pfft!'],
+    // v3.0.1: Nek Lampir's fortune (the user asked for a little humour: she wants Pak Belalang to read her future)
+    nek: {
+      hint: 'Somebody under Pak Belalang\'s coconut tree is shouting for "a READING, nujum, and be quick about it". That voice sounds familiar...',
+      helperGo: 'Hmph. A nujum? I will go and sit in front of him myself. (She stomps off towards the coconut tree.)',
+      intro: [
+        { text: 'A crowd has gathered under Pak Belalang\'s coconut tree. In the middle, on a mat, sits a familiar old woman with a basket of herbs and a very sour face.' },
+        { who: 'lampir', text: 'Hmph. YOU again. Do not look at me like that. I came for a reading. The whole coast says this Pak Belalang is the greatest nujum alive.' },
+        { who: 'pak_belalang', text: '(whispering, terrified) Who is she? Why does she smell of pepper? Why is she looking at me like a cat looks at a fish?' },
+        { who: 'belalang', text: '(whispering to you) She\'s YOUR friend! Quick: whisper Father something true about her, and he\'ll say it out loud.' }
+      ],
+      introAfter: [
+        { text: 'A crowd has gathered under Pak Belalang\'s coconut tree. In the middle, on a mat, sits a familiar old woman with a basket of herbs and a very sour face.' },
+        { who: 'lampir', text: 'Hmph. YOU again. I hear this Pak Belalang is not a real nujum. I do not care. A fake nujum is cheaper than a real one. I want a reading.' },
+        { who: 'pak_belalang', text: '(whispering) I am retired! I keep ORCHARDS now! ...Why is she looking at me like a cat looks at a fish?' },
+        { who: 'belalang', text: '(whispering to you) Just one more time, Father. For fun! Our friend whispers, you talk. Like the riddles!' }
+      ],
+      qs: [
+        { q: 'First question, nujum. I used to be a great witch. The princess of Gunung Ledang took my magic away. Will I ever get it back?',
+          opts: [
+            { label: 'Whisper: her magic lives in her herbs now', good: true, res: [
+              { who: 'pak_belalang', text: '(eyes closed, swaying) Your magic... is not gone! It has gone... into your HERBS!' },
+              { who: 'lampir', text: '...Hm. That is not stupid. My pepper powder IS very magical. It once made Badang sneeze for a whole afternoon.' }] },
+            { label: 'Whisper: she has a soft spot for cats', res: [
+              { who: 'pak_belalang', text: '(eyes closed, swaying) I see... a cat. Many cats. So, so many cats.' },
+              { who: 'lampir', text: 'I HATE cats.' },
+              { text: 'Somewhere behind the hut, a cat says "meow". Nek Lampir glares at the hut until it stops.' }] },
+            { label: 'Whisper: yes, but very slowly', good: true, res: [
+              { who: 'pak_belalang', text: 'Yes! ...Slowly. Very, very slowly. A little bit... every... hundred... years.' },
+              { who: 'lampir', text: 'A hundred years. Hmph. I have waited longer for worse things.' }] }
+          ] },
+        { q: 'Second question. Hang Tuah threw me off my own mountain. Will he ever say sorry?',
+          opts: [
+            { label: 'Whisper: yes, one day, if she is patient', good: true, res: [
+              { who: 'pak_belalang', text: 'He will say sorry! The stars say so! In... (he counts on his fingers, twice) ...three hundred years.' },
+              { who: 'lampir', text: 'Three hundred years. Good. I can wait. I am VERY good at waiting. And at holding grudges.' }] },
+            { label: 'Whisper: he forgot all about her', res: [
+              { who: 'pak_belalang', text: 'He has... forgotten you completely! He does not even remember your name!' },
+              { who: 'lampir', text: 'FORGOTTEN?!' },
+              { text: 'A jar of pepper explodes in her basket. The whole front row sneezes. Pak Belalang sneezes twice, and once more for luck.' }] }
+          ] },
+        { q: 'Last question. (She lowers her voice.) Will I ever find... true love?',
+          opts: [
+            { label: 'Whisper: someone tall and handsome', res: [
+              { who: 'pak_belalang', text: 'Someone tall! Someone handsome! Someone with... (he panics) ...a great many teeth! A tall, handsome... CROCODILE!' }] },
+            { label: 'Whisper: anything, quick!', res: [
+              { who: 'pak_belalang', text: '(in a panic) Love! Yes! A... a... CROCODILE! A big one! In a river! Very handsome. For a crocodile.' }] }
+          ],
+          after: [
+            { text: 'The crowd holds its breath. Nek Lampir is silent for a long, long moment.' },
+            { who: 'lampir', text: '...A crocodile.' },
+            { who: 'lampir', text: '...Is he rich?' }
+          ] }
+      ],
+      pay: [
+        { who: 'lampir', text: 'Here. Payment. My famous jamu: bitter leaf, black pepper, and one ingredient I will not name. Drink it. ALL of it. Now. While I watch.' },
+        { text: 'Pak Belalang drinks it. His face goes green, then purple, then a colour nobody in Tanjung Bunga has a name for.' },
+        { who: 'pak_belalang', text: '(faintly) ...Delicious. Truly. I can see... through time.' },
+        { who: 'belalang', text: 'Hee hee hee!' }
+      ],
+      good: 'Hmph. A good nujum. Better than I expected. (She almost smiles.) And you, child: here, for the whispering. Do not think I did not see.',
+      bad: 'Hmph. A terrible nujum. But an entertaining one. (She almost smiles.) And you, child: here, for the whispering. Do not think I did not see.',
+      leave: 'Nek Lampir stomps off towards the jetty with her basket. A skinny ginger cat trots after her. She shoos it. It follows her anyway.',
+      callback: [
+        { who: 'lampir', text: '(from the back of the crowd) WAIT. So my fortune was FAKE?!' },
+        { who: 'pak_belalang', text: '...Mostly fake. The crocodile part might be true! Who knows? Nobody knows! That is the beauty of crocodiles.' },
+        { who: 'lampir', text: '...Hmph. I am keeping the crocodile.' }
+      ],
+      cat: ['A skinny ginger cat, curled up beside Nek Lampir\'s herbs. It followed her all the way home from Tanjung Bunga. She calls it "Kucing". (It means "cat".)', 'The cat is asleep in Nek Lampir\'s basket of pepper leaves. It sneezes in its sleep.', 'Nek Lampir says the cat is NOT hers. The cat has its own bowl, its own cushion, and a little blanket she knitted.'],
+      talk: ['Do NOT mention the crocodile.', 'The cat is not mine. It just lives here. And eats here. And sleeps on my feet. That is all.', 'Three hundred years until Hang Tuah says sorry. I have marked it on my calendar.', 'That jamu I gave the fake nujum? Mostly harmless. Mostly.', 'If you ever meet a tall, handsome crocodile... tell him I am busy. But not TOO busy.']
+    }
   };
 })(window.LC);

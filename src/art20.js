@@ -200,6 +200,20 @@ window.LC = window.LC || {};
     p.outline(OUT);
   }
 
+  // ---------------------------------------------------------------- v3.0.1: the stray cat that adopted Nek Lampir (16 x 12, sitting)
+  function drawKucing(p) {
+    var O = '#e0883a', O2 = '#b8642a', W = '#f6e6cc';
+    p.ell(8, 11, 6, 1.2, 'rgba(30,20,10,0.25)');
+    p.line(12, 10, 15, 6, O, 2); p.px(15, 5, O2);                                                      // the tail, curled up
+    p.ell(9, 8, 4.5, 3.4, O); p.ell(9, 9.5, 3, 1.6, W);                                                  // the body
+    p.ell(5, 5, 3.2, 2.8, O); p.poly([[2, 4], [2.5, 0], [5, 2.5]], O); p.poly([[5, 2.5], [7.5, 0], [8, 4]], O);   // the head and ears
+    p.px(3, 1, '#f2a8a0'); p.px(7, 1, '#f2a8a0');
+    p.px(4, 5, '#2a3a1a'); p.px(6, 5, '#2a3a1a'); p.px(5, 6, '#c86a6a');                               // eyes half shut, a pink nose
+    [[6, 8], [10, 7], [12, 9]].forEach(function (c) { p.px(c[0], c[1], O2); });                          // stripes
+    p.rect(4, 10, 2, 1, W); p.rect(8, 10, 2, 1, W);                                                      // white paws
+    p.outline(OUT);
+  }
+
   // ---------------------------------------------------------------- the Sumpit and its dart
   function drawSumpit(p) {
     p.line(1, 14, 14, 1, '#c8a050', 2); p.line(2, 14, 14, 2, '#a88030');
@@ -225,6 +239,7 @@ window.LC = window.LC || {};
     make(scene, 'kain10', 16, 16, drawKain);
     make(scene, 'syiling10', 16, 16, drawSyiling, true);
     make(scene, 'obor10', 16, 16, drawObor, true);
+    make(scene, 'kucing10', 16, 12, drawKucing);
     make(scene, 'damak10', 10, 3, function (p) { p.line(0, 1, 7, 1, '#e8e0d0'); p.rect(7, 0, 3, 3, '#c8323a'); p.px(0, 1, '#ffffff'); });
     for (var f = 0; f < 2; f++) (function (f) {
       make(scene, 'pencuri10_' + f, 16, 22, function (p) { drawPencuri(p, f); });

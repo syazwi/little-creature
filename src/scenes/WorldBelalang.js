@@ -97,6 +97,15 @@ window.LC = window.LC || {};
         }
       }
       if (a === 'merbau') { var fire = this.objImgs && this.objImgs.mb_unggun; if (fire) this.tweens.add({ targets: fire, scaleY: 1.12, scaleX: 0.94, duration: 260, yoyo: true, repeat: -1 }); }
+      // v3.0.1: Nek Lampir, waiting impatiently for her reading; and later, her cat on Gunung Ledang
+      var nek = a === 'tanjung' && this.objImgs && this.objImgs.tj_nek;
+      if (nek) {
+        nek.setFlipX(true);
+        this.tweens.add({ targets: nek, scaleY: 1.04, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        if (!q.c10nekHint) { q.c10nekHint = 1; this.time.delayedCall(2600, function () { if (!self.leaving && !self.ui.isBlocking()) self.toast(X.nek.hint, 'npc_lampir_0'); }); }
+      }
+      var cat = a === 'ledang' && this.objImgs && this.objImgs.ld_kucing10;
+      if (cat) this.tweens.add({ targets: cat, scaleY: 0.94, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       void c;
     },
 
@@ -118,8 +127,44 @@ window.LC = window.LC || {};
           if (!f[o.i]) { f[o.i] = 1; LC.Audio.sfx('chime'); }
           self.toast(X.clue[o.i], 'ic_moon');
         } };
+        case 'nek10': return { label: 'Nek Lampir wants her fortune told', fn: function () { self.nekFortune10(); } };
+        case 'kucing10': return { label: 'Nek Lampir\'s cat', fn: function () { LC.Audio.sfx('pet'); self.toast(pick(X.nek.cat), 'npc_lampir_0'); } };
       }
       return undefined;
+    },
+
+    // ================================================================ v3.0.1: Nek Lampir's fortune
+    // You whisper to Pak Belalang (with buttons) and he says it out loud. Every answer goes somewhere funny.
+    nekFortune10: function () {
+      var self = this, q = Q(), N = X.nek, score = 0, done = false;
+      if (q.c10nek || this.c10.nekBusy) return;
+      this.c10.nekBusy = true;
+      if (this.nek && !this.nek.leaving && this.nekLeave) this.nekLeave(N.helperGo);   // (your helper, if she is with you, sits down in front of him herself)
+      function lines(arr) { return self.ch2Lines(arr); }
+      function ask(k) {
+        if (k >= N.qs.length) { pay(); return; }
+        var R = N.qs[k];
+        self.ui.say(lines([{ who: 'lampir', text: R.q }]), { choices: R.opts.map(function (o) { return { label: o.label, fn: function () {
+          if (o.good) score++;
+          LC.Audio.sfx(o.good ? 'chime' : k === 1 ? 'sneeze' : 'giggle');
+          if (!o.good && k === 1) self.cameras.main.shake(160, 0.003);
+          self.ui.say(lines(o.res.concat(R.after || [])), { onDone: function () { ask(k + 1); } });
+        } }; }) });
+      }
+      function pay() {
+        if (done) return; done = true;
+        q.c10nek = 1;   // (first: the rewards, then the lines)
+        if (LC.State.canAdd('herba')) LC.State.add('herba', 3);
+        LC.State.addFriendship('lampir', 8);
+        LC.Audio.sfx('gulp');
+        self.ui.say(lines(N.pay.concat([{ who: 'lampir', text: (score >= 2 ? N.good : N.bad) + ' (+3 Herba, and two more hearts. She will never admit it.)' }])), { onDone: function () {
+          self.c10.nekBusy = false;
+          self.refreshWhen();
+          self.toast(N.leave, 'npc_lampir_0');
+        } });
+      }
+      LC.Audio.sfx('drum');
+      this.ui.say(lines(LC.ch10Step() >= 8 ? N.introAfter : N.intro), { onDone: function () { ask(0); } });
     },
 
     updateBelalang: function (time, dt) {
@@ -397,8 +442,13 @@ window.LC = window.LC || {};
       LC.State.recalc(); LC.emit('ghost'); LC.emit('inv');
       this.doShared('kind', { n: 25 }, function () {});
       c.holdGhost = true; this.cutscene = true;
-      var settle = -1;
-      X.finale.forEach(function (l, i) { if (/settles on your shoulder/.test(l.text)) settle = i; });
+      var settle = -1, fin = X.finale.slice();
+      if (q.c10nek) {   // v3.0.1: Nek Lampir heard everything
+        var at = -1;
+        fin.forEach(function (l, i) { if (/worth more than any riddle/.test(l.text)) at = i; });
+        if (at >= 0) Array.prototype.splice.apply(fin, [at + 1, 0].concat(X.nek.callback));
+      }
+      fin.forEach(function (l, i) { if (/settles on your shoulder/.test(l.text)) settle = i; });
       function home() {   // Pelita floats across, from Belalang to you
         var P = c.pel; c.pel = null;
         if (!P) { c.holdGhost = false; return; }
@@ -415,7 +465,7 @@ window.LC = window.LC || {};
         if (c.holdGhost) home();
         self.toast('The Sumpit: hold it and press USE to shoot a dart at whatever is in front of you, far away.' + (q.c10sumpitOwed ? ' (Make room in your bag: Belalang will give it to you when you talk to him.)' : ''), 'i_sumpit');
       }
-      this.ui.say(this.ch2Lines(X.finale), { onLine: function (i) { if (i === settle && c.holdGhost) home(); if (i === settle + 1) self.cameras.main.flash(500, 255, 230, 160); }, onDone: end });
+      this.ui.say(this.ch2Lines(fin), { onLine: function (i) { if (i === settle && c.holdGhost) home(); if (i === settle + 1) self.cameras.main.flash(500, 255, 230, 160); }, onDone: end });
       var w = this.time.addEvent({ delay: 500, loop: true, callback: function () { if (done) { w.remove(); return; } if (!self.ui.isBlocking()) { w.remove(); end(); } } });
     },
 

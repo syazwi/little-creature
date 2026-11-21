@@ -87,6 +87,7 @@ window.LC = window.LC || {};
       if (vid === 'pak_belalang' && st >= 8) rows.push({ icon: 'i_mangga', label: 'The royal orchards', right: 'Talk', sub: 'Ask Pak Belalang about his new job.', action: function () {
         sayLines([{ who: 'pak_belalang', text: pick(['Up at dawn! Every day! Mangoes do not pick themselves, it turns out. I asked them to.', 'I am the keeper of the royal orchards. It is honest work. It is very, very honest. My back is very honest about it.', 'Belalang reads to me in the evenings now. Books! I fall asleep, but that is a compliment.', 'The Sultan says I am the only man in the palace who tells him the truth. So I told him his riddles are terrible. He laughed for an hour.']) }]); return 'close';
       } });
+      if (vid === 'lampir' && Q.c10nek) rows.push({ icon: 'ic_nek', label: 'The crocodile', right: 'Talk', sub: 'Ask Nek Lampir about her fortune.', action: function () { sayLines([{ who: 'lampir', text: pick(X.nek.talk) }]); return 'close'; } });
       if (vid === 'sultan_muzaffar') {
         if (st === 4 && !Q.c10sultan) rows.push({ icon: 'ic_moon', label: 'The stolen chest', right: 'Ask', sub: 'Ask the Sultan what has happened.', action: function () { Q.c10sultan = 1; Q.c10due = S.day + C10.days; LC.Audio.sfx('drum'); sayLines(X.sultan); return 'close'; } });
         if (st === 4 && Q.c10sultan) info('i_peti_diraja', 'Until Ahad', '"My chest! Have you found my chest?" (' + daysText() + (Q.c10late ? '. He has already given you one more week.' : '. Bring it back before then for an extra reward.') + ')');
@@ -115,6 +116,8 @@ window.LC = window.LC || {};
         var doneS = st > s[0];
         rows.push({ icon: doneS ? 'ic_bond' : 'ic_moon', label: (doneS ? '✓ ' : '') + s[1], right: doneS ? 'Done' : 'Now', sub: s[2] });
       });
+      if (st >= 5) rows.push(Q.c10nek ? { icon: 'ic_nek', label: '✓ Nek Lampir\'s fortune', right: 'Done', sub: 'A tall, handsome crocodile. And a cat, whether she likes it or not.' }
+        : { icon: 'ic_nek', label: 'Nek Lampir\'s fortune (optional)', right: 'Now', sub: 'Somebody is waiting under Pak Belalang\'s coconut tree in Tanjung Bunga, demanding a reading.' });
       return rows;
     },
 
