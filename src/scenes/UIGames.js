@@ -41,12 +41,13 @@ window.LC = window.LC || {};
       var self = this, S = this.S, W = this.world, tab = 0, m;
       var c = this.modalC(92, 0x000000, 0.55), X = 90, Y = 40, Wd = 780, Hd = 560;
       var bg = this.add.graphics(); this.panel(bg, X, Y, Wd, Hd); c.add(bg);
+      this.closeX(c, X + Wd, Y, function () { if (self.modal === m) m.key('Escape'); });   // v2.7.7
       var tabT = ['This place', 'The land'].map(function (l, k) {
         var t = self.txt(X + 40 + k * 170, Y + 18, l, 20, '#cdb8a0').setInteractive({ useHandCursor: true });
         t.on('pointerdown', function () { tab = k; LC.Audio.sfx('click'); render(); });
         c.add(t); return t;
       });
-      var keys = this.txt(480, Y + Hd - 22, this.touchOn ? 'Tap a tab to switch  ·  X (top) to close' : 'A/D or Tab switch  ·  M or Esc close', 12, '#8a7a6a', { ox: 0.5 });
+      var keys = this.txt(480, Y + Hd - 22, this.touchOn ? 'Tap a tab to switch  ·  X to close' : 'A/D or Tab switch  ·  M or Esc close', 12, '#8a7a6a', { ox: 0.5 });
       c.add(keys);
       var body = null;
       function render() {

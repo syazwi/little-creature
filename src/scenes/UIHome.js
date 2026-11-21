@@ -77,6 +77,7 @@ window.LC = window.LC || {};
       var X = 120, Y = 28, Wd = 720, Hd = 584, CS = 54, GAP = 60;
       var bg = this.add.graphics(); this.panel(bg, X, Y, Wd, Hd); c.add(bg);
       var title = this.txt(480, Y + 14, 'Bag', 28, '#ffd166', { ox: 0.5 }); c.add(title);
+      this.closeX(c, X + Wd, Y, function () { if (self.modal === m) m.key('Escape'); });   // v2.7.7
       var gx0 = X + 34, gyH = Y + 76, gyB = Y + 168;
       c.add(this.txt(gx0, gyH - 20, 'Hotbar (1-9)', 13, '#a08a6a'));
       var backT = this.txt(gx0, gyB - 20, '', 13, '#a08a6a'); c.add(backT);
@@ -120,7 +121,7 @@ window.LC = window.LC || {};
         gbz.on('pointerdown', function () { give(); });
         c.add([gg2, gbt, gbz]);
       }
-      c.add(this.txt(480, Y + Hd - 18, this.touchOn ? 'Tap an item to pick it up, tap another slot to swap  ·  X (top) to close'
+      c.add(this.txt(480, Y + Hd - 18, this.touchOn ? 'Tap an item to pick it up, tap another slot to swap  ·  X to close'
         : 'Arrows/mouse move  ·  E or click: pick up, then swap  ·  T / Delete: throw away' + (coop ? '  ·  G: give a friend' : '') + '  ·  Esc close', 12, '#8a7a6a', { ox: 0.5 }));
       function keepVisible() {
         if (cur < 9) return;

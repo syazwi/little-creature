@@ -386,7 +386,8 @@ window.LC = window.LC || {};
       this.updateCoopUI();
 
       // toasts (lifted above the thumb-stick in touch mode)
-      var y = this.toastBaseY(), tx = this.toastX, now = this.time.now;
+      var y = this.toastBaseY(), tx = this.toastX, now = this.time.now, dm = this.modal;
+      if (dm && dm.type === 'dialog' && dm.c && dm.c.scene) y = Math.min(y, dm.c.y + dm.top - 8);   // v2.7.7: above a dialog, never behind it
       this.toasts = this.toasts.filter(function (c) {
         if (!c.dying && now - c.born > 4200) {
           c.dying = true;
@@ -483,31 +484,62 @@ window.LC = window.LC || {};
       lines = lines.map(function (l) { return typeof l === 'string' ? { text: l } : l; });
       this.closeModal();
       var c = this.modalC(100, undefined, 0, true);
-      var bg = this.add.graphics(); this.panel(bg, 60, 430, 840, 160); c.add(bg);
+      // v2.7.7: the box grows upward to fit the longest line (and the choice buttons), so text never runs into anything
+      var LX = 60, BW = 840, BOT = 590, CH = 48, CG = 10;
+      var bg = this.add.graphics(); c.add(bg);
       var pg = this.add.graphics(); c.add(pg);
       var por = this.add.image(140, 510, 'ghost_0_normal').setScale(4); c.add(por);
       var name = this.txt(90, 448, '', 20, '#ffd166');
       var body = this.txt(90, 476, '', 19, '#fbecc8', { ls: 5, wrap: 770 });
-      var hint = this.txt(884, 582, '>>', 16, '#ffd166', { ox: 1, oy: 1 });
-      c.add([name, body, hint]);
+      var hint = this.txt(LX + BW - 16, BOT - 8, '>>', 16, '#ffd166', { ox: 1, oy: 1 });
+      var cg = this.add.graphics();
+      var meas = this.txt(0, 0, '', 19, '#fbecc8').setVisible(false);
+      c.add([name, body, hint, cg, meas]);
       this.tweens.add({ targets: hint, alpha: 0.25, duration: 420, yoyo: true, repeat: -1 });
-      var idx = -1, full = '', shown = 0, typing = false, cIdx = 0, choiceT = [], tx = 90;
+      var idx = -1, full = '', shown = 0, typing = false, cIdx = 0, choiceT = [], tx = 90, ww = 770, top = 430, bodyY = 0;
       var m;
+      function frame(L) { return L.portrait ? { tx: 218, ww: 650 } : { tx: 90, ww: 770 }; }
+      // the choices as buttons, each as wide as its words, wrapping onto a new row when they don't fit
+      function layChoices(x0, w0) {
+        var out = [], x = x0, row = 0;
+        (opts.choices || []).forEach(function (ch) {
+          meas.setText(ch.label || '');
+          var w = Math.min(w0, Math.max(130, Math.ceil(meas.width) + 44));
+          if (x > x0 && x + w > x0 + w0) { x = x0; row++; }
+          out.push({ x: x, row: row, w: w }); x += w + 12;
+        });
+        out.rows = out.length ? row + 1 : 0;
+        return out;
+      }
+      function choicesH(lay) { return lay.rows ? 16 + lay.rows * CH + (lay.rows - 1) * CG : 0; }
+      // how tall the box must be for line i (its name, all of its words, and the buttons after the last line)
+      function needH(i) {
+        var L = lines[i], f = frame(L);
+        body.setWordWrapWidth(f.ww, true).setText(L.text || '');
+        var h = (L.name ? 50 : 32) + body.height;
+        if (i === lines.length - 1 && opts.choices) h += choicesH(layChoices(f.tx, f.ww));
+        body.setText('');
+        return Math.max(160, Math.ceil(h) + 24);
+      }
+      var boxH = Math.max.apply(null, lines.map(function (l, i) { return needH(i); }));
+      top = BOT - boxH;
+      bg.fillStyle(0x1e1510, 1); bg.fillRoundedRect(LX, top, BW, boxH, 8);   // (solid: nothing behind it shows through)
+      this.panel(bg, LX, top, BW, boxH);
       function next() {
         idx++;
         if (idx >= lines.length) { finish(); return; }
-        var L = lines[idx], hasP = !!L.portrait;
+        var L = lines[idx], hasP = !!L.portrait, f = frame(L);
         if (opts.onLine) opts.onLine(idx);   // v2.5: a scene can react to a line as it appears
         pg.clear(); por.setVisible(hasP);
-        tx = 90; var ww = 770;
+        tx = f.tx; ww = f.ww;
         if (hasP) {
-          pg.fillStyle(0x3b2f5c, 1); pg.fillRoundedRect(84, 452, 112, 116, 8);
+          pg.fillStyle(0x3b2f5c, 1); pg.fillRoundedRect(84, top + 22, 112, 116, 8);
           por.setTexture(L.portrait === 'ghost' ? LC.ghostTex(S.ghost.stage, L.expr || 'normal') : L.portrait);
-          por.setScale(Math.min(4, 104 / por.frame.width, 108 / por.frame.height));   // (v2.6: a big portrait, like a dragon, fits its frame)
-          tx = 218; ww = 650;
+          por.setScale(Math.min(4, 104 / por.frame.width, 108 / por.frame.height)).setPosition(140, top + 80);   // (v2.6: a big portrait, like a dragon, fits its frame)
         }
-        name.setPosition(tx, 448).setText(L.name || '');
-        body.setPosition(tx, L.name ? 480 : 462); body.setWordWrapWidth(ww, true);
+        name.setPosition(tx, top + 18).setText(L.name || '');
+        bodyY = top + (L.name ? 50 : 32);
+        body.setPosition(tx, bodyY); body.setWordWrapWidth(ww, true);
         full = L.text || ''; shown = 0; typing = true; body.setText('');
         hint.setVisible(false);
       }
@@ -523,16 +555,27 @@ window.LC = window.LC || {};
       }
       function showChoices() {
         hint.setVisible(false);
+        var lay = layChoices(tx, ww), y0 = Math.max(bodyY + body.height + 16, BOT - 24 - choicesH(lay) + 16);
         choiceT = opts.choices.map(function (ch, k) {
-          var t = self.txt(tx + k * 200, 548, '', 20, '#cdb8a0').setInteractive({ useHandCursor: true });
-          t.on('pointerover', function () { cIdx = k; renderChoices(); });
-          t.on('pointerdown', function () { pick(k); });
-          c.add(t); return t;
+          var p = lay[k], y = y0 + p.row * (CH + CG);
+          var t = self.txt(p.x + p.w / 2, y + CH / 2, ch.label || '', 19, '#fbecc8', { ox: 0.5, oy: 0.5 });
+          if (t.width > p.w - 16) t.setFontSize('16px');
+          var z = self.add.zone(p.x, y, p.w, CH).setOrigin(0).setInteractive({ useHandCursor: true });
+          z.on('pointerover', function () { if (cIdx !== k) { cIdx = k; renderChoices(); } });
+          z.on('pointerdown', function () { pick(k); });
+          c.add([t, z]);
+          return { t: t, x: p.x, y: y, w: p.w };
         });
         renderChoices();
       }
       function renderChoices() {
-        choiceT.forEach(function (t, k) { t.setText((k === cIdx ? '> ' : '  ') + opts.choices[k].label); t.setColor(k === cIdx ? '#ffd166' : '#cdb8a0'); });
+        cg.clear();
+        choiceT.forEach(function (o, k) {
+          var on = k === cIdx;
+          cg.fillStyle(on ? 0x6a4a1c : 0x2e2219, 1); cg.fillRoundedRect(o.x, o.y, o.w, CH, 10);
+          cg.lineStyle(on ? 3 : 2, on ? 0xffd166 : 0x8a6a4a, 1); cg.strokeRoundedRect(o.x, o.y, o.w, CH, 10);
+          o.t.setColor(on ? '#ffd166' : '#fbecc8');
+        });
       }
       function advance() {
         if (typing) { shown = full.length; body.setText(full); typing = false; lineDone(); return; }
@@ -543,8 +586,10 @@ window.LC = window.LC || {};
       function finish() { close(); if (opts.onDone) opts.onDone(); }
       function close() { timer.remove(); c.destroy(); if (self.modal === m) self.modal = null; }
       m = {
-        type: 'dialog', opened: this.time.now, close: close,
+        type: 'dialog', opened: this.time.now, close: close, c: c, top: top,   // (top: toasts stay above the box)
         key: function (code) {
+          var dg = /^(Digit|Numpad)([1-9])$/.exec(code);
+          if (dg && choiceT.length && +dg[2] <= choiceT.length) { pick(+dg[2] - 1); return; }   // 1, 2, 3... pick a button
           if (ACCEPT[code]) advance();
           else if (choiceT.length && /Arrow(Left|Up)|Key[AW]/.test(code)) { cIdx = (cIdx + choiceT.length - 1) % choiceT.length; renderChoices(); }
           else if (choiceT.length && /Arrow(Right|Down)|Key[DS]/.test(code)) { cIdx = (cIdx + 1) % choiceT.length; renderChoices(); }
@@ -584,6 +629,25 @@ window.LC = window.LC || {};
       c.add([g, t, z]);
       return { show: function (vis, on) { g.setVisible(vis).setAlpha(on ? 1 : 0.3); t.setVisible(vis).setAlpha(on ? 1 : 0.3); if (z.input) z.input.enabled = vis; } };
     }
+    // v2.7.7: a big X in a panel's top-right corner (x, y: the panel's right edge and top), easy to hit with a thumb;
+    // the small X at the top of the screen still works too
+    closeX(c, right, y, fn) {
+      var s = 48, x = right - s - 10, g = this.add.graphics(), self = this;
+      y += 10;
+      function draw(hot) {
+        g.clear();
+        g.fillStyle(hot ? 0x7a3226 : 0x4a2a1e, 1); g.fillRoundedRect(x, y, s, s, 10);
+        g.lineStyle(2, hot ? 0xffd166 : 0xd9a94e, 1); g.strokeRoundedRect(x, y, s, s, 10);
+        g.lineStyle(5, 0xfbecc8, 1); g.lineBetween(x + 15, y + 15, x + s - 15, y + s - 15); g.lineBetween(x + s - 15, y + 15, x + 15, y + s - 15);
+      }
+      draw(false);
+      var z = this.add.zone(x - 10, y - 10, s + 20, s + 20).setOrigin(0).setInteractive({ useHandCursor: true });
+      z.on('pointerover', function () { draw(true); });
+      z.on('pointerout', function () { draw(false); });
+      z.on('pointerdown', function () { LC.Audio.sfx('click'); fn.call(self); });
+      c.add([g, z]);
+      return z;
+    }
 
     // ================================================================ list menus
     openMenu(cfg) {
@@ -595,7 +659,8 @@ window.LC = window.LC || {};
       var bg = this.add.graphics(); this.panel(bg, X, Y, Wd, Hd); c.add(bg);
       c.add(this.txt(X + Wd / 2, Y + 16, cfg.title, 28, '#ffd166', { ox: 0.5 }));
       var coinT = null;
-      if (cfg.coins) { c.add(this.add.image(X + Wd - 118, Y + 34, 'ic_coin').setScale(2)); coinT = this.txt(X + Wd - 100, Y + 21, '', 22, '#f7dd8a'); c.add(coinT); }
+      if (cfg.coins) { c.add(this.add.image(X + Wd - 182, Y + 34, 'ic_coin').setScale(2)); coinT = this.txt(X + Wd - 164, Y + 21, '', 22, '#f7dd8a'); c.add(coinT); }
+      this.closeX(c, X + Wd, Y, function () { if (self.modal === m) m.key('Escape'); });   // v2.7.7
       var tabs = cfg.tabs, tabT = [], listY = Y + 66;
       if (tabs.length > 1) {
         listY = Y + 96;
@@ -628,7 +693,7 @@ window.LC = window.LC || {};
       var dn = this.scrollBtn(c, X + Wd + 8, listY + (VIS - 2) * RH, 2 * RH - 6, false, function () { var n = cur().length; if (scroll + VIS < n) { scroll = Math.min(n - VIS, scroll + VIS - 1); sel = scroll; LC.Audio.sfx('click'); render(); } });
       var empty = this.txt(X + Wd / 2, listY + 110, '', 18, '#a08a6a', { ox: 0.5, wrap: Wd - 100, align: 'center' });
       var foot = this.txt(X + Wd / 2, Y + Hd - 56, '', 14, '#cdb8a0', { ox: 0.5, wrap: Wd - 90, align: 'center' });
-      var keys = this.txt(X + Wd / 2, Y + Hd - 22, this.touchOn ? 'Tap a row to choose' + (tabs.length > 1 ? '  ·  tap a tab to switch' : '') + '  ·  X (top) to close'
+      var keys = this.txt(X + Wd / 2, Y + Hd - 22, this.touchOn ? 'Tap a row to choose' + (tabs.length > 1 ? '  ·  tap a tab to switch' : '') + '  ·  X to close'
         : 'W/S choose  ·  E select' + (tabs.length > 1 ? '  ·  A/D switch tab' : '') + '  ·  Esc close', 12, '#8a7a6a', { ox: 0.5 });
       c.add([empty, foot, keys]);
 
@@ -776,6 +841,7 @@ window.LC = window.LC || {};
       var c = this.modalC(90, 0x000000, 0.45);
       var bg = this.add.graphics(); this.panel(bg, X, Y, Wd, Hd); c.add(bg);
       c.add(this.txt(X + Wd / 2, Y + 16, cfg.title, 28, '#ffd166', { ox: 0.5 }));
+      this.closeX(c, X + Wd, Y, function () { if (self.modal === m) m.key('Escape'); });   // v2.7.7
       var tg = this.add.graphics(); c.add(tg);
       var tiles = [];
       for (var i = 0; i < COLS * MAXR; i++) (function (k) {
@@ -790,7 +856,7 @@ window.LC = window.LC || {};
       var dl = this.txt(X + 36, DY + 6, '', 15, '#ffd166');
       var ds = this.txt(X + 36, DY + 26, '', 13, '#b8a890', { wrap: Wd - 72 });
       var foot = this.txt(X + Wd / 2, Y + Hd - 40, '', 12, '#cdb8a0', { ox: 0.5, wrap: Wd - 90, align: 'center' });
-      var keys = this.txt(X + Wd / 2, Y + Hd - 20, this.touchOn ? 'Tap a tile to choose  ·  X (top) to close' : 'WASD / Arrows choose  ·  E select  ·  Esc close', 12, '#8a7a6a', { ox: 0.5 });
+      var keys = this.txt(X + Wd / 2, Y + Hd - 20, this.touchOn ? 'Tap a tile to choose  ·  X to close' : 'WASD / Arrows choose  ·  E select  ·  Esc close', 12, '#8a7a6a', { ox: 0.5 });
       c.add([dl, ds, foot, keys]);
       // more than 20 tiles: page up / down beside the grid (as in the list menus)
       var up = this.scrollBtn(c, X + Wd + 8, AY, 150, true, function () { sel = Math.max(0, sel - COLS * (MAXR - 1)); LC.Audio.sfx('click'); render(); });
@@ -1058,6 +1124,7 @@ window.LC = window.LC || {};
       var X = 140, Y = 100, Wd = 680, Hd = 400;
       var bg = this.add.graphics(); this.panel(bg, X, Y, Wd, Hd); c.add(bg);
       c.add(this.txt(480, Y + 16, 'Bag', 28, '#ffd166', { ox: 0.5 }));
+      this.closeX(c, X + Wd, Y, function () { if (self.modal === m) m.key('Escape'); });   // v2.7.7
       var gx0 = 480 - (9 * 60 - 6) / 2, gy0 = Y + 84;
       c.add(this.txt(gx0, gy0 - 22, 'Hotbar (1-9)', 13, '#a08a6a'));
       c.add(this.txt(gx0, gy0 + 68, 'Backpack', 13, '#a08a6a'));
@@ -1077,7 +1144,7 @@ window.LC = window.LC || {};
       var tName = this.txt(X + 34, Y + 268, '', 20, '#ffd166');
       var tDesc = this.txt(X + 34, Y + 296, '', 16, '#fbecc8', { wrap: Wd - 68 });
       var tInfo = this.txt(X + 34, Y + 322, '', 14, '#b8a890', { wrap: Wd - 68 });
-      c.add([tName, tDesc, tInfo, this.txt(480, Y + Hd - 24, this.touchOn ? 'Tap an item to pick it up, tap another slot to swap  ·  X (top) to close'
+      c.add([tName, tDesc, tInfo, this.txt(480, Y + Hd - 24, this.touchOn ? 'Tap an item to pick it up, tap another slot to swap  ·  X to close'
         : 'Arrows/mouse move  ·  E or click: pick up, then swap  ·  Esc close', 12, '#8a7a6a', { ox: 0.5 })]);
       function render() {
         gg.clear();

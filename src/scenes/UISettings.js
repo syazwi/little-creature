@@ -86,6 +86,7 @@ window.LC = window.LC || {};
       var c = this.modalC(95, 0x000000, 0.45);
       var X = 190, Y = 140, Wd = 580, Hd = 360, RH = 62, barX = X + 240, barW = 200;
       var bg = this.add.graphics(); this.panel(bg, X, Y, Wd, Hd); c.add(bg);
+      this.closeX(c, X + Wd, Y, function () { if (self.modal === m) m.key('Escape'); });   // v2.7.7
       c.add(this.txt(480, Y + 14, 'Sound & Music', 26, '#ffd166', { ox: 0.5 }));
       var rg = this.add.graphics(); c.add(rg);
       var rows = SOUND_ROWS.map(function (r, i) {
@@ -105,7 +106,7 @@ window.LC = window.LC || {};
         return { y: y, lb: lb, sb: sb, pc: pc };
       });
       var foot = this.txt(480, Y + Hd - 52, '', 13, '#cdb8a0', { ox: 0.5, wrap: Wd - 60, align: 'center' });
-      var keys = this.txt(480, Y + Hd - 22, this.touchOn ? 'Tap − / + or the bar  ·  X (top) to close' : 'W/S choose  ·  A/D or ←/→ change  ·  N music on/off  ·  Esc close', 12, '#8a7a6a', { ox: 0.5 });
+      var keys = this.txt(480, Y + Hd - 22, this.touchOn ? 'Tap − / + or the bar  ·  X to close' : 'W/S choose  ·  A/D or ←/→ change  ·  N music on/off  ·  Esc close', 12, '#8a7a6a', { ox: 0.5 });
       c.add([foot, keys]);
       function change(dv) { var r = SOUND_ROWS[sel]; A.setVolume(r.k, A.vol[r.k] + dv); LC.Audio.sfx('click'); render(); }
       function render() {
@@ -164,7 +165,11 @@ window.LC = window.LC || {};
 
     // ================================================================ save and load
     openSaves: function (mode) {
-      var self = this, armed = 0, saving = mode === 'save';
+      var self = this, saving = mode === 'save';
+      // v2.7.7: "are you sure?" is a dialog with buttons (it was "press again to confirm"); Cancel comes back here
+      function ask(q, yes, fn) {
+        self.say([{ text: q }], { choices: [{ label: yes, fn: fn }, { label: 'Cancel', fn: function () { self.time.delayedCall(60, function () { self.openSaves(mode); }); } }] });
+      }
       this.openMenu({
         title: saving ? 'Save Game' : 'Load Game',
         footer: function () {
@@ -175,20 +180,21 @@ window.LC = window.LC || {};
           var rows = [];
           for (var n = 1; n <= LC.SAVE_SLOTS; n++) (function (n) {
             var info = LC.State.slotInfo(n), cur = n === LC.State.slot, txt = info ? LC.State.slotText(info) : 'Empty slot';
-            if (saving) rows.push({ icon: cur ? 'ic_sun' : info ? 'ic_bond' : 'ic_moon', label: armed === n ? 'Overwrite slot ' + n + '? Press again to confirm.' : 'Slot ' + n + (cur ? '  (this farm)' : ''), sub: txt, right: 'Save',
+            if (saving) rows.push({ icon: cur ? 'ic_sun' : info ? 'ic_bond' : 'ic_moon', label: 'Slot ' + n + (cur ? '  (this farm)' : ''), sub: txt, right: 'Save',
               action: function () {
-                if (info && !cur && armed !== n) { armed = n; LC.Audio.sfx('click'); return; }
-                var ok = LC.State.saveTo(n);
-                if (ok && LC.Net.isHost()) LC.Net.broadcast({ t: 'saved', by: LC.Net.myName });
-                self.toast(ok ? 'Saved to slot ' + n + '.' : 'Could not save: browser storage is blocked.', 'ic_bond');
+                function save() {
+                  var ok = LC.State.saveTo(n);
+                  if (ok && LC.Net.isHost()) LC.Net.broadcast({ t: 'saved', by: LC.Net.myName });
+                  self.toast(ok ? 'Saved to slot ' + n + '.' : 'Could not save: browser storage is blocked.', 'ic_bond');
+                }
+                if (info && !cur) { ask('Slot ' + n + ' has another farm in it (' + txt + '). Save over it?', 'Save over it', save); return; }
+                save();
                 return 'close';
               } });
-            else rows.push({ icon: cur ? 'ic_sun' : info ? 'ic_bond' : 'ic_moon', label: armed === n ? 'Load slot ' + n + '? Press again to confirm.' : 'Slot ' + n + (cur ? '  (this farm)' : ''), sub: txt, right: info ? 'Load' : '',
+            else rows.push({ icon: cur ? 'ic_sun' : info ? 'ic_bond' : 'ic_moon', label: 'Slot ' + n + (cur ? '  (this farm)' : ''), sub: txt, right: info ? 'Load' : '',
               enabled: !!info, why: 'This slot is empty.',
               action: function () {
-                if (armed !== n) { armed = n; LC.Audio.sfx('click'); return; }
-                self.loadSlot(n);
-                return 'close';
+                ask('Load slot ' + n + ' (' + txt + ')? ' + (LC.Net.isHost() ? 'Everyone goes back to the loaded farm.' : 'Anything since your last save is lost.'), 'Load it', function () { self.loadSlot(n); });
               } });
           })(n);
           return rows;
