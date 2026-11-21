@@ -1,4 +1,4 @@
-/* Little Creature — art, part 18 (v2.7.4): the masjid of Kampung Tepian (a Malay kampung masjid with a tiered roof,
+/* Little Creature — art, part 18 (v2.7.4): the masjid of Kampung Tepian (and v2.7.5: the khemah, a tent) (a Malay kampung masjid with a tiered roof,
  * a slim menara and a beduk drum on the serambi) and its small map icon. */
 window.LC = window.LC || {};
 (function (LC) {
@@ -57,9 +57,30 @@ window.LC = window.LC || {};
       { y: '#ffd166', g: '#2e8a5a', w: '#f4f0e4', d: '#3a4a5a', s: '#b8b0a0' }, 1, 2);
   }
 
+  // v2.7.5: the khemah, a canvas A-frame tent (32 x 28; the bottom 16 px are its two-tile footprint) and its bag icon
+  var CAN = '#d9893a', CAN2 = '#b86a28', CAN3 = '#8a4a1c', DOOR = '#3a2418', ROPE = '#e8dcc0', PEG = '#6a4a2a';
+  function drawKhemah(p) {
+    p.ell(16, 26, 15, 2.4, 'rgba(30,20,12,0.3)');
+    // the guy ropes and the pegs at the corners
+    p.line(3, 13, 0, 25, ROPE); p.line(29, 13, 31, 25, ROPE); p.rect(0, 24, 1, 2, PEG); p.rect(31, 24, 1, 2, PEG);
+    // the fly sheet: lit on the left, in shade on the right, a seam along the ridge
+    p.poly([[3, 25], [16, 5], [16, 25]], CAN); p.poly([[16, 5], [29, 25], [16, 25]], CAN2);
+    p.line(16, 5, 16, 25, CAN3); p.line(3, 25, 16, 5, '#e9a456'); p.rect(3, 24, 27, 2, CAN3);
+    // the open door flap, tied back
+    p.poly([[11, 25], [16, 12], [21, 25]], DOOR); p.line(16, 12, 12, 25, '#f0b060'); p.rect(19, 18, 2, 1, ROPE);
+    // the pole tip and a little pennant
+    p.rect(15, 2, 2, 4, PEG); p.poly([[17, 2], [22, 3.5], [17, 5]], '#c8323a');
+  }
+  function iconKhemah(p) {   // 16 x 16: a folded-up tent with its pole
+    p.poly([[1, 13], [8, 2], [15, 13]], CAN); p.poly([[8, 2], [15, 13], [8, 13]], CAN2);
+    p.poly([[5.5, 13], [8, 7], [10.5, 13]], DOOR); p.rect(1, 13, 14, 2, CAN3); p.rect(7, 0, 2, 3, PEG);
+  }
+
   Art.generate18 = function (scene) {
     var make = Art.make;
     make(scene, 'masjid', 96, 96, drawMasjid, true);
     make(scene, 'ic_masjid', 12, 12, iconMasjid, true);
+    make(scene, 'khemah', 32, 28, drawKhemah, true);
+    make(scene, 'i_khemah', 16, 16, iconKhemah, true);
   };
 })(window.LC);

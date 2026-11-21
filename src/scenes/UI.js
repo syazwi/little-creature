@@ -672,10 +672,70 @@ window.LC = window.LC || {};
         if (coinT) coinT.setText(String(S.kepeng));
         foot.setText(typeof cfg.footer === 'function' ? cfg.footer() : (cfg.footer || ''));
       }
+      // v2.7.5: a shop row with qty: { id, price, buy(n)? } asks how many first (- and +, ±10, Max), then buys them all
+      var qo = null;
+      function openQty(it) {
+        var q = it.qty, n = 1, PW = 500, PH = 300, PX = X + (Wd - PW) / 2, PY = Y + (Hd - PH) / 2;
+        function max() { return Math.max(1, Math.min(99, Math.floor(S.kepeng / q.price), LC.State.room(q.id))); }
+        var qc = self.add.container(0, 0); c.add(qc);
+        var dim = self.add.graphics(); dim.fillStyle(0x000000, 0.55); dim.fillRect(X, Y, Wd, Hd); qc.add(dim);
+        qc.add(self.add.zone(X, Y, Wd, Hd).setOrigin(0).setInteractive());   // (the rows underneath can't be clicked)
+        var g = self.add.graphics(); self.panel(g, PX, PY, PW, PH); qc.add(g);
+        var bg2 = self.add.graphics(); qc.add(bg2);
+        var ic = self.add.image(PX + 50, PY + 50, LC.ITEMS[q.id].icon); ic.setScale(Math.min(3, 48 / ic.frame.width)); qc.add(ic);
+        qc.add(self.txt(PX + 92, PY + 26, LC.ITEMS[q.id].name, 24, '#ffd166'));
+        qc.add(self.txt(PX + 92, PY + 58, q.price + ' k each  ·  How many?', 16, '#cdb8a0'));
+        var numT = self.txt(PX + PW / 2, PY + 104, '1', 40, '#fbecc8', { ox: 0.5 }); qc.add(numT);
+        var totT = self.txt(PX + PW / 2, PY + 160, '', 17, '#f7dd8a', { ox: 0.5 }); qc.add(totT);
+                function btn(x, y, w, h, label, fn, hot) {
+          bg2.fillStyle(hot ? 0x6a4a1c : 0x3a2a1e, 1); bg2.fillRoundedRect(x, y, w, h, 8);
+          bg2.lineStyle(2, hot ? 0xffd166 : 0x8a6a4a, 1); bg2.strokeRoundedRect(x, y, w, h, 8);
+          qc.add(self.txt(x + w / 2, y + h / 2 - 11, label, 20, hot ? '#ffd166' : '#fbecc8', { ox: 0.5 }));
+          var z = self.add.zone(x, y, w, h).setOrigin(0).setInteractive({ useHandCursor: true });
+          z.on('pointerdown', fn); qc.add(z);
+        }
+        function show() {
+          n = Phaser.Math.Clamp(n, 1, max());
+          numT.setText(String(n));
+          totT.setText('Total: ' + n * q.price + ' k   ·   you have ' + S.kepeng + ' k' + (n >= max() ? '   (most you can buy)' : ''));
+        }
+        function add(d) { n += d; LC.Audio.sfx('click'); show(); }
+        function buy() {
+          var k = Phaser.Math.Clamp(n, 1, max());
+          if (S.kepeng < k * q.price || !LC.State.room(q.id)) { LC.Audio.sfx('error'); return; }
+          if (q.buy) q.buy(k); else { S.kepeng -= k * q.price; LC.State.add(q.id, k); LC.Audio.sfx('buy'); }
+          self.toast('You bought ' + (k > 1 ? k + ' x ' : 'a ') + LC.ITEMS[q.id].name + ' for ' + k * q.price + ' k.', LC.ITEMS[q.id].icon);
+          shut();
+        }
+        function shut() { qc.destroy(); qo = null; render(); }
+        var by = PY + 92, cx = PX + PW / 2;
+        btn(cx - 214, by, 66, 52, '-10', function () { add(-10); });
+        btn(cx - 140, by, 62, 52, '-', function () { add(-1); });
+        btn(cx + 78, by, 62, 52, '+', function () { add(1); });
+        btn(cx + 148, by, 66, 52, '+10', function () { add(10); });
+        btn(cx - 214, PY + 200, 130, 52, 'Max', function () { n = max(); LC.Audio.sfx('click'); show(); });
+        btn(cx - 70, PY + 200, 140, 52, 'Buy', buy, true);
+        btn(cx + 84, PY + 200, 130, 52, 'Back', function () { LC.Audio.sfx('click'); shut(); });
+        qc.add(self.txt(cx, PY + PH - 28, self.touchOn ? 'Tap - and + to choose how many' : 'A/D -1 +1  ·  W/S +10 -10  ·  E buy  ·  Esc back', 12, '#8a7a6a', { ox: 0.5 }));
+        qo = {
+          key: function (code) {
+            if (code === 'Escape' || code === 'Tab') { LC.Audio.sfx('click'); shut(); }
+            else if (code === 'ArrowLeft' || code === 'KeyA') add(-1);
+            else if (code === 'ArrowRight' || code === 'KeyD') add(1);
+            else if (code === 'ArrowUp' || code === 'KeyW') add(10);
+            else if (code === 'ArrowDown' || code === 'KeyS') add(-10);
+            else if (ACCEPT[code]) buy();
+          },
+          wheel: function (dy) { add(dy > 0 ? -1 : 1); }
+        };
+        show();
+        LC.Audio.sfx('click');
+      }
       function activate() {
         var it = cur()[sel];
         if (!it) return;
         if (it.enabled === false) { LC.Audio.sfx('error'); if (it.why) self.toast(it.why); return; }
+        if (it.qty) { openQty(it); return; }
         if (!it.action) return;
         var res = it.action();
         if (self.modal !== m) return;
@@ -686,6 +746,7 @@ window.LC = window.LC || {};
       m = {
         type: 'menu', close: close, render: render,
         key: function (code) {
+          if (qo) { qo.key(code); return; }   // v2.7.5: the quantity picker is open
           var n = cur().length;
           if (code === 'Escape' || code === 'Tab') { close(); return; }
           if (code === 'ArrowUp' || code === 'KeyW') { sel = Math.max(0, sel - 1); LC.Audio.sfx('click'); }
@@ -695,7 +756,7 @@ window.LC = window.LC || {};
           else if (ACCEPT[code]) { activate(); return; }
           render();
         },
-        wheel: function (dy) { var n = cur().length; sel = Phaser.Math.Clamp(sel + (dy > 0 ? 1 : -1), 0, Math.max(0, n - 1)); render(); }
+        wheel: function (dy) { if (qo) { qo.wheel(dy); return; } var n = cur().length; sel = Phaser.Math.Clamp(sel + (dy > 0 ? 1 : -1), 0, Math.max(0, n - 1)); render(); }
       };
       this.modal = m;
       render();
@@ -825,7 +886,7 @@ window.LC = window.LC || {};
       if (!S.flags.metAni) { S.flags.metAni = true; this.say(LC.TEXT.makAniFirst, { onDone: function () { self.openShop(); } }); return; }
       var tip = LC.TEXT.makAniTips[Math.floor(Math.random() * LC.TEXT.makAniTips.length)];
       var sea = LC.State.season(), big = LC.State.level() >= 10, seedOff = sea.id === 'menanam' ? 0.8 : 1;
-      var stock = LC.SHOP.concat(LC.SHOP_SEASON[sea.id] || [], big ? LC.SHOP_LV10 : []);
+      var stock = LC.SHOP.concat(LC.SHOP_SEASON[sea.id] || [], big ? LC.SHOP_LV10 : [], Object.keys(LC.SHOP_LEVEL || {}));   // (v2.7.5: SHOP_LEVEL, things that come with Pelita's level)
       if (big && !S.flags.warungBig) { S.flags.warungBig = true; tip = 'Welcome to my new stall! Chests, compost, ais kacang... and I pay you 10% more now. Business is good, thanks to you!'; }
       this.openMenu({
         title: big ? 'Mak Ani\'s Kedai Runcit' : 'Mak Ani\'s Warung', coins: true, footer: 'Mak Ani: "' + tip + '"  (' + sea.name + (seedOff < 1 ? ': seeds 20% off!' : '') + ')',
@@ -834,8 +895,12 @@ window.LC = window.LC || {};
             return stock.map(function (id) {
               var it = LC.ITEMS[id], price = Math.round(it.price * (it.kind === 'seed' ? seedOff : 1)), afford = S.kepeng >= price, room = LC.State.canAdd(id);
               var tag = (LC.SHOP_SEASON[sea.id] || []).indexOf(id) >= 0 ? '  (in season)' : big && LC.SHOP_LV10.indexOf(id) >= 0 ? '  (new stall)' : '';
-              return { icon: it.icon, label: it.name + tag, sub: it.desc, right: price + ' k', enabled: afford && room, why: afford ? 'Your bag is full!' : 'Not enough kepeng.',
-                action: function () { S.kepeng -= price; LC.State.add(id, 1); LC.Audio.sfx('buy'); } };
+              var lvNeed = (LC.SHOP_LEVEL || {})[id], lvOk = !lvNeed || LC.State.level() >= lvNeed, owned = it.one && LC.State.owns(id);
+              if (lvNeed) tag = lvOk ? '  (new)' : '  (at Pelita Lv ' + lvNeed + ')';
+              return { icon: it.icon, label: it.name + (owned ? '  (yours)' : tag), sub: it.desc, right: price + ' k', enabled: afford && room && lvOk && !owned,
+                why: !lvOk ? 'Mak Ani will stock it once Pelita reaches Lv ' + lvNeed + '.' : owned ? 'You already have one!' : afford ? 'Your bag is full!' : 'Not enough kepeng.',
+                action: it.one ? function () { S.kepeng -= price; LC.State.add(id, 1); LC.Audio.sfx('buy'); self.toast('The ' + it.name + ' is yours! ' + (it.got || ''), it.icon); } : null,
+                qty: it.one ? null : { id: id, price: price } };   // v2.7.5: choose how many
             });
           } },
           { label: 'Sell', empty: 'Nothing to sell yet. Bring crops, fruit, flowers, eggs or cooking (or a farm animal)!', rows: function () {

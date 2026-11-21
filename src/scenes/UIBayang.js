@@ -94,7 +94,7 @@ window.LC = window.LC || {};
             return C5.javaStock.filter(function (id) { return LC.ITEMS[id]; }).map(function (id) {
               var it = LC.ITEMS[id], price = Math.round((it.price || (it.sell || 20) * 2) * 0.85), room = LC.State.canAdd(id);
               return { icon: it.icon, label: it.name, sub: it.desc, right: price + ' k', enabled: S.kepeng >= price && room, why: S.kepeng < price ? 'Not enough kepeng.' : 'Your bag is full!',
-                action: function () { S.kepeng -= price; LC.State.add(id, 1); LC.Audio.sfx('buy'); } };
+                qty: { id: id, price: price } };   // v2.7.5: choose how many
             });
           } },
           { label: 'Sell', empty: 'They want Bornean goods: woven cloth, brass, belian, honey, nibong.', rows: function () {

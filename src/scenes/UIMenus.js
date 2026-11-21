@@ -165,6 +165,7 @@ window.LC = window.LC || {};
           var need = v.shopNeeds && v.shopNeeds[id], friendOk = !need || LC.State.hearts(vid) >= need, owned = it.kind === 'vehicle' && LC.State.count(id) > 0;
           return { icon: it.icon, label: it.name + (owned ? '  (yours)' : ''), sub: it.desc + (need && !friendOk ? ' Only for friends: ' + need + ' ♥.' : ''), right: it.price + ' k',
             enabled: afford && room && friendOk && !owned, why: owned ? 'You already have one!' : !friendOk ? v.name + ' only sells it to a friend (' + need + ' ♥).' : afford ? 'Your bag is full!' : 'Not enough kepeng.',
+            qty: it.kind === 'vehicle' || it.one ? null : { id: id, price: it.price },   // v2.7.5: choose how many
             action: function () {
               S.kepeng -= it.price; LC.State.add(id, 1); LC.Audio.sfx('buy');
               if (it.kind === 'vehicle') self.toast('The ' + it.name + ' is yours! Press R (or select it and press USE) to ' + 'ride.', it.icon);

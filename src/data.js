@@ -268,10 +268,10 @@ window.LC = window.LC || {};
     fill(20, 12, 21, 27, 'p');
     fill(39, 9, 42, 9, 'p');
     fill(29, 0, 30, 9, 'p');      // v1.3: the north trail into Hutan Rimba
-    // fenced farm field (v2.7.4: bigger, 15 x 9 = 135 tiles, was 12 x 8 = 96; the torches by the gate stand on the fence)
-    fill(3, 12, 19, 12, 'F'); fill(3, 22, 19, 22, 'F'); fill(3, 12, 3, 22, 'F'); fill(19, 12, 19, 22, 'F');
-    fill(11, 12, 12, 12, 'p');
-    fill(4, 13, 18, 21, 'f');
+    // fenced farm field: 12 x 8 = 96 tiles at first (v2.7.5: field.js grows it with Pelita's level, up to 15 x 9 = 135)
+    fill(5, 13, 18, 13, 'F'); fill(5, 22, 18, 22, 'F'); fill(5, 13, 5, 22, 'F'); fill(18, 13, 18, 22, 'F');
+    fill(11, 13, 12, 13, 'p');
+    fill(6, 14, 17, 21, 'f');
     // sawah (rice paddy) with bunds
     fill(23, 13, 36, 22, 'b'); fill(24, 14, 35, 21, 'r');
     fill(24, 17, 35, 17, 'b'); fill(29, 14, 30, 21, 'b'); fill(29, 12, 30, 12, 'b');

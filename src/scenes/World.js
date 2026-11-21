@@ -325,7 +325,7 @@ window.LC = window.LC || {};
         tries++;
         var x = rnd.between(1, this.W - 3), y = rnd.between(2, this.H - 3);
         if (g[y][x] !== D.on || this.solid[y][x] || near(x, y)) continue;
-        if (this.area === 'farm' && LC.inLadang(x, y)) continue;   // v1.7: Badang's land may become a field
+        if (this.area === 'farm' && (LC.inLadang(x, y) || (LC.inFieldArea && LC.inFieldArea(x, y)))) continue;   // v1.7: Badang's land may become a field (v2.7.5: and the field grows)
         if (this.area === 'farm' && x >= LC.HOUSE_ZONE.x0 && x <= LC.HOUSE_ZONE.x1 && y >= LC.HOUSE_ZONE.y0 && y <= LC.HOUSE_ZONE.y1) continue;   // v1.8: room for the house to grow
         var by = (y + 1) * T - 1;
         this.add.image(x * T + 8 + rnd.between(-3, 3), by, rnd.pick(D.types)).setOrigin(0.5, 1).setDepth(by);
@@ -1364,7 +1364,8 @@ window.LC = window.LC || {};
         self.refreshAllTiles();
         self.refreshOfferings();
         self.refreshPlots(); self.refreshSeason(); self.refreshAnimals(); self.refreshChests();
-        self.player.setPosition(4 * T + 8, 8 * T + 13);
+        var wake = stay && !fainted && stay.area === 'farm' ? self.tilePx(stay) : { x: 4 * T + 8, y: 8 * T + 13 };   // (v2.7.5: or by your khemah)
+        self.player.setPosition(wake.x, wake.y);
         self.dir = 'down';
         var h = self.ghostHome(); self.gpos.x = h.x; self.gpos.y = h.y;
         self.ui.showSummary(sum, function () {

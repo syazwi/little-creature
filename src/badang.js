@@ -61,7 +61,9 @@ window.LC = window.LC || {};
   LC.inLadang = function (x, y) { var L = LC.LADANG; return x >= L.x0 && x <= L.x1 && y >= L.y0 && y <= L.y1; };
   // the farm map knows whether Badang has cleared the land (called whenever the world is built or a day begins)
   LC.syncLadang = function () {
-    var S = LC.State.s, g = LC.areaGrid('farm'), L = LC.LADANG, done = !!(S && S.ladang === 2);
+    if (LC.syncField) LC.syncField();   // v2.7.5: the field above grows with Pelita, and this land is as wide as it
+    var S = LC.State.s, g = LC.areaGrid('farm'), L = LC.LADANG, done = !!(S && S.ladang === 2), M = LC.FIELD_MAX;
+    if (M) for (var yy = L.y0 + 1; yy <= L.y1; yy++) for (var xx = M.x0; xx <= M.x1; xx++) g[yy][xx] = '.';
     for (var y = L.y0; y <= L.y1; y++) {
       for (var x = L.x0; x <= L.x1; x++) g[y][x] = done ? 'f' : y === L.y0 ? 'F' : '.';
       if (y > L.y0) g[y][L.x0 - 1] = g[y][L.x1 + 1] = done ? 'F' : '.';   // one big field: the side fences run on down

@@ -212,6 +212,10 @@ window.LC = window.LC || {};
     canAdd: function (id) {
       return this.s.inv.some(function (sl) { return !sl || (sl.id === id && sl.n < 99); });
     },
+    // v2.7.5: how many more of this fit in the bag (for the shop's "how many?")
+    room: function (id) {
+      return this.s.inv.reduce(function (a, sl) { return a + (!sl ? 99 : sl.id === id ? Math.max(0, 99 - sl.n) : 0); }, 0);
+    },
     add: function (id, n) {
       n = n || 1;
       var inv = this.s.inv, i;

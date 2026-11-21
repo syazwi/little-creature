@@ -375,6 +375,7 @@ window.LC = window.LC || {};
     refreshLadang: function () {
       var self = this;
       LC.syncLadang();
+      if (this.area === 'farm' && this.refreshField) this.refreshField();   // v2.7.5 (WorldField.js)
       if (this.area !== 'farm' || this.S.ladang !== 2) return;
       this.objects.forEach(function (o) {
         if (o.type !== 'tunggul') return;

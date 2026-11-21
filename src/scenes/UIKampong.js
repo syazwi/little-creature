@@ -129,7 +129,7 @@ window.LC = window.LC || {};
           return pick.map(function (id) {
             var it = LC.ITEMS[id], price = it.price ? Math.round(it.price * 0.9) : Math.max(4, Math.round((it.sell || 5) * 1.5)), room = LC.State.canAdd(id);
             return { icon: it.icon, label: it.name, sub: it.desc, right: price + ' k', enabled: S.kepeng >= price && room, why: S.kepeng < price ? 'Not enough kepeng.' : 'Your bag is full!',
-              action: function () { S.kepeng -= price; LC.State.add(id, 1); LC.Audio.sfx('buy'); } };
+              qty: { id: id, price: price } };   // v2.7.5: choose how many
           });
         } }]
       });
