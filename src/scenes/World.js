@@ -37,7 +37,7 @@ window.LC = window.LC || {};
     create(data) {
       data = data || {};
       var S = this.S = LC.State.s;
-      var area = data.area && LC.AREAS[data.area] ? data.area : 'farm';
+      var area = data.area && LC.AREAS[data.area] ? data.area : S.area === 'bunian' ? 'bunian' : 'farm';
       this.area = area; this.A = LC.AREAS[area];
       S.area = area; S.visited[area] = true;
       LC.syncLadang();   // v1.7: has Badang cleared the land south of the field?
@@ -613,8 +613,10 @@ window.LC = window.LC || {};
         N.on.tick = function (m) {
           self.netGhost = m.g;
           Object.keys(m.gs).forEach(function (k) { S.ghost[k] = m.gs[k]; });
-          if (Math.abs(S.minutes - m.m) > 2) S.minutes = m.m;
-          S.day = m.d;
+          if (!self.A.frozenClock) {
+            if (Math.abs(S.minutes - m.m) > 2) S.minutes = m.m;
+            S.day = m.d;
+          }
         };
         N.on.sync = function (m) {
           var parts = m.parts || {};
@@ -640,10 +642,12 @@ window.LC = window.LC || {};
         N.on.dayStart = function (m) { self.guestDayStart(m); };
         // v1.6: the host loaded a saved farm: everyone goes to it (guests keep their own bags)
         N.on.reload = function (m) {
-          LC.State.applySnapshot(m.world); LC.State.save();
+          LC.State.applySnapshot(m.world);
+          if (LC.BunianTrials.restore(S)) { LC.State.recalc(); S.hp = S.maxHp; }
+          LC.State.save();
           self.ui.closeModal(); self.leaving = true;
           self.cameras.main.fadeOut(400, 0, 0, 0);
-          self.cameras.main.once('camerafadeoutcomplete', function () { self.scene.restart({ loaded: -1, by: m.by }); });
+          self.cameras.main.once('camerafadeoutcomplete', function () { self.scene.restart({ area: 'farm', loaded: -1, by: m.by }); });
         };
         N.on.saved = function (m) { if (LC.State.save()) self.ui.toast((m.by || 'Your friend') + ' saved the farm. Your bag is saved too.', 'ic_bond'); };
         N.on.closed = function (why) {
@@ -990,7 +994,7 @@ window.LC = window.LC || {};
 
       var N = LC.Net, guest = N.isGuest(), coop = N.active();
       // In co-op the clock never pauses for menus (friends are still playing). Guests just follow the host's clock.
-      if (!this.sleeping && (!blocked || coop)) {
+      if (!this.A.frozenClock && !this.sleeping && (!blocked || coop)) {
         var dm = dt * LC.TIME_SCALE;
         S.minutes += dm;
         var hgn = LC.State.isHGN() ? 2 : 1;
@@ -1380,6 +1384,7 @@ window.LC = window.LC || {};
     // ---------------------------------------------------------------- day cycle
     sleep(fainted, stay) {   // stay (v2.7.1): { area, x, y } to wake up there instead of at home (a guest house)
       if (this.sleeping) return;
+      if (this.A.frozenClock) { this.toast('Time stands still here. Leave Kampung Bunian to sleep.', 'ic_moon'); return; }
       var self = this;
       this.sleeping = true;
       this.S.riding = null;
@@ -1409,7 +1414,7 @@ window.LC = window.LC || {};
     }
     // co-op guest: the host went to bed (everyone sleeps together)
     guestSleep() {
-      if (this.sleeping) return;
+      if (this.sleeping || this.A.frozenClock) return;
       this.sleeping = true;
       this.S.riding = null;
       this.ui.closeModal();
@@ -1418,6 +1423,13 @@ window.LC = window.LC || {};
     }
     guestDayStart(m) {
       var self = this, S = this.S;
+      if (this.A.frozenClock) {
+        var day = S.day, minutes = S.minutes;
+        LC.State.applySnapshot(m.world);
+        S.day = day; S.minutes = minutes;
+        LC.State.recalc();
+        return;
+      }
       this.sleeping = true;
       this.ui.closeModal();
       LC.State.applySnapshot(m.world);

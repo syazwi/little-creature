@@ -234,7 +234,7 @@ window.LC = window.LC || {};
     drawChecklist: function () {
       var S = this.S, W = this.world;
       if (!this.tCheck) this.tCheck = this.txt(16, 0, '', 13, '#e8d8b0', { wrap: 330, stroke: 4 });
-      var t = this.tCheck, show = !!(W && !S.guest && !(S.flags && S.flags.noGuide) && this.tGoal && this.tGoal.visible);
+      var t = this.tCheck, show = !!(W && !W.bunianTrial && !S.guest && !(S.flags && S.flags.noGuide) && this.tGoal && this.tGoal.visible);
       var lines = [];
       if (show) {
         var L = LC.checklist(), todo = L.items.filter(function (x) { return !x.ok; });

@@ -147,7 +147,9 @@ window.LC = window.LC || {};
       s.flags = { introDone: true, fedOnce: true, incense: true, tilled: true, planted: true, watered: true, slept: true, harvested: true, cooked: true, metAni: true };
       this.s = s;
       this.applySnapshot(world);
+      var returned = LC.BunianTrials.restore(s);
       this.recalc();
+      if (returned) s.hp = s.maxHp;
       return s;
     },
     load: function (n) {
@@ -164,7 +166,8 @@ window.LC = window.LC || {};
         // v1.3: Pelita's level comes from its bond (no celebrations for levels earned before the update)
         data.ghost.level = LC.levelFor(data.ghost.bond);
         data.pendingStage = []; data.pendingLevel = [];
-        data.area = 'farm'; data.riding = null;
+        data.area = data.area === 'bunian' ? 'bunian' : 'farm'; data.riding = null;
+        var returned = LC.BunianTrials.restore(data);
         if (!data.coop || typeof data.coop !== 'object') data.coop = base.coop;
         if (!data.pantrySales || typeof data.pantrySales !== 'object' || Array.isArray(data.pantrySales)) data.pantrySales = {};
         if (!data.wear || typeof data.wear !== 'object') data.wear = {};
@@ -191,10 +194,12 @@ window.LC = window.LC || {};
         // a friendship under 'dayang' can only have been made with the weaver: it moves to her.
         if (fk.dayang && !fk.dayang_barunai && (q0.ch7 || 0) < 3) { fk.dayang_barunai = fk.dayang; delete fk.dayang; }
         // saves happen at bedtime and whenever the app is backgrounded, so keep the clock
-        if (!(data.minutes >= LC.DAY_START && data.minutes < LC.DAY_END - 10)) data.minutes = LC.DAY_START;
+        var lastMinute = data.area === 'bunian' ? LC.DAY_END : LC.DAY_END - 10;
+        if (!(data.minutes >= LC.DAY_START && data.minutes < lastMinute)) data.minutes = LC.DAY_START;
         this.s = data;
         this.rememberSlot(n);
         this.recalc();
+        if (returned) data.hp = data.maxHp;
         return true;
       } catch (e) { return false; }
     },
@@ -328,18 +333,19 @@ window.LC = window.LC || {};
 
     // personal limits that grow with Pelita's level and spirit blessings
     recalc: function () {
-      var s = this.s, lv = this.level(), e = 120;
+      var s = this.s, lv = this.level(), trial = LC.BunianTrials.bonuses(s), e = 120;
       Object.keys(LC.LEVEL_REWARDS).forEach(function (k) { if (lv >= +k && LC.LEVEL_REWARDS[k].energy) e += LC.LEVEL_REWARDS[k].energy; });
       if (this.friend('kenyalang')) e += 30;
       for (var hs = 1; hs <= (s.house || 0); hs++) if (LC.HOUSE_STAGES[hs] && LC.HOUSE_STAGES[hs].energy) e += LC.HOUSE_STAGES[hs].energy;   // v1.8: a bigger house
       if (s.quests && s.quests.asmara) e += 15;   // v2.0: Asmara's dawn crow
       if (s.quests && (s.quests.ch6 || 0) >= 7) e += 20;   // v2.4: Nenek is home
-      s.maxEnergy = e;
+      s.maxEnergy = e + trial.energy;
       if (s.inv) { var bag = LC.bagSize(lv); while (s.inv.length < bag) s.inv.push(null); }   // v1.8: the bag grows with Pelita's level
       s.maxWater = 20 + (lv >= 10 ? 10 : 0) + (s.quests && s.quests.gembor ? 10 : 0);   // v2.0: Dang Kemala's brass gembor
       if (s.energy > s.maxEnergy) s.energy = s.maxEnergy;
       s.maxHp = LC.maxHpFor(s.str || 10) + (s.flags && s.flags.poseidon ? 20 : 0) + (s.quests && s.quests.jinn ? 20 : 0) + (s.quests && (s.quests.ch5 || 0) >= 5 ? 20 : 0);   // v2.1: Gelang Jerambak; v2.3: Pelita Purnama
       if (s.quests && s.quests.minePassages && s.quests.minePassages.blessed) s.maxHp += LC.MINE_PASSAGES.health;
+      s.maxHp += trial.hp;
       if (s.hp === undefined || s.hp > s.maxHp) s.hp = s.maxHp;
     },
     // a level's personal gifts (every player on the farm gets them). Returns a line for the celebration.

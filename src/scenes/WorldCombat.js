@@ -37,9 +37,10 @@ window.LC = window.LC || {};
       var D = LC.ENEMIES[g.kind], p = g.fixed ? this.tilePx(g.fixed) : this.randomFree(g.zone), pl = this.player;
       for (var k = 0; k < 8 && !g.fixed && !first && Math.hypot(p.x - pl.x, p.y - pl.y) < 110; k++) p = this.randomFree(g.zone);
       if (!e) {
+        var texture = D.texture || g.kind;
         e = { kind: g.kind, def: D, zone: g.zone, g: g };
-        e.spr = this.add.sprite(p.x, p.y, g.kind + '_0').setOrigin(0.5, 1);
-        e.spr.play(g.kind + '_walk');
+        e.spr = this.add.sprite(p.x, p.y, texture + '_0').setOrigin(0.5, 1);
+        e.spr.play(texture + '_walk');
         e.light = this.addLight(p.x, p.y - 8, D.boss ? 0xff7040 : g.kind === 'obor' ? 0xff9050 : 0xff3050, D.boss ? 0.9 : 0.35, true);
         this.enemies.push(e);
       }

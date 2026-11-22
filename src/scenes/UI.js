@@ -350,7 +350,7 @@ window.LC = window.LC || {};
       if (!this.ready) return;
       var S = this.S, g = S.ghost, gf = this.gfx, self = this;
       var m = Math.floor(S.minutes / 10) * 10, h = Math.floor(m / 60) % 24, mm = m % 60, ap = h < 12 ? 'AM' : 'PM', h12 = h % 12 || 12;
-      this.tTime.setText(h12 + ':' + (mm < 10 ? '0' : '') + mm + ' ' + ap);
+      this.tTime.setText(this.world.A.frozenClock ? 'Paused' : h12 + ':' + (mm < 10 ? '0' : '') + mm + ' ' + ap);
       this.icTime.setTexture(S.minutes >= 18 * 60 ? 'ic_moon' : 'ic_sun');
       var hgn = LC.State.isHGN();
       var dayStr = 'Day ' + S.day + ' · ' + LC.State.weekday();

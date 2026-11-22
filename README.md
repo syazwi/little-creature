@@ -299,6 +299,10 @@ After Chapter 6, the old witch grows herbs on the lower slopes of Gunung Ledang.
 - **A paid teleport.** With no fight around, calling her opens her service: she sends you to any place you have already been, for 200 kepeng (500 across the sea), then rests 2 minutes.
 - She goes home by herself when there is nothing left to fight (or when you send her home), and needs 20 seconds before she will come again.
 
+### The Four Trials of Kampung Bunian (v3.7)
+
+The in-game clock pauses in Kampung Bunian and its trial rooms. Ask the gatekeeper in the southern courtyard about the Sea Creatures, Warrior Creatures, Magic Creatures, and Supernatural Creatures doors. Clear each room's minions and boss to earn items and kepeng every time, plus permanent max health or max energy on the first win. A defeat or retreat brings you back to the gatekeeper with your health and provisions restored. The gatekeeper holds prizes when your bag is full.
+
 ### Chapter 13 — Jack Separaw and the School of Sorcery (v3.6)
 
 After Storm Reef, read Jack’s enchanted letter at Nenek’s farm to visit Kampung Mantera. Train with Nek Lampir, defend the school against Suraya’s stone soldiers and illusions, and retrieve Batu Ikrar from the Collector’s sealed vault. Press **P** or tap the mirror to cast **Mantera Pantul**. Time it just before a bolt reaches you. The spell remains available after the chapter.

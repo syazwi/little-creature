@@ -33,6 +33,8 @@ window.LC = window.LC || {};
     f.fill(4, 15, 39, 16, 'p');                  // the cross street
     f.fill(11, 17, 11, 17, 'p');
     f.ell(33, 25, 5, 3, 'q');                    // the lotus pond
+    f.fill(8, 25, 27, 28, 'k');                  // the courtyard of the four trials
+    f.fill(21, 23, 22, 25, 'k');
     f.ell(6, 26, 3, 2.4, 'J'); f.ell(40, 8, 1.8, 2.6, 'J');
     return g;
   }
@@ -88,7 +90,7 @@ window.LC = window.LC || {};
     pond: 'stream', amb: 'forest', decor: { n: 44, types: ['fern', 'bougainvillea', 'hibiscus', 'bush', 'fern', 'lalang'], on: '.' },
     critters: [{ kind: 'kancil', n: 2, zone: { x0: 4, y0: 17, x1: 20, y1: 28 } }],
     exits: [{ x0: 21, y0: 31, x1: 22, y1: 31, to: 'forest', sx: 8.5, sy: 19, dir: 'down' }],
-    golden: true, home: { x: 21.5, y: 29 }, ride: {},
+    golden: true, frozenClock: true, home: { x: 21.5, y: 29 }, ride: {},
     trees: { n: 12, on: '.', tex: ['jtree', 'jtree2'], text: 'An ancient tree, its leaves edged with gold.' }
   };
   LC.AREAS.lombong = {

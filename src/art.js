@@ -787,5 +787,6 @@ window.LC = window.LC || {};
     if (Art.generate23) Art.generate23(scene);   // v3.4: Chapter 11, Part 2 (1578)
     if (Art.generate24) Art.generate24(scene);
     if (Art.generate25) Art.generate25(scene);
+    if (Art.generate26) Art.generate26(scene);
   };
 })(window.LC);
