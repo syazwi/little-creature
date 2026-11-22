@@ -58,6 +58,7 @@ window.LC = window.LC || {};
   LC.UIScene.prototype.onKey = function (ev) {
     var S = this.S, W = this.world, code = ev.code;
     if (this.modal || !W || W.sleeping || W.leaving || S.guest) return onKey.call(this, ev);
+    if (code === 'KeyP' && W.pantulAvailable && W.pantulAvailable()) return onKey.call(this, ev);
     function sleepTo(day) { S.day = day - 1; W.sleep(false); }
     switch (code) {
       case 'BracketRight': sleepTo(S.day + 1); return;

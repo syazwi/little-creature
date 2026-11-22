@@ -45,7 +45,10 @@ window.LC = window.LC || {};
       next: 'After Chapter 11, meet Jack Separaw at Nenek’s farm jetty.' },
     { n: 12, key: 'ch12', end: LC.C12.end, name: 'Jack Separaw and the Kraken of Storm Reef',
       steps: ['The bargain at the jetty', 'The chase through the waterspouts', 'Board the treasure ship', 'The Kraken rises', 'Bring the fishing crews home'],
-      next: 'Return to the jetty to sail freely. Follow the Pedoman to a wreck or sea boss.' }
+      next: 'Read Jack’s enchanted letter at the farm to start Chapter 13. You can still sail freely from the jetty.' },
+    { n: 13, key: 'ch13', end: LC.C13.end, name: 'Jack Separaw and the School of Sorcery',
+      steps: ['Jack’s enchanted letter', 'Nek Lampir’s lesson', 'Face Supreme Sorcerer Suraya', 'Stone soldiers and falling stars', 'Save the students', 'Break the Collector’s seal', 'Return Batu Ikrar'],
+      next: 'Keep Mantera Pantul as you travel. Nek Lampir’s desk is open to visitors.' }
   ];
 
   // the parts of the current step (only steps with more than one part, or with things to bring)
@@ -137,6 +140,11 @@ window.LC = window.LC || {};
       if (st === 9) return [c(LC.c11Past, 'Pelita\'s stone lamp (Barunai), then the lead vinta in Kampong Ayer'), c((Q.c11p2leg || 0) >= 1, 'Timur Laut (north-east) to Batu Kembar'), c(false, 'Into the fog: follow the ships\' bells to the Castilian fleet')];
       if (st === 10) return [c(false, 'Dive beside the flagship, under the galleons'), c(Object.keys(Q.c11rope || {}).length >= 3, 'Cut the anchor ropes (' + Object.keys(Q.c11rope || {}).length + ' / 3), out of the lantern light')];
       if (st === 11) return [c(Q.c11signal, 'Signal the fleets on the kulintang (beside the galleons on the reef)'), c(false, 'Board the flagship')];
+      return null;
+    },
+    13: function (st, Q) {
+      if (st === 1) return [c(Q.c13Lesson, 'Talk to Nek Lampir at her old desk'), c(false, 'Reflect practice bolts (' + (Q.c13Reflected || 0) + ' / 3)')];
+      if (st === 3) return [c(Q.c13Golems, 'Defeat Suraya’s stone soldiers'), c(false, 'Find the real Suraya and win the duel')];
       return null;
     }
   };
