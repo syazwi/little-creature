@@ -6,20 +6,20 @@
  * dist/ (the version news and the downloads) always comes from the internet. */
 
 // ---- stamped by tools/build-web.mjs on every build (do not edit by hand): the version, and every file the game needs
-var CACHE = 'little-creature-52-20261122105533';
+var CACHE = 'little-creature-53-20261122145509';
 var FILES = [
   './', 'index.html', 'manifest.webmanifest', 'lib/phaser.min.js', 'lib/peerjs.min.js', 'src/version.js',
   'src/update.js', 'src/data.js', 'src/areas.js', 'src/folk.js', 'src/data2.js', 'src/areas2.js', 'src/undersea.js',
   'src/battle.js', 'src/badang.js', 'src/home.js', 'src/barunai.js', 'src/kampong.js', 'src/kampong2.js',
   'src/barunai-activities.js', 'src/majapahit.js', 'src/bayang.js', 'src/ledang.js', 'src/neklampir.js',
   'src/santubong.js', 'src/bualang.js', 'src/gelora.js', 'src/mayang.js', 'src/masjid.js', 'src/lombong2.js',
-  'src/mine-passages.js', 'src/belalang.js', 'src/sulu.js', 'src/sulu2.js', 'src/state.js', 'src/field.js',
-  'src/khemah.js', 'src/posts.js', 'src/bagsort.js', 'src/sim.js', 'src/net.js', 'src/worldview.js', 'src/art.js',
-  'src/art2.js', 'src/art3.js', 'src/art4.js', 'src/art5.js', 'src/art6.js', 'src/art7.js', 'src/art8.js',
-  'src/art9.js', 'src/art10.js', 'src/art11.js', 'src/art12.js', 'src/art13.js', 'src/art14.js', 'src/art15.js',
-  'src/art16.js', 'src/art17.js', 'src/art18.js', 'src/art19.js', 'src/art20.js', 'src/art21.js', 'src/art22.js',
-  'src/art23.js', 'src/audio.js', 'src/lagu.js', 'src/lobby.js', 'src/scenes/Boot.js', 'src/scenes/Title.js',
-  'src/scenes/World.js', 'src/scenes/WorldLife.js', 'src/scenes/WorldFarm.js', 'src/scenes/WorldCombat.js',
+  'src/mine-passages.js', 'src/belalang.js', 'src/sulu.js', 'src/sulu2.js', 'src/storm-reef.js', 'src/state.js',
+  'src/field.js', 'src/khemah.js', 'src/posts.js', 'src/bagsort.js', 'src/sim.js', 'src/net.js', 'src/worldview.js',
+  'src/art.js', 'src/art2.js', 'src/art3.js', 'src/art4.js', 'src/art5.js', 'src/art6.js', 'src/art7.js',
+  'src/art8.js', 'src/art9.js', 'src/art10.js', 'src/art11.js', 'src/art12.js', 'src/art13.js', 'src/art14.js',
+  'src/art15.js', 'src/art16.js', 'src/art17.js', 'src/art18.js', 'src/art19.js', 'src/art20.js', 'src/art21.js',
+  'src/art22.js', 'src/art23.js', 'src/art24.js', 'src/audio.js', 'src/lagu.js', 'src/lobby.js', 'src/scenes/Boot.js',
+  'src/scenes/Title.js', 'src/scenes/World.js', 'src/scenes/WorldLife.js', 'src/scenes/WorldFarm.js', 'src/scenes/WorldCombat.js',
   'src/scenes/WorldTanggang.js', 'src/scenes/WorldBadang.js', 'src/scenes/WorldHome.js', 'src/scenes/WorldBarunai.js',
   'src/scenes/WorldKampong.js', 'src/scenes/WorldKampong2.js', 'src/scenes/WorldMajapahit.js', 'src/scenes/WorldBayang.js',
   'src/scenes/WorldLedang.js', 'src/scenes/WorldNek.js', 'src/scenes/WorldSantubong.js', 'src/scenes/WorldBualang.js',
@@ -32,8 +32,8 @@ var FILES = [
   'src/scenes/UIBualang.js', 'src/scenes/UIGelora.js', 'src/scenes/UIMayang.js', 'src/scenes/UIGuide.js',
   'src/scenes/UIChecklist.js', 'src/scenes/UIMasjid.js', 'src/scenes/UICompanions.js', 'src/scenes/UIBelalang.js',
   'src/scenes/UISulu.js', 'src/scenes/UISulu2.js', 'src/scenes/WorldField.js', 'src/scenes/WorldKhemah.js',
-  'src/main.js', 'lib/fonts/PixelifySans-latin.woff2', 'lib/fonts/PixelifySans-latin-ext.woff2', 'icons/icon-192.png',
-  'icons/icon-512.png'
+  'src/scenes/WorldStormReef.js', 'src/scenes/UIStormReef.js', 'src/main.js', 'lib/fonts/PixelifySans-latin.woff2',
+  'lib/fonts/PixelifySans-latin-ext.woff2', 'icons/icon-192.png', 'icons/icon-512.png'
 ];
 // ---- end of stamp
 

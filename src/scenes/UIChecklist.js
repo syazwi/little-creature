@@ -42,7 +42,10 @@ window.LC = window.LC || {};
       next: 'When Chapter 10 is complete, be at Nenek\'s farm after 8 PM the next night: Chapter 11 begins.' },
     { n: 11, key: 'ch11', end: 13, name: 'Bulan dan Mutiara', steps: ['Rest at the farm', 'The dark moon', 'The Sultan of Sulu', 'Ready the vinta', 'Captain of the vinta', 'The Bakunawa', 'Two little moons',
       'Pelita glows again', '1578: the envoy from Sulu', 'Find the fleet', 'The anchor ropes', 'Gongs across the water', 'The flagship'],
-      next: 'Chapter 11 is the latest chapter. More are on the way!' }
+      next: 'After Chapter 11, meet Jack Separaw at Nenek’s farm jetty.' },
+    { n: 12, key: 'ch12', end: LC.C12.end, name: 'Jack Separaw and the Kraken of Storm Reef',
+      steps: ['The bargain at the jetty', 'The chase through the waterspouts', 'Board the treasure ship', 'The Kraken rises', 'Bring the fishing crews home'],
+      next: 'Return to the jetty to sail freely. Follow the Pedoman to a wreck or sea boss.' }
   ];
 
   // the parts of the current step (only steps with more than one part, or with things to bring)
