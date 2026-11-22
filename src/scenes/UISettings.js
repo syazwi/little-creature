@@ -182,6 +182,29 @@ window.LC = window.LC || {};
     },
 
     // ================================================================ save and load
+    openGraphics: function () {
+      var self = this, display = LC.Display;
+      function back() { return { icon: 'ic_door', label: 'Back to pause menu', action: function () { self.openPause(); } }; }
+      this.openMenu({
+        title: 'Graphics', footer: 'Changes are saved on this device. Actual FPS depends on your screen and device.',
+        tabs: [
+          { label: 'Quality', rows: function () {
+            return Object.keys(display.presets).map(function (quality) {
+              var choice = display.presets[quality];
+              return { icon: 'ic_fullscr', label: choice.label, sub: choice.desc, right: display.quality === quality ? 'Selected' : '',
+                action: function () { display.setQuality(quality); LC.Audio.sfx('click'); } };
+            }).concat(back());
+          } },
+          { label: 'Frame rate', rows: function () {
+            return display.rates.map(function (fps) {
+              return { icon: 'ic_play', label: fps + ' FPS', sub: fps === 60 ? 'Default frame-rate limit.' : '',
+                right: display.fps === fps ? 'Selected' : '', action: function () { display.setFps(fps); LC.Audio.sfx('click'); } };
+            }).concat(back());
+          } }
+        ]
+      });
+    },
+
     openSaves: function (mode) {
       var self = this, saving = mode === 'save';
       // v2.7.7: "are you sure?" is a dialog with buttons (it was "press again to confirm"); Cancel comes back here

@@ -65,7 +65,7 @@ function stampServiceWorker() {
   for (const f of files) if (f !== './') read(f);   // (throws if a file is missing)
   const stamp = `var CACHE = 'little-creature-${ver.code}-${ver.built.replace(/[^0-9]/g, '').slice(0, 14)}';\n` +
     `var FILES = [\n  ${files.map((f) => `'${f}'`).join(', ').replace(/(.{100,}?), /g, '$1,\n  ')}\n];\n`;
-  const sw = read('sw.js').toString('utf8');
+  const sw = read('sw.js').toString('utf8').replace(/\r\n/g, '\n');
   const re = /var CACHE = [^\n]*\nvar FILES = \[[\s\S]*?\];\n/;
   if (!re.test(sw)) throw new Error('could not find the stamp in sw.js');
   writeFileSync(join(ROOT, 'sw.js'), sw.replace(re, stamp));

@@ -4,6 +4,48 @@
   var params = new URLSearchParams(location.search);
   LC.PLATFORM = params.get('platform') === 'android' ? 'android' : 'web';
 
+  var DISPLAY_KEY = 'littleCreature.display';
+  var presets = {
+    low: { label: 'Low', density: 0.25, flicker: false, desc: 'Fewer particles, lighter weather, and steady lights.' },
+    medium: { label: 'Medium', density: 0.60, flicker: true, desc: 'Balanced particles, weather, and lighting effects.' },
+    high: { label: 'High', density: 1, flicker: true, desc: 'Full particles, weather, and lighting effects.' }
+  };
+  var rates = [30, 60, 90, 120];
+  var qualityNames = Object.keys(presets);
+  var display = LC.Display = {
+    quality: 'medium', fps: 60, presets: presets, rates: rates,
+    preset: function () { return presets[this.quality]; },
+    effectCount: function (count) { return count > 0 ? Math.max(1, Math.round(count * this.preset().density)) : count; },
+    setQuality: function (quality) { if (qualityNames.includes(quality)) { this.quality = quality; saveDisplay(); } },
+    setFps: function (fps) { if (rates.includes(fps)) { this.fps = fps; saveDisplay(); } }
+  };
+  try {
+    var savedDisplay = JSON.parse(localStorage.getItem(DISPLAY_KEY));
+    if (savedDisplay && qualityNames.includes(savedDisplay.quality)) display.quality = savedDisplay.quality;
+    if (savedDisplay && rates.includes(savedDisplay.fps)) display.fps = savedDisplay.fps;
+  } catch (e) { /* use the defaults when storage is unavailable */ }
+  function saveDisplay() {
+    try { localStorage.setItem(DISPLAY_KEY, JSON.stringify({ quality: display.quality, fps: display.fps })); } catch (e) { /* this session only */ }
+  }
+
+  class DisplayGame extends Phaser.Game {
+    step(time, delta) {
+      var fps = display.fps, interval = 1000 / fps;
+      if (this.frameRate !== fps) {
+        this.frameRate = fps;
+        this.nextFrameAt = time;
+      }
+      this.frameDelta = (this.frameDelta || 0) + delta;
+      if (!this.pendingDestroy && time + 0.75 < this.nextFrameAt) return;
+      // Keep the cadence across display refreshes, including 90 FPS targets on 120 Hz screens.
+      var periods = Math.max(1, Math.floor((time - this.nextFrameAt) / interval) + 1);
+      this.nextFrameAt += periods * interval;
+      var elapsed = this.frameDelta;
+      this.frameDelta = 0;
+      super.step(time, elapsed);
+    }
+  }
+
   // Save whenever the game is hidden: Android may kill a backgrounded app, and tabs get closed.
   LC.autoSave = function () {
     var g = LC.game;
@@ -182,7 +224,7 @@
 
   window.addEventListener('load', function () {
     var v = LC.viewSize();
-    LC.game = new Phaser.Game({
+    LC.game = new DisplayGame({
       type: Phaser.AUTO,
       parent: 'game',
       width: v.w,
@@ -190,8 +232,7 @@
       backgroundColor: '#120d0a',
       pixelArt: true,
       roundPixels: true,
-      // A little headroom above 30 keeps the cap aligned with every other 60 Hz display frame.
-      fps: LC.MOBILE ? { limit: 31, smoothStep: false } : {},
+      fps: { smoothStep: false },
       render: { powerPreference: LC.MOBILE ? 'low-power' : 'default' },
       input: { activePointers: 3 },
       scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },

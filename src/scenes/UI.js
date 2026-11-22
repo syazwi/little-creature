@@ -1114,6 +1114,7 @@ window.LC = window.LC || {};
             self.chapterTile ? self.chapterTile() : null,   // v2.8.2: how far along this chapter is
             { icon: 'ic_bond', label: 'Journal', sub: 'Villager requests, places, spirits, fish and Pelita\'s levels. Press J anytime.', action: function () { self.openJournal(); } },
             { icon: 'ic_map', label: 'Map', sub: 'This place, and the whole land. Press M anytime' + (self.touchOn ? ' (or tap MAP).' : '.'), action: function () { self.openMap(); } },
+            { icon: 'ic_fullscr', label: 'Graphics', sub: LC.Display.preset().label + ' · ' + LC.Display.fps + ' FPS', action: function () { self.openGraphics(); } },
             { icon: 'ic_stats', label: 'My stats', sub: 'Health, energy, strength, attack, speed, kepeng, Pelita\'s level, abilities and records.', action: function () { self.openStats(0); } },   // v2.8
             (function () {
               var n = self.world.companionCount ? self.world.companionCount() : 0;

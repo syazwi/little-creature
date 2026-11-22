@@ -823,6 +823,8 @@ window.LC = window.LC || {};
       var self = this, A = this.A;
       this.dark = this.add.image(0, 0, 'px').setOrigin(0).setDisplaySize(this.W * T, this.H * T).setDepth(9000).setBlendMode(Phaser.BlendModes.MULTIPLY).setVisible(false);
       this.lights = [];
+      this.ambientParticles = [];
+      this.graphicsPreset = null;
       this.torches.forEach(function (t) { t.light = self.addLight(t.x, t.y + 2, 0xffa040, 1.5, true); });
       if (this.houseImg) {
         var hx = this.houseImg.x - 40, hy = this.houseImg.y - 96;
@@ -853,13 +855,28 @@ window.LC = window.LC || {};
       this.rays = [];
       if (A.underwater) {
         for (i = 0; i < 9; i++) { var rx = 40 + i * (this.W * T - 80) / 8 + Math.random() * 30; this.rays.push({ img: this.add.image(rx, -10, 'ray').setOrigin(0.5, 0).setDepth(8998).setBlendMode(Phaser.BlendModes.ADD).setScale(1.2 + Math.random(), 3.4).setAngle(-12), bx: rx, ph: Math.random() * 6 }); }
-        this.add.particles(0, 0, 'bubble', { x: { min: 16, max: this.W * T - 16 }, y: { min: 40, max: this.H * T - 16 }, speedY: { min: -30, max: -16 }, speedX: { min: -4, max: 4 }, lifespan: 4200, alpha: { start: 0.8, end: 0 }, scale: { start: 0.6, end: 1.1 }, frequency: 160 }).setDepth(9004);
+        this.addAmbientParticles('bubble', { x: { min: 16, max: this.W * T - 16 }, y: { min: 40, max: this.H * T - 16 }, speedY: { min: -30, max: -16 }, speedX: { min: -4, max: 4 }, lifespan: 4200, alpha: { start: 0.8, end: 0 }, scale: { start: 0.6, end: 1.1 }, frequency: 160 });
       }
       this.fogs = [];
       if (A.fog) for (i = 0; i < 9; i++) {
         var fg = this.add.image(Math.random() * this.W * T, Math.random() * this.H * T, 'fog').setDepth(8999).setScale(1.5 + Math.random() * 1.5).setAlpha(0.3 + Math.random() * 0.2);
         this.fogs.push({ img: fg, v: 3 + Math.random() * 5 });
       }
+    }
+    addAmbientParticles(key, config) {
+      var emitter = this.add.particles(0, 0, key, config).setDepth(9004);
+      this.ambientParticles.push({ emitter: emitter, frequency: config.frequency });
+    }
+    applyGraphicsQuality(preset) {
+      this.graphicsPreset = preset;
+      [this.flies, this.rays, this.fogs].forEach(function (effects) {
+        var count = LC.Display.effectCount(effects.length);
+        effects.forEach(function (effect, i) { effect.img.setVisible(i < count); });
+      });
+      this.ambientParticles.forEach(function (effect) {
+        effect.emitter.setFrequency(Math.round(effect.frequency / preset.density));
+      });
+      this.refreshRainDrops();
     }
     addLight(x, y, tint, scale, flicker) {
       var img = this.add.image(x, y, 'glow').setBlendMode(Phaser.BlendModes.ADD).setDepth(9001).setTint(tint).setScale(scale).setAlpha(0);
@@ -874,6 +891,8 @@ window.LC = window.LC || {};
     }
     updateLighting(time, dt) {
       var S = this.S, A = this.A, col = this.skyColor(S.minutes);
+      var preset = LC.Display.preset();
+      if (preset !== this.graphicsPreset) this.applyGraphicsQuality(preset);
       var lum = ((col >> 16 & 255) * 0.3 + (col >> 8 & 255) * 0.59 + (col & 255) * 0.11) / 255;
       var n = Phaser.Math.Clamp((1 - lum - 0.06) / 0.45, 0, 1);
       if (A.cave && !A.naturalLight) { col = 0x2e2638; n = 1; }
@@ -892,7 +911,7 @@ window.LC = window.LC || {};
       this.playerLight.img.setPosition(this.player.x, this.player.y - 8);
       if (A.cave) this.playerLight.img.setScale((this.ghostHere ? 3.2 + S.ghost.glow / 100 : 2.2) * (0.96 + 0.04 * Math.sin(time / 130)));   // Pelita's glow pushes the dark back
       this.lights.forEach(function (L) {
-        var f = L.flicker ? 0.86 + 0.14 * Math.sin(time / 90 + L.ph) * Math.sin(time / 37 + L.ph * 2) : 1;
+        var f = L.flicker && preset.flicker ? 0.86 + 0.14 * Math.sin(time / 90 + L.ph) * Math.sin(time / 37 + L.ph * 2) : 1;
         L.img.setAlpha(n * L.base * f);
       });
       var lit = n > 0.25;
@@ -901,13 +920,14 @@ window.LC = window.LC || {};
         t.light.img.setTint(hgn ? 0xff5040 : 0xffa040);
       });
       this.flies.forEach(function (f) {
+        if (!f.img.visible) return;
         f.img.x = f.bx + Math.sin(time / 1000 * f.sp + f.ph) * 14;
         f.img.y = f.by + Math.cos(time / 1300 * f.sp + f.ph * 1.3) * 9;
         f.img.setAlpha(n * (0.3 + 0.7 * Math.abs(Math.sin(time / 420 * f.sp + f.ph))));
       });
       var mapW = this.W * T;
-      this.fogs.forEach(function (f) { f.img.x += f.v * dt; if (f.img.x > mapW + 120) f.img.x = -120; });
-      (this.rays || []).forEach(function (r) { r.img.x = r.bx + Math.sin(time / 5000 + r.ph) * 30; r.img.setAlpha((0.16 + 0.06 * Math.sin(time / 1300 + r.ph)) * (1 - n)); });
+      this.fogs.forEach(function (f) { if (f.img.visible) { f.img.x += f.v * dt; if (f.img.x > mapW + 120) f.img.x = -120; } });
+      this.rays.forEach(function (r) { if (r.img.visible) { r.img.x = r.bx + Math.sin(time / 5000 + r.ph) * 30; r.img.setAlpha((0.16 + 0.06 * Math.sin(time / 1300 + r.ph)) * (1 - n)); } });
       if (A.underwater && time > (this.nextBreath || 0)) { this.nextBreath = time + 1400 + Math.random() * 900; this.fx.bubble.explode(2, this.player.x + (this.dir === 'left' ? -3 : 3), this.player.y - 12); }
       this.boats.forEach(function (b) { b.spr.y = b.y0 + Math.round(Math.sin(time / 600)); });
       if (this.ani) this.ani.setVisible(shopOpen);
@@ -918,7 +938,12 @@ window.LC = window.LC || {};
     // ================================================================ fx
     createFx() {
       var self = this;
-      function mk(key, cfg) { var e = self.add.particles(0, 0, key, Object.assign({ emitting: false }, cfg)); e.setDepth(9500); return e; }
+      function mk(key, cfg) {
+        var e = self.add.particles(0, 0, key, Object.assign({ emitting: false }, cfg)).setDepth(9500);
+        var explode = e.explode;
+        e.explode = function (count, x, y) { return explode.call(this, LC.Display.effectCount(count), x, y); };
+        return e;
+      }
       this.fx = {
         heart: mk('heart', { speed: { min: 12, max: 30 }, angle: { min: 235, max: 305 }, lifespan: 1000, alpha: { start: 1, end: 0 }, gravityY: -15 }),
         bubble: mk('bubble', { speedY: { min: -40, max: -22 }, speedX: { min: -6, max: 6 }, lifespan: 1600, alpha: { start: 0.9, end: 0 } }),

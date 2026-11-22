@@ -12,7 +12,7 @@ LC.TitleScene = class extends Phaser.Scene {
     LC.Audio.setNight(true);   // dusk on the title screen: slow music, crickets and frogs
     var g = this.add.graphics();
     g.fillGradientStyle(0x1f1840, 0x1f1840, 0xd9805a, 0xd9805a, 1); g.fillRect(0, 0, W, hz);
-    for (var i = 0; i < Math.round(70 * sx); i++) {
+    for (var i = 0, stars = LC.Display.effectCount(Math.round(70 * sx)); i < stars; i++) {
       var s = this.add.image(Math.random() * W, Math.random() * (250 + dy), 'px').setScale(0.25 + Math.random() * 0.35).setAlpha(0.3 + Math.random() * 0.7);
       this.tweens.add({ targets: s, alpha: 0.1, duration: 900 + Math.random() * 1800, yoyo: true, repeat: -1, delay: Math.random() * 1500 });
     }
@@ -26,7 +26,7 @@ LC.TitleScene = class extends Phaser.Scene {
     // river
     var r = this.add.graphics();
     r.fillGradientStyle(0x3b3266, 0x3b3266, 0x16122a, 0x16122a, 1); r.fillRect(0, hz, W, H - hz);
-    for (i = 0; i < Math.round(26 * sx); i++) {
+    for (i = 0; i < LC.Display.effectCount(Math.round(26 * sx)); i++) {
       var ln = this.add.rectangle(Math.random() * W, hz + 10 + Math.random() * (H - hz - 20), 20 + Math.random() * 60, 2, 0xffc890, 0.25 + Math.random() * 0.25);
       this.tweens.add({ targets: ln, x: ln.x + 30, alpha: 0.05, duration: 2000 + Math.random() * 2000, yoyo: true, repeat: -1 });
     }
@@ -44,7 +44,7 @@ LC.TitleScene = class extends Phaser.Scene {
     }
     // fireflies
     this.flies = [];
-    for (i = 0; i < Math.round(30 * sx); i++) {
+    for (i = 0; i < LC.Display.effectCount(Math.round(30 * sx)); i++) {
       var f = this.add.image(Math.random() * W, 330 + dy + Math.random() * 200, 'firefly').setScale(2).setBlendMode(Phaser.BlendModes.ADD);
       this.flies.push({ img: f, bx: f.x, by: f.y, ph: Math.random() * 10, sp: 0.5 + Math.random() });
     }

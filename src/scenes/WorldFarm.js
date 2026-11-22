@@ -26,15 +26,19 @@ window.LC = window.LC || {};
       this.refreshHidden();
       this.drops = [];
       this.refreshSeason();
-      if (A.golden) this.add.particles(0, 0, 'sparkle', { x: { min: 0, max: this.W * T }, y: { min: 0, max: this.H * T }, speedY: { min: -8, max: -3 }, speedX: { min: -4, max: 4 }, lifespan: 3000, alpha: { start: 0.9, end: 0 }, scale: { start: 0.8, end: 0.2 }, frequency: 90, blendMode: 'ADD', tint: 0xffe08a }).setDepth(9004);   // golden motes in the hidden village
+      if (A.golden) this.addAmbientParticles('sparkle', { x: { min: 0, max: this.W * T }, y: { min: 0, max: this.H * T }, speedY: { min: -8, max: -3 }, speedX: { min: -4, max: 4 }, lifespan: 3000, alpha: { start: 0.9, end: 0 }, scale: { start: 0.8, end: 0.2 }, frequency: 90, blendMode: 'ADD', tint: 0xffe08a });   // golden motes in the hidden village
     },
     // the monsoon: rain over every open-air place (checked again each morning)
     refreshSeason: function () {
       var A = this.A, rain = LC.State.season().id === 'tengkujuh' && !A.cave && !A.underwater && !A.warm && !A.golden;
       this.raining = rain;
-      if (rain && !this.drops.length) for (var i = 0; i < 70; i++) this.drops.push({ img: this.add.image(0, 0, 'rain').setDepth(9005).setAlpha(0.55), v: 160 + Math.random() * 80, init: true });
-      if (!rain && this.drops.length) { this.drops.forEach(function (d) { d.img.destroy(); }); this.drops = []; }
+      this.refreshRainDrops();
       LC.Audio.setRain(rain);
+    },
+    refreshRainDrops: function () {
+      var count = this.raining ? LC.Display.effectCount(70) : 0;
+      while (this.drops.length > count) this.drops.pop().img.destroy();
+      while (this.drops.length < count) this.drops.push({ img: this.add.image(0, 0, 'rain').setDepth(9005).setAlpha(0.55), v: 160 + Math.random() * 80, init: true });
     },
 
     // ================================================================ chests
