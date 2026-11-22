@@ -94,6 +94,9 @@ window.LC = window.LC || {};
   var IC = {
     nibong: function (p) { for (var i = 0; i < 3; i++) { p.rect(3 + i * 4, 2 + i, 3, 13 - i, '#7a6a4a'); p.rect(3 + i * 4, 2 + i, 3, 1, '#c8b88a'); } },
     belian: function (p) { p.ell(8, 9, 7, 4, '#5a2e1e'); p.ell(8, 8, 6, 2.6, '#7a3e28'); p.ell(14, 9, 1.6, 3.4, '#c8784a'); },
+    keris_besi: function (p) { p.line(3, 13, 6, 10, '#98623e'); p.line(4, 9, 8, 13, '#b68149'); p.poly([[6, 10], [9, 5], [8, 4], [14, 1], [12, 6], [12, 8], [8, 12]], '#b2c1c9'); p.line(9, 8, 13, 2, '#f0f4ed'); },
+    pedang_barunai: function (p) { p.line(2, 14, 6, 10, '#895034'); p.line(4, 8, 8, 12, '#d4a34f'); p.poly([[6, 9], [11, 2], [14, 1], [14, 5], [8, 11]], '#b6c8ce'); p.line(7, 9, 13, 2, '#f1fbf5'); },
+    tombak_belian: function (p) { p.line(1, 14, 11, 4, '#a1653b'); p.line(2, 14, 11, 5, '#6a3e29'); p.poly([[9, 4], [14, 1], [13, 6], [10, 7]], '#c7d8d8'); p.px(13, 3, '#f7f3dd'); },
     pinggan_emas: function (p) { p.ell(8, 9, 7, 4, '#c4922f'); p.ell(8, 8.5, 5.6, 3, '#e9c46a'); p.ell(6, 7.5, 2, 1, '#fff4c0'); },
     bulu_mutiara: function (p) { p.line(3, 14, 12, 2, '#8a8690'); p.line(4, 11, 11, 3, '#a8a4ae'); p.line(5, 13, 13, 5, '#a8a4ae'); p.px(12, 2, '#e8f4ff'); }
   };
@@ -121,6 +124,21 @@ window.LC = window.LC || {};
     }, true);
     make(scene, 'jong_majapahit', 80, 48, drawJong, true);
     make(scene, 'perahu_kecil', 24, 12, function (p) { p.poly([[1, 4], [23, 4], [19, 10], [5, 10]], '#8a5a2b'); p.rect(3, 4, 18, 1, '#a8743e'); p.line(14, 2, 20, 8, '#5a3a1e'); p.rect(0, 10, 24, 1, 'rgba(220,240,255,0.55)'); }, true);
+    make(scene, 'perahu_race_dock', 36, 26, function (p) {
+      p.rect(8, 2, 2, 19, '#755844'); p.poly([[10, 2], [25, 5], [10, 10]], '#e0a644'); p.rect(11, 5, 6, 2, '#fff0bc');
+      p.poly([[1, 17], [35, 15], [31, 22], [7, 24]], '#834c37'); p.line(2, 17, 34, 15, '#e8ba67');
+      p.line(2, 24, 25, 24, '#9ad7e4'); p.line(24, 22, 35, 21, '#b4ebf1');
+    }, true);
+    [0, 1].forEach(function (f) {
+      make(scene, 'perahu_race_boat_' + f, 42, 17, function (p) {
+        for (var x = 7; x < 36; x += 5) {
+          p.rect(x, 3, 3, 3, '#edbb88'); p.rect(x, 2, 3, 1, '#342e32'); p.rect(x, 6, 3, 4, '#e4e8d7');
+          p.line(x, 8, x + (f ? 3 : -3), 16, '#c79761');
+        }
+        p.poly([[1, 9], [40, 8], [36, 13], [7, 14]], '#a26b45'); p.line(2, 9, 39, 8, '#fff2bd');
+        p.line(10, 14, 28, 14, '#d5f8fc'); p.line(24, 16, 39, 15, '#94d0de');
+      }, true);
+    });
     Object.keys(IC).forEach(function (id) { make(scene, 'i_' + id, 16, 16, IC[id], true); });
     var a = scene.anims;
     ['padian', 'mutiara', 'asmara'].forEach(function (k) {

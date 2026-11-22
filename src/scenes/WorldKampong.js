@@ -87,6 +87,8 @@ window.LC = window.LC || {};
     kampongObjAction: function (o) {
       var self = this, S = this.S, q = Q();
       switch (o.type) {
+        case 'besi_forge': return { label: 'Kampong Pandai Besi smithy', fn: function () { self.ui.openBesiForge(); } };
+        case 'perahu_race': return { label: 'Kampong Ayer boat race', fn: function () { self.ui.openPerahuRaceDock(); } };
         case 'kplot': {
           var built = (q.kaPlots || {})[o.id];
           return { label: built ? 'Your house over the river' : 'Empty pilings: build a house', fn: function () { self.ui.openKPlot(o.id); } };

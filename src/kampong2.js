@@ -50,6 +50,7 @@ window.LC = window.LC || {};
   var K_OBJ = [
     { id: 'k_balai', type: 'tour', stop: 2, x: 22, y: 2, w: 5, h: 3, tex: 'balai', keep: true, text: 'The great hall of Kampong Ayer, on the hill above the water city.' },
     { id: 'k_back', type: 'vision_back', x: 23, y: 6, tex: 'pelita_batu' },
+    { id: 'k_race', type: 'perahu_race', x: 6, y: 28, tex: 'perahu_race_dock', keep: true, when: function (S) { return (S.quests.ch3 || 0) === 11; } },
     { id: 'k_pasar', type: 'tour', stop: 0, x: 30, y: 13, w: 2, h: 1, tex: 'padian_0', when: function (S) { return (S.quests.ch3 || 0) === 11; }, text: 'A padian boat piled with fish and fruit.' },
     { id: 'k_pasar2', type: 'bldg', x: 34, y: 20, w: 2, h: 1, tex: 'padian_1', when: function (S) { return (S.quests.ch3 || 0) === 11; }, text: 'Another padian, selling rice and betel leaves from house to house.' },
     { id: 'k_gajah1', type: 'bldg', x: 13, y: 4, w: 2, h: 2, tex: 'gajah', when: function (S) { return (S.quests.ch3 || 0) === 11; }, text: 'An elephant dressed in red and gold silk, waiting to carry the visitors up to the great hall.' },

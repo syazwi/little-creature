@@ -1076,7 +1076,7 @@ window.LC = window.LC || {};
       switch (o.type) {
         case 'house': case 'house_wing': return { label: 'Nenek\'s house', fn: function () { self.ui.openHouse(); } };   // v1.8: sleep, the pantry, helpers, building
         case 'jejak': case 'tembadau': case 'bulu': case 'pinggai': case 'salvage': case 'vase': case 'tamu2': return this.barunaiObjAction(o);   // v1.9 (tamu2: v2.7.1)
-        case 'kplot': case 'padian': case 'hop': case 'ghost_ayam': case 'batu_ayam': return this.kampongObjAction(o);   // v2.0
+        case 'kplot': case 'padian': case 'hop': case 'ghost_ayam': case 'batu_ayam': case 'besi_forge': case 'perahu_race': return this.kampongObjAction(o);   // v2.0
         case 'hero': case 'vision': case 'vision_back': case 'tour': case 'meriam': case 'api': case 'keluarga': return this.kampongObjAction(o);   // v2.1
         case 'ally': case 'api4': case 'jong_dagang': return this.kampongObjAction(o);   // v2.2
         case 'jong5': case 'pasar5': case 'obor5': case 'damar': case 'raja5': case 'kebo5': case 'lampir5': return this.kampongObjAction(o);   // v2.3

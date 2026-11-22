@@ -36,7 +36,7 @@ window.LC = window.LC || {};
     { name: 'new homes over the river', desc: 'Five new sets of pilings between the shore and the walkway. You choose which to build on, and how.', cost: { nibong: 15, belian: 6, atap: 12 }, kepeng: 4000 }
   ];
   LC.KA_WALKS = [null,
-    [[8, 27, 40, 28]],                                                               // the craft quarter walkway
+    [[8, 27, 40, 28], [9, 29, 11, 29]],                                               // the craft quarter and smithy steps
     [[2, 21, 4, 26]],                                                                // the market landing (the padian moor just west of it)
     [[10, 20, 10, 20], [15, 20, 15, 20], [20, 20, 20, 20], [29, 20, 29, 20], [34, 20, 34, 20]]   // steps up to the new pilings
   ];
@@ -47,18 +47,19 @@ window.LC = window.LC || {};
     for (var n = 1; n < LC.KA_WALKS.length; n++) LC.KA_WALKS[n].forEach(function (r) { for (var y = r[1]; y <= r[3]; y++) for (var x = r[0]; x <= r[2]; x++) g[y][x] = st >= n ? 'j' : 'w'; });
   };
   var stage = function (n) { return function (S) { return (S.quests.kaStage || 0) >= n; }; };
-  [['b_besi', 9, 'bengkel_besi', 'The blacksmiths\' workshop: a glowing forge, an anvil, and a rack of blades. This end of the village will be called Kampong Pandai Besi.'],
+  [['b_besi', 9, 'bengkel_besi', 'The blacksmiths\' workshop: a glowing forge, an anvil, and a rack of blades.'],
    ['b_tembaga', 15, 'bengkel_tembaga', 'The brassmiths\' workshop. Kendi jugs, gongs and little cannons shine in the sun.'],
    ['b_tenun', 21, 'bengkel_tenun', 'The weavers\' house. A wooden loom clacks inside, weaving kain tenunan with gold thread.'],
    ['b_perahu', 27, 'bengkel_perahu', 'The boat builders\' shed, with a half-finished perahu on trestles.'],
    ['b_emas', 33, 'kedai_emas', 'The goldsmith\'s house. Through the window: tiny hammers, gold leaf, and a very careful old man.']].forEach(function (w) {
-    LC.AREAS.barunai.objects.push({ id: w[0], type: 'bldg', x: w[1], y: 30, w: 3, h: 2, tex: w[2], keep: true, shared: true, when: stage(1), text: w[3] });
+    LC.AREAS.barunai.objects.push({ id: w[0], type: w[0] === 'b_besi' ? 'besi_forge' : 'bldg', x: w[1], y: 30, w: 3, h: 2, tex: w[2], keep: true, shared: true, when: stage(1), text: w[3] });
   });
   LC.KA_PLOTS = [{ id: 'kp0', x: 9 }, { id: 'kp1', x: 14 }, { id: 'kp2', x: 19 }, { id: 'kp3', x: 28 }, { id: 'kp4', x: 33 }];
   LC.KA_PLOTS.forEach(function (p) { LC.AREAS.barunai.objects.push({ id: p.id, type: 'kplot', x: p.x, y: 18, w: 3, h: 2, tex: 'tiang_kosong', shared: true, when: stage(3) }); });
   LC.KA_HOUSES = { rumah_air: 'Rumah Atap Nipah (a palm-thatched house)', rumah_air2: 'Rumah Atap Hijau (a house with a green roof)', rumah_air3: 'Rumah Papan Biru (a blue plank house)' };
   LC.KA_HOUSE_COST = { nibong: 4, atap: 3 }; LC.KA_HOUSE_KEPENG = 300;
   LC.AREAS.barunai.objects.push(
+    { id: 'b_race', type: 'perahu_race', x: 1, y: 24, tex: 'perahu_race_dock', keep: true, shared: true, when: stage(2) },
     { id: 'b_jong', type: 'bldg', x: 39, y: 29, w: 5, h: 3, tex: 'jong_majapahit', when: function (S) { var c = S.quests.ch3 || 0; return c >= 4 && c <= 6; }, text: 'The flagship of Majapahit, its sails painted red and white. Forty more ships wait at the river mouth.' },
     { id: 'b_perahu_teluk', type: 'sampan', x: 3, y: 19, w: 2, h: 1, to: 'teluk', when: function (S) { return (S.quests.ch3 || 0) >= 7; } }
   );

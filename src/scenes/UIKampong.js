@@ -263,6 +263,8 @@ window.LC = window.LC || {};
         var doneS = st > s[0];
         rows.push({ icon: doneS ? 'ic_bond' : 'ic_moon', label: (doneS ? '✓ ' : '') + s[1], right: doneS ? 'Done' : 'Now', sub: s[2] });
       });
+      if (LC.kaStage() >= 1) rows.push({ icon: 'i_pedang_barunai', label: 'Kampong Pandai Besi smithy', sub: 'Craft weapons with Wak Juru at the west end of the craft quarter.' });
+      if (LC.kaStage() >= 2) rows.push({ icon: 'perahu_race_dock', label: 'Kampong Ayer boat race', sub: 'Invite five people in Barunai, then enter at the dock beside the floating market.' });
       if (LC.kaStage() >= 3) rows.push({ icon: 'rumah_air3', iconScale: 0.85, label: 'New homes: ' + Object.keys(Q.kaPlots || {}).length + ' / ' + LC.KA_PLOTS.length, sub: 'Build on the empty pilings between the shore and the walkway.' });
       return rows;
     }
