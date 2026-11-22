@@ -1,7 +1,7 @@
 /* Little Creature — v1.8: a home that grows, helpers to hire, a bigger bag, Pelita up to Lv 30, and new folk in the dunes.
  *  - Nenek's house grows in three stages (lots of kepeng and materials; Tukang Leong and the kampung build each one
  *    overnight, or at once with Badang): a verandah and a pantry, a middle room, and a grand kitchen wing.
- *  - Each stage makes room for a helper, paid every morning: Mak Som cooks from the pantry, Pak Hamid waters,
+ *  - Each stage makes room for helpers, paid every morning: Mak Som cooks from the pantry, Pak Hamid waters,
  *    harvests and replants the field, and Kak Nur picks the farm's fruit and collects the eggs and milk.
  *  - Your bag grows by a row of 9 at Pelita Lv 5, 10, 15, 20, 25 and 30 (18 -> 72), and Pelita can now reach Lv 30.
  *  - Bukit Pasir: Mak Thuy, a Cham potter by the old tower (pots from your clay, and the tower's brick path to
@@ -51,7 +51,7 @@ window.LC = window.LC || {};
     null,
     { name: 'Serambi', desc: 'A breezy verandah beside the house, and a pantry (Almari Dapur) for your helpers. Room for 1 helper.', kepeng: 2000, cost: { kayu: 20, atap: 10 }, rooms: 1 },
     { name: 'Rumah Tengah', desc: 'A new middle room: the dapur cooks up to 5 dishes at once, and +20 max energy. Room for 2 helpers.', kepeng: 6000, cost: { kayu: 30, batu: 15, atap: 15 }, rooms: 2, energy: 20 },
-    { name: 'Rumah Dapur', desc: 'A grand kitchen wing with carved gables: a bigger pantry (48 stacks), and +20 more max energy. Room for 3 helpers.', kepeng: 15000, cost: { kayu: 40, batu: 20, tanah_liat: 10, tempayan: 2 }, rooms: 3, energy: 20 }
+    { name: 'Rumah Dapur', desc: 'A grand kitchen wing with carved gables: a bigger pantry (48 stacks), and +20 more max energy. Room for all 5 helpers.', kepeng: 15000, cost: { kayu: 40, batu: 20, tanah_liat: 10, tempayan: 2 }, rooms: 5, energy: 20 }
   ];
   LC.OBJECTS.push({ id: 'h_wing', type: 'house_wing', x: 7, y: 3, w: 2, h: 5, tex: 'wing_1', when: function (S) { return (S.house || 0) >= 1; } });
   LC.HOUSE_ZONE = { x0: 7, y0: 2, x1: 9, y1: 7 };   // kept free of grass tufts and bushes, for the new wing
@@ -60,16 +60,24 @@ window.LC = window.LC || {};
       look: { skin: '#a8714a', shirt: '#c8506a', shirt2: '#a03a52', bottom: '#5a3a5a', bottom2: '#42283a', hair: '#1a1210', hat: 'tudung', hatColor: '#f2d0a0' },
       does: 'Every night she cooks up to 5 dishes from the ingredients in the pantry (the best ones she can make) and leaves them there.',
       chat: ['Put rice, eggs, fish and chilli in the almari, and I will do the rest!', 'Nenek\'s recipes are written in pencil inside the almari door. I follow them exactly.', 'A kitchen with no one cooking is the saddest room in a house.'] },
-    ladang: { name: 'Pak Hamid', role: 'Pekerja Ladang (farmhand)', wage: 70, spot: { x: 22, y: 16 },
+    ladang: { name: 'Pak Hamid', role: 'Pekerja Ladang (farmhand)', wage: 70, spot: { x: 12, y: 12 },
       look: { skin: '#8e5c3a', shirt: '#4a7a8a', shirt2: '#3a5e6a', bottom: '#5a4a3a', bottom2: '#40342a', hair: '#3a3a3a', hat: 'terendak' },
       does: 'Every night he waters the whole field, harvests whatever is ripe into the pantry, and replants it with seeds from the pantry.',
       chat: ['Leave seeds in the almari and I will replant what I harvest.', 'Your soil is good. Nenek looked after it for fifty years.', 'Early to bed, early to the field!'] },
-    kutip: { name: 'Kak Nur', role: 'Pengumpul (gatherer)', wage: 50, spot: { x: 17, y: 9 },
+    kutip: { name: 'Kak Nur', role: 'Pengumpul (gatherer)', wage: 50, spot: { x: 3, y: 11 },
       look: { skin: '#c9905e', shirt: '#e9b949', shirt2: '#c4922f', bottom: '#3a6a4a', bottom2: '#2a4e36', hair: '#2a1a10', hat: 'flower' },
       does: 'Every night she picks the ripe fruit on the farm and collects the eggs and milk from the reban, into the pantry.',
-      chat: ['The mango tree is generous this week!', 'The hens know me now. They do not even peck me any more.', 'I put the eggs on top, so they do not break.'] }
+      chat: ['The mango tree is generous this week!', 'The hens know me now. They do not even peck me any more.', 'I put the eggs on top, so they do not break.'] },
+    pelita: { name: 'Kak Aini', role: 'Penjaga Pelita (Pelita caretaker)', wage: 65, spot: { x: 10, y: 7 },
+      look: { skin: '#d79c73', shirt: '#60538b', shirt2: '#443766', bottom: '#385b66', bottom2: '#263e48', hair: '#2a1a10', hat: 'tudung', hatColor: '#d9b0e0' },
+      does: 'When Pelita is hungry, she makes or serves one meal from pantry supplies overnight. She tries to satisfy its craving first.',
+      chat: ['I check what Pelita is craving before I light the dapur.', 'Pak Hamid and Kak Nur bring things from the farm. You can leave fish and other ingredients in the pantry for me.'] },
+    stor: { name: 'Pak Idris', role: 'Penjaga Stor (storekeeper)', wage: 60, spot: { x: 5, y: 10 },
+      look: { skin: '#ad7754', shirt: '#3c7070', shirt2: '#295052', bottom: '#7c5135', bottom2: '#583920', hair: '#242124', hat: 'songkok' },
+      does: 'He sells goods from the pantry overnight according to the stock limits you set under Pantry Sales. Other helpers use the pantry first.',
+      chat: ['Tell me how much of each item to keep in the pantry. I will take the surplus to Mak Ani.', 'Leave the pantry sales list empty and everything stays on the farm.'] }
   };
-  LC.HELPER_ORDER = ['masak', 'ladang', 'kutip'];
+  LC.HELPER_ORDER = ['masak', 'ladang', 'kutip', 'pelita', 'stor'];
 
   // shared-world helpers (run by the host or a single player)
   LC.Home = {
@@ -88,6 +96,52 @@ window.LC = window.LC || {};
     pCount: function (id) { var c = LC.State.s.chests.pantry; return c ? c.items.reduce(function (a, sl) { return a + (sl.id === id ? sl.n : 0); }, 0) : 0; },
     pAdd: function (id, n) { return LC.State.s.chests.pantry ? LC.Sim.chest_put({ id: 'pantry', item: id, n: n }).n : 0; },
     pTake: function (id, n) { return LC.State.s.chests.pantry ? LC.Sim.chest_take({ id: 'pantry', item: id, n: n }).n : 0; },
+    pantrySalePrice: function (id) {
+      var it = LC.ITEMS[id];
+      return it && !LC.FIXED_ITEMS[id] && it.sell > 0 ? it.sell : 0;
+    },
+    sellSurplus: function (s, lines) {
+      var self = this, sales = s.pantrySales, earned = 0, sold = [];
+      Object.keys(sales).forEach(function (id) {
+        var price = self.pantrySalePrice(id), keep = sales[id];
+        if (!price || !Number.isInteger(keep) || keep < 0) return;
+        var surplus = self.pCount(id) - keep;
+        if (surplus <= 0) return;
+        var count = self.pTake(id, surplus);
+        if (count) { earned += count * price; sold.push(count + ' ' + LC.ITEMS[id].name); }
+      });
+      if (earned) {
+        s.kepeng += earned; s.stats.earned += earned;
+        lines.push('Pak Idris sold ' + sold.join(', ') + ' for ' + earned + ' kepeng.');
+      }
+    },
+    feedPelita: function (s, lines) {
+      var g = s.ghost, self = this;
+      if (g.full >= 60 || LC.pelitaAway()) return;
+      function rank(id) {
+        if (id === g.craving && !g.cravingDone) return 0;
+        if (LC.LOVES.indexOf(id) >= 0) return 1;
+        var it = LC.ITEMS[id];
+        return it.kind === 'dish' || it.kind === 'drink' ? 2 : 3;
+      }
+      var meals = new Map();
+      s.chests.pantry.items.forEach(function (slot) {
+        var it = LC.ITEMS[slot.id];
+        if (it && it.food && LC.DISLIKES.indexOf(slot.id) < 0) meals.set(slot.id, null);
+      });
+      LC.RECIPES.forEach(function (r) {
+        if (LC.ITEMS[r.out].food && LC.DISLIKES.indexOf(r.out) < 0 && !meals.has(r.out) &&
+            Object.keys(r.inp).every(function (id) { return self.pCount(id) >= r.inp[id]; })) meals.set(r.out, r.inp);
+      });
+      var id = Array.from(meals.keys()).sort(function (a, b) { return rank(a) - rank(b) || LC.ITEMS[b].food.full - LC.ITEMS[a].food.full; })[0];
+      if (!id) { lines.push('Kak Aini needs food or cooking ingredients in the pantry for Pelita.'); return; }
+      var recipe = meals.get(id), used = recipe || { [id]: 1 };
+      var result = LC.Sim.feed({ item: id });
+      if (!result.ok) return;
+      Object.keys(used).forEach(function (item) { self.pTake(item, used[item]); });
+      s.flags.fedOnce = true;
+      lines.push('Kak Aini ' + (recipe ? 'made' : 'served') + ' ' + LC.ITEMS[id].name + ' for Pelita.' + (result.craving ? ' Its craving was satisfied!' : ''));
+    },
     // dusk (before the crops grow): pay the wages; the farmhand waters the field
     dusk: function (s, lines) {
       var h = s.helpers || {}, work = {}, unpaid = [], paid = 0;
@@ -105,7 +159,7 @@ window.LC = window.LC || {};
       }
       return work;
     },
-    // dawn (after the crops grew and the trees regrew): harvest and replant, gather, cook; a finished house stage
+    // dawn: gather fresh ingredients, feed Pelita, cook, then sell pantry surplus
     dawn: function (s, lines, work) {
       var self = this, full = false;
       if (s.houseBuild) {
@@ -137,6 +191,7 @@ window.LC = window.LC || {};
         ['telur', 'telur_itik', 'susu'].forEach(function (id) { if (coop[id]) { var put = store(id, coop[id]); coop[id] -= put; eggs += put; } });
         if (picked || eggs) lines.push('Kak Nur picked ' + picked + ' fruit' + (eggs ? ' and collected ' + eggs + ' eggs and milk' : '') + ' into the pantry.');
       }
+      if (work.pelita) this.feedPelita(s, lines);
       if (work.masak) {
         var made = {}, total = 0, progress = true;
         var recipes = LC.RECIPES.slice().sort(function (a, b) { return (LC.ITEMS[b.out].sell || 0) - (LC.ITEMS[a.out].sell || 0); });
@@ -153,6 +208,7 @@ window.LC = window.LC || {};
         lines.push(total ? 'Mak Som cooked ' + Object.keys(made).map(function (id) { return made[id] + ' ' + LC.ITEMS[id].name; }).join(', ') + '. They are in the pantry.'
           : 'Mak Som found nothing to cook in the pantry. Leave her some ingredients!');
       }
+      if (work.stor) this.sellSurplus(s, lines);
       if (full) lines.push('The pantry was full, so some things could not be stored. Empty it a little!');
     }
   };

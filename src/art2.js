@@ -258,12 +258,12 @@ window.LC = window.LC || {};
   }
 
   // ================================================================== VILLAGERS (16x20)
-  function drawVillager(p, L, blink) {
+  function drawVillager(p, L, blink, step) {
     var SK = L.skin, EYE = '#2a1a10';
-    p.rect(5, 18, 2, 2, '#4a3020'); p.rect(9, 18, 2, 2, '#4a3020');
+    p.rect(5, step === 1 ? 17 : 18, 2, 2, '#4a3020'); p.rect(9, step === 2 ? 17 : 18, 2, 2, '#4a3020');
     p.rect(4, 13, 8, 5, L.bottom); p.rect(10, 13, 2, 5, L.bottom2); p.rect(4, 15, 8, 1, L.bottom2);
     p.rect(4, 8, 8, 6, L.shirt); p.rect(10, 8, 2, 6, L.shirt2); p.rect(3, 9, 1, 4, L.shirt); p.rect(12, 9, 1, 4, L.shirt2);
-    p.px(3, 13, SK); p.px(12, 13, SK);
+    p.px(3, step === 2 ? 12 : 13, SK); p.px(12, step === 1 ? 12 : 13, SK);
     if (L.hat === 'flower') p.rect(5, 9, 6, 1, L.shirt2);   // batik sash
     p.rect(5, 3, 6, 5, SK);
     if (blink) { p.rect(6, 5, 2, 1, EYE); p.rect(9, 5, 2, 1, EYE); } else { p.px(6, 5, EYE); p.px(9, 5, EYE); }

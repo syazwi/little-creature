@@ -13,11 +13,12 @@ window.LC = window.LC || {};
       var self = this, S = this.S, W = this.world, H = LC.Home, N = LC.Net;
       this.openMenu({
         title: 'Nenek\'s House',
-        footer: function () { var w = H.wages(); return w ? 'Wages: ' + w + ' kepeng every morning, paid by ' + (N.role ? 'the host' : 'you') + '. A helper you cannot pay takes the night off.' : 'Grow the house to make room for helpers who cook, farm and gather for you.'; },
+        footer: function () { var w = H.wages(); return w ? 'Wages: ' + w + ' kepeng every morning, paid by ' + (N.role ? 'the host' : 'you') + '. A helper you cannot pay takes the night off.' : 'Expand the house to make room for helpers.'; },
         tabs: [{ label: 'House', rows: function () {
           var rows = [], st = H.stage(), next = LC.HOUSE_STAGES[st + 1], pantry = S.chests && S.chests.pantry;
           rows.push({ icon: 'ic_moon', label: 'Sleep', sub: 'Climb the tangga and end the day. (The game saves every night.)', action: function () { self.confirmSleep(); } });
-          if (pantry) rows.push({ icon: 'i_' + pantry.kind, label: LC.ITEMS[pantry.kind].name + ' (the pantry)', sub: pantry.items.length + ' / ' + LC.CHESTS[pantry.kind].slots + ' stacks. Your helpers put their work here, and the cook takes her ingredients from it.', action: function () { self.openChest('pantry'); } });
+          if (pantry) rows.push({ icon: 'i_' + pantry.kind, label: LC.ITEMS[pantry.kind].name + ' (the pantry)', sub: pantry.items.length + ' / ' + LC.CHESTS[pantry.kind].slots + ' stacks. Your helpers share these supplies.', action: function () { self.openChest('pantry'); } });
+          if (pantry && S.helpers && S.helpers.stor && !N.isGuest()) rows.push({ icon: 'i_kepeng', label: 'Pantry Sales', sub: 'Choose which items Pak Idris sells and how many he keeps.', action: function () { self.openPantrySales(); } });
           // the helpers
           LC.HELPER_ORDER.forEach(function (k) {
             var Hp = LC.HELPERS[k], hired = !!(S.helpers && S.helpers[k]), por = 'npc_h_' + k + '_0';
@@ -38,7 +39,7 @@ window.LC = window.LC || {};
                   W.doShared('hire', { k: k }, function (res) {
                     if (!res || !res.ok) { self.toast('There is no room for another helper.'); return; }
                     LC.Audio.sfx('chime'); W.refreshHelpers();
-                    self.say([{ name: Hp.name, portrait: por, text: 'Terima kasih! I will start tonight. You will see what I have done in the morning.' }]);
+                    self.say([{ name: Hp.name, portrait: por, text: 'Terima kasih! You can find me around the farm during the day. Check the morning report for my work.' }]);
                   });
                   return 'close';
                 } });
@@ -64,6 +65,43 @@ window.LC = window.LC || {};
               } });
           } else rows.push({ icon: 'ic_glow', label: 'Nenek\'s house is complete', sub: 'Verandah, middle room and the grand kitchen wing. The finest rumah panggung on the river.' });
           return rows;
+        } }]
+      });
+    },
+
+    openPantrySales: function () {
+      var self = this, S = this.S, H = LC.Home;
+      if (LC.Net.isGuest() || !S.helpers.stor || !S.chests.pantry) return;
+      var sales = S.pantrySales;
+      this.openMenu({
+        title: 'Pantry Sales', footer: 'Pak Idris counts the stock after the other helpers finish their overnight work.',
+        tabs: [{ label: 'Stock limits', rows: function () {
+          var ids = new Set(Object.keys(sales));
+          S.chests.pantry.items.forEach(function (slot) { if (H.pantrySalePrice(slot.id)) ids.add(slot.id); });
+          var rows = Array.from(ids).filter(function (id) { return H.pantrySalePrice(id); }).map(function (id) {
+            return { icon: LC.ITEMS[id].icon, label: LC.ITEMS[id].name + ' × ' + H.pCount(id),
+              sub: H.pantrySalePrice(id) + ' kepeng each at the warung.', right: sales[id] === undefined ? 'Keep all' : 'Keep ' + sales[id],
+              action: function () { self.openPantrySaleLimit(id); } };
+          });
+          if (!rows.length) rows.push({ icon: 'i_' + S.chests.pantry.kind, label: 'No goods to sell', sub: 'Put goods in the pantry to set a sale limit for them.' });
+          rows.push({ icon: 'ic_door', label: 'Back to Nenek\'s house', action: function () { self.openHouse(); } });
+          return rows;
+        } }]
+      });
+    },
+
+    openPantrySaleLimit: function (id) {
+      var self = this, sales = this.S.pantrySales, it = LC.ITEMS[id];
+      this.openMenu({
+        title: it.name, footer: 'New stock of this item follows the same limit until you change it.',
+        tabs: [{ label: 'Stock limit', rows: function () {
+          return [undefined, 0, 5, 10, 20, 50].map(function (keep) {
+            var label = keep === undefined ? 'Keep all' : keep === 0 ? 'Sell all' : 'Keep ' + keep;
+            return { icon: it.icon, label: label, right: sales[id] === keep ? 'Selected' : '', action: function () {
+              if (keep === undefined) delete sales[id]; else sales[id] = keep;
+              LC.Audio.sfx('click'); self.openPantrySales();
+            } };
+          }).concat({ icon: 'ic_door', label: 'Back to Pantry Sales', action: function () { self.openPantrySales(); } });
         } }]
       });
     },

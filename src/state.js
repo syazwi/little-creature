@@ -57,7 +57,7 @@ window.LC = window.LC || {};
       // v1.7: your bubu in the water (personal), Badang at your side (personal, for one day), the land he clears (shared: 0 / 1 tonight / 2 done)
       bubus: [], buddy: null, buddyDay: 0, ladang: 0,
       // v1.8 shared: how far Nenek's house has grown (0-3), a stage being built tonight, and the hired helpers
-      house: 0, houseBuild: 0, helpers: {}
+      house: 0, houseBuild: 0, helpers: {}, pantrySales: {}
     };
   }
   var BAG_EXTRA = ['str', 'wear', 'trophies', 'contest', 'quests', 'bubus'];   // a co-op guest's own progress travels in their bag
@@ -166,6 +166,7 @@ window.LC = window.LC || {};
         data.pendingStage = []; data.pendingLevel = [];
         data.area = 'farm'; data.riding = null;
         if (!data.coop || typeof data.coop !== 'object') data.coop = base.coop;
+        if (!data.pantrySales || typeof data.pantrySales !== 'object' || Array.isArray(data.pantrySales)) data.pantrySales = {};
         if (!data.wear || typeof data.wear !== 'object') data.wear = {};
         if (data.flags.metAni) data.visited.kampung = data.visited.kampung || false;
         while (data.inv.length < LC.INV_SIZE) data.inv.push(null);
@@ -477,11 +478,6 @@ window.LC = window.LC || {};
       } else {
         lines.push('Pelita dozes off, a little restless.');
       }
-      if (!g.cravingDone && g.stage >= 1) {
-        g.joy = Math.max(0, g.joy - 10);
-        lines.push('Pelita never got the ' + LC.ITEMS[g.craving].name + ' it was craving...');
-      }
-
       var work = LC.Home.dusk(s, lines);   // v1.8: wages, and the farmhand waters the field
 
       // crops grow
@@ -554,7 +550,11 @@ window.LC = window.LC || {};
 
       // trees and forage regrow
       Object.keys(s.trees).forEach(function (id) { if (s.trees[id] > 0) s.trees[id]--; });
-      LC.Home.dawn(s, lines, work);   // v1.8: the helpers harvest, gather and cook; a house stage is finished
+      LC.Home.dawn(s, lines, work);
+      if (!g.cravingDone && g.stage >= 1) {
+        g.joy = Math.max(0, g.joy - 10);
+        lines.push('Pelita never got the ' + LC.ITEMS[g.craving].name + ' it was craving...');
+      }
 
       // overnight needs
       g.full = clamp(g.full - 15, 0, 100);

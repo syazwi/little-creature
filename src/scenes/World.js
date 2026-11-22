@@ -1023,7 +1023,7 @@ window.LC = window.LC || {};
       this.updateEnemies(time, dt, blocked);
       this.updateTanggang(time, dt, blocked);
       this.updateBadang(time, dt, blocked);
-      this.updateHome(time, dt);
+      this.updateHome(time, blocked && (!coop || this.sleeping || this.leaving) ? 0 : dt);
       this.updateBarunai(time, dt, blocked);
       this.updateKampong(time, dt);
       this.updateLighting(time, dt);
@@ -1048,6 +1048,8 @@ window.LC = window.LC || {};
         var oa = this.objectAction(o, sl, it, isFood);
         if (oa) return oa;
       }
+      var helper = this.helperAt(tx, ty);
+      if (helper) return this.helperAction(helper);
       var wp = this.weaponOf(sl);   // swing a weapon wherever enemies roam (or the cangkul, when one comes close)
       if (wp && this.hasEnemies() && (!wp.improvised || this.enemyNear(70))) return { label: 'Swing the ' + wp.name, swing: true, fn: function () { self.attack(); } };
       var cr = this.critterAt(f.fx, f.fy);
@@ -1073,7 +1075,6 @@ window.LC = window.LC || {};
       var S = this.S, self = this;
       switch (o.type) {
         case 'house': case 'house_wing': return { label: 'Nenek\'s house', fn: function () { self.ui.openHouse(); } };   // v1.8: sleep, the pantry, helpers, building
-        case 'helper': return this.helperAction(o);
         case 'jejak': case 'tembadau': case 'bulu': case 'pinggai': case 'salvage': case 'vase': case 'tamu2': return this.barunaiObjAction(o);   // v1.9 (tamu2: v2.7.1)
         case 'kplot': case 'padian': case 'hop': case 'ghost_ayam': case 'batu_ayam': return this.kampongObjAction(o);   // v2.0
         case 'hero': case 'vision': case 'vision_back': case 'tour': case 'meriam': case 'api': case 'keluarga': return this.kampongObjAction(o);   // v2.1
