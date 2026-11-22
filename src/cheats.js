@@ -12,7 +12,8 @@
  *   0  Chapter 7: jump to its next step (finishes Chapters 2 to 6 first); at the end, Sang Bualang (B) and Angin Bualang (U)
  *   =  Chapter 8: jump to its next step (finishes Chapters 2 to 7 first); at the end, riding Naga Kecil (the Seruling Naga)
  *   `  Chapter 9: jump to its next step (finishes Chapters 2 to 8 first); at the end, Lagu Mayang (L)
- *   '  Chapter 10: jump to its next step (finishes Chapters 2 to 9 first); at the end, Pelita comes home with the Sumpit */
+ *   '  Chapter 10: jump to its next step (finishes Chapters 2 to 9 first); at the end, Pelita comes home with the Sumpit
+ *   /  Chapter 11: jump to its next step (finishes Chapters 2 to 10 first); part 1: the dark moon, Sulu, the vinta, the Bakunawa */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -219,6 +220,25 @@ window.LC = window.LC || {};
         this.toast('Chapter 10, step ' + (Qa.ch10 || 0) + ': ' + ((Qa.ch10 || 0) >= 8 ? 'complete! Pelita is home, and the Sumpit shoots darts (USE).' : (LC.ch10Goal() || '').replace(/^Chapter 10: /, '')) + ' (Re-enter the place to see it. The jong at the farm jetty sails to Tanjung Bunga.)', 'ic_glow');
         return;
       }
+      case 'Slash': {   // v3.3: jump to the next step of Chapter 11 (finishes Chapter 10 first)
+        var Qb = S.quests, sb = Qb.ch11 || 0;
+        if ((Qb.ch10 || 0) < 8) {
+          Qb.ch2 = 8; Qb.ch3 = 13; Qb.kaStage = 3; Qb.asmara = 1; Qb.jinn = 1; Qb.ch4 = 4; Qb.c4wave = 5; Qb.ch5 = 5; Qb.ch6 = 7; Qb.ch7 = 10; Qb.bualang = 1; Qb.pelitaSun = 1;
+          Qb.ch8 = 9; Qb.c8duel = 'done'; Qb.nagaRide = 1; Qb.c8sealed = 6; Qb.ch9 = 7; Qb.laguMayang = 1; Qb.ch10 = 8; delete Qb.c10needs; delete Qb.c10with; Qb.c11wait = S.day - 1;
+          ['keris_majapahit', 'seruling_naga', 'sumpit'].forEach(function (id) { if (!State.count(id)) State.add(id, 1); });
+        }
+        else if (sb === 0) Qb.ch11 = 1;
+        else if (sb === 1) { Qb.ch11 = 2; S.visited.sulu = true; }
+        else if (sb === 2) { Qb.ch11 = 3; Qb.c11arrive = 1; }
+        else if (sb === 3) { Qb.c11gong = 1; Qb.c11dive = 1; Qb.c11berani = 1; Qb.c11pedoman = 1; Qb.c11prov = 1; if (!State.count('pedoman')) State.add('pedoman', 1); Qb.ch11 = 4; Qb.c11leg = 0; }
+        else if (sb === 4 && (Qb.c11leg || 0) < LC.C11.legs.length) Qb.c11leg = LC.C11.legs.length;
+        else if (sb === 4) { Qb.ch11 = 5; S.visited.bulan = true; }
+        else if (sb === 5) { Qb.c11won = 1; Qb.ch11 = 6; if (!State.count('mutiara_kembar')) State.add('mutiara_kembar', 1); }
+        else if (sb === 6) { if (State.count('mutiara_kembar')) State.remove('mutiara_kembar', State.count('mutiara_kembar')); Qb.ch11 = 7; }
+        State.recalc();
+        this.toast('Chapter 11, step ' + (Qb.ch11 || 0) + ': ' + ((Qb.ch11 || 0) >= LC.CH11_END ? 'Part 1 complete! The vinta is yours (the jetty of Lupah Sug).' : (LC.ch11Goal() || '').replace(/^Chapter 11: /, '')) + ' (Re-enter the place to see it. The jong at the farm jetty sails to Lupah Sug.)', 'ic_glow');
+        return;
+      }
       case 'Minus': {   // v1.7: replay Badang's story (moved from B in v2.5: B calls Sang Bualang) (skinny, by the forest pool) or make him strong again
         var strong = (S.quests.badang || 0) >= 3;
         S.quests.badang = strong ? 2 : 3; S.buddy = null;
@@ -232,6 +252,6 @@ window.LC = window.LC || {};
   LC.UIScene.prototype.create = function () {
     create.apply(this, arguments);
     var self = this;
-    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story, - replay the Badang story, K next Chapter 2 step, ; next Chapter 3 step, O next Chapter 4 step, P next Chapter 5 step, Y next Chapter 6 step, Z Nek Lampir the helper, 0 next Chapter 7 step, = next Chapter 8 step, ` next Chapter 9 step, \' next Chapter 10 step.', 'ic_glow'); });
+    this.time.delayedCall(1500, function () { self.toast('TEST BUILD: everything unlocked (separate save). Keys: ] next day, [ next season, \\ next Pesta, H heal, T replay the Tanggang story, - replay the Badang story, K next Chapter 2 step, ; next Chapter 3 step, O next Chapter 4 step, P next Chapter 5 step, Y next Chapter 6 step, Z Nek Lampir the helper, 0 next Chapter 7 step, = next Chapter 8 step, ` next Chapter 9 step, \' next Chapter 10 step, / next Chapter 11 step.', 'ic_glow'); });
   };
 })(window.LC);

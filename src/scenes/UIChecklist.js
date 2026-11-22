@@ -39,7 +39,9 @@ window.LC = window.LC || {};
     { n: 9, key: 'ch9', end: 7, name: 'Ulek Mayang', steps: ['Wait for the night', 'The empty boat', 'Find the song', 'The mayang and the rice', 'Ulek Mayang', 'Gua Puteri Tujuh', 'Take the spirit home'],
       next: 'When Chapter 9 is complete, be at Nenek\'s farm between 6 AM and 8 PM the next day: Chapter 10 begins.' },
     { n: 10, key: 'ch10', end: 8, name: 'Nujum Pak Belalang', steps: ['Rest at the farm', 'The glowing grasshoppers', 'Hide-and-seek in Tanjung Bunga', 'Belalang\'s chores', 'The stolen chest', 'Back to the Sultan', 'The riddle contest', 'The truth'],
-      next: 'Chapter 10 is the latest chapter. More are on the way!' }
+      next: 'When Chapter 10 is complete, be at Nenek\'s farm after 8 PM the next night: Chapter 11 begins.' },
+    { n: 11, key: 'ch11', end: 7, name: 'Bulan dan Mutiara', steps: ['Rest at the farm', 'The dark moon', 'The Sultan of Sulu', 'Ready the vinta', 'Captain of the vinta', 'The Bakunawa', 'Two little moons'],
+      next: 'Chapter 11, Part 2 is on the way: in 1578, Barunai and Sulu stand together against a foreign fleet.' }
   ];
 
   // the parts of the current step (only steps with more than one part, or with things to bring)
@@ -120,6 +122,14 @@ window.LC = window.LC || {};
       if (st === 4) return [c(Q.c10sultan, 'Go to the Sultan, in front of the palace'), c(Q.c10with || Q.c10won, 'Take Belalang and Pelita along (talk to Belalang)'),
         c(Q.c10won, 'Follow the tracks west through Hutan Merbau, and beat the Kerengga gang' + (Q.c10sultan && !Q.c10won ? ' (' + LC.ch10DaysLeft() + ' days until Ahad)' : '')), c(false, 'Take the Peti Pusaka Diraja')];
       if (st === 6) return [c(Q.c10heard, 'After dark, hide in the sampan under the foreign ship (by the jetty)'), c(false, 'The riddle contest (talk to the Sultan)')];
+      return null;
+    },
+    11: function (st, Q) {   // v3.3
+      if (st === 3) return [c(Q.c11gong, 'Learn the kulintang with Mak Jaliha (the gong hall, west)'),
+        c(Q.c11berani || cnt('batu_berani') || Q.c11pedoman, 'The batu berani: dive at the end of the boardwalk, to the old boat on the reef'),
+        c(Q.c11pedoman, 'Give it to Mbo\' Arani for a pedoman'),
+        c(Q.c11prov, '2 Tiyula Itum for the crew (' + Math.min(2, cnt('tiyula_itum')) + ' / 2; Mak Salma at the market)'), c(false, 'Then talk to Mbo\' Arani by the jetty')];
+      if (st === 4) { var lg = Q.c11leg || 0; return [c(lg >= 1, 'Timur Laut (north-east) to Batu Kembar'), c(lg >= 2, 'Timur (east) through the fog, to the black water'), c(lg >= 3, 'Selatan (south) to Pulau Bulan'), c(false, 'Drop anchor at Pulau Bulan')]; }
       return null;
     }
   };
