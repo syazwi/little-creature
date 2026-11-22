@@ -40,8 +40,9 @@ window.LC = window.LC || {};
       next: 'When Chapter 9 is complete, be at Nenek\'s farm between 6 AM and 8 PM the next day: Chapter 10 begins.' },
     { n: 10, key: 'ch10', end: 8, name: 'Nujum Pak Belalang', steps: ['Rest at the farm', 'The glowing grasshoppers', 'Hide-and-seek in Tanjung Bunga', 'Belalang\'s chores', 'The stolen chest', 'Back to the Sultan', 'The riddle contest', 'The truth'],
       next: 'When Chapter 10 is complete, be at Nenek\'s farm after 8 PM the next night: Chapter 11 begins.' },
-    { n: 11, key: 'ch11', end: 7, name: 'Bulan dan Mutiara', steps: ['Rest at the farm', 'The dark moon', 'The Sultan of Sulu', 'Ready the vinta', 'Captain of the vinta', 'The Bakunawa', 'Two little moons'],
-      next: 'Chapter 11, Part 2 is on the way: in 1578, Barunai and Sulu stand together against a foreign fleet.' }
+    { n: 11, key: 'ch11', end: 13, name: 'Bulan dan Mutiara', steps: ['Rest at the farm', 'The dark moon', 'The Sultan of Sulu', 'Ready the vinta', 'Captain of the vinta', 'The Bakunawa', 'Two little moons',
+      'Pelita glows again', '1578: the envoy from Sulu', 'Find the fleet', 'The anchor ropes', 'Gongs across the water', 'The flagship'],
+      next: 'Chapter 11 is the latest chapter. More are on the way!' }
   ];
 
   // the parts of the current step (only steps with more than one part, or with things to bring)
@@ -130,6 +131,9 @@ window.LC = window.LC || {};
         c(Q.c11pedoman, 'Give it to Mbo\' Arani for a pedoman'),
         c(Q.c11prov, '2 Tiyula Itum for the crew (' + Math.min(2, cnt('tiyula_itum')) + ' / 2; Mak Salma at the market)'), c(false, 'Then talk to Mbo\' Arani by the jetty')];
       if (st === 4) { var lg = Q.c11leg || 0; return [c(lg >= 1, 'Timur Laut (north-east) to Batu Kembar'), c(lg >= 2, 'Timur (east) through the fog, to the black water'), c(lg >= 3, 'Selatan (south) to Pulau Bulan'), c(false, 'Drop anchor at Pulau Bulan')]; }
+      if (st === 9) return [c(LC.c11Past, 'Pelita\'s stone lamp (Barunai), then the lead vinta in Kampong Ayer'), c((Q.c11p2leg || 0) >= 1, 'Timur Laut (north-east) to Batu Kembar'), c(false, 'Into the fog: follow the ships\' bells to the Castilian fleet')];
+      if (st === 10) return [c(false, 'Dive beside the flagship, under the galleons'), c(Object.keys(Q.c11rope || {}).length >= 3, 'Cut the anchor ropes (' + Object.keys(Q.c11rope || {}).length + ' / 3), out of the lantern light')];
+      if (st === 11) return [c(Q.c11signal, 'Signal the fleets on the kulintang (beside the galleons on the reef)'), c(false, 'Board the flagship')];
       return null;
     }
   };

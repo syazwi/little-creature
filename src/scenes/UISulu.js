@@ -121,8 +121,9 @@ window.LC = window.LC || {};
     },
 
     // ================================================================ the kulintang: Mak Jaliha plays, you play it back
-    openKulintang: function (onWin, onQuit) {
-      var self = this, W = this.world, F = this.gameFrame('Kulintang', 660, 440), XX = F.X, YY = F.Y, g = F.g, m, done = false, round = 0;
+    openKulintang: function (onWin, onQuit, pats, title) {   // (v3.4: pats = phrase lengths, for the fleet's signal)
+      var PATS = pats || C.patterns;
+      var self = this, W = this.world, F = this.gameFrame(title || 'Kulintang', 660, 440), XX = F.X, YY = F.Y, g = F.g, m, done = false, round = 0;
       F.c.list.forEach(function (o) { if (o.text && /give up/.test(o.text)) o.setText(self.touchOn ? 'Tap the gongs  ·  X (top) to stop' : 'Keys 1-5, or click the gongs  ·  Esc to stop'); });
       var tok = this.add.image(XX + 70, YY + 330, 'npc_jaliha_0').setScale(4).setOrigin(0.5, 1);
       var me = this.add.image(XX + 590, YY + 330, LC.Art.plKey(W.pc || 0) + '_side_0').setScale(4).setOrigin(0.5, 1).setFlipX(true);
@@ -137,10 +138,10 @@ window.LC = window.LC || {};
       })(j);
       var seq = [], phase = 'listen', t0, played = 0, pos = 0;
       function newRound() {
-        var n = C.patterns[round], last = -1; seq = [];
+        var n = PATS[round], last = -1; seq = [];
         for (var i = 0; i < n; i++) { var d; do { d = Math.floor(Math.random() * C.gongs); } while (d === last && Math.random() < 0.7); seq.push(d); last = d; }
         phase = 'listen'; t0 = self.time.now + 600; played = 0; pos = 0;
-        F.msg.setText('Phrase ' + (round + 1) + ' of ' + C.patterns.length + ': listen to Mak Jaliha...').setColor('#fbecc8');
+        F.msg.setText((PATS.length > 1 ? 'Phrase ' + (round + 1) + ' of ' + PATS.length + ': ' : '') + 'listen to Mak Jaliha...').setColor('#fbecc8');
       }
       function tone(i, hers) {
         gongs[i].hit = self.time.now;
@@ -157,7 +158,7 @@ window.LC = window.LC || {};
           pos++;
           if (pos >= seq.length) {
             round++;
-            if (round >= C.patterns.length) {
+            if (round >= PATS.length) {
               phase = 'won'; F.msg.setText('The gongs ring together. Mak Jaliha smiles.').setColor('#b8f0c8');
               self.time.delayedCall(1300, function () { if (done) return; done = true; close(); if (onWin) onWin(); });
             } else { phase = 'wait'; F.msg.setText('Good!').setColor('#b8f0c8'); self.time.delayedCall(900, function () { if (!done) newRound(); }); }
@@ -248,7 +249,7 @@ window.LC = window.LC || {};
       }
       // the moon going dark over the farm
       var f = c ? c.eclipseF || 0 : 0;
-      this.moonI.setVisible(f > 0.01 && !!W && W.area === 'farm'); this.moonS.setVisible(this.moonI.visible);
+      this.moonI.setVisible(f > 0.01 && !!W && (W.area === 'farm' || W.area === 'kapal11')); this.moonS.setVisible(this.moonI.visible);
       if (this.moonI.visible) {
         var mo = this.anchorOff('tc');
         this.moonI.setTint(Phaser.Display.Color.GetColor(255, Math.round(255 - 140 * f), Math.round(255 - 170 * f)));

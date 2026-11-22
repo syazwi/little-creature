@@ -784,5 +784,6 @@ window.LC = window.LC || {};
     if (Art.generate20) Art.generate20(scene);   // v3.0: Chapter 10, Nujum Pak Belalang
     if (Art.generate21) Art.generate21(scene);
     if (Art.generate22) Art.generate22(scene);   // v3.3: Chapter 11, Bulan dan Mutiara
+    if (Art.generate23) Art.generate23(scene);   // v3.4: Chapter 11, Part 2 (1578)
   };
 })(window.LC);

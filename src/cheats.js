@@ -13,7 +13,8 @@
  *   =  Chapter 8: jump to its next step (finishes Chapters 2 to 7 first); at the end, riding Naga Kecil (the Seruling Naga)
  *   `  Chapter 9: jump to its next step (finishes Chapters 2 to 8 first); at the end, Lagu Mayang (L)
  *   '  Chapter 10: jump to its next step (finishes Chapters 2 to 9 first); at the end, Pelita comes home with the Sumpit
- *   /  Chapter 11: jump to its next step (finishes Chapters 2 to 10 first); part 1: the dark moon, Sulu, the vinta, the Bakunawa */
+ *   /  Chapter 11: jump to its next step (finishes Chapters 2 to 10 first); part 1: the dark moon, Sulu, the vinta, the Bakunawa;
+ *      part 2 (1578): the fleet, the anchor ropes, the signal, the flagship; at the end, the Kalis Sulu */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -235,8 +236,15 @@ window.LC = window.LC || {};
         else if (sb === 4) { Qb.ch11 = 5; S.visited.bulan = true; }
         else if (sb === 5) { Qb.c11won = 1; Qb.ch11 = 6; if (!State.count('mutiara_kembar')) State.add('mutiara_kembar', 1); }
         else if (sb === 6) { if (State.count('mutiara_kembar')) State.remove('mutiara_kembar', State.count('mutiara_kembar')); Qb.ch11 = 7; }
+        else if (sb === 7) Qb.ch11 = 8;
+        else if (sb === 8) { Qb.ch11 = 9; Qb.c11p2arrive = 1; }
+        else if (sb === 9) { Qb.c11p2leg = 1; Qb.c11p2sea = 1; Qb.ch11 = 10; }
+        else if (sb === 10) { Qb.c11rope = { 0: 1, 1: 1, 2: 1 }; Qb.c11cut = 1; Qb.c11sauh = 1; Qb.ch11 = 11; }
+        else if (sb === 11 && !Qb.c11signal) Qb.c11signal = 1;
+        else if (sb === 11) Qb.ch11 = 12;
+        else if (sb === 12) { Qb.ch11 = 13; Qb.c11won2 = 1; if (!State.count('kalis')) State.add('kalis', 1); }
         State.recalc();
-        this.toast('Chapter 11, step ' + (Qb.ch11 || 0) + ': ' + ((Qb.ch11 || 0) >= LC.CH11_END ? 'Part 1 complete! The vinta is yours (the jetty of Lupah Sug).' : (LC.ch11Goal() || '').replace(/^Chapter 11: /, '')) + ' (Re-enter the place to see it. The jong at the farm jetty sails to Lupah Sug.)', 'ic_glow');
+        this.toast('Chapter 11, step ' + (Qb.ch11 || 0) + ': ' + ((Qb.ch11 || 0) >= LC.CH11_END ? 'complete! The Kalis Sulu is yours.' : (LC.ch11Goal() || '').replace(/^Chapter 11( \(1578\))?: /, '')) + ' (Re-enter the place to see it. The jong at the farm jetty sails to Lupah Sug.)', 'ic_glow');
         return;
       }
       case 'Minus': {   // v1.7: replay Badang's story (moved from B in v2.5: B calls Sang Bualang) (skinny, by the forest pool) or make him strong again
