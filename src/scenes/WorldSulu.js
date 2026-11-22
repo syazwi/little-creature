@@ -119,6 +119,7 @@ window.LC = window.LC || {};
       if (c.boss) this.updateBoss(time, dt, blocked);
       if (c.friend) this.updateFriend(time, dt);
       if (c.serpent) this.updateSerpent(time);
+      if (c.hooking && !this.ui.isBlocking() && !this.leaving) this.finishHook11();
     },
 
     suluObjAction: function (o) {
@@ -172,15 +173,20 @@ window.LC = window.LC || {};
           if (i === 7 && !c.arani) self.jettyCrew11();
           if (i === 7) self.refreshWhen();
         },
-        onDone: function () {
-          self.cutscene = false; c.eclipseF = 0;
-          if (c.serpent) self.serpentSink11(true);
-          if (!c.arani) self.jettyCrew11();
-          self.refreshWhen();
-          c.imgs.forEach(function (im) { if (im.scene && self.objImgs.f_vinta11) im.destroy(); });
-          cam.startFollow(self.player, true, 0.2, 0.2);
-        }
+        onDone: function () { self.finishHook11(); }
       });
+      c.hooking = true;   // (updateSulu finishes the scene too, if its lines are closed early: that skips onDone)
+    },
+    finishHook11: function () {
+      var self = this, c = this.c11;
+      if (!c.hooking) return;
+      c.hooking = false;
+      this.cutscene = false; this.tweens.killTweensOf(c); c.eclipseF = 0;
+      if (c.serpent) this.serpentSink11(true);
+      if (!c.arani) this.jettyCrew11();
+      this.refreshWhen();
+      c.imgs.forEach(function (im) { if (im.scene && self.objImgs.f_vinta11) im.destroy(); });
+      this.cameras.main.startFollow(this.player, true, 0.2, 0.2);
     },
     serpentHumps11: function () {   // humps of a long back, rolling along the river
       var c = this.c11, self = this;
@@ -450,7 +456,8 @@ window.LC = window.LC || {};
         this.makeBakunawa(false);
         this.time.delayedCall(800, function () {
           if (self.leaving) return;
-          self.ui.say(self.ch2Lines(X.island), { onDone: function () { if (c.boss) c.boss.ready = true; } });
+          self.ui.say(self.ch2Lines(X.island));
+          if (c.boss) c.boss.ready = true;   // (it waits while the lines are open anyway, and a dialogue closed early skips onDone)
         });
       } else if (s >= 6 || q.c11won) this.makeBakunawa(true);
     },

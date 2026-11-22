@@ -288,7 +288,8 @@ window.LC = window.LC || {};
       LC.Audio.sfx('cheer');
       this.time.delayedCall(200 + spots.length * 220 + 900, function () {
         if (self.leaving) return;
-        self.ui.say(X.boarding, { onDone: function () { self.cutscene = false; self.deckWave(1); self.toast(X.deckHint, 'ic_glow'); } });
+        self.cutscene = false; d.ready = true;   // (the fight starts when these lines close, however they are closed)
+        self.ui.say(X.boarding);
       });
       void cam; void q;
     },
@@ -371,6 +372,16 @@ window.LC = window.LC || {};
       cam.setRotation(Math.sin(time / 1500) * 0.014);   // the deck rolls
       if ((d.sprayT -= dt) <= 0) { d.sprayT = 0.4 + Math.random() * 0.5; var top = Math.random() < 0.5; this.fx.drop.explode(3, (6 + Math.random() * 34) * T, top ? 6.5 * T : 19.8 * T); }
       d.allies.forEach(function (a) { if (!a.busy) a.spr.setY(a.hy + Math.sin(time / 500 + a.hx) * 0.6).setDepth(a.hy); });
+      // Each part of the story moves on when its lines close: a dialogue closed early (the pause button, say) skips its
+      // onDone, so nothing important waits for one.
+      var talking = this.ui.isBlocking() || this.leaving;
+      if (d.ready && !d.wave && !talking) { this.deckWave(1); this.toast(X.deckHint, 'ic_glow'); }
+      if (d.over && !talking) {
+        if (d.phase === 'yield') this.deckEclipse();
+        else if (d.phase === 'eclipse') this.deckPearls();
+        else if (d.phase === 'pearls') { d.phase = 'leaving'; LC.Audio.sfx('stage'); this.toast('+1 Kalis Sulu, +15,000 kepeng, +2 Mutiara.', 'i_kalis'); this.cutscene = false; this.endVision11(X.end); }
+        else if (d.phase === 'leaving') { d.phase = 'gone'; this.goArea('barunai', this.tilePx({ x: 24, y: 8 }), 'down'); }
+      }
       if (blocked || this.cutscene || d.over || !d.wave) return;
       if ((d.allyT -= dt) <= 0) { d.allyT = 1.8 + Math.random(); this.allyStrike(); }
       if (d.wave === 3) {
@@ -393,15 +404,19 @@ window.LC = window.LC || {};
       this.doShared('kind', { n: 12 }, function () {});
       LC.Audio.setBattle(false); LC.Audio.sfx('cheer');
       (this.enemies || []).forEach(function (o) { if (!o.dead && !o.away && o !== e) { o.dead = true; o.respawn = 1e9; self.tweens.add({ targets: o.spr, alpha: 0, duration: 800 }); } });
+      d.phase = 'wait';
       this.time.delayedCall(900, function () {
         if (self.leaving) return;
-        self.ui.say(self.ch2Lines(X.yield), { onDone: function () { self.deckEclipse(); } });
+        d.phase = 'yield';
+        self.ui.say(self.ch2Lines(X.yield));
       });
     },
     deckEclipse: function () {
-      var self = this, c = this.c11, cam = this.cameras.main;
+      var self = this, c = this.c11, cam = this.cameras.main, d = c.p2.deck;
       cam.stopFollow(); cam.pan(22 * T, 8.5 * T, 1200, 'Sine.easeInOut');   // (the serpent rises off the north side, above the dialogue)
       var head = null, humps = [], glow = null, gongs = null;
+      d.phase = 'eclipse';
+      d.serp = function () { return { parts: humps.concat(head ? [head] : []).concat(glow ? [glow] : []), gongs: gongs }; };
       this.ui.say(this.ch2Lines(X.eclipse), {
         onLine: function (i) {
           if (self.leaving) return;
@@ -419,18 +434,18 @@ window.LC = window.LC || {};
           if (i === 3) gongs = self.time.addEvent({ delay: 480, repeat: 14, callback: function () { if (!self.leaving) LC.Audio.sfx('gongbeat11'); } });
           if (i === 5) self.tweens.add({ targets: c, eclipseF: 0, duration: 3000 });
           if (i === 6) { var all = humps.concat(head ? [head] : []).concat(glow ? [glow] : []); self.tweens.add({ targets: all, alpha: 0, y: '+=16', duration: 1600 }); LC.Audio.sfx('wave11'); }
-        },
-        onDone: function () {
-          if (gongs) gongs.remove();
-          c.eclipseF = 0;
-          self.ui.say(self.ch2Lines(X.pearls), { onDone: function () {
-            LC.Audio.sfx('stage');
-            self.toast('+1 Kalis Sulu, +15,000 kepeng, +2 Mutiara.', 'i_kalis');
-            self.cutscene = false;
-            self.endVision11(X.end);
-          } });
         }
       });
+    },
+    deckPearls: function () {   // the eclipse is over (however its lines were closed): tidy up, then the pearls
+      var c = this.c11, d = c.p2.deck, sp = d.serp ? d.serp() : null;
+      if (sp) {
+        if (sp.gongs) sp.gongs.remove();
+        this.tweens.add({ targets: sp.parts, alpha: 0, duration: 800 });
+      }
+      this.tweens.killTweensOf(c); c.eclipseF = 0;
+      d.phase = 'pearls';
+      this.ui.say(this.ch2Lines(X.pearls));
     }
   });
 })(window.LC);
