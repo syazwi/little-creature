@@ -112,7 +112,8 @@ window.LC = window.LC || {};
     kemala: craftsman('Dang Kemala', 'Brassmith', 16, look('#c8902a', 'tudung', { hatColor: '#7a3a2a', skin: '#b9825a' }),
       ['Welcome! I am Dang Kemala. I beat brass into kendi, gongs, and anything that should shine.', 'I could make you a brass watering can that holds far more than your old gembor.'],
       ['Brass sings when it is beaten properly.', 'One day Barunai\'s brass will be famous across the seas.', 'A gong should be heard across the whole river.'], { shop: ['tembaga'] }),
-    dayang: craftsman('Mak Dayang', 'Weaver', 22, look('#7a1e3a', 'tudung', { hatColor: '#e9c46a', skin: '#c9905e' }),
+    // (v3.2.4: her id was 'dayang', which Chapter 7's Mak Dayang of Santubong also used, and replaced her)
+    dayang_barunai: craftsman('Mak Dayang', 'Weaver', 22, look('#7a1e3a', 'tudung', { hatColor: '#e9c46a', skin: '#c9905e' }),
       ['Shh, the loom is counting. One, two... there. I am Mak Dayang. I weave kain tenunan, threads of silk and gold.', 'A good cloth takes a month. A great one takes a lifetime.'],
       ['Every pattern has a name. This one is "bunga bertabur", scattered flowers.', 'Gold thread is patient. Silk is not.', 'My daughter weaves faster than me now. Do not tell her I said so.'], { shop: ['kain_tenun'] }),
     lajak: craftsman('Pak Lajak', 'Boat builder', 28, look('#4a6a8a', 'terendak'),

@@ -185,6 +185,10 @@ window.LC = window.LC || {};
           if ((q0.ch2 || 0) < 6) delete fk.puteri;
           else if (q0.ch2 === 6) fk.puteri.met = false;   // (her quest is still open: let her ask again)
         }
+        // v3.2.4: Chapter 7's Mak Dayang (Santubong) used the Barunai weaver's villager id ('dayang') and replaced her.
+        // The weaver has her own id now. Santubong's Mak Dayang only appears from Chapter 7 step 4, so before that,
+        // a friendship under 'dayang' can only have been made with the weaver: it moves to her.
+        if (fk.dayang && !fk.dayang_barunai && (q0.ch7 || 0) < 3) { fk.dayang_barunai = fk.dayang; delete fk.dayang; }
         // saves happen at bedtime and whenever the app is backgrounded, so keep the clock
         if (!(data.minutes >= LC.DAY_START && data.minutes < LC.DAY_END - 10)) data.minutes = LC.DAY_START;
         this.s = data;

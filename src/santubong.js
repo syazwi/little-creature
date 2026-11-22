@@ -30,10 +30,12 @@ window.LC = window.LC || {};
     beras_sejinjang: { name: 'Beras Sejinjang', kind: 'treasure', desc: 'Rice pounded by Puteri Sejinjang\'s own antan. Every grain shines like a little pearl.' },
     surat_serapi: { name: 'Surat Serapi', kind: 'treasure', desc: 'Two folded leaves of nipah, one for each princess, in Putera Serapi\'s careful hand.' },
     wau_bualang: { name: 'Wau Bualang', kind: 'treasure', desc: 'A moon kite of rattan and golden thread, made for someone who has never been given anything.' },
-    kain_tenun: { name: 'Kain Tenun', kind: 'goods', sell: 220, desc: 'A length of hand-woven cloth, patterned like the ones from Santubong. Traders pay well for it.' },
     tepung_beras: { name: 'Tepung Beras', kind: 'material', sell: 20, desc: 'Fine rice flour, pounded in Sejinjang\'s lesung. For kuih.' },
     kuih_lapis: { name: 'Kuih Lapis', kind: 'dish', sell: 45, food: { full: 18, joy: 14 }, desc: 'Steamed layers of rice flour and santan, in every colour, peeled off one at a time.' }
   });
+  // v3.2.4: Kain Tenun already exists (Chapter 2: the dowry chest, and Mak Dayang's loom in Barunai sells it). This file
+  // used to define it again, which threw away its shop price. Santubong's looms weave the same cloth: keep the one item.
+  Object.assign(LC.ITEMS.kain_tenun, { name: 'Kain Tenun', kind: 'goods', sell: 220, desc: 'Hand-woven cloth shot with gold thread, the pride of the weavers of Barunai and Santubong. Traders pay well for it.' });
   LC.CATS.dye = 'any dye (tarum, kunyit or kesumba)';
   // the chapter's treasures stay with you until the story uses them
   ['kabus_ledang', 'kain_santubong', 'beras_sejinjang', 'surat_serapi', 'wau_bualang'].forEach(function (id) { LC.FIXED_ITEMS[id] = 1; });
