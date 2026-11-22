@@ -129,15 +129,31 @@ window.LC = window.LC || {};
       p.poly([[1, 17], [35, 15], [31, 22], [7, 24]], '#834c37'); p.line(2, 17, 34, 15, '#e8ba67');
       p.line(2, 24, 25, 24, '#9ad7e4'); p.line(24, 22, 35, 21, '#b4ebf1');
     }, true);
-    [0, 1].forEach(function (f) {
-      make(scene, 'perahu_race_boat_' + f, 42, 17, function (p) {
-        for (var x = 7; x < 36; x += 5) {
-          p.rect(x, 3, 3, 3, '#edbb88'); p.rect(x, 2, 3, 1, '#342e32'); p.rect(x, 6, 3, 4, '#e4e8d7');
-          p.line(x, 8, x + (f ? 3 : -3), 16, '#c79761');
+    // Rest, catch, pull, lift, and recovery poses for the crew and their paddles.
+    var strokes = [[0, -2, 18], [2, 6, 22], [-1, -2, 23], [-2, -7, 19], [1, 5, 14]];
+    strokes.forEach(function (pose, frame) {
+      make(scene, 'perahu_race_boat_' + frame, 48, 25, function (p) {
+        for (var x = 8; x <= 34; x += 5) {
+          var head = x + pose[0];
+          p.rect(head, 5, 3, 4, '#f1c69a'); p.rect(head, 4, 3, 1, '#342e32');
+          p.line(head + 1, 9, x + 1, 13, '#e4e8d7');
         }
-        p.poly([[1, 9], [40, 8], [36, 13], [7, 14]], '#a26b45'); p.line(2, 9, 39, 8, '#fff2bd');
-        p.line(10, 14, 28, 14, '#d5f8fc'); p.line(24, 16, 39, 15, '#94d0de');
+        p.poly([[1, 13], [46, 11], [41, 18], [9, 19]], '#9c5e3e');
+        p.line(3, 13, 44, 12, '#fff2bd'); p.line(10, 17, 40, 16, '#ce9263');
+        for (var oar = 8; oar <= 34; oar += 5) {
+          var blade = oar + pose[1];
+          p.line(oar + pose[0], 10, blade, pose[2], '#b87b46');
+          p.line(blade - 1, pose[2] - 1, blade + 1, pose[2], '#e7b577');
+        }
       }, true);
+    });
+    make(scene, 'perahu_race_wake', 48, 11, function (p) {
+      p.line(2, 6, 22, 6, '#8fcede'); p.line(16, 4, 38, 5, '#b4e5e9'); p.line(26, 7, 48, 5, '#e2f8ed');
+      p.line(8, 9, 20, 9, '#6fb7d1'); p.line(32, 2, 46, 4, '#f0f8ed');
+    });
+    make(scene, 'perahu_race_splash', 24, 12, function (p) {
+      p.px(5, 2, '#d5f8fc'); p.px(11, 5, '#d5f8fc'); p.px(20, 1, '#d5f8fc');
+      p.line(1, 9, 8, 8, '#a5dce8'); p.line(13, 10, 22, 8, '#a5dce8'); p.px(16, 4, '#f1f9e8');
     });
     Object.keys(IC).forEach(function (id) { make(scene, 'i_' + id, 16, 16, IC[id], true); });
     var a = scene.anims;
