@@ -37,7 +37,7 @@ window.LC = window.LC || {};
       var f = State.folk(vid), gifts = LC.VILLAGERS[vid].gifts || {};
       f.pts = 40; Object.keys(gifts).forEach(function (h) { f.gifts[h] = true; });
     });
-    S.quests.bunian = 2; S.wear.glasses = true; S.str = LC.STR_MAX;
+    S.quests.bunian = 2; S.wear.glasses = true; S.quests.xp = LC.PL ? LC.PL.total(30) : 0; S.str = LC.STR_MAX;   // v3.12: you start at Lv 30 (strength limit 216)
     S.quests.tanggang = 4; S.quests.stoneTold = 1;   // v1.6: Sumpahan Batu and Restu Ibu
     S.quests.badang = 3;                              // v1.7: Badang is already strong (B replays his story)
     S.house = 3; LC.Home.applyStage(3);               // v1.8: Nenek's house fully grown (hire the helpers to test them)
@@ -59,6 +59,7 @@ window.LC = window.LC || {};
     var S = this.S, W = this.world, code = ev.code;
     if (this.modal || !W || W.sleeping || W.leaving || S.guest) return onKey.call(this, ev);
     if (code === 'KeyP' && W.pantulAvailable && W.pantulAvailable()) return onKey.call(this, ev);
+    if (code === 'KeyK' && LC.hasSuria && LC.hasSuria()) return onKey.call(this, ev);   // v3.12: K casts Mantera Suria once it is learned
     function sleepTo(day) { S.day = day - 1; W.sleep(false); }
     switch (code) {
       case 'BracketRight': sleepTo(S.day + 1); return;

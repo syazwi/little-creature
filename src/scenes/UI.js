@@ -677,8 +677,8 @@ window.LC = window.LC || {};
         });
       }
       var rg = this.add.graphics(); c.add(rg);
-      var rowsUI = [];
-      function cur() { return tabs[tab].rows(); }
+      var rowsUI = [], custom = null;   // v3.12: a tab may draw its own page instead of rows: tab.draw(container, box)
+      function cur() { return tabs[tab].rows ? tabs[tab].rows() : []; }
       for (var r = 0; r < VIS; r++) {
         (function (r) {
           var y = listY + r * RH;
@@ -723,6 +723,8 @@ window.LC = window.LC || {};
         if (sel >= scroll + VIS) scroll = sel - VIS + 1;
         scroll = Math.max(0, Math.min(scroll, list.length - VIS));
         rg.clear();
+        if (custom && custom.tab !== tab) { custom.c.destroy(); custom = null; }
+        if (tabs[tab].draw && !custom) { custom = { tab: tab, c: self.add.container(0, 0) }; c.add(custom.c); tabs[tab].draw.call(self, custom.c, { x: X + 20, y: listY, w: Wd - 40, h: Y + Hd - 66 - listY }); }
         rowsUI.forEach(function (o, r) {
           var it = list[scroll + r];
           if (!it) { o.ic.setVisible(false); o.lb.setText(''); o.sb.setText(''); o.rt.setText(''); return; }
@@ -743,7 +745,7 @@ window.LC = window.LC || {};
         var long = list.length > VIS;
         up.show(long, scroll > 0); dn.show(long, scroll + VIS < list.length);
         tabT.forEach(function (t, k) { t.setColor(k === tab ? '#ffd166' : '#8a7a6a').setText(k === tab && tabs.length <= 5 ? '[ ' + tabs[k].label + ' ]' : tabs[k].label); });
-        empty.setText(list.length ? '' : (tabs[tab].empty || 'Nothing here.'));
+        empty.setText(list.length || tabs[tab].draw ? '' : (tabs[tab].empty || 'Nothing here.'));
         if (coinT) coinT.setText(String(S.kepeng));
         foot.setText(typeof cfg.footer === 'function' ? cfg.footer() : (cfg.footer || ''));
       }
