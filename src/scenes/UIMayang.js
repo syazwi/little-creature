@@ -163,6 +163,9 @@ window.LC = window.LC || {};
         click: function () {},
         close: function () { if (done) return; done = true; close(); if (onQuit) onQuit(); }
       };
+      if (LC.DEVELOPER_HTML) m.devTick = function () {
+        if (phase === 'you') self.pressKey('Digit' + (seq[pos] + 1));
+      };
       this.modal = m;
     },
 

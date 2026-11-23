@@ -196,6 +196,9 @@ window.LC = window.LC || {};
           self.time.delayedCall(1500, function () { close(); onDone(good); });
         }
       });
+      if (LC.DEVELOPER_HTML) this.modal.devTick = function () {
+        if (!over && Math.abs((self.time.now - t0) / 1000 - beatT(k)) < 0.085) self.pressKey('KeyE');
+      };
     },
 
     // ================================================================ the great cockfight: three bouts, win two (no blood: feints, leaps and crows)
@@ -237,6 +240,9 @@ window.LC = window.LC || {};
         g.fillStyle(0xfffdf2, 1); g.fillRect(bx + pos * bw - 3, by - 8, 6, 38);
         for (var i = 0; i < 3; i++) { g.fillStyle(i < res.length ? (res[i] ? 0x9be15d : 0xe07a5f) : 0x5a4a3a, 1); g.fillCircle(X + 282 + i * 28, Y + 316, 8); }
       }, function () { cb(null); });
+      if (LC.DEVELOPER_HTML) this.modal.devTick = function () {
+        if (!done && wait <= 0 && Math.abs(pos - zone) <= ZW * 0.6) self.pressKey('KeyE');
+      };
     },
 
     // ================================================================ the Journal: Chapter 3

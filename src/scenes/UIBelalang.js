@@ -136,6 +136,7 @@ window.LC = window.LC || {};
           if (i === 0) { LC.Audio.sfx('chime'); self.say(W.ch2Lines(R.right), { onDone: function () { ask(k + 1); } }); }
           else { LC.Audio.sfx('error'); self.say(W.ch2Lines(X.wrong), { onDone: function () { ask(k); } }); }
         } }; }) });
+        if (LC.DEVELOPER_HTML) self.modal.devAnswer = R.a[0];
       }
       LC.Audio.sfx('drum');
       this.say(W.ch2Lines(X.contest), { onDone: function () { ask(0); } });

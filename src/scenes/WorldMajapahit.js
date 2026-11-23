@@ -52,7 +52,7 @@ window.LC = window.LC || {};
       }
       // a safety net for every story scene: a cutscene with no dialogue on screen for 6 s has lost its way, so let go
       if (this.cutscene && !this.ui.modal && !this.leaving) { c.cutIdle = (c.cutIdle || 0) + dt; if (c.cutIdle > 6) { this.cutscene = false; this.hopping = false; c.cutIdle = 0; } } else c.cutIdle = 0;
-      if (c.allies.length && !blocked && (c.allyT -= dt) <= 0) { c.allyT = 2.4; this.allyStrike(c.allies[c.allyI++ % c.allies.length]); }
+      if (c.allies.length && !blocked && (c.allyT -= dt) <= 0) { c.allyT = 2.4; this.majapahitAllyStrike(c.allies[c.allyI++ % c.allies.length]); }
       if ((c.smokeT = (c.smokeT || 0) - dt) <= 0) {
         c.smokeT = 0.35;
         Object.keys(c.fires).forEach(function (i) { var f = c.fires[i]; if (!f.out) self.fx.smoke.explode(1, f.spr.x + (Math.random() - 0.5) * 10, f.spr.y - 14); });
@@ -74,7 +74,7 @@ window.LC = window.LC || {};
         th.name = h.name; c.allies.push(th);
       });
     },
-    allyStrike: function (th) {
+    majapahitAllyStrike: function (th) {
       var self = this, best = null, bd = 220;
       if (!th || !this.enemies) return;
       this.enemies.forEach(function (e) { if (!FOES[e.kind] || e.dead || e.away) return; var d = Math.hypot(e.spr.x - th.hx, e.spr.y - th.hy); if (d < bd) { bd = d; best = e; } });

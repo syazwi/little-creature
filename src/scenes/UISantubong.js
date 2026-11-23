@@ -163,6 +163,9 @@ window.LC = window.LC || {};
       function close() { timer.remove(); c.destroy(); if (self.modal === m) self.modal = null; }
       m = { type: 'game', close: close, key: function (code) { if (ACCEPT[code]) pound(); else if (code === 'Escape') { close(); } },
         peek: function () { return { hx: HX, r: R, hits: hits, misses: misses, beats: beats.map(function (b) { return { x: Math.round(xOf(b)), done: b.done }; }) }; } };   // (for tests)
+      if (LC.DEVELOPER_HTML) m.devTick = function () {
+        if (beats.some(function (beat) { return !beat.done && Math.abs(xOf(beat) - HX) < R * 0.65; })) self.pressKey('KeyE');
+      };
       this.modal = m;
       render();
     }

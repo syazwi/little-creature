@@ -8,12 +8,12 @@ window.LC = window.LC || {};
   panel.id = 'lc-dev-tools'; panel.open = true;
   panel.innerHTML = '<summary>Developer Tools</summary>' +
     '<div class="lc-dev-fields"><label>Chapter <select id="lc-dev-chapter"></select></label>' +
-    '<label>Travel speed <select id="lc-dev-speed"><option value="1">1×</option><option value="1.5">1.5×</option><option value="2" selected>2×</option></select></label></div>' +
+    '<label>Travel speed <select id="lc-dev-speed"><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option></select></label></div>' +
     '<div class="lc-dev-actions"><button type="button" id="lc-dev-jump" disabled>Jump to chapter</button>' +
     '<button type="button" id="lc-dev-auto" disabled>Start autoplay</button></div>' +
     '<progress id="lc-dev-progress" aria-label="Story progress" hidden></progress>' +
     '<output id="lc-dev-status" role="status">Loading game…</output>' +
-    '<p>Jump to any chapter in Slot ' + story.slot + '. Gameplay autoplay is available for Chapters 12–13. Stop at any time to take over.</p>';
+    '<p>Play Chapters 1–13 in Slot ' + story.slot + '. Autoplay supplies ingredients, speeds up early bonding, and uses quest travel. Stop at any time to take over.</p>';
   var style = document.createElement('style');
   style.textContent = '#lc-dev-tools{position:fixed;z-index:15;top:max(8px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);' +
     'width:min(390px,calc(100vw - 22px));max-height:calc(100dvh - 20px);overflow:auto;box-sizing:border-box;color:#fff0d5;background:#241c34;' +
@@ -95,7 +95,7 @@ window.LC = window.LC || {};
     if (!autoplay.supports(chapter.n)) { status.textContent = 'Chapter ' + chapter.n + ' is available for manual play.'; return; }
     try {
       var active = LC.game.scene.isActive('World') && State.slot === story.slot &&
-        LC.CHAPTER_LIST.find(function (item) { return (State.s.quests[item.key] || 0) < item.end; }) === chapter;
+        (!State.s.quests.ch2 ? chapters[0] : LC.CHAPTER_LIST.find(function (item) { return (State.s.quests[item.key] || 0) < item.end; })) === chapter;
       if (!active) { fresh(i); play(chapter); }
       run = jumpButton.disabled = chapterSelect.disabled = true;
       autoButton.textContent = 'Stop and play';

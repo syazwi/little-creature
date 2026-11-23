@@ -108,6 +108,9 @@ window.LC = window.LC || {};
         if (cool > 0.6) { g.fillStyle(0xfff2b0, (cool - 0.6) * 3); g.fillCircle(CX, CY, 16); }
         for (var i = 0; i < MAX; i++) { g.fillStyle(i < res.length ? (res[i] ? 0x9be15d : 0xe07a5f) : 0x5a4a3a, 1); g.fillCircle(CX - 42 + i * 28, Y + 300, 8); }
       }, function () { cb(null); });
+      if (LC.DEVELOPER_HTML) this.modal.devTick = function () {
+        if (!done && cool <= 0 && Math.abs(ship.x - CX) < 26) self.pressKey('KeyE');
+      };
     }
   });
 

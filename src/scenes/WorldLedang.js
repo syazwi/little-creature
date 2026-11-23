@@ -296,7 +296,11 @@ window.LC = window.LC || {};
       if (!win) { this.ui.say(this.ch2Lines([{ who: who, text: T6.duelLose[who] }])); return; }
       LC.Audio.sfx('cheer');
       if (who === 'hangtuah') {
-        if (LC.ch6Step() === 3) q.ch6 = 4;
+        if (LC.ch6Step() === 3) {
+          q.ch6 = 4;
+          this.placeVillager('puteri_ledang');
+          this.placeVillager('jebat');
+        }
         this.ui.say(this.ch2Lines(T6.tuahWin), { onDone: function () { self.toast('Climb to the stream at the top of the path: the princess is waiting.', 'ic_glow'); } });
       } else {
         if (!q.c6jebat) { q.c6jebat = 1; LC.State.gainStr(5); S.kepeng += 1500; S.stats.earned += 1500; }

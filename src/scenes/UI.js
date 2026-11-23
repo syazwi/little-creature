@@ -597,6 +597,11 @@ window.LC = window.LC || {};
         },
         click: function () { if (self.time.now - m.opened < 250 || choiceT.length) return; advance(); }
       };
+      if (LC.DEVELOPER_HTML) m.devChoice = function (match) {
+        var k = choiceT.length && opts.choices.findIndex(function (ch) { return match.test(ch.label); });
+        if (choiceT.length && k >= 0) { pick(k); return true; }
+        return false;
+      };
       this.modal = m;
       next();
     }
@@ -827,6 +832,13 @@ window.LC = window.LC || {};
           render();
         },
         wheel: function (dy) { if (qo) { qo.wheel(dy); return; } var n = cur().length; sel = Phaser.Math.Clamp(sel + (dy > 0 ? 1 : -1), 0, Math.max(0, n - 1)); render(); }
+      };
+      if (LC.DEVELOPER_HTML) m.devChoose = function (match) {
+        for (var k = 0; k < tabs.length; k++) {
+          var i = tabs[k].rows().findIndex(function (row) { return row.action && row.enabled !== false && match.test(row.label); });
+          if (i >= 0) { tab = k; sel = i; activate(); return true; }
+        }
+        return false;
       };
       this.modal = m;
       render();
