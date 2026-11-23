@@ -98,7 +98,7 @@ window.LC = window.LC || {};
   var sfx = LC.Audio.sfx;
   LC.Audio.sfx = function (name) {
     var A = LC.Audio;
-    if (name !== 'laugh14' && name !== 'clang14' && name !== 'scream14') return sfx.apply(this, arguments);
+    if (['laugh14', 'clang14', 'scream14', 'whizz14', 'boom14', 'crackle14'].indexOf(name) < 0) return sfx.apply(this, arguments);
     if (!A.ctx || A.ctx.state !== 'running' || !A.vol || !A.vol.sfx) return;
     var t = A.ctx.currentTime + 0.01, i;
     if (name === 'laugh14') for (i = 0; i < 6; i++) {   // HA-HA-HA-HA, rolling down
@@ -106,6 +106,9 @@ window.LC = window.LC || {};
       A.tone(t + i * 0.15, 'sine', 1120 - i * 56, 940 - i * 60, 0.08, 0.04);
       A.noise(t + i * 0.15, 0.06, 0.05, 'bandpass', 1600);
     }
+    else if (name === 'whizz14') { A.tone(t, 'sine', 500, 1800, 0.65, 0.05); A.noise(t, 0.6, 0.05, 'highpass', 3000); }   // a rocket going up
+    else if (name === 'boom14') { A.noise(t, 0.55, 0.32, 'lowpass', 900, 120); A.tone(t, 'sine', 90, 40, 0.5, 0.22); A.noise(t + 0.05, 0.25, 0.08, 'highpass', 4000); }
+    else if (name === 'crackle14') for (i = 0; i < 9; i++) A.noise(t + 0.1 + i * 0.06 + Math.random() * 0.04, 0.03, 0.09, 'highpass', 5000);
     else if (name === 'clang14') { A.noise(t, 0.25, 0.22, 'bandpass', 3200, 1800); A.tone(t, 'square', 880, 840, 0.3, 0.06); A.tone(t, 'sine', 1320, 1250, 0.4, 0.06); }
     else { A.tone(t, 'sawtooth', 420, 980, 0.55, 0.07); A.tone(t + 0.05, 'sawtooth', 380, 900, 0.5, 0.05); A.noise(t, 0.5, 0.08, 'bandpass', 2000, 3000); }
   };
@@ -204,11 +207,22 @@ window.LC = window.LC || {};
       ['', 'Kak Senah laughs her famous laugh: HAHAHAHA! From the cage, Si Tiong laughs right back.'],
       ['penunggu14', '(Under the house, the Penunggu claps its tiny hands. The house is not alone any more. It blesses you: home-cooked warmth, +15 max energy.)'],
       ['senah14', 'For finding my runaways, take some seri muka. And the recipe. Don\'t tell Jusoh, he\'ll want his for free.'],
-      ['', '✦ Chapter 14 complete! ✦ You got Seri Muka x5, Kak Senah\'s recipe (cook it at the dapur) and 800 kepeng.'],
-      ['', 'As everyone heads home, the famous laugh rings out once more from the dark banana grove... HAHAHAHA!'],
+      ['senah14', 'And since the whole kampung thought this was a haunted house... let\'s give them something better to look at.'],
+      ['', 'She snaps open her suitcase. It is packed with bunga api from Kuala Lipis, bought for the kampung kenduri.'],
+      ['imam14', 'From a safe distance, please. And point them at the sky, not at Jusoh.'],
+      ['bahar14', 'Ah, chemistry! Strontium burns red, copper burns blue, barium burns green. Science is beautiful.'],
+      ['jusoh14', 'I will light the first one. Bravely. From over there.'],
+      ['', '✦ Chapter 14 complete! ✦ You got Seri Muka x5, Kak Senah\'s recipe (cook it at the dapur) and 800 kepeng.']
+    ],
+    gag: [
+      ['', 'As the last sparks drift down, the famous laugh rings out once more from the dark banana grove... HAHAHAHA!'],
       ['', 'But Kak Senah is right here, and Si Tiong is in its cage. Slowly, everyone turns to look at Pelita.'],
       ['pelita14', '(Pelita whistles a little tune, and looks the other way.)']
     ],
+    cheers: ['Wahhh!', 'Cantiknya!', 'Lagi! Lagi!', 'Strontium!', 'HAHAHAHA!', 'Masya-Allah, cantik!', 'Wooo!'],
+    fwAgain: [['amin14', 'Mak Long saved some bunga api for us! Stand back... and watch the sky!']],
+    fwDay: [['amin14', 'Bunga api are for the night! Come back after dark and we\'ll light some.']],
+    fwDone: [['amin14', 'That was tonight\'s last one. Mak Long says one show a night, or the hens won\'t lay.']],
     after: {
       senah14: 'Come back any time. There is always seri muka for the one who found my runaways. HAHAHAHA!',
       jusoh14: 'Next time there is a ghost, I will be first in line. Right behind you.',

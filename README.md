@@ -314,7 +314,8 @@ An original kampung comedy ghost story. After Chapter 13, Kampung Tepian whisper
 
 - Go **after 7 PM**: take the lane at the top of Kampung Tepian, between the two vegetable plots. Talk to the frightened villagers at the pondok (Jusoh, Cikgu Bahar and Tok Imam), then peek through Kak Senah's window.
 - Find three clues around the house (the clothesline, the birdcage and the kitchen, which only has its secret at night), then follow Pelita's glow to the shy **Penunggu Rumah** under the house.
-- The **next night after 10 PM**, be there when Kak Senah comes home. Round up the runaways, and let Pelita's light show her honest shadow.
+- The **next night after 10 PM**, be there when Kak Senah comes home. Round up the runaways, and let Pelita's light show her honest shadow. Then Kak Senah opens her suitcase: it is full of **bunga api**, and the kampung celebrates with a fireworks show over the yard (v3.14.1).
+- After the chapter, talk to Amin in Kak Senah's yard at night to **light the bunga api** again (one show a night).
 - **Rewards:** 5 Seri Muka, Kak Senah's **seri muka recipe** at the dapur (padi, pandan and kelapa), 800 kepeng, and the Penunggu's blessing (+15 max energy). And try casting Mantera Suria at an auntie...
 
 ### Your level, your aura and magic (v3.12)
