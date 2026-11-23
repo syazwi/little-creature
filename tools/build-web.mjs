@@ -76,7 +76,7 @@ bundle(page, 'dist/LittleCreature.html');
 function developerPage(title, extra) {
   const main = '<script src="src/main.js"></script>';
   if (!page.includes(main)) throw new Error('could not find the game entry script');
-  const scripts = [...extra, 'src/dev-story.js', 'src/dev-tools.js'].map(file => `<script src="${file}"></script>`);
+  const scripts = [...extra, 'src/dev-story.js', 'src/dev-autoplay.js', 'src/dev-tools.js'].map(file => `<script src="${file}"></script>`);
   return page.replace(main, [...scripts, main].join('\n  ')).replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`);
 }
 bundle(developerPage('Little Creature — Full Test Build', ['src/cheats.js']), 'dist/LittleCreature_full.html');

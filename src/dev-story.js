@@ -154,14 +154,5 @@ window.LC = window.LC || {};
     }
     return s;
   }
-  function simulate(s, chapter, step) {
-    if (step === chapter.steps.length - 1) {
-      complete(s, chapter);
-      return;
-    }
-    // Checkpoint playback advances the journal while the game scene is stopped.
-    // Only the state at chapter boundaries is kept as a manually playable save.
-    s.quests[chapter.key] = Math.min(step + 1, chapter.end - 1);
-  }
-  LC.DevStory = { slot: slot, chapters: chapters, checkpoint: checkpoint, simulate: simulate, entry: entry, unlimited: unlimited };
+  LC.DevStory = { slot: slot, chapters: chapters, checkpoint: checkpoint, entry: entry };
 })(window.LC);

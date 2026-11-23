@@ -1,25 +1,25 @@
-/* Developer-only panel for chapter jumping and fast-forward story checkpoints. */
+/* Developer-only panel for chapter jumping and gameplay autoplay. */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
-  var State = LC.State, story = LC.DevStory, chapters = story.chapters, run = null;
+  var State = LC.State, story = LC.DevStory, chapters = story.chapters, autoplay = LC.DevAutoplay, run = false;
   var total = chapters.reduce(function (n, chapter) { return n + chapter.steps.length; }, 0);
   var panel = document.createElement('details');
   panel.id = 'lc-dev-tools'; panel.open = true;
   panel.innerHTML = '<summary>Developer Tools</summary>' +
     '<div class="lc-dev-fields"><label>Chapter <select id="lc-dev-chapter"></select></label>' +
-    '<label>Speed <select id="lc-dev-speed"><option value="1">1×</option><option value="4" selected>4×</option><option value="16">16×</option></select></label></div>' +
+    '<label>Travel speed <select id="lc-dev-speed"><option value="1">1×</option><option value="1.5">1.5×</option><option value="2" selected>2×</option></select></label></div>' +
     '<div class="lc-dev-actions"><button type="button" id="lc-dev-jump" disabled>Jump to chapter</button>' +
     '<button type="button" id="lc-dev-auto" disabled>Start autoplay</button></div>' +
-    '<progress id="lc-dev-progress" aria-label="Story checkpoint progress" hidden></progress>' +
+    '<progress id="lc-dev-progress" aria-label="Story progress" hidden></progress>' +
     '<output id="lc-dev-status" role="status">Loading game…</output>' +
-    '<p>Jump and autoplay replace developer Slot ' + story.slot + '. Autoplay fast-forwards story checkpoints. You can stop and play from the latest chapter opening.</p>';
+    '<p>Jump to any chapter in Slot ' + story.slot + '. Gameplay autoplay is available for Chapters 12–13. Stop at any time to take over.</p>';
   var style = document.createElement('style');
   style.textContent = '#lc-dev-tools{position:fixed;z-index:15;top:max(8px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);' +
     'width:min(390px,calc(100vw - 22px));max-height:calc(100dvh - 20px);overflow:auto;box-sizing:border-box;color:#fff0d5;background:#241c34;' +
     'border:1px solid #b49055;border-radius:9px;padding:9px 12px;font:14px/1.35 system-ui,sans-serif;box-shadow:0 5px 18px #0008}' +
     '#lc-dev-tools:not([open]){width:max-content;max-width:calc(100vw - 22px)}#lc-dev-tools summary{cursor:pointer;color:#ffd98e;font-weight:650}' +
-    '#lc-dev-tools .lc-dev-fields{display:grid;grid-template-columns:minmax(0,1fr) 70px;gap:9px;margin-top:9px}' +
+    '#lc-dev-tools .lc-dev-fields{display:grid;grid-template-columns:minmax(0,1fr) 91px;gap:9px;margin-top:9px}' +
     '#lc-dev-tools select,#lc-dev-tools button{box-sizing:border-box;min-height:34px;border:1px solid #807099;border-radius:5px;' +
     'background:#35284c;color:inherit;padding:4px 8px;font:inherit}#lc-dev-tools select{display:block;width:100%}' +
     '#lc-dev-tools :focus-visible{outline:2px solid #f9d489;outline-offset:2px}#lc-dev-tools button:not(:disabled){cursor:pointer}' +
@@ -34,21 +34,22 @@ window.LC = window.LC || {};
   var jumpButton = panel.querySelector('#lc-dev-jump'), autoButton = panel.querySelector('#lc-dev-auto');
   progress.max = total;
   chapters.forEach(function (chapter, i) { chapterSelect.add(new Option(chapter.n + ' · ' + chapter.name, i)); });
+  chapterSelect.value = chapters.findIndex(function (chapter) { return autoplay.supports(chapter.n); });
   ['keydown', 'keyup', 'keypress'].forEach(function (type) {
     panel.addEventListener(type, function (event) { event.stopPropagation(); });
   });
 
-  var title = LC.TitleScene.prototype, titleCreate = title.create, titleChoose = title.choose;
+  var title = LC.TitleScene.prototype, titleCreate = title.create;
   title.create = function () {
     titleCreate.apply(this, arguments);
-    jumpButton.disabled = !!run; autoButton.disabled = false;
+    if (run) autoplay.stop('Autoplay stopped at the title screen.');
+    jumpButton.disabled = autoButton.disabled = false;
     if (!run && status.textContent === 'Loading game…') status.textContent = 'Choose a chapter to test.';
   };
-  title.choose = function () { if (!run) return titleChoose.apply(this, arguments); };
   var createUI = LC.UIScene.prototype.create;
   LC.UIScene.prototype.create = function () {
     createUI.apply(this, arguments);
-    jumpButton.disabled = false; autoButton.disabled = false;
+    jumpButton.disabled = run; autoButton.disabled = false;
   };
 
   function available() {
@@ -88,69 +89,44 @@ window.LC = window.LC || {};
       play(chapter); panel.open = false;
     } catch (error) { handleFailure(error); }
   }
-  function bookmark(s) { return JSON.stringify(s); }
   function start() {
     if (!available()) return;
+    var i = +chapterSelect.value, chapter = chapters[i];
+    if (!autoplay.supports(chapter.n)) { status.textContent = 'Chapter ' + chapter.n + ' is available for manual play.'; return; }
     try {
-      var i = +chapterSelect.value, s = fresh(i);
-      var done = chapters.slice(0, i).reduce(function (n, chapter) { return n + chapter.steps.length; }, 0);
-      run = { index: i, step: 0, done: done, s: s, saved: bookmark(s), timer: 0 };
-      jumpButton.disabled = chapterSelect.disabled = true;
+      var active = LC.game.scene.isActive('World') && State.slot === story.slot &&
+        LC.CHAPTER_LIST.find(function (item) { return (State.s.quests[item.key] || 0) < item.end; }) === chapter;
+      if (!active) { fresh(i); play(chapter); }
+      run = jumpButton.disabled = chapterSelect.disabled = true;
       autoButton.textContent = 'Stop and play';
-      progress.hidden = false; progress.value = done;
-      status.textContent = 'Starting Chapter ' + chapters[i].n + '…';
-      if (!LC.game.scene.isActive('Title')) LC.game.scene.start('Title');
-      schedule();
+      progress.hidden = false;
+      status.textContent = 'Starting Chapter ' + chapter.n + '…';
+      autoplay.start(function () { return Number(speed.value); }, showProgress, finish);
     } catch (error) { handleFailure(error); }
   }
-  function schedule() { run.timer = window.setTimeout(tick, Math.round(700 / Number(speed.value))); }
-  function tick() {
-    var chapter = chapters[run.index], s = run.s;
-    try {
-      status.textContent = 'Chapter ' + chapter.n + ' · ' + chapter.steps[run.step];
-      story.simulate(s, chapter, run.step);
-      progress.value = ++run.done;
-      if (++run.step === chapter.steps.length) {
-        var next = chapters[++run.index];
-        s.day++;
-        story.entry(s, next ? next.n : 0);
-        State.save();
-        run.saved = bookmark(s);
-        run.step = 0;
-        if (!next) { finish(true); return; }
-      }
-      schedule();
-    } catch (error) { handleFailure(error); }
+  function showProgress(n, step, action) {
+    var label = 'Chapter ' + n + ' · ' + action;
+    if (status.textContent !== label) status.textContent = label;
+    var chapter = String(chapters.findIndex(function (ch) { return ch.n === n; }));
+    if (chapterSelect.value !== chapter) chapterSelect.value = chapter;
+    var passed = chapters.slice(0, +chapter).reduce(function (count, ch) { return count + ch.steps.length; }, step);
+    if (progress.value !== passed) progress.value = passed;
   }
-  function stopTimer() {
-    clearTimeout(run.timer);
-    run = null;
+  function finish(message) {
+    run = false;
     jumpButton.disabled = chapterSelect.disabled = false;
     autoButton.textContent = 'Start autoplay';
-  }
-  function finish(complete) {
-    var chapter = chapters[run.index], saved = run.saved;
-    if (!complete) {
-      State.s = JSON.parse(saved);
-      story.unlimited(State.s);
-      State.recalc();
-      State.save();
-      chapterSelect.value = run.index;
-      status.textContent = 'Autoplay stopped. Playing Chapter ' + chapter.n + ' from its opening.';
-    } else status.textContent = 'Story complete · ' + chapters.length + ' / ' + chapters.length + ' chapters';
-    stopTimer();
-    play(chapter);
+    status.textContent = message;
+    if (message === 'Story complete.') progress.value = total;
+    State.save();
   }
   function handleFailure(error) {
-    if (run) {
-      State.s = JSON.parse(run.saved); story.unlimited(State.s); State.recalc();
-      stopTimer();
-    }
+    if (run) autoplay.stop('Autoplay stopped.');
     var scenes = LC.game.scene;
     if (!scenes.isActive('Title') && !scenes.isActive('World')) scenes.start('Title');
     status.textContent = 'Developer checkpoint failed. ' + error.message;
     console.error(error);
   }
   jumpButton.addEventListener('click', jump);
-  autoButton.addEventListener('click', function () { if (run) finish(false); else start(); });
+  autoButton.addEventListener('click', function () { if (run) autoplay.stop('Autoplay stopped. You have control.'); else start(); });
 })(window.LC);

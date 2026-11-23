@@ -18,8 +18,8 @@ android {
         applicationId 'com.syazwi.littlecreature'
         minSdk 24
         targetSdk 35
-        versionCode 57
-        versionName '3.9'
+        versionCode 58
+        versionName '3.10'
     }
 
     signingConfigs {
@@ -78,7 +78,7 @@ abstract class SyncWebAssets extends DefaultTask {
         fs.sync { spec ->
             spec.from(webRoot) {
                 it.include('index.html', 'src/**', 'lib/**', 'icons/**')
-                it.exclude('src/dev-story.js', 'src/dev-tools.js')
+                it.exclude('src/dev-story.js', 'src/dev-tools.js', 'src/dev-autoplay.js')
             }
             spec.into(outputDir.dir('www'))
         }
@@ -90,7 +90,7 @@ def syncWeb = tasks.register('syncWebAssets', SyncWebAssets) {
     webRoot.set(webRootDir)
     webFiles.from(fileTree(webRootDir) {
         include 'index.html', 'src/**', 'lib/**', 'icons/**'
-        exclude 'src/dev-story.js', 'src/dev-tools.js'
+        exclude 'src/dev-story.js', 'src/dev-tools.js', 'src/dev-autoplay.js'
     })
     outputDir.set(layout.buildDirectory.dir('generated/webAssets'))
 }
