@@ -308,6 +308,15 @@ After Chapter 6, the old witch grows herbs on the lower slopes of Gunung Ledang.
 
 The in-game clock pauses in Kampung Bunian and its trial rooms. Ask the gatekeeper in the southern courtyard about the Sea Creatures, Warrior Creatures, Magic Creatures, and Supernatural Creatures doors. Clear each room's minions and boss to earn items and kepeng every time, plus permanent max health or max energy on the first win. A defeat or retreat brings you back to the gatekeeper with your health and provisions restored. The gatekeeper holds prizes when your bag is full.
 
+### Chapter 14 — Hantu Kak Senah? (v3.13)
+
+An original kampung comedy ghost story. After Chapter 13, Kampung Tepian whispers that Kak Senah, the kuih seller with the loudest laugh in the land, has gone away, and that every night her house laughs, smells of kuih and shows a white figure at the window. Is she a ghost? Pelita does not glow at it...
+
+- Go **after 7 PM**: take the lane at the top of Kampung Tepian, between the two vegetable plots. Talk to the frightened villagers at the pondok (Jusoh, Cikgu Bahar and Tok Imam), then peek through Kak Senah's window.
+- Find three clues around the house (the clothesline, the birdcage and the kitchen, which only has its secret at night), then follow Pelita's glow to the shy **Penunggu Rumah** under the house.
+- The **next night after 10 PM**, be there when Kak Senah comes home. Round up the runaways, and let Pelita's light show her honest shadow.
+- **Rewards:** 5 Seri Muka, Kak Senah's **seri muka recipe** at the dapur (padi, pandan and kelapa), 800 kepeng, and the Penunggu's blessing (+15 max energy). And try casting Mantera Suria at an auntie...
+
 ### Your level, your aura and magic (v3.12)
 
 - **You have a level now (Lv 1 to 50), not only Pelita.** Earn XP by beating monsters (stronger ones give more; ones far below your level give less), finishing chapter steps, catching fish, training your strength and every level Pelita gains. A save from before v3.12 starts with the XP its adventures already earned.

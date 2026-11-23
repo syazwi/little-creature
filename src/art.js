@@ -788,5 +788,6 @@ window.LC = window.LC || {};
     if (Art.generate24) Art.generate24(scene);
     if (Art.generate25) Art.generate25(scene);
     if (Art.generate26) Art.generate26(scene);
+    if (Art.generate27) Art.generate27(scene);   // v3.13: Chapter 14, Hantu Kak Senah?
   };
 })(window.LC);
