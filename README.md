@@ -318,6 +318,17 @@ An original kampung comedy ghost story. After Chapter 13, Kampung Tepian whisper
 - After the chapter, talk to Amin in Kak Senah's yard at night to **light the bunga api** again (one show a night).
 - **Rewards:** 5 Seri Muka, Kak Senah's **seri muka recipe** at the dapur (padi, pandan and kelapa), 800 kepeng, and the Penunggu's blessing (+15 max energy). And try casting Mantera Suria at an auntie...
 
+### Chapter 16 — Kampung Mamai? (v3.16)
+
+The day after Chapter 15, Kampung Tepian wants to give thanks that everyone is safe, and Tok Penghulu asks **you** to host the **majlis doa kesyukuran** at the gelanggang.
+
+- **Invite everyone:** Pak Mat (his hut), Abang Zul (his shop), Tukang Leong (his workshop), Tok Imam (the masjid; he leads the doa), and Kak Senah and Jusoh down the lane.
+- **Hands for the kitchen:** ask Amin at Kak Senah's house and Si Bara at your dapur. Then an old friend's lantern glows by the dapur: **Nek Lampir's spirit** comes to help make amends.
+- **Cook the feast** beside your dapur: Nasi Minyak (3 padi), Ayam Masak Merah (3 cili) and Seri Muka (2). The majlis begins at the gelanggang **after 6 PM**.
+- **The morning after**, everyone who ate the ayam masak merah is sleepwalking, arms out, mumbling "nasiii...". Nobody is hurt, and nobody can be fought: weapons only go *Boing!*, Pelita's light holds them still, Lagu Mayang sits them down, and your sun spell makes them sneeze. Find three clues (Amin, a jar by your dapur, Si Bara).
+- **The cure:** Nek Lampir mixed up her old sleeping powder with kunyit (a ghost cannot smell!). Bring her Madu Tualang and 2 Herba from Hutan Rimba and a Pandan to brew **Jamu Bangun** on Si Bara's fire, then give a cup to each of the six sleepwalkers.
+- **Rewards:** the **Senduk Lampir** (home-cooked dishes give half as much energy again), the Jamu Bangun recipe at the dapur, 1000 kepeng, and Nek Lampir's lantern on the farm porch.
+
 ### Chapter 15 — Jerebu dan Bunga Api (v3.15)
 
 After Chapter 14, rest at the farm and visit Tok Penghulu when the sky turns orange. Carry the **Topeng Jerebu** to reduce the haze, or use Angin Bualang to clear it briefly.
