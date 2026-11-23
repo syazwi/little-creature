@@ -33,7 +33,7 @@ window.LC = window.LC || {};
   LC.UIScene.prototype.updateRow = function () { return null; };
 
   var chapters = [{ n: 1, name: 'Little Creature', end: 1, steps: ['Help Pelita become a Legend of the Kampung'] }].concat(LC.CHAPTER_LIST);
-  var entryHours = { 5: 19.5, 9: 20.5, 11: 20.5 };
+  var entryHours = { 5: 19.5, 9: 20.5, 11: 20.5, 14: 19 };
   var delays = { 4: 'ch3day', 5: 'ch4day', 6: 'ch5day', 7: 'c7wait', 8: 'c8wait', 9: 'c9wait', 10: 'c10wait', 11: 'c11wait' };
   function grant(map) {
     Object.keys(map).forEach(function (id) {
@@ -139,7 +139,8 @@ window.LC = window.LC || {};
     s.water = s.maxWater;
   }
   function entry(s, n) {
-    s.area = n === 3 ? 'barunai' : 'farm';
+    var areas = { 3: 'barunai', 14: 'kampung' };
+    s.area = areas[n] || 'farm';
     s.minutes = (entryHours[n] || 7) * 60 + 5;
     if (delays[n]) s.quests[delays[n]] = s.day - 1;
     return { area: s.area };

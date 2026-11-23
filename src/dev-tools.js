@@ -13,7 +13,7 @@ window.LC = window.LC || {};
     '<button type="button" id="lc-dev-auto" disabled>Start autoplay</button></div>' +
     '<progress id="lc-dev-progress" aria-label="Story progress" hidden></progress>' +
     '<output id="lc-dev-status" role="status">Loading game…</output>' +
-    '<p>Play Chapters 1–13 in Slot ' + story.slot + '. Autoplay supplies ingredients, speeds up early bonding, and uses quest travel. Stop at any time to take over.</p>';
+    '<p>Play Chapters 1–' + chapters.length + ' in Slot ' + story.slot + '. Autoplay supplies ingredients, speeds up early bonding, and uses quest travel. Stop at any time to take over.</p>';
   var style = document.createElement('style');
   style.textContent = '#lc-dev-tools{position:fixed;z-index:15;top:max(8px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);' +
     'width:min(390px,calc(100vw - 22px));max-height:calc(100dvh - 20px);overflow:auto;box-sizing:border-box;color:#fff0d5;background:#241c34;' +

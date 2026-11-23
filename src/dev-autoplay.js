@@ -306,7 +306,41 @@ window.LC = window.LC || {};
     if (step === 6 && w.area === 'manteraVault') pilot.object('mantera_return', 'Returning to the school');
   }
 
-  var routes = LC.DevRoutes = { 12: storm, 13: mantera };
+  function senah(pilot, step) {
+    var w = pilot.world, q = w.S.quests, C = LC.C14;
+    if (step === 4 && w.S.day <= q.c14day) {
+      if (w.area === 'senah') pilot.prop('senah_back', 'Head home for the night');
+      else pilot.sleep();
+      return;
+    }
+    if (w.area !== 'senah') {
+      if (pilot.travel('kampung')) pilot.prop('senah_way', 'Walk down Kak Senah’s lane');
+      return;
+    }
+    if (step < 3 && w.S.minutes < C.night) pilot.clock(C.night / 60);
+    switch (step) {
+      case 0: pilot.object('sn_jusoh0', 'Talk to the villagers at the pondok'); break;
+      case 1: pilot.prop('senah_house', 'Peek through Kak Senah’s window'); break;
+      case 2:
+        if (!q.c14sheet) pilot.prop('senah_line', 'Look at the clothesline');
+        else if (!q.c14tiong) pilot.prop('senah_sangkar', 'Look at Si Tiong’s birdcage');
+        else if (!q.c14amin) pilot.prop('senah_dapur', 'Check the outdoor kitchen');
+        else pilot.state.action = 'Wait for the rattling pots';
+        break;
+      case 3: pilot.prop('senah_penunggu', 'Greet the Penunggu Rumah'); break;
+      case 4:
+        if (w.S.minutes < C.late) pilot.clock(C.late / 60);
+        pilot.stand(C.yard.x, C.yard.y, 'Wait for Kak Senah’s homecoming');
+        break;
+      case 5:
+        if (w.senah.cine) pilot.state.action = 'Watch Kak Senah’s homecoming';
+        else pilot.prop('senah_hide', 'Find the runaways');
+        break;
+      case 6: pilot.prop('senah_kak', 'Raise Pelita’s light'); break;
+    }
+  }
+
+  var routes = LC.DevRoutes = { 12: storm, 13: mantera, 14: senah };
   var methods = LC.DevAutoplay = {
     supports: function (chapter) { return !!routes[chapter]; },
     start: function (speed, onStatus, onStop) {
