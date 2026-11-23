@@ -402,7 +402,89 @@ window.LC = window.LC || {};
     else if (pilot.travel('kampung')) pilot.object('k_rain15', 'Talk to Tok Penghulu at the gelanggang');
   }
 
-  var routes = LC.DevRoutes = { 12: storm, 13: mantera, 14: senah, 15: jerebu };
+  function mamaiTravel(pilot, area) {
+    var w = pilot.world;
+    if (w.area === area) return true;
+    if (w.area === 'senah') pilot.prop('senah_back', 'Walk back to Kampung Tepian');
+    else if (area !== 'senah') return pilot.travel(area);
+    else if (pilot.travel('kampung')) pilot.prop('senah_way', 'Walk down Kak Senah’s lane');
+    return false;
+  }
+
+  function wakeMamaiSleepers(pilot) {
+    var w = pilot.world, p = w.player;
+    var sleepers = w.mamai.sleepers.filter(function (s) { return !s.wake; });
+    sleepers.sort(function (a, b) { return range(p, a.spr) - range(p, b.spr); });
+    var sleeper = sleepers[0];
+    if (!sleeper) { pilot.state.action = 'Wait for everyone to gather'; return; }
+    var x = sleeper.spr.x, y = sleeper.spr.y, dx = x - p.x, dy = y - p.y;
+    w.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
+    var action = w.getAction();
+    if (action && /^Give .+ the Jamu Bangun$/.test(action.label)) {
+      pilot.state.action = action.label;
+      w.doAction();
+      return;
+    }
+    pilot.near(x / T - 0.5, y / T - 0.8, 'Walk to ' + sleeper.name, 20);
+  }
+
+  function mamai(pilot, step) {
+    var w = pilot.world, q = w.S.quests, C = LC.C16;
+    if (step === 0 || step === 6) {
+      var rain = w.jerebu && w.jerebu.rain;
+      if (step === 0 && rain && rain.time < 3) { pilot.state.action = 'Watch the rain arrive'; return; }
+      if (mamaiTravel(pilot, 'farm') && (step === 6 || w.S.day <= q.c16wait)) pilot.sleep();
+      return;
+    }
+    if (step === 1 || step === 5) {
+      if (!mamaiTravel(pilot, 'kampung')) return;
+      if (step === 5 && w.S.minutes < C.majlis) pilot.clock(C.majlis / 60);
+      pilot.object('k_tokp16', step === 1 ? 'Talk to Tok Penghulu' : 'Join the majlis at the gelanggang');
+      return;
+    }
+    if (step === 2) {
+      var invite = C.invites.find(function (v) { return !(q.c16inv || {})[v.who]; });
+      if (invite && mamaiTravel(pilot, invite.obj.indexOf('sn_') === 0 ? 'senah' : 'kampung')) pilot.object(invite.obj, 'Invite ' + invite.name);
+      return;
+    }
+    if (step === 3) {
+      var helpers = q.c16help || {};
+      if (!helpers.amin) {
+        if (mamaiTravel(pilot, 'senah')) pilot.object('sn_amin2', 'Ask Amin to help in the kitchen');
+      } else if (mamaiTravel(pilot, 'farm')) {
+        if (!helpers.bara) pilot.object('f_sibara15', 'Ask Si Bara to tend the fire');
+        else pilot.state.action = 'Wait for Nek Lampir at the dapur';
+      }
+      return;
+    }
+    if (step === 4 && mamaiTravel(pilot, 'farm')) {
+      var pot = Object.keys(C.pots).find(function (key) { return !(q.c16cook || {})[key]; });
+      if (pot) {
+        pilot.supply(C.pots[pot].need);
+        pilot.object('f_periuk16_' + pot + '0', 'Cook ' + C.pots[pot].name);
+      }
+      return;
+    }
+    if (step === 7) {
+      var clues = q.c16clue || {};
+      if (!clues.amin) {
+        if (mamaiTravel(pilot, 'kampung')) pilot.object('k_amin16', 'Ask Amin about the sleepwalkers');
+      } else if (mamaiTravel(pilot, 'farm')) {
+        if (!clues.jar) pilot.object('f_balang16', 'Inspect the little jar');
+        else pilot.object('f_sibara15', 'Ask Si Bara what he saw');
+      }
+      return;
+    }
+    if (step === 8 || step === 9) {
+      if (!mamaiTravel(pilot, 'farm')) return;
+      if (step === 9) pilot.supply(C.jamu);
+      pilot.object('f_lampir16', step === 8 ? 'Show Nek Lampir the jar' : 'Brew Jamu Bangun');
+      return;
+    }
+    if (step === 10 && mamaiTravel(pilot, 'kampung')) wakeMamaiSleepers(pilot);
+  }
+
+  var routes = LC.DevRoutes = { 12: storm, 13: mantera, 14: senah, 15: jerebu, 16: mamai };
   var methods = LC.DevAutoplay = {
     supports: function (chapter) { return !!routes[chapter]; },
     start: function (speed, onStatus, onStop) {
@@ -420,7 +502,8 @@ window.LC = window.LC || {};
     var chapter = q.ch2 ? LC.CHAPTER_LIST.find(function (item) { return (q[item.key] || 0) < item.end; }) : LC.DevStory.chapters[0];
     var finished = !chapter;
     var rain = world.jerebu && world.jerebu.rain;
-    if (finished && !blocked && !world.ui.modal && (!rain || rain.time >= 3)) { methods.stop('Story complete.'); return move.call(this, dt, blocked); }
+    var spirit = world.mamai && world.mamai.spirit;
+    if (finished && !blocked && !world.ui.modal && (!rain || rain.time >= 3) && (!spirit || !spirit.active)) { methods.stop('Story complete.'); return move.call(this, dt, blocked); }
     if (finished) chapter = LC.CHAPTER_LIST[LC.CHAPTER_LIST.length - 1];
     var step = q[chapter.key] || 0;
     var key = [chapter.n, step, world.area, world.war && world.war.wave, q.c4wave, q.c13Reflected, q.c12Rescued].join(':');
