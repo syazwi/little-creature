@@ -75,7 +75,7 @@ window.LC = window.LC || {};
     this.removeStormEnemy(enemy);
     this.fx.sparkle.explode(enemy.def.boss ? 24 : 6, enemy.spr.x, enemy.spr.y - 12);
     if (enemy !== t.boss) return;
-    this.finishBunianTrial(t.door);
+    this.finishBunianTrial(t);
   };
 
   Object.assign(W, {
@@ -83,7 +83,7 @@ window.LC = window.LC || {};
       var collected = this.collectBunianLoot();
       var lines = [line('Here, time stands still. Each door holds a band of minions and a boss. Bring a weapon and watch the ground before each special attack.'),
         line('Start at the blue door if you’re new to the trials. If you fall or retreat, I’ll bring you back with your bag intact, even the provisions you used.'),
-        line('The first win at each door strengthens you permanently. You’ll earn items and kepeng every time you win. Ask at each door for its reward and how to face its boss.')];
+        line('The first win at each door strengthens you permanently. Each win toughens that door’s boss and increases its kepeng and item rewards. Inspect a door to see your next round’s prize.')];
       if (collected.length) {
         LC.State.save();
         lines.unshift(line('I held these for you. Here are ' + collected.join(', ') + '.'));
@@ -95,9 +95,10 @@ window.LC = window.LC || {};
       this.ui.say(lines);
     },
     inspectBunianDoor: function (door) {
-      var self = this, won = B.clearCount(this.S, door);
-      this.ui.say([line(door.advice), line(door.count + ' minions, then ' + door.boss[0] + '. Each clear earns ' + door.kepeng + ' kepeng and ' + lootText(door.loot[0], door.loot[1]) +
-        '. ' + (won ? 'Clears so far: ' + won + '.' : 'First clear: ' + statText(door) + ' permanently.'))], { choices: [
+      var self = this, round = B.round(this.S, door);
+      this.ui.say([line(door.advice), line('Round ' + round.number + ' · ' + door.count + ' minions, then ' + door.boss[0] + ' with ' + round.hp + ' HP and ' + round.damage + ' attack damage.'),
+        line('Win this round for ' + round.kepeng + ' kepeng and ' + lootText(door.loot[0], round.items) +
+          '.' + (round.number === 1 ? ' Your first win also grants ' + statText(door) + ' permanently.' : ''))], { choices: [
         { label: 'Enter the trial', fn: function () {
           B.enter(self.S); LC.State.save(); LC.Audio.sfx('gate'); self.goArea(door.area, undefined, 'up');
         } }, { label: 'Wait' }
@@ -105,7 +106,7 @@ window.LC = window.LC || {};
     },
     createBunianTrial: function (door) {
       var self = this;
-      var t = this.bunianTrial = { door: door, phase: 'minions', timer: 0, marks: [], art: this.add.graphics().setDepth(1250) };
+      var t = this.bunianTrial = { door: door, round: B.round(this.S, door), phase: 'minions', timer: 0, marks: [], art: this.add.graphics().setDepth(1250) };
       t.minions = B.spawns.slice(0, door.count).map(function (p) { return self.spawnBunianTrialFoe(door.minionKind, p, door); });
     },
     spawnBunianTrialFoe: function (kind, at, door) {
@@ -130,6 +131,8 @@ window.LC = window.LC || {};
           if (t.timer <= 0) {
             t.phase = 'boss'; t.timer = 2.0;
             t.boss = this.spawnBunianTrialFoe(t.door.bossKind, B.bossAt, t.door);
+            t.boss.def = Object.assign({}, t.boss.def, { hp: t.round.hp, dmg: t.round.damage });
+            t.boss.hp = t.round.hp;
           }
         } else if (t.phase === 'boss') this.updateBunianBoss(t, dt);
       }
@@ -222,19 +225,20 @@ window.LC = window.LC || {};
       });
       return delivered;
     },
-    finishBunianTrial: function (door) {
-      var self = this, S = this.S, t = this.bunianTrial, q = S.quests, cleared = B.clearCount(S, door);
+    finishBunianTrial: function (t) {
+      var self = this, S = this.S, q = S.quests, door = t.door, round = t.round;
       if (t.ending) return;
       t.ending = true;
       t.marks = [];
       q.bunianClears = q.bunianClears || {};
-      q.bunianClears[door.id] = cleared + 1;
+      q.bunianClears[door.id] = round.number;
       q.bunianKeepsakes = q.bunianKeepsakes || {};
       var id = door.loot[0];
-      q.bunianKeepsakes[id] = (q.bunianKeepsakes[id] || 0) + door.loot[1];
-      var delivered = this.collectBunianLoot(), pending = !!q.bunianKeepsakes[id];
-      S.kepeng += door.kepeng;
-      S.stats.earned = (S.stats.earned || 0) + door.kepeng;
+      q.bunianKeepsakes[id] = (q.bunianKeepsakes[id] || 0) + round.items;
+      this.collectBunianLoot();
+      var pending = !!q.bunianKeepsakes[id];
+      S.kepeng += round.kepeng;
+      S.stats.earned = (S.stats.earned || 0) + round.kepeng;
       if (LC.C12.step(S) >= LC.C12.end) this.stormBonus();
       delete q.bunianTrialEntry;
       LC.State.recalc();
@@ -243,9 +247,9 @@ window.LC = window.LC || {};
       LC.Audio.sfx('stage');
       this.cameras.main.flash(330, 195, 230, 213);
       this.time.delayedCall(520, function () {
-        var reward = door.kepeng + ' kepeng' + (delivered.length ? ' and ' + delivered.join(', ') : '');
+        var reward = round.kepeng + ' kepeng and ' + lootText(id, round.items);
         self.backToBunian(door.boss[0] + ' is beaten. You earned ' + reward + '.' +
-          (cleared ? '' : ' You also gained ' + statText(door) + ' permanently.') +
+          (round.number === 1 ? ' You also gained ' + statText(door) + ' permanently.' : '') +
           (pending ? ' I’ll hold your remaining prize until your bag has room.' : ''));
       });
     },
@@ -269,8 +273,9 @@ window.LC = window.LC || {};
     var t = this.world && this.world.bunianTrial;
     if (!t) return goal.apply(this, arguments);
     if (t.ending) return 'Returning to Kampung Bunian';
-    if (t.phase === 'minions') return 'Defeat the minions (' + t.minions.filter(function (e) { return e.dead; }).length + ' / ' + t.minions.length + ')';
-    return 'Defeat ' + t.door.boss[0];
+    var round = 'Round ' + t.round.number + ' · ';
+    if (t.phase === 'minions') return round + 'Defeat the minions (' + t.minions.filter(function (e) { return e.dead; }).length + ' / ' + t.minions.length + ')';
+    return round + 'Defeat ' + t.door.boss[0];
   };
   var stats = U.statRows;
   U.statRows = function () {

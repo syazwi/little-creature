@@ -24,6 +24,11 @@ window.LC = window.LC || {};
         hp: 10, energy: 10, loot: ['serpihan_bayang', 4], kepeng: 1100 }
     ],
     clearCount: function (s, door) { return s.quests && s.quests.bunianClears && s.quests.bunianClears[door.id] || 0; },
+    round: function (s, door) {
+      var clears = B.clearCount(s, door), multiplier = 1 + clears * 0.25;
+      return { number: clears + 1, hp: Math.round(door.boss[2] * multiplier), damage: door.boss[4] + clears,
+        kepeng: Math.round(door.kepeng * multiplier), items: door.loot[1] + clears };
+    },
     bonuses: function (s) {
       var result = { hp: 0, energy: 0 };
       B.doors.forEach(function (door) {
