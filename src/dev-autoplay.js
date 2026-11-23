@@ -340,7 +340,69 @@ window.LC = window.LC || {};
     }
   }
 
-  var routes = LC.DevRoutes = { 12: storm, 13: mantera, 14: senah };
+  function jerebuCan(pilot, refill) {
+    var w = pilot.world;
+    pilot.supply({ can: 1 });
+    var index = w.S.inv.findIndex(function (slot) { return slot && slot.id === 'can'; });
+    if (index >= 0 && w.S.sel !== index) w.ui.selectSlot(index);
+    if (w.S.water > 0) return true;
+    pilot.object(refill, 'Refill the gembor');
+    return false;
+  }
+  function jerebu(pilot, step) {
+    var w = pilot.world, q = w.S.quests, C = LC.C15, j = w.jerebu;
+    if (step === 0) {
+      if (w.senah && (w.senah.finale || w.senah.show || w.senah.gagPending)) {
+        w.S.minutes = Math.min(w.S.minutes, LC.DAY_END - 1);
+        pilot.state.action = 'Watch Kak Senah’s fireworks'; return;
+      }
+      if (pilot.travel('farm') && q.c15wait !== undefined && w.S.day <= q.c15wait) pilot.sleep();
+      return;
+    }
+    if (step === 1) { pilot.npc('penghulu'); return; }
+    if (step >= 2 && step <= 5 && !pilot.travel('kampung')) return;
+    if (step === 2) {
+      if (w.S.minutes < C.night) pilot.clock(C.night / 60);
+      pilot.stand(20, 8, 'Wait by the wakaf after dark'); return;
+    }
+    if (step === 3) {
+      if (!jerebuCan(pilot, 'k_well')) return;
+      var target = C.small.find(function (t) { return j.fires[t.id] && j.fires[t.id].level; });
+      if (target) pilot.object(target.id, 'Douse ' + target.name);
+      return;
+    }
+    if (step === 4) { pilot.object('k_bucket15', 'Join the bucket line'); return; }
+    if (step === 5) {
+      var actors = j.people.filter(function (a) { return !a.calm; });
+      actors.sort(function (a, b) { return range(w.player, a.spr) - range(w.player, b.spr); });
+      var actor = actors[0];
+      if (!actor) return;
+      if (LC.hasLagu() && w.laguLeft() <= 0 && range(w.player, actor.spr) <= LC.C9.lagu.r - 4) { w.ui.pressKey('KeyL'); return; }
+      var pos = actor.spr, dx = pos.x - w.player.x, dy = pos.y - w.player.y;
+      if (Math.hypot(dx, dy) < 31) {
+        w.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
+        var action = w.getAction();
+        if (action && /^Calm /.test(action.label)) { w.doAction(); return; }
+      }
+      pilot.near(pos.x / T - 0.5, pos.y / T - 0.8, 'Walk to ' + actor.data.name, 20);
+      return;
+    }
+    if (step === 6 || step === 7 && w.area !== 'senah') {
+      if (w.S.minutes < C.groveNight) pilot.clock(C.groveNight / 60);
+      if (w.area !== 'senah' && pilot.travel('kampung')) pilot.prop('senah_way', 'Follow the sparks to Kak Senah’s lane');
+      return;
+    }
+    if (step === 7) {
+      if (jerebuCan(pilot, 'sn_tempayan')) {
+        pilot.prop(function (o) { return o.type === 'jerebu_fuse' && !(q.c15fuses || {})[o.i]; }, 'Douse the lit fuses');
+      }
+      return;
+    }
+    if (w.area === 'senah') pilot.prop('senah_back', 'Walk back to Kampung Tepian');
+    else if (pilot.travel('kampung')) pilot.object('k_rain15', 'Talk to Tok Penghulu at the gelanggang');
+  }
+
+  var routes = LC.DevRoutes = { 12: storm, 13: mantera, 14: senah, 15: jerebu };
   var methods = LC.DevAutoplay = {
     supports: function (chapter) { return !!routes[chapter]; },
     start: function (speed, onStatus, onStop) {
@@ -357,7 +419,8 @@ window.LC = window.LC || {};
     s.vector = null;
     var chapter = q.ch2 ? LC.CHAPTER_LIST.find(function (item) { return (q[item.key] || 0) < item.end; }) : LC.DevStory.chapters[0];
     var finished = !chapter;
-    if (finished && !blocked && !world.ui.modal) { methods.stop('Story complete.'); return move.call(this, dt, blocked); }
+    var rain = world.jerebu && world.jerebu.rain;
+    if (finished && !blocked && !world.ui.modal && (!rain || rain.time >= 3)) { methods.stop('Story complete.'); return move.call(this, dt, blocked); }
     if (finished) chapter = LC.CHAPTER_LIST[LC.CHAPTER_LIST.length - 1];
     var step = q[chapter.key] || 0;
     var key = [chapter.n, step, world.area, world.war && world.war.wave, q.c4wave, q.c13Reflected, q.c12Rescued].join(':');

@@ -73,7 +73,7 @@ window.LC = window.LC || {};
     if (on) this.shockwave(p.x, p.y - 4, 26, 0x8fe8ff);
   };
   // while you ride, every swing sends a jet of water ahead
-  proto.nagaJet = function () {
+  proto.nagaJet = function (onTravel) {
     var self = this, p = this.player, d = DIRV[this.dir], x = p.x + d[0] * 14, y = p.y - 12 + d[1] * 10, J = LC.NAGA_JET;
     var img = this.add.image(x, y, 'jet8').setDepth(9550).setAngle(ANG[this.dir]).setBlendMode(ADD());
     LC.Audio.sfx('splash');
@@ -81,6 +81,7 @@ window.LC = window.LC || {};
     this.tweens.add({ targets: o, t: 1, duration: J.life * 1000, onUpdate: function () {
       if (!img.active || self.leaving) return;
       var nx = x + d[0] * dist * o.t, ny = y + d[1] * dist * o.t;
+      if (onTravel) onTravel(nx, ny);
       img.setPosition(nx, ny).setScale(1 + o.t * 0.7, 1 - o.t * 0.2);
       if (Math.random() < 0.45) self.fx.bubble.explode(1, nx, ny);
       (self.enemies || []).forEach(function (e) {

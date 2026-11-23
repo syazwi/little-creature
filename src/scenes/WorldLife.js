@@ -328,6 +328,7 @@ window.LC = window.LC || {};
       var self = this, S = this.S, awake = present(S), p = this.player;
       Object.keys(this.npcs).forEach(function (vid) {
         var n = self.npcs[vid], here = n.ghost || awake || (vid === 'badang' && LC.badangWatch());   // ghosts (and Badang, on his night watch) stay up all night
+        if (here && self.jerebuAway && self.jerebuAway(vid)) here = false;
         if (n.here !== here) {
           n.here = here; n.spr.setVisible(here);
           self.solid[n.ty][n.tx] = here; self.objAt[n.ty][n.tx] = here ? n.o : null;

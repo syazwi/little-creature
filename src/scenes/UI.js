@@ -1028,9 +1028,9 @@ window.LC = window.LC || {};
             rows.push({ icon: LC.ITEMS[crave].icon, label: '✦ Pelita is craving ' + LC.ITEMS[crave].name + ' today', right: 'x' + LC.State.count(crave),
               sub: 'No cooking needed: hold it and face Pelita (or its spirit house) to give it. (+20 bond)' });
           return rows.concat(ordered(LC.RECIPES).map(function (r) {
-            var it = LC.ITEMS[r.out], ok = LC.State.has(r.inp), fav = LC.LOVES.indexOf(r.out) >= 0 ? '  ♥' : '', batch = (S.house || 0) >= 2 ? 5 : 1;   // v1.8: the bigger dapur
+            var it = LC.ITEMS[r.out], ok = LC.State.has(r.inp), fav = LC.LOVES.indexOf(r.out) >= 0 ? '  ♥' : '', batch = LC.cookBatch(S);
             var wt = wantText(r.out);
-            return { icon: it.icon, label: (wt ? '✦ ' : '') + it.name + fav, sub: wt + self.ingText(r.inp) + (batch > 1 ? '  (cooks up to 5 at once)' : ''), right: 'x' + LC.State.count(r.out), enabled: ok && LC.State.canAdd(r.out), why: ok ? 'Your bag is full!' : 'Missing ingredients.',
+            return { icon: it.icon, label: (wt ? '✦ ' : '') + it.name + fav, sub: wt + self.ingText(r.inp) + (batch > 1 ? '  (cooks up to ' + batch + ' at once)' : ''), right: 'x' + LC.State.count(r.out), enabled: ok && LC.State.canAdd(r.out), why: ok ? 'Your bag is full!' : 'Missing ingredients.',
               action: function () {
                 var made = 0;
                 while (made < batch && LC.State.has(r.inp) && LC.State.canAdd(r.out)) { LC.State.takeAll(r.inp); LC.State.add(r.out, 1); made++; }

@@ -34,7 +34,7 @@ window.LC = window.LC || {};
 
   var chapters = [{ n: 1, name: 'Little Creature', end: 1, steps: ['Help Pelita become a Legend of the Kampung'] }].concat(LC.CHAPTER_LIST);
   var entryHours = { 5: 19.5, 9: 20.5, 11: 20.5, 14: 19 };
-  var delays = { 4: 'ch3day', 5: 'ch4day', 6: 'ch5day', 7: 'c7wait', 8: 'c8wait', 9: 'c9wait', 10: 'c10wait', 11: 'c11wait' };
+  var delays = { 4: 'ch3day', 5: 'ch4day', 6: 'ch5day', 7: 'c7wait', 8: 'c8wait', 9: 'c9wait', 10: 'c10wait', 11: 'c11wait', 15: 'c15wait' };
   function grant(map) {
     Object.keys(map).forEach(function (id) {
       if (!LC.ITEMS[id]) throw new Error('Unknown chapter reward ' + id);
@@ -127,6 +127,10 @@ window.LC = window.LC || {};
     13: function (s) {
       Object.assign(s.quests, { c13Learned: true, c13Lesson: true, c13Reflected: 3, c13Golems: true, c13NekGone: true });
       visit(s, ['mantera', 'manteraVault']);
+    },
+    14: function (s) {
+      s.quests.c14found = { jusoh: true, bahar: true, amin: true };
+      grant({ seri_muka: 5 }); visit(s, ['senah']); earn(s, 800);
     }
   };
 

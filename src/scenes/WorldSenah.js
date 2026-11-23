@@ -248,63 +248,34 @@ window.LC = window.LC || {};
         if (sn.shadow) { sn.shadow.destroy(); sn.shadow = null; }
         this.refreshWhen();
         var self = this;
+        sn.gagPending = true;
         this.senahFireworks(14, function () {
           if (self.area !== 'senah') return;
           self.senahLaugh(C.pisang.x, C.pisang.y - 2);
-          self.time.delayedCall(700, function () { if (self.area === 'senah') self.senahLines(X.gag); });
+          self.time.delayedCall(700, function () { if (self.area === 'senah') { sn.gagPending = false; self.senahLines(X.gag); } });
         });
       }
     },
 
     // ---------------------------------------------------------------- bunga api over Kak Senah's yard
     senahFireworks: function (n, done) {
-      var self = this, sn = this.senah, cam = this.cameras.main;
+      var self = this, sn = this.senah;
       if (!sn || sn.show) return;
       sn.show = true;
-      var COLORS = [[0xff4a4a, 0xffd0a0], [0x4ab0ff, 0xd0f0ff], [0x5ae05a, 0xe0ffd0], [0xffd23a, 0xfff2b0], [0xd070ff, 0xffd0ff], [0xff8a3a, 0xffe0a0]];
-      if (!sn.fwE) {   // one emitter per colour (made once per visit; they go when the scene changes)
-        sn.fwE = COLORS.map(function (c) {
-          var e = self.add.particles(0, 0, 'px', { emitting: false, speed: { min: 35, max: 120 }, lifespan: { min: 900, max: 1600 }, gravityY: 40,
-            scale: { start: 0.95, end: 0 }, alpha: { start: 1, end: 0 }, tint: [c[0], c[1]], blendMode: 'ADD' }).setDepth(9650);
-          var explode = e.explode;
-          e.explode = function (count, x, y) { return explode.call(this, LC.Display ? LC.Display.effectCount(count) : count, x, y); };
-          return e;
-        });
-      }
-      var launch = [{ x: 14, y: 14 }, { x: 17, y: 14.5 }, { x: 19, y: 14 }, { x: 21, y: 15 }, { x: 15.5, y: 15.5 }];
-      function rocket(grand) {
-        if (self.area !== 'senah' || !self.senah) return;
-        var wv = cam.worldView, from = launch[Math.floor(Math.random() * launch.length)];
-        var lx = from.x * T + Phaser.Math.Between(-6, 6), ly = from.y * T;
-        var bx = Phaser.Math.Clamp(lx + Phaser.Math.Between(-70, 70), wv.x + wv.width * 0.3, wv.x + wv.width * 0.7);   // (the middle of the sky, clear of the corner panels)
-        var by = wv.y + wv.height * Phaser.Math.FloatBetween(0.16, 0.36), ci = Math.floor(Math.random() * COLORS.length);
-        var r = self.add.image(lx, ly, 'px').setScale(0.55).setTint(0xffe0a0).setBlendMode(Phaser.BlendModes.ADD).setDepth(9640);
-        LC.Audio.sfx('whizz14');
-        self.tweens.add({ targets: r, x: bx, y: by, duration: Phaser.Math.Between(650, 850), ease: 'Quad.easeOut',
-          onUpdate: function () { if (Math.random() < 0.5) self.fx.sparkle.explode(1, r.x, r.y + 2); },
-          onComplete: function () {
-            r.destroy();
-            if (!self.senah || !self.senah.fwE) return;
-            var E = self.senah.fwE;
-            E[ci].explode(grand ? 75 : 52, bx, by);
-            if (Math.random() < 0.5 || grand) E[(ci + 2) % E.length].explode(grand ? 36 : 22, bx, by);
-            var flash = self.add.image(bx, by, 'glow').setBlendMode(Phaser.BlendModes.ADD).setTint(COLORS[ci][0]).setScale(0.3).setAlpha(0.9).setDepth(9645);
-            self.tweens.add({ targets: flash, scale: grand ? 3.2 : 2.2, alpha: 0, duration: 560, onComplete: function () { flash.destroy(); } });
-            LC.Audio.sfx('boom14');
-            if (Math.random() < 0.6) self.time.delayedCall(250, function () { LC.Audio.sfx('crackle14'); });
-          } });
-      }
-      var t = 600;
-      for (var i = 0; i < n; i++) { this.time.delayedCall(t, function () { rocket(false); }); t += Phaser.Math.Between(550, 900); }
-      for (var g = 0; g < 4; g++) this.time.delayedCall(t + 300 + g * 120, function () { rocket(true); });   // the grand finale
       var cheer = 0, folks = ['sn_jusoh1', 'sn_bahar1', 'sn_amin2', 'sn_imam1', 'sn_kak'];
-      this.time.addEvent({ delay: 1500, repeat: Math.floor(t / 1500), callback: function () {   // the kampung cheers
-        var im = self.objImgs && self.objImgs[folks[cheer % folks.length]];
-        if (im) { self.ui.floatText(im.x, im.y - 22, X.cheers[cheer % X.cheers.length], '#fff2c0'); self.tweens.add({ targets: im, y: im.y - 4, duration: 120, yoyo: true }); }
-        cheer++;
-      } });
-      this.time.delayedCall(t + 2600, function () {
-        if (self.senah) self.senah.show = false;
+      this.fwShow(n, {
+        launch: [{ x: 14, y: 14 }, { x: 17, y: 14.5 }, { x: 19, y: 14 }, { x: 21, y: 15 }, { x: 15.5, y: 15.5 }],
+        active: function () { return self.area === 'senah' && self.senah === sn; },
+        cheer: function () {
+          var im = self.objImgs && self.objImgs[folks[cheer % folks.length]];
+          if (im) {
+            self.ui.floatText(im.x, im.y - 22, X.cheers[cheer % X.cheers.length], '#fff2c0');
+            self.tweens.add({ targets: im, y: im.y - 4, duration: 120, yoyo: true });
+          }
+          cheer++;
+        }
+      }, function () {
+        if (self.senah === sn) sn.show = false;
         LC.Audio.sfx('cheer');
         if (done) done();
       });
