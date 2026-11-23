@@ -76,6 +76,7 @@ window.LC = window.LC || {};
     this.removeStormEnemy(e);
     this.fx.sparkle.explode(e.def.boss ? 22 : 8, e.spr.x, e.spr.y - 14);
     if (e.kind === 'suraya13') {
+      this.clearManteraSpells();
       this.stormBonus(); story(this, 4);
     } else if (e.kind === 'collector13') {
       this.stormBonus(); story(this, 6);
@@ -179,6 +180,7 @@ window.LC = window.LC || {};
       m.boss.spr.setVisible(true).setAlpha(0.3);
       this.tweens.add({ targets: m.boss.spr, alpha: 1, duration: 450 });
       if (vault) { this.manteraLines(X.vault); return; }
+      m.trueShadow = this.add.image(m.boss.spr.x, m.boss.spr.y, 'mantera_true_shadow').setDepth(6);
       m.marks = C.court.slice(0, 3).concat([C.suraya]);
       m.real = 3;
       m.copies = m.marks.map(function (p, i) {
@@ -346,6 +348,7 @@ window.LC = window.LC || {};
       m.bolts = []; m.meteors = []; m.cosmic = false;
       m.copies.forEach(function (s) { s.destroy(); });
       m.copies = [];
+      if (m.trueShadow) { m.trueShadow.destroy(); m.trueShadow = null; }
     },
     updateManteraRift: function (dt) {
       var self = this, m = this.mantera, anchor = this.tilePx(C.rift);
@@ -401,9 +404,8 @@ window.LC = window.LC || {};
       }
       if (m.boss && !m.boss.dead) {
         var actor = m.boss.spr;
-        if (m.boss.kind === 'suraya13') {
-          floor.fillStyle(0x302034, 0.55); floor.fillEllipse(actor.x, actor.y, 23, 9);
-          g.lineStyle(1, MIRROR, 0.75); g.strokeEllipse(actor.x, actor.y, 25, 9);
+        if (m.trueShadow) {
+          m.trueShadow.setPosition(actor.x, actor.y).setAlpha(0.86 + 0.14 * Math.sin(time / 210));
           m.copies.forEach(function (s, i) { s.setAlpha(0.35 + 0.14 * Math.sin(time / 160 + i)); });
         }
         if (m.boss.g.manteraSeal) {

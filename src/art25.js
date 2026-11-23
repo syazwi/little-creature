@@ -59,6 +59,14 @@ window.LC = window.LC || {};
       p.poly([[7, 1], [13, 3], [15, 9], [11, 14], [3, 14], [1, 8]], '#537d79');
       p.poly([[7, 2], [12, 4], [10, 9], [3, 8]], '#99c7a8'); p.line(6, 10, 10, 5, '#ffe4a3');
     });
+    Art.make(scene, 'mantera_true_shadow', 36, 14, function (p) {
+      p.ell(18, 7, 14, 4, 'rgba(246,192,110,0.25)');
+      p.ell(18, 7, 10, 2, 'rgba(92,65,99,0.33)');
+      var gold = { g: '#f7c477', w: '#fff1cb' };
+      p.str(['..g..', '.ggg.', 'ggwgg', '.ggg.', '..g..'], gold, 2, 3);
+      p.str(['.g.', 'gwg', '.g.'], gold, 29, 5);
+      p.px(15, 10, '#f7c477'); p.px(22, 11, '#fff1cb');
+    });
     [0, 1].forEach(function (f) {
       make('suraya13_' + f, 25, 28, function (p) { sorcerer(p, f, false); });
       make('npc_suraya13_' + f, 25, 28, function (p) { sorcerer(p, f, false); });
