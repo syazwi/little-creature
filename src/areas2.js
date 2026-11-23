@@ -31,10 +31,11 @@ window.LC = window.LC || {};
     f.ell(21.5, 7, 7, 3.2, 'k');                 // the stone plaza around the keris
     f.fill(21, 10, 22, H - 1, 'p');              // the path south to the gate
     f.fill(4, 15, 39, 16, 'p');                  // the cross street
-    f.fill(11, 17, 11, 17, 'p');
+    f.fill(3, 8, 14, 14, 'k');                   // the northwestern trial court
+    f.fill(8, 15, 9, 15, 'k');                   // the court's entrance from the cross street
+    f.fill(11, 17, 12, 19, 'p');                 // the approach to Dang Melur's stall
+    f.fill(33, 17, 34, 21, 'p');                 // the approach to the lotus pond
     f.ell(33, 25, 5, 3, 'q');                    // the lotus pond
-    f.fill(8, 25, 27, 28, 'k');                  // the courtyard of the four trials
-    f.fill(21, 23, 22, 25, 'k');
     f.ell(6, 26, 3, 2.4, 'J'); f.ell(40, 8, 1.8, 2.6, 'J');
     return g;
   }
@@ -45,10 +46,11 @@ window.LC = window.LC || {};
     { id: 'b_rumah3', type: 'bldg', x: 25, y: 19, w: 4, h: 3, tex: 'rumah_bunian', keep: true, text: 'A Bunian house. Somebody inside is playing a rebab, very softly.' },
     { id: 'b_rumah4', type: 'bldg', x: 3, y: 19, w: 4, h: 3, tex: 'rumah_bunian', keep: true, text: 'A Bunian house with a garden of golden flowers. The air smells of jasmine.' },
     { id: 'b_gerai', type: 'bldg', x: 8, y: 17, w: 3, h: 2, tex: 'gerai_bunian', keep: true, text: 'Dang Melur\'s stall of rare goods, hung with tiny lamps.' },
-    { id: 'b_frangi1', type: 'bldg', x: 11, y: 10, w: 1, h: 1, tex: 'frangipani', text: 'A kemboja tree in full bloom, as it is all year round here.' },
+    { id: 'b_frangi1', type: 'bldg', x: 16, y: 12, w: 1, h: 1, tex: 'frangipani', text: 'A kemboja tree in full bloom, as it is all year round here.' },
     { id: 'b_frangi2', type: 'bldg', x: 31, y: 10, w: 1, h: 1, tex: 'frangipani', text: 'A kemboja tree. Its petals drift down and vanish before they touch the ground.' },
-    { type: 'torch', x: 18, y: 12 }, { type: 'torch', x: 25, y: 12 }, { type: 'torch', x: 19, y: 24 }, { type: 'torch', x: 24, y: 24 },
-    { type: 'torch', x: 13, y: 14 }, { type: 'torch', x: 30, y: 14 }
+    { id: 'b_trial_sign', type: 'signpost', x: 15, y: 14, tex: 'sign', text: 'The four trial doors are in the stone court to the northwest. Ask Penjaga Pintu for advice.' },
+    { type: 'torch', x: 18, y: 12 }, { type: 'torch', x: 25, y: 12 }, { type: 'torch', x: 30, y: 14 },
+    { type: 'torch', x: 3, y: 8 }, { type: 'torch', x: 14, y: 8 }, { type: 'torch', x: 3, y: 14 }, { type: 'torch', x: 14, y: 14 }
   ];
 
   // ------------------------------------------------------------------ Lombong Puaka (the haunted gold mine)
