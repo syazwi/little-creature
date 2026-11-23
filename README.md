@@ -79,7 +79,7 @@ PC browsers and Android phones can all play together.
 | Action | Keyboard | Touch (phone/tablet) |
 |---|---|---|
 | Move | WASD / Arrow keys | Drag anywhere on the left side (floating joystick) |
-| Interact / use item | E / Space / Enter | **USE** button (glows gold when something can be done) |
+| Interact / use item | E / Space / Enter | **USE** button (glows gold when something can be done), or **tap the thing itself** (v3.9) |
 | Select hotbar slot | 1 – 9, mouse wheel | Tap a slot |
 | Eat the selected food | X | **EAT** button |
 | Bag (and **Throw away**) | Tab / I (T or Delete throws the selected item away) | **BAG** button |
@@ -108,6 +108,8 @@ PC browsers and Android phones can all play together.
 | Angin Bualang, your gust (after Chapter 7) | U | Tap the gust button beside the wau |
 | Lagu Mayang, the song that calms (after Chapter 9) | L | Tap the mayang button above the wau |
 | Sing back the Ulek Mayang (Chapter 9) | 1 2 3 4 5 | Tap the lamps |
+
+**Tap to use (v3.9).** On a phone or tablet, walk with the joystick, then just tap a person, Pelita, an animal, a crop or anything else within two steps of you: you turn to it and use it, exactly as if you faced it and pressed USE. Things you can tap glow softly at their feet. Tap something farther away and "Walk closer" appears. Tap an enemy to swing at it, and tap Pelita to pet it (or to feed it the food you hold). A press that drags still works the joystick, so walking is unchanged. It is on by default; Pause > **Tap to use** turns it off (the USE button always works). After the update, players see a one-time "What's new" note explaining it.
 
 Touch controls switch on automatically on touch screens. You can toggle them in the pause menu, where **Sound & music** also sets the volume of the music, the battle music, the sound effects and the nature sounds.
 
