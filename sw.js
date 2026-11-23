@@ -6,7 +6,7 @@
  * dist/ (the version news and the downloads) always comes from the internet. */
 
 // ---- stamped by tools/build-web.mjs on every build (do not edit by hand): the version, and every file the game needs
-var CACHE = 'little-creature-65-20261123063606';
+var CACHE = 'little-creature-66-20261123125001';
 var FILES = [
   './', 'index.html', 'manifest.webmanifest', 'lib/phaser.min.js', 'lib/peerjs.min.js', 'src/version.js',
   'src/update.js', 'src/data.js', 'src/areas.js', 'src/folk.js', 'src/data2.js', 'src/areas2.js', 'src/undersea.js',
@@ -36,8 +36,9 @@ var FILES = [
   'src/scenes/WorldStormReef.js', 'src/scenes/UIStormReef.js', 'src/scenes/WorldMantera.js', 'src/scenes/UIMantera.js',
   'src/scenes/WorldBunianTrials.js', 'src/scenes/WorldTap.js', 'src/scenes/UITap.js', 'src/level.js', 'src/scenes/WorldLevel.js',
   'src/scenes/UILevel.js', 'src/senah.js', 'src/scenes/WorldFireworks.js', 'src/scenes/WorldSenah.js', 'src/scenes/UISenah.js',
-  'src/jerebu.js', 'src/scenes/WorldJerebu.js', 'src/scenes/UIJerebu.js', 'src/main.js', 'lib/fonts/PixelifySans-latin.woff2',
-  'lib/fonts/PixelifySans-latin-ext.woff2', 'icons/icon-192.png', 'icons/icon-512.png'
+  'src/jerebu.js', 'src/scenes/WorldJerebu.js', 'src/scenes/UIJerebu.js', 'src/scenes/UICompanionProfiles.js',
+  'src/main.js', 'lib/fonts/PixelifySans-latin.woff2', 'lib/fonts/PixelifySans-latin-ext.woff2', 'icons/icon-192.png',
+  'icons/icon-512.png'
 ];
 // ---- end of stamp
 

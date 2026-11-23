@@ -658,7 +658,7 @@ window.LC = window.LC || {};
     openMenu(cfg) {
       this.closeModal();
       // v1.8.1: roomier cards (5 to a page) whose text always fits: a long description shrinks, then is shortened
-      var self = this, S = this.S, tab = cfg.tab > 0 && cfg.tab < cfg.tabs.length ? cfg.tab : 0, sel = 0, scroll = 0, VIS = 5, m;   // (v2.8: cfg.tab, the tab to start on)
+      var self = this, S = this.S, tab = cfg.tab > 0 && cfg.tab < cfg.tabs.length ? cfg.tab : 0, sel = Math.max(0, cfg.selected || 0), scroll = 0, VIS = 5, m;
       var X = 90, Y = 46, Wd = 780, Hd = 578, RH = 84;
       var c = this.modalC(90, 0x000000, 0.45);
       var bg = this.add.graphics(); this.panel(bg, X, Y, Wd, Hd); c.add(bg);
@@ -698,8 +698,8 @@ window.LC = window.LC || {};
       var dn = this.scrollBtn(c, X + Wd + 8, listY + (VIS - 2) * RH, 2 * RH - 6, false, function () { var n = cur().length; if (scroll + VIS < n) { scroll = Math.min(n - VIS, scroll + VIS - 1); sel = scroll; LC.Audio.sfx('click'); render(); } });
       var empty = this.txt(X + Wd / 2, listY + 110, '', 18, '#a08a6a', { ox: 0.5, wrap: Wd - 100, align: 'center' });
       var foot = this.txt(X + Wd / 2, Y + Hd - 56, '', 14, '#cdb8a0', { ox: 0.5, wrap: Wd - 90, align: 'center' });
-      var keys = this.txt(X + Wd / 2, Y + Hd - 22, this.touchOn ? 'Tap a row to choose' + (tabs.length > 1 ? '  ·  tap a tab to switch' : '') + '  ·  X to close'
-        : 'W/S choose  ·  E select' + (tabs.length > 1 ? '  ·  A/D switch tab' : '') + '  ·  Esc close', 12, '#8a7a6a', { ox: 0.5 });
+      var keys = this.txt(X + Wd / 2, Y + Hd - 22, cfg.keys || (this.touchOn ? 'Tap a row to choose' + (tabs.length > 1 ? '  ·  tap a tab to switch' : '') + '  ·  X to close'
+        : 'W/S choose  ·  E select' + (tabs.length > 1 ? '  ·  A/D switch tab' : '') + '  ·  Esc close'), 12, '#8a7a6a', { ox: 0.5 });
       c.add([empty, foot, keys]);
 
       // a title shrinks so it never runs into the price on the right; a description gets up to three lines
@@ -747,7 +747,7 @@ window.LC = window.LC || {};
         tabT.forEach(function (t, k) { t.setColor(k === tab ? '#ffd166' : '#8a7a6a').setText(k === tab && tabs.length <= 5 ? '[ ' + tabs[k].label + ' ]' : tabs[k].label); });
         empty.setText(list.length || tabs[tab].draw ? '' : (tabs[tab].empty || 'Nothing here.'));
         if (coinT) coinT.setText(String(S.kepeng));
-        foot.setText(typeof cfg.footer === 'function' ? cfg.footer() : (cfg.footer || ''));
+        foot.setText(typeof cfg.footer === 'function' ? cfg.footer(tab) : (cfg.footer || ''));
       }
       // v2.7.5: a shop row with qty: { id, price, buy(n)? } asks how many first (- and +, ±10, Max), then buys them all
       var qo = null;
@@ -810,7 +810,7 @@ window.LC = window.LC || {};
       }
       function activate() {
         var it = cur()[sel];
-        if (!it) return;
+        if (!it) { if (tabs[tab].activate) tabs[tab].activate(); return; }
         if (it.enabled === false) { LC.Audio.sfx('error'); if (it.why) self.toast(it.why); return; }
         if (it.qty) { openQty(it); return; }
         if (!it.action) return;
@@ -825,7 +825,7 @@ window.LC = window.LC || {};
         key: function (code) {
           if (qo) { qo.key(code); return; }   // v2.7.5: the quantity picker is open
           var n = cur().length;
-          if (code === 'Escape' || code === 'Tab') { close(); return; }
+          if (code === 'Escape' || code === 'Tab') { close(); if (cfg.onBack) cfg.onBack(); return; }
           if (code === 'ArrowUp' || code === 'KeyW') { sel = Math.max(0, sel - 1); LC.Audio.sfx('click'); }
           else if (code === 'ArrowDown' || code === 'KeyS') { sel = Math.min(Math.max(0, n - 1), sel + 1); LC.Audio.sfx('click'); }
           else if ((code === 'ArrowLeft' || code === 'KeyA') && tabs.length > 1) { tab = (tab + tabs.length - 1) % tabs.length; sel = 0; scroll = 0; LC.Audio.sfx('click'); }
@@ -837,6 +837,7 @@ window.LC = window.LC || {};
       };
       if (LC.DEVELOPER_HTML) m.devChoose = function (match) {
         for (var k = 0; k < tabs.length; k++) {
+          if (!tabs[k].rows) continue;
           var i = tabs[k].rows().findIndex(function (row) { return row.action && row.enabled !== false && match.test(row.label); });
           if (i >= 0) { tab = k; sel = i; activate(); return true; }
         }
@@ -1132,7 +1133,7 @@ window.LC = window.LC || {};
             { icon: 'ic_stats', label: 'My stats', sub: 'Health, energy, strength, attack, speed, kepeng, Pelita\'s level, abilities and records.', action: function () { self.openStats(0); } },   // v2.8
             (function () {
               var n = self.world.companionCount ? self.world.companionCount() : 0;
-              return { icon: 'ic_comp', label: 'Companions: ' + (n ? n + ' with you' : 'None'), sub: 'Who travels with you and what each one does for you. Send them home, or bring a spirit friend along.', action: function () { self.openStats(1); } };
+              return { icon: 'ic_comp', label: 'Companions: ' + (n ? n + ' with you' : 'None'), sub: 'View companion portraits, stats and skills. Bring them along or send them home from their profiles.', action: function () { self.openStats(1); } };
             })()
           ].concat(coop, [
             N.isGuest() ? { icon: 'ic_bond', label: 'Save my bag', sub: 'Your bag, kepeng, strength and quests are kept on this device. ' + N.hostName + ' saves the farm itself.', action: function () { self.toast(LC.State.save() ? 'Your bag is saved.' : 'Could not save: browser storage is blocked.', 'ic_bond'); return 'close'; } }

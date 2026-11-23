@@ -153,11 +153,14 @@ window.LC = window.LC || {};
     },
 
     // My stats: your aura, the attribute octagon, your level
-    openStats: function (tab) {
+    openStats: function (tab, companionId) {
       var self = this;
       this.openMenu({
         title: 'You', tab: tab === 1 ? 2 : tab === 2 ? 1 : tab || 0,
-        footer: 'Earn XP by beating monsters, finishing chapter steps, catching fish, training and helping Pelita grow.',
+        selected: companionId ? this.companionRows().findIndex(function (row) { return row.companionId === companionId; }) : 0,
+        footer: function (tab) {
+          return tab === 2 ? 'Select a companion to view their profile.' : 'Earn XP by beating monsters, finishing chapter steps, catching fish, training and helping Pelita grow.';
+        },
         tabs: [{ label: 'Me', draw: function (c, box) { self.drawMe(c, box); } },
           { label: 'My stats', rows: function () { return self.statRows(); } },
           { label: 'Companions', rows: function () { return self.companionRows(); } }]

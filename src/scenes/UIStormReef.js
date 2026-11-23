@@ -25,7 +25,8 @@ window.LC = window.LC || {};
   U.companionRows = function () {
     var list = rows.apply(this, arguments), self = this, world = this.world, q = this.S.quests;
     if (C.step(this.S) < C.end) return list;
-    list.push({ icon: 'npc_jack12_0', label: 'Jack Separaw' + (q.c12Jack ? ' (with you)' : ''), right: q.c12Jack ? 'Dismiss' : 'Bring',
+    list.push({ companionId: 'jack', companionStatus: q.c12Jack ? 'In your party' : 'At the jetty',
+      icon: 'npc_jack12_0', label: 'Jack Separaw' + (q.c12Jack ? ' (with you)' : ''), right: q.c12Jack ? 'Dismiss' : 'Bring',
       sub: 'Jack follows you and fights nearby enemies whenever you go into battle.', action: function () {
         q.c12Jack = !q.c12Jack; world.refreshStormJack(); LC.State.save();
         self.toast(q.c12Jack ? 'Jack Separaw is ready to fight at your side.' : 'Jack Separaw heads back to the jetty.', 'npc_jack12_0');

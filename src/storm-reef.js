@@ -16,6 +16,7 @@ window.LC = window.LC || {};
     dock: { x: 22, y: 28 }, port: { x: 8, y: 29 }, rival: { x: 38, y: 26 }, reef: { x: 57, y: 30 },
     crews: [{ x: 57, y: 27 }, { x: 60, y: 29 }, { x: 58, y: 33 }],
     eye: { x: 23, y: 13 },
+    jackFight: { dmg: 4, cd: 2.4, sight: 84, reach: 36 },
     encounter: function (S) {
       var n = S.quests.stormVoyage || 0;
       var roll = Math.imul((S.mineSeed >>> 0) ^ (n + 41), 2654435761) >>> 0;

@@ -445,11 +445,11 @@ window.LC = window.LC || {};
       this.storm.jack = { spr: spr, cd: 1.6, entrance: this.area === 'stormdeck' ? 0.7 : 0 };
     },
     updateStormJack: function (dt, blocked) {
-      var jack = this.storm.jack, p = this.player, spr = jack.spr;
+      var jack = this.storm.jack, p = this.player, spr = jack.spr, fight = C.jackFight;
       if ((jack.entrance -= dt) > 0 || blocked) return;
       jack.cd -= dt;
       var foe = (this.enemies || []).filter(active).reduce(function (a, e) {
-        return distance(p, e.spr) < 84 && (!a || distance(spr, e.spr) < distance(spr, a.spr)) ? e : a;
+        return distance(p, e.spr) < fight.sight && (!a || distance(spr, e.spr) < distance(spr, a.spr)) ? e : a;
       }, null);
       var foot = foe ? foe.spr : { x: p.x - 18, y: p.y + 7 }, d = distance(spr, foot);
       if (distance(spr, p) > 152) spr.setPosition(p.x - 12, p.y + 8);
@@ -459,13 +459,13 @@ window.LC = window.LC || {};
         if (!this.blockedAt(spr.x, y)) spr.y = y;
       }
       spr.setDepth(spr.y).setFlipX(foot.x < spr.x);
-      if (!foe || d > 36 || jack.cd > 0) return;
-      jack.cd = 2.4;
+      if (!foe || d > fight.reach || jack.cd > 0) return;
+      jack.cd = fight.cd;
       var arc = this.add.image(foe.spr.x, foe.spr.y - 9, 'slash_right').setDepth(9598).setTint(0xffd298).setAlpha(0.9).setScale(0.8);
       this.tweens.add({ targets: arc, alpha: 0, scale: 1.2, duration: 240, onComplete: function () { arc.destroy(); } });
       this.tweens.add({ targets: spr, angle: spr.flipX ? -9 : 9, duration: 85, yoyo: true });
-      LC.Audio.sfx('swing'); this.ui.floatText(foe.spr.x, foe.spr.y - 19, 'Jack 4', '#ffdd9f');
-      foe.hp -= 4; foe.hurtT = 0.15; foe.spr.setTintFill(0xffffff);
+      LC.Audio.sfx('swing'); this.ui.floatText(foe.spr.x, foe.spr.y - 19, 'Jack ' + fight.dmg, '#ffdd9f');
+      foe.hp -= fight.dmg; foe.hurtT = 0.15; foe.spr.setTintFill(0xffffff);
       if (foe.hp <= 0) this.enemyDie(foe);
     }
   });

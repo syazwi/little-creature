@@ -1,7 +1,6 @@
-/* v2.8: companions and your stats.
- * - Everyone travelling with you is in one place (pause menu > Companions, or the second tab of "You"): what each one
- *   does for you, and a button to send them home (it used to be only at Pelita's spirit house, or in Badang's own menu
- *   while he was away following you). Spirit friends can be brought along from there too.
+/* Companions and your stats.
+ * - Pause menu > Companions lists travelling and available companions. Their profiles explain their skills and
+ *   let you bring, call or dismiss a companion when that action is available.
  * - Every companion helps: each folk spirit gives a bonus while it travels with you (LC.SPIRITS[sid].perk), Si Tanggang
  *   quickens your step; Badang, Nek Lampir and Sang Bualang fight for you.
  * - My stats: health, energy, strength, attack, speed, kepeng, Pelita, the bag, the gembor, abilities, blessings, records.
@@ -77,36 +76,41 @@ window.LC = window.LC || {};
     companionRows: function () {
       var self = this, S = this.S, W = this.world, rows = [], tap = this.touchOn;
       var pel = W.following && W.following();
-      rows.push({ icon: 'ic_bond', label: 'Pelita' + (pel ? '  (with you)' : '  (at its spirit house)'),
+      rows.push({ companionId: 'pelita', companionStatus: pel ? 'With you' : 'At its spirit house',
+        icon: 'ic_bond', label: 'Pelita' + (pel ? '  (with you)' : '  (at its spirit house)'),
         sub: pel ? 'Your own little spirit. It stays with you while its joy is 12 or more, and every level brings a gift.' : 'Your own little spirit. Play with it and feed it: once its joy is 12 or more, it follows you again.' });
       // ---- with you now
       var sid = S.companion, sp = sid && LC.SPIRITS[sid];
-      if (sp && LC.State.friend(sid)) rows.push({ icon: 'sp_' + sid, iconScale: 1.4, label: sp.name + '  (with you)', right: 'Send home',
+      if (sp && LC.State.friend(sid)) rows.push({ companionId: sid, companionStatus: 'With you', icon: 'sp_' + sid, iconScale: 1.4, label: sp.name + '  (with you)', right: 'Send home',
         sub: 'While it travels with you: ' + sp.perk + '. Its blessing works either way: ' + sp.blessing + '.', action: function () { W.setCompanion(sid); } });
-      if (LC.badangBuddy()) rows.push({ icon: 'ic_badang', label: 'Badang  (with you today)', right: 'Send home',
+      if (LC.badangBuddy()) rows.push({ companionId: 'badang', companionStatus: 'With you today', icon: 'ic_badang', label: 'Badang  (with you today)', right: 'Send home',
         sub: 'He fights anything that threatens you, all day.', action: function () { W.sendBuddyHome(); } });
-      if (W.nek && !W.nek.leaving) rows.push({ icon: 'ic_nek', label: 'Nek Lampir  (with you)', right: 'Send home',
+      if (W.nek && !W.nek.leaving) rows.push({ companionId: 'lampir', companionStatus: 'With you', icon: 'ic_nek', label: 'Nek Lampir  (with you)', right: 'Send home',
         sub: 'She throws pepper at anything that attacks you, and pulls you out of danger when you are badly hurt. In a fight, ' + (tap ? 'tap her face' : 'press C') + ' for her green circle (half the hurt inside it).',
         action: function () { W.nekLeave(pick(LC.NEKTEXT.leave)); } });
-      if (W.bual && !W.bual.leaving) rows.push({ icon: 'ic_wau', label: 'Sang Bualang  (with you)', right: 'Send home',
+      if (W.bual && !W.bual.leaving) rows.push({ companionId: 'bualang', companionStatus: 'With you', icon: 'ic_wau', label: 'Sang Bualang  (with you)', right: 'Send home',
         sub: 'He spins into enemies and flings them back, dizzy. ' + (tap ? 'Tap the wau' : 'Press B') + ' to send him spinning at once.', action: function () { W.bualLeave(pick(LC.BUALANGTEXT.leave)); } });
-      if (S.escort) rows.push({ icon: 'npc_tanggang_0', iconScale: 1.6, label: 'Si Tanggang  (with you)', right: 'Ask him to wait', enabled: !W.reuniting, why: 'He is with his mother now.',
+      if (S.escort) rows.push({ companionId: 'tanggang', companionStatus: W.reuniting ? 'With Mak Deruma' : 'With you',
+        icon: 'npc_tanggang_0', iconScale: 1.6, label: 'Si Tanggang  (with you)', right: 'Ask him to wait', enabled: !W.reuniting, why: 'He is with his mother now.',
         sub: 'While he walks with you: you walk ' + Math.round(LC.COMP.escort * 100) + '% faster. Take him to Mak Deruma on the beach of Pulau Mutiara.', action: function () { W.stopEscort(); } });
       if (!W.companionCount()) rows.push({ icon: 'ic_moon', label: 'Nobody else is with you', sub: 'Bring a spirit friend along (below), or call one of your helpers.' });
       // ---- who can come
       LC.SPIRIT_ORDER.forEach(function (k) {
         if (k === S.companion || !LC.State.friend(k)) return;
         var s2 = LC.SPIRITS[k];
-        rows.push({ icon: 'sp_' + k, iconScale: 1.4, label: 'Bring the ' + s2.name, right: 'Bring',
+        rows.push({ companionId: k, companionStatus: 'At home', icon: 'sp_' + k, iconScale: 1.4, label: 'Bring the ' + s2.name, right: 'Bring',
           sub: 'While it travels with you: ' + s2.perk + '.' + (S.companion && LC.SPIRITS[S.companion] ? ' (The ' + LC.SPIRITS[S.companion].name + ' goes home: one spirit at a time.)' : ''),
           action: function () { W.setCompanion(k); } });
       });
       var lost = LC.SPIRIT_ORDER.filter(function (k) { return !LC.State.friend(k); }).length;
       if (lost) rows.push({ icon: 'ic_glow', label: lost + ' more spirit' + (lost > 1 ? 's' : '') + ' to befriend', sub: 'Grant a spirit\'s wish and it becomes your friend: then it can travel with you too. (Pelita\'s spirit house lists them.)' });
-      if (LC.hasBadang() && !LC.badangBuddy()) rows.push({ icon: 'ic_badang', label: 'Badang', sub: S.buddyDay === S.day ? 'He already went out with you today. Tomorrow!' : 'Ask him along in ' + LC.AREAS[LC.villagerArea('badang')].name + ' (once a day): he fights anything that threatens you, all day.' });
-      if (LC.hasNek() && !(W.nek && !W.nek.leaving)) rows.push({ icon: 'ic_nek', label: 'Nek Lampir', right: 'Call',
+      if (LC.hasBadang() && !LC.badangBuddy()) rows.push({ companionId: 'badang', companionStatus: S.buddyDay === S.day ? 'Available tomorrow' : 'At home',
+        icon: 'ic_badang', label: 'Badang', sub: S.buddyDay === S.day ? 'He already went out with you today. Tomorrow!' : 'Ask him along in ' + LC.AREAS[LC.villagerArea('badang')].name + ' (once a day): he fights anything that threatens you, all day.' });
+      if (LC.hasNek() && !(W.nek && !W.nek.leaving)) rows.push({ companionId: 'lampir', companionStatus: LC.nekLeft.call() ? 'Resting' : 'Can be called',
+        icon: 'ic_nek', label: 'Nek Lampir', right: 'Call',
         sub: (tap ? 'Tap her face beside the hotbar' : 'Press C') + ' to call her (only when you are alone). Pepper in a fight, her green circle, and a paid teleport.', action: function () { self.closeModal(); W.nekKey(); } });
-      if (LC.hasBualang() && !(W.bual && !W.bual.leaving)) rows.push({ icon: 'ic_wau', label: 'Sang Bualang', right: 'Call',
+      if (LC.hasBualang() && !(W.bual && !W.bual.leaving)) rows.push({ companionId: 'bualang', companionStatus: LC.bualangLeft.due() ? 'On his way' : LC.bualangLeft.rest() ? 'Resting' : 'Can be called',
+        icon: 'ic_wau', label: 'Sang Bualang', right: 'Call',
         sub: (tap ? 'Tap the wau beside the hotbar' : 'Press B') + ' to call him on the wind (never under the sea). He spins enemies away, dizzy.', action: function () { self.closeModal(); W.bualangKey(); } });
       return rows;
     },

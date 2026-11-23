@@ -160,8 +160,10 @@ window.LC = window.LC || {};
   var companionRows = LC.UIScene.prototype.companionRows;
   LC.UIScene.prototype.companionRows = function () {
     var rows = companionRows.apply(this, arguments), W = this.world;
-    if (LC.pelitaAway() && rows[0]) rows[0] = { icon: 'ic_bond', label: 'Pelita  (with Belalang, in Tanjung Bunga)', sub: 'Pelita followed a boy called Belalang home, and does not want to leave him. Its needs will wait for it. Bring it home: Chapter 10.' };
-    if (W && W.c10 && W.c10.fol) rows.splice(1, 0, { icon: 'npc_belalang_0', iconScale: 1.6, label: 'Belalang  (with you)', right: 'Send home',
+    if (LC.pelitaAway() && rows[0]) rows[0] = { companionId: 'pelita', companionStatus: 'With Belalang', icon: 'ic_bond',
+      label: 'Pelita  (with Belalang, in Tanjung Bunga)', sub: 'Pelita followed Belalang home to Tanjung Bunga. Its needs are paused until you bring it home.' };
+    if (W && W.c10 && W.c10.fol) rows.splice(1, 0, { companionId: 'belalang', companionStatus: 'With you', icon: 'npc_belalang_0',
+      iconScale: 1.6, label: 'Belalang  (with you)', right: 'Send home',
       sub: 'He walks with you, with Pelita above his head. Pelita\'s light shows the thieves\' footprints in Hutan Merbau.', action: function () { W.c10SendHome(); } });
     return rows;
   };

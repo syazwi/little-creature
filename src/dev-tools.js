@@ -18,7 +18,7 @@ window.LC = window.LC || {};
   style.textContent = '#lc-dev-tools{position:fixed;z-index:15;top:max(8px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);' +
     'width:min(390px,calc(100vw - 22px));max-height:calc(100dvh - 20px);overflow:auto;box-sizing:border-box;color:#fff0d5;background:#241c34;' +
     'border:1px solid #b49055;border-radius:9px;padding:9px 12px;font:14px/1.35 system-ui,sans-serif;box-shadow:0 5px 18px #0008}' +
-    '#lc-dev-tools:not([open]){width:max-content;max-width:calc(100vw - 22px)}#lc-dev-tools summary{cursor:pointer;color:#ffd98e;font-weight:650}' +
+    '#lc-dev-tools:not([open]){left:max(11px,env(safe-area-inset-left));transform:none;width:max-content;max-width:calc(100vw - 22px)}#lc-dev-tools summary{cursor:pointer;color:#ffd98e;font-weight:650}' +
     '#lc-dev-tools .lc-dev-fields{display:grid;grid-template-columns:minmax(0,1fr) 91px;gap:9px;margin-top:9px}' +
     '#lc-dev-tools select,#lc-dev-tools button{box-sizing:border-box;min-height:34px;border:1px solid #807099;border-radius:5px;' +
     'background:#35284c;color:inherit;padding:4px 8px;font:inherit}#lc-dev-tools select{display:block;width:100%}' +
