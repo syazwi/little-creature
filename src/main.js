@@ -70,7 +70,7 @@
   // Installable / offline web version when hosted (e.g. GitHub Pages). Not needed for file:// or the Android app.
   // v2.4.2: this is how iPhones play it, as a Home Screen app. sw.js keeps one complete copy of the game and starts
   // from it (like an installed app); a new version downloads in the background and is used from the next start.
-  LC.HOSTED = /^https?:$/.test(location.protocol) && LC.PLATFORM === 'web';
+  LC.HOSTED = !LC.DEVELOPER_HTML && /^https?:$/.test(location.protocol) && LC.PLATFORM === 'web';
   if (LC.HOSTED) {
     var link = document.createElement('link'); link.rel = 'manifest'; link.href = 'manifest.webmanifest';
     document.head.appendChild(link);

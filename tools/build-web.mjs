@@ -1,6 +1,6 @@
 // Little Creature — bundles the whole game into ONE self-contained HTML file: dist/LittleCreature.html
 // (Phaser, game code, font and icon are inlined), so it can be copied to any computer and double-clicked.
-// Also builds dist/LittleCreature_full.html: a TESTING build with everything unlocked (src/cheats.js) and its own save.
+// Also builds the fully unlocked testing edition and a developer edition with separate saves and story checkpoints.
 // Usage: node tools/build-web.mjs
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -73,8 +73,11 @@ function stampServiceWorker() {
 }
 stampServiceWorker();
 bundle(page, 'dist/LittleCreature.html');
-const full = page
-  .replace('<script src="src/main.js"></script>', '<script src="src/cheats.js"></script>\n  <script src="src/main.js"></script>')
-  .replace(/<title>[^<]*<\/title>/, '<title>Little Creature (TEST: everything unlocked)</title>');
-if (!full.includes('src/cheats.js')) throw new Error('could not add the cheats to the test build');
-bundle(full, 'dist/LittleCreature_full.html');
+function developerPage(title, extra) {
+  const main = '<script src="src/main.js"></script>';
+  if (!page.includes(main)) throw new Error('could not find the game entry script');
+  const scripts = [...extra, 'src/dev-story.js', 'src/dev-tools.js'].map(file => `<script src="${file}"></script>`);
+  return page.replace(main, [...scripts, main].join('\n  ')).replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`);
+}
+bundle(developerPage('Little Creature — Full Test Build', ['src/cheats.js']), 'dist/LittleCreature_full.html');
+bundle(developerPage('Little Creature — Developer Edition', []), 'dist/LittleCreature_developer.html');
