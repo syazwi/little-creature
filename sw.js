@@ -6,7 +6,7 @@
  * dist/ (the version news and the downloads) always comes from the internet. */
 
 // ---- stamped by tools/build-web.mjs on every build (do not edit by hand): the version, and every file the game needs
-var CACHE = 'little-creature-60-20261123030947';
+var CACHE = 'little-creature-61-20261123050716';
 var FILES = [
   './', 'index.html', 'manifest.webmanifest', 'lib/phaser.min.js', 'lib/peerjs.min.js', 'src/version.js',
   'src/update.js', 'src/data.js', 'src/areas.js', 'src/folk.js', 'src/data2.js', 'src/areas2.js', 'src/undersea.js',
@@ -19,7 +19,7 @@ var FILES = [
   'src/art5.js', 'src/art6.js', 'src/art7.js', 'src/art8.js', 'src/art9.js', 'src/art10.js', 'src/art11.js',
   'src/art12.js', 'src/art13.js', 'src/art14.js', 'src/art15.js', 'src/art16.js', 'src/art17.js', 'src/art18.js',
   'src/art19.js', 'src/art20.js', 'src/art21.js', 'src/art22.js', 'src/art23.js', 'src/art24.js', 'src/art25.js',
-  'src/art26.js', 'src/audio.js', 'src/lagu.js', 'src/lobby.js', 'src/scenes/Boot.js', 'src/scenes/Title.js',
+  'src/art26.js', 'src/art27.js', 'src/audio.js', 'src/lagu.js', 'src/lobby.js', 'src/scenes/Boot.js', 'src/scenes/Title.js',
   'src/scenes/World.js', 'src/scenes/WorldLife.js', 'src/scenes/WorldFarm.js', 'src/scenes/WorldCombat.js',
   'src/scenes/WorldTanggang.js', 'src/scenes/WorldBadang.js', 'src/scenes/WorldHome.js', 'src/scenes/WorldBarunai.js',
   'src/scenes/WorldKampong.js', 'src/scenes/WorldKampong2.js', 'src/scenes/WorldMajapahit.js', 'src/scenes/WorldBayang.js',
@@ -35,8 +35,9 @@ var FILES = [
   'src/scenes/UISulu.js', 'src/scenes/UISulu2.js', 'src/scenes/WorldField.js', 'src/scenes/WorldKhemah.js',
   'src/scenes/WorldStormReef.js', 'src/scenes/UIStormReef.js', 'src/scenes/WorldMantera.js', 'src/scenes/UIMantera.js',
   'src/scenes/WorldBunianTrials.js', 'src/scenes/WorldTap.js', 'src/scenes/UITap.js', 'src/level.js', 'src/scenes/WorldLevel.js',
-  'src/scenes/UILevel.js', 'src/main.js', 'lib/fonts/PixelifySans-latin.woff2', 'lib/fonts/PixelifySans-latin-ext.woff2',
-  'icons/icon-192.png', 'icons/icon-512.png'
+  'src/scenes/UILevel.js', 'src/senah.js', 'src/scenes/WorldSenah.js', 'src/scenes/UISenah.js', 'src/main.js',
+  'lib/fonts/PixelifySans-latin.woff2', 'lib/fonts/PixelifySans-latin-ext.woff2', 'icons/icon-192.png',
+  'icons/icon-512.png'
 ];
 // ---- end of stamp
 
