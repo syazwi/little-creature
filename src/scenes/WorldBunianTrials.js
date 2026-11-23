@@ -83,7 +83,7 @@ window.LC = window.LC || {};
       var collected = this.collectBunianLoot();
       var lines = [line('Here, time stands still. Each door holds a band of minions and a boss. Bring a weapon and watch the ground before each special attack.'),
         line('Start at the blue door if you’re new to the trials. If you fall or retreat, I’ll bring you back with your bag intact, even the provisions you used.'),
-        line('The first win at each door strengthens you permanently. Each win toughens that door’s boss and increases its kepeng and item rewards. Inspect a door to see your next round’s prize.')];
+        line('The first win at each door strengthens you permanently. Each win raises the level of its minions and boss and increases its prizes. Inspect a door to see the next round.')];
       if (collected.length) {
         LC.State.save();
         lines.unshift(line('I held these for you. Here are ' + collected.join(', ') + '.'));
@@ -95,8 +95,8 @@ window.LC = window.LC || {};
       this.ui.say(lines);
     },
     inspectBunianDoor: function (door) {
-      var self = this, round = B.round(this.S, door);
-      this.ui.say([line(door.advice), line('Round ' + round.number + ' · ' + door.count + ' minions, then ' + door.boss[0] + ' with ' + round.hp + ' HP and ' + round.damage + ' attack damage.'),
+      var self = this, round = B.round(this.S, door), boss = round.boss;
+      this.ui.say([line(door.advice), line('Round ' + round.number + ' · ' + door.count + ' Lv ' + round.minion.level + ' minions, then ' + door.boss[0] + ' (Lv ' + boss.level + ', ' + boss.hp + ' HP, ' + boss.dmg + ' damage).'),
         line('Win this round for ' + round.kepeng + ' kepeng and ' + lootText(door.loot[0], round.items) +
           '.' + (round.number === 1 ? ' Your first win also grants ' + statText(door) + ' permanently.' : ''))], { choices: [
         { label: 'Enter the trial', fn: function () {
@@ -107,10 +107,12 @@ window.LC = window.LC || {};
     createBunianTrial: function (door) {
       var self = this;
       var t = this.bunianTrial = { door: door, round: B.round(this.S, door), phase: 'minions', timer: 0, marks: [], art: this.add.graphics().setDepth(1250) };
-      t.minions = B.spawns.slice(0, door.count).map(function (p) { return self.spawnBunianTrialFoe(door.minionKind, p, door); });
+      t.minions = B.spawns.slice(0, door.count).map(function (p) { return self.spawnBunianTrialFoe(door.minionKind, p, door, t.round.minion); });
     },
-    spawnBunianTrialFoe: function (kind, at, door) {
+    spawnBunianTrialFoe: function (kind, at, door, stats) {
       var e = this.spawnEnemy({ kind: kind, bunianTrial: door.id, zone: { x0: at.x, x1: at.x, y0: at.y, y1: at.y } }, true);
+      e.def = Object.assign({}, e.def, stats);
+      e.hp = stats.hp;
       var p = this.tilePx(at);
       e.spr.setPosition(p.x, p.y).setDepth(p.y).setAlpha(0);
       e.light.img.setTint(door.color);
@@ -130,9 +132,7 @@ window.LC = window.LC || {};
           t.timer -= dt;
           if (t.timer <= 0) {
             t.phase = 'boss'; t.timer = 2.0;
-            t.boss = this.spawnBunianTrialFoe(t.door.bossKind, B.bossAt, t.door);
-            t.boss.def = Object.assign({}, t.boss.def, { hp: t.round.hp, dmg: t.round.damage });
-            t.boss.hp = t.round.hp;
+            t.boss = this.spawnBunianTrialFoe(t.door.bossKind, B.bossAt, t.door, t.round.boss);
           }
         } else if (t.phase === 'boss') this.updateBunianBoss(t, dt);
       }
@@ -150,7 +150,7 @@ window.LC = window.LC || {};
       t.timer -= dt;
       if (t.timer <= 0) {
         this.markBunianAttack(t);
-        t.timer = t.boss.hp < t.boss.def.hp * 0.45 ? 3.5 : 4.7;
+        t.timer = t.boss.hp < t.boss.def.hp * 0.45 ? t.round.enragedCooldown : t.round.specialCooldown;
       }
     },
     markBunianAttack: function (t) {

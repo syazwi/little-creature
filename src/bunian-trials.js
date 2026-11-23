@@ -25,9 +25,14 @@ window.LC = window.LC || {};
     ],
     clearCount: function (s, door) { return s.quests && s.quests.bunianClears && s.quests.bunianClears[door.id] || 0; },
     round: function (s, door) {
-      var clears = B.clearCount(s, door), multiplier = 1 + clears * 0.25;
-      return { number: clears + 1, hp: Math.round(door.boss[2] * multiplier), damage: door.boss[4] + clears,
-        kepeng: Math.round(door.kepeng * multiplier), items: door.loot[1] + clears };
+      var clears = B.clearCount(s, door);
+      return {
+        number: clears + 1,
+        minion: { level: LC.monsterLevel(door.minionKind) + clears * 2, hp: Math.round(door.minion[2] * (1 + clears * 0.35)), dmg: door.minion[4] + clears },
+        boss: { level: LC.monsterLevel(door.bossKind) + clears * 3, hp: Math.round(door.boss[2] * (1 + clears * 0.75)), dmg: door.boss[4] + clears * 3 },
+        specialCooldown: Math.max(3.1, 4.7 - clears * 0.4), enragedCooldown: Math.max(2.4, 3.5 - clears * 0.3),
+        kepeng: Math.round(door.kepeng * (1 + clears * 0.25)), items: door.loot[1] + clears
+      };
     },
     bonuses: function (s) {
       var result = { hp: 0, energy: 0 };

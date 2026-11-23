@@ -306,7 +306,7 @@ After Chapter 6, the old witch grows herbs on the lower slopes of Gunung Ledang.
 
 ### The Four Trials of Kampung Bunian (v3.7)
 
-The in-game clock pauses in Kampung Bunian and its trial rooms. Ask the gatekeeper in the southern courtyard about the Sea Creatures, Warrior Creatures, Magic Creatures, and Supernatural Creatures doors. Each door tracks its own wins. After each win, the next boss gains 25% of its starting health and 1 attack damage. The prize increases by 25% of its starting kepeng and one item. Inspect a door to see the next round and its prize. The first win also grants permanent max health or max energy. A defeat or retreat brings you back to the gatekeeper with your health and provisions restored. The gatekeeper holds prizes when your bag is full.
+The in-game clock pauses in Kampung Bunian and its trial rooms. Ask the gatekeeper in the southern courtyard about the Sea Creatures, Warrior Creatures, Magic Creatures, and Supernatural Creatures doors. Each door tracks its own wins. Every win raises the next boss by 3 levels and the minions by 2. Both gain health and attack damage, and bosses use their special attacks more often in later rounds. The prize increases by 25% of its starting kepeng and one item per win. Inspect a door to see the next round’s enemy levels and prize. The first win also grants permanent max health or max energy. A defeat or retreat brings you back to the gatekeeper with your health and provisions restored. The gatekeeper holds prizes when your bag is full.
 
 ### Chapter 14 — Hantu Kak Senah? (v3.13)
 

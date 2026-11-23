@@ -91,8 +91,9 @@ window.LC = window.LC || {};
     bunian_sea_boss: 28, bunian_warrior_boss: 32, bunian_magic_boss: 36, bunian_spirit_boss: 40
   };
   LC.monsterLevel = function (kind, def) {
-    if (LC.ENEMY_LV[kind]) return LC.ENEMY_LV[kind];
     def = def || LC.ENEMIES[kind] || {};
+    var level = def.level || LC.ENEMY_LV[kind];
+    if (level) return level;
     var hp = Math.min(200, def.hp || 1), dmg = def.dmg || 1;
     return Math.max(1, Math.min(60, Math.round(Math.pow(hp, 0.62) * 0.9 + dmg * 0.6 - 3) + (def.boss ? 3 : 0)));
   };
