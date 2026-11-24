@@ -114,6 +114,16 @@ window.LC = window.LC || {};
   }
   function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 
+  function devInputs(ui, modal, input) {
+    if (!LC.DEVELOPER_HTML) return;
+    var nextAt = 0;
+    modal.devTick = function () {
+      if (ui.time.now < nextAt) return;
+      nextAt = ui.time.now + 105;
+      input();
+    };
+  }
+
   Object.assign(U, {
     // ================================================================ the voice mantera at the cliff door
     openMantera17: function (onOk) {
@@ -146,6 +156,7 @@ window.LC = window.LC || {};
       // ---- speak into the microphone
       function speakMode() {
         mode = 'speak'; clearBody(); stopMic();
+        devInputs(self, m, tapMode);
         var meter = self.add.graphics(); body.add(meter);
         var dots = self.add.graphics(); body.add(dots);
         body.add(self.txt(480, Y0 + 168, 'Press Speak, then say the whole mantera, word by word.', 14, '#cdb8a0', { ox: 0.5 }));
@@ -236,6 +247,9 @@ window.LC = window.LC || {};
           self.cameras.main.shake(120, 0.004);
         }
         m.pick = pickTile; m.tiles = tiles;
+        devInputs(self, m, function () {
+          if (seq.length < C.words.length) pickTile(tiles.indexOf(C.words[seq.length]));
+        });
         show();
       }
       function close() { closed = true; stopMic(); c.destroy(); if (self.modal === m) self.modal = null; }
@@ -311,6 +325,13 @@ window.LC = window.LC || {};
         give: give, wheel: wl, typeWord: function (s) { String(s).toUpperCase().split('').forEach(function (ch) { if (ABC.indexOf(ch) >= 0) type(ch); }); }
       };
       this.modal = m;
+      devInputs(self, m, function () {
+        if (C.step(LC.State.s) !== 5) return;
+        if (wl && wl.key() !== C.key) m.key(wl.key() < C.key ? 'ArrowRight' : 'ArrowLeft');
+        else if (!C.code.startsWith(word)) m.key('Backspace');
+        else if (word.length < C.code.length) m.key('Key' + C.code[word.length]);
+        else m.key('Enter');
+      });
       render();
       LC.Audio.sfx('click');
     },
@@ -351,6 +372,7 @@ window.LC = window.LC || {};
         wheel: wl
       };
       this.modal = m;
+      devInputs(self, m, function () { m.key(solved ? 'Enter' : wl.key() < C.key ? 'ArrowRight' : 'ArrowLeft'); });
       LC.Audio.sfx('click');
     }
   });

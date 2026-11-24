@@ -34,7 +34,7 @@ window.LC = window.LC || {};
 
   var chapters = [{ n: 1, name: 'Little Creature', end: 1, steps: ['Help Pelita become a Legend of the Kampung'] }].concat(LC.CHAPTER_LIST);
   var entryHours = { 5: 19.5, 9: 20.5, 11: 20.5, 14: 19 };
-  var delays = { 4: 'ch3day', 5: 'ch4day', 6: 'ch5day', 7: 'c7wait', 8: 'c8wait', 9: 'c9wait', 10: 'c10wait', 11: 'c11wait', 15: 'c15wait', 16: 'c16wait' };
+  var delays = { 4: 'ch3day', 5: 'ch4day', 6: 'ch5day', 7: 'c7wait', 8: 'c8wait', 9: 'c9wait', 10: 'c10wait', 11: 'c11wait', 15: 'c15wait', 16: 'c16wait', 17: 'c17wait' };
   function grant(map) {
     Object.keys(map).forEach(function (id) {
       if (!LC.ITEMS[id]) throw new Error('Unknown chapter reward ' + id);
@@ -139,6 +139,14 @@ window.LC = window.LC || {};
       LC.C15.people.forEach(function (person) { s.quests.c15calm[person.id] = true; });
       LC.C15.fuses.forEach(function (_, i) { s.quests.c15fuses[i] = true; });
       grant({ topeng_jerebu: 1 }); earn(s, 1000);
+    },
+    16: function (s) {
+      Object.assign(s.quests, { c16inv: {}, c16help: { amin: true, bara: true }, c16cook: {},
+        c16clue: { amin: true, jar: true, bara: true }, c16woke: {}, c16jamu: 0 });
+      LC.C16.invites.forEach(function (v) { s.quests.c16inv[v.who] = true; });
+      Object.keys(LC.C16.pots).forEach(function (key) { s.quests.c16cook[key] = true; });
+      LC.C16.sleepers.forEach(function (v) { s.quests.c16woke[v.who] = true; });
+      grant({ senduk_lampir: 1 }); earn(s, 1000);
     }
   };
 

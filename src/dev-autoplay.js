@@ -484,7 +484,47 @@ window.LC = window.LC || {};
     if (step === 10 && mamaiTravel(pilot, 'kampung')) wakeMamaiSleepers(pilot);
   }
 
-  var routes = LC.DevRoutes = { 12: storm, 13: mantera, 14: senah, 15: jerebu, 16: mamai };
+  function penyamun(pilot, step) {
+    var w = pilot.world, q = w.S.quests, m = w.penyamun, C = LC.C17;
+    if (m.cine) { pilot.state.action = 'Watch the thieves at Bukit Kapur'; return; }
+    if (m.enterPending || m.exitPending || m.freePending || m.stuckPending || m.merchantPending || m.bossPending) return;
+    if (step === 0) {
+      if (w.mamai && w.mamai.spirit && w.mamai.spirit.active) { pilot.state.action = 'Watch Nek Lampir return to her lantern'; return; }
+      if (pilot.travel('farm') && w.S.day <= q.c17wait) pilot.sleep();
+      return;
+    }
+    if (step >= 3 && step <= 5 && w.area !== 'gua17') {
+      if (w.area !== 'kapur') {
+        if (pilot.travel('forest')) pilot.object('fr_kapur17', 'Take the eastern trail to Bukit Kapur');
+      } else if (step === 3) pilot.object('kp_semak17', 'Hide in the bushes with Ali Baba');
+      else pilot.object('kp_pintu17', 'Say the mantera at the cliff door');
+      return;
+    }
+    if (step === 5) {
+      var clues = q.c17clue || {};
+      if (!q.c17stop) pilot.object('g17_celah', 'Send Pelita through the crack');
+      else if (!clues.list) pilot.object('g17_senarai', 'Read the shopping list');
+      else if (!clues.chalk) pilot.object('g17_kapur', 'Read the chalk wall');
+      else if (!clues.roda) pilot.object('g17_roda', 'Pick up the Roda Rahsia');
+      else if (!clues.diari) pilot.object('g17_diari', 'Decode Kopak’s diary');
+      else pilot.object('g17_pintu', 'Enter the code at Tok Batu’s door');
+      return;
+    }
+    if (step === 2) {
+      if (pilot.travel('farm')) pilot.object('f_alibaba17', 'Talk to Ali Baba');
+      return;
+    }
+    if (w.area === 'gua17') { pilot.object('g17_pintu', 'Leave the cave'); return; }
+    if (w.area === 'kapur') { pilot.object('kp_back17', 'Walk back to Hutan Rimba'); return; }
+    if (!pilot.travel('kampung')) return;
+    if (step === 1 || step === 6) pilot.object('k_tokp17', step === 1 ? 'Talk to Tok Penghulu' : 'Warn Tok Penghulu');
+    else if (step === 7) {
+      var jar = Object.keys(C.thief).find(function (i) { return !(q.c17caught || {})[C.thief[i]]; });
+      if (jar) pilot.object('k_jar17_' + jar, (q.c17tap || {})[jar] ? 'Lift the jar lid' : 'Tap the jar and listen');
+    } else if (step === 8) pilot.attack(m.boss);
+  }
+
+  var routes = LC.DevRoutes = { 12: storm, 13: mantera, 14: senah, 15: jerebu, 16: mamai, 17: penyamun };
   var methods = LC.DevAutoplay = {
     supports: function (chapter) { return !!routes[chapter]; },
     start: function (speed, onStatus, onStop) {
@@ -503,7 +543,8 @@ window.LC = window.LC || {};
     var finished = !chapter;
     var rain = world.jerebu && world.jerebu.rain;
     var spirit = world.mamai && world.mamai.spirit;
-    if (finished && !blocked && !world.ui.modal && (!rain || rain.time >= 3) && (!spirit || !spirit.active)) { methods.stop('Story complete.'); return move.call(this, dt, blocked); }
+    var finalePending = world.penyamun && world.penyamun.finalePending;
+    if (finished && !blocked && !world.ui.modal && (!rain || rain.time >= 3) && (!spirit || !spirit.active) && !finalePending) { methods.stop('Story complete.'); return move.call(this, dt, blocked); }
     if (finished) chapter = LC.CHAPTER_LIST[LC.CHAPTER_LIST.length - 1];
     var step = q[chapter.key] || 0;
     var key = [chapter.n, step, world.area, world.war && world.war.wave, q.c4wave, q.c13Reflected, q.c12Rescued].join(':');
