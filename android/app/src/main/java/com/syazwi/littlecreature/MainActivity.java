@@ -12,6 +12,8 @@ import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
+import android.provider.Settings;
+import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -31,6 +33,8 @@ public class MainActivity extends Activity {
     private static final String HOST = "appassets.androidplatform.net";
     private static final String START_URL = "https://" + HOST + "/assets/www/index.html?platform=android";
     private static final int MIC_REQUEST = 17;
+    private static final int MIC_ASK = 18;   // v3.17.5: the game asks first (LCAndroid.askMic), then turns the microphone on
+    private static final String PREFS = "littleCreature", MIC_ASKED = "micAsked";
     private WebView web;
     private String safeJs = null;   // last reported cutout insets, as a JS call
     private PermissionRequest pendingMic = null;   // the game asked for the microphone; waiting for the player's answer
@@ -100,6 +104,7 @@ public class MainActivity extends Activity {
                     }
                     if (pendingMic != null) pendingMic.deny();
                     pendingMic = request;
+                    markMicAsked();
                     requestPermissions(new String[] { Manifest.permission.RECORD_AUDIO }, MIC_REQUEST);
                 });
             }
@@ -109,6 +114,11 @@ public class MainActivity extends Activity {
                 if (request == pendingMic) pendingMic = null;
             }
         });
+
+        // v3.17.5: asking from inside a WebView permission request paused the game behind Android's dialog, and on
+        // some phones the microphone never started. Now the game asks Android first (askMic), waits for the answer
+        // (LC.onMicAnswer), and only then turns the microphone on, which onPermissionRequest grants at once.
+        web.addJavascriptInterface(new MicBridge(), "LCAndroid");
 
         // The game art fills the whole screen; only the HUD is nudged away from the cutout.
         web.setOnApplyWindowInsetsListener((v, insets) -> {
@@ -162,9 +172,59 @@ public class MainActivity extends Activity {
         }
     }
 
+    private boolean micGranted() {
+        return checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void markMicAsked() {
+        getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(MIC_ASKED, true).apply();
+    }
+
+    /** "granted", "prompt" (Android will show its question), or "blocked" (the player chose Don't allow for good). */
+    private String micState() {
+        if (micGranted()) return "granted";
+        boolean asked = getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(MIC_ASKED, false);
+        return asked && !shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO) ? "blocked" : "prompt";
+    }
+
+    private void answerMic(String state) {
+        if (web != null) web.evaluateJavascript("window.LC&&LC.onMicAnswer&&LC.onMicAnswer('" + state + "')", null);
+    }
+
+    /** The game's way to ask about the microphone. Only the bundled game is ever loaded here (links open outside). */
+    private class MicBridge {
+        @JavascriptInterface
+        public String micState() {
+            return MainActivity.this.micState();
+        }
+
+        @JavascriptInterface
+        public void askMic() {
+            runOnUiThread(() -> {
+                if (micGranted()) { answerMic("granted"); return; }
+                markMicAsked();
+                requestPermissions(new String[] { Manifest.permission.RECORD_AUDIO }, MIC_ASK);
+            });
+        }
+
+        @JavascriptInterface
+        public void openSettings() {
+            runOnUiThread(() -> {
+                try {
+                    startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", getPackageName(), null)));
+                } catch (Exception ignored) { }
+            });
+        }
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
         super.onRequestPermissionsResult(requestCode, permissions, results);
+        if (requestCode == MIC_ASK) {
+            boolean ok = results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED;
+            answerMic(ok ? "granted" : shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO) || results.length == 0 ? "denied" : "blocked");
+            return;
+        }
         if (requestCode != MIC_REQUEST || pendingMic == null) return;
         if (results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED)
             pendingMic.grant(new String[] { PermissionRequest.RESOURCE_AUDIO_CAPTURE });
