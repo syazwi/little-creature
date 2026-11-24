@@ -553,7 +553,8 @@ window.LC = window.LC || {};
       var n = this.nightF || 0;
       this.ghost.setAlpha(0.78 + 0.22 * n);
       var legend = (g.level || 1) >= LC.LEGEND_LEVEL;
-      this.ghostGlow.setPosition(gx, gy).setScale(0.45 + g.glow / 100 * 0.55 + g.stage * 0.08 + (legend ? 0.25 : 0)).setAlpha((0.18 + 0.55 * n) * (0.4 + g.glow / 160) + (legend ? 0.15 : 0));
+      // v3.17.6: softer and smaller. At the top it was 360 px across at 0.9 (half the screen, washing you and the path out)
+      this.ghostGlow.setPosition(gx, gy).setScale(0.5 + g.glow / 100 * 0.35 + g.stage * 0.04 + (legend ? 0.1 : 0)).setAlpha((0.12 + 0.43 * n) * (0.5 + g.glow / 200) + (legend ? 0.05 : 0));
       if (g.stage === 4) this.ghostGlow.setTint(0xffe08a);
       this.ghostShadow.setPosition(gx, Math.round(this.gpos.y + 19)).setAlpha(0.25 - 0.1 * n);
 
@@ -847,7 +848,8 @@ window.LC = window.LC || {};
       });
       (this.objLights || []).forEach(function (L) { self.addLight(L.x, L.y, L.c, 1.2, false); });
       this.playerLight = this.addLight(0, 0, 0xfff2d0, A.cave ? 2.4 : 1.3, false);
-      this.playerLight.base = A.cave ? 0.75 : 0.35;
+      this.playerLight.base = A.cave ? 0.72 : 0.45;
+      if (this.textures.exists('glow_soft')) this.playerLight.img.setTexture('glow_soft');   // v3.17.6: no white blaze on top of you
       this.flies = [];
       for (var i = 0; i < (this.area === 'mountain' ? 10 : 28); i++) {
         var fx, fy;
@@ -899,7 +901,12 @@ window.LC = window.LC || {};
       if (preset !== this.graphicsPreset) this.applyGraphicsQuality(preset);
       var lum = ((col >> 16 & 255) * 0.3 + (col >> 8 & 255) * 0.59 + (col & 255) * 0.11) / 255;
       var n = Phaser.Math.Clamp((1 - lum - 0.06) / 0.45, 0, 1);
-      if (A.cave && !A.naturalLight) { col = 0x2e2638; n = 1; }
+      if (A.cave && !A.naturalLight) {
+        col = 0x2e2638; n = 1;
+        // v3.17.6: Pelita lifts the dark of the whole cave (and further with its daylight), instead of a lantern so big
+        // and bright that the cave turned into white fog and you could not see yourself
+        if (this.ghostHere) col = lerpColor(col, LC.pelitaSun && LC.pelitaSun() ? 0x8a82a0 : 0x5a5270, 0.3 + 0.7 * Phaser.Math.Clamp(S.ghost.glow / 100, 0, 1));
+      }
       this.nightF = n;
       var tint = col, sea = LC.State.season().id, outdoors = !A.cave && !A.underwater;
       if (A.dim) tint = mulColor(tint, A.underwater ? 0xb8c8d8 : 0xd2e2d0);   // shade under the canopy (or inside the wreck)
@@ -911,9 +918,9 @@ window.LC = window.LC || {};
       this.dark.setVisible(tint !== 0xffffff).setTint(tint);
       var hgn = LC.State.isHGN(), shopOpen = this.shopOpen();
       if (this.warungLight) this.warungLight.base = shopOpen ? 0.8 : 0;
-      if (this.spiritLight) this.spiritLight.base = 0.25 + S.ghost.glow / 100 * 0.7;
+      if (this.spiritLight) this.spiritLight.base = 0.25 + S.ghost.glow / 100 * 0.35;
       this.playerLight.img.setPosition(this.player.x, this.player.y - 8);
-      if (A.cave) this.playerLight.img.setScale((this.ghostHere ? 3.2 + S.ghost.glow / 100 : 2.2) * (0.96 + 0.04 * Math.sin(time / 130)));   // Pelita's glow pushes the dark back
+      if (A.cave) this.playerLight.img.setScale((this.ghostHere ? 2.6 + S.ghost.glow / 100 * 0.6 : 2.2) * (0.96 + 0.04 * Math.sin(time / 130)));   // Pelita's glow pushes the dark back (v3.17.6: was up to 4.2, a white fog)
       this.lights.forEach(function (L) {
         var f = L.flicker && preset.flicker ? 0.86 + 0.14 * Math.sin(time / 90 + L.ph) * Math.sin(time / 37 + L.ph * 2) : 1;
         L.img.setAlpha(n * L.base * f);

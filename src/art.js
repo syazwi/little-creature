@@ -759,6 +759,13 @@ window.LC = window.LC || {};
     if (scene.textures.exists('glow')) scene.textures.remove('glow');
     scene.textures.addCanvas('glow', g);
     scene.textures.get('glow').setFilter(Phaser.Textures.FilterMode.LINEAR);
+    // v3.17.6: a flatter light with no white-hot middle, for the lantern around you (it sits right on top of you)
+    var gs = canvas(64, 64), gsx = gs.getContext('2d'), gsg = gsx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gsg.addColorStop(0, 'rgba(255,255,255,0.55)'); gsg.addColorStop(0.4, 'rgba(255,255,255,0.42)'); gsg.addColorStop(0.75, 'rgba(255,255,255,0.15)'); gsg.addColorStop(1, 'rgba(255,255,255,0)');
+    gsx.fillStyle = gsg; gsx.fillRect(0, 0, 64, 64);
+    if (scene.textures.exists('glow_soft')) scene.textures.remove('glow_soft');
+    scene.textures.addCanvas('glow_soft', gs);
+    scene.textures.get('glow_soft').setFilter(Phaser.Textures.FilterMode.LINEAR);
 
     Object.keys(LC.ITEMS).forEach(function (id) { if (ICON[id]) make(scene, 'i_' + id, 16, 16, ICON[id], true); });
     make(scene, 'i_kepeng', 16, 16, ICON.kepeng, true);

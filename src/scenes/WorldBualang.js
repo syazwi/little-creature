@@ -22,7 +22,8 @@ window.LC = window.LC || {};
   proto.updateLighting = function (time, dt) {
     if (!LC.pelitaSun() || !this.ghostHere || this.A.cave) {
       updateLighting.call(this, time, dt);
-      if (LC.pelitaSun() && this.ghostHere && this.A.cave) this.playerLight.img.setScale(this.playerLight.img.scaleX * 1.5);   // (the mine is still a mine: Pelita just shines further)
+      // (the mine is still a mine: Pelita just lifts its dark further. v3.17.6: it used to make the lantern 1.5 times
+      // bigger, which filled caves with white fog; see updateLighting)
       return;
     }
     var S = this.S, m = S.minutes, night = m >= 18 * 60 + 30 || m < 6 * 60;

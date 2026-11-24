@@ -212,6 +212,7 @@ Locked paths are blocked by vines, rockfall or sand until Pelita is strong enoug
   - **Kapal Karam:** swim into the sunken junk to meet the ghost of **Si Tanggang**, the proud son of the Malay legend, who wants to say sorry to his mother. Help him find her lost *selendang* (ask Tok Duyung) and he finds peace (then see above).
   - **Istana Laut Selatan (Pelita Lv 12):** the jade Palace of the Southern Sea, home of **Kanjeng Ratu Kidul**, the Queen of the Southern Sea from the Javanese legend of Nyi Roro Kidul. Bring her a royal gift of jasmine, and every sea forage gives you one extra.
   - **Kota Atlantis (Pelita Lv 15):** the sunken city of the old Greek tales, where **Poseidon** still sits on his throne. Bring him pearls, cave crystals and an *ikan emas* and he gives you his trident and +20 health.
+- **Pelita's light (v3.17.6).** A strong Pelita no longer floods the screen. At night its halo is smaller and softer, and in caves and the mine Pelita lifts the dark of the whole place (further with Pelita's daylight) instead of a white fog over you. Your own lantern has no white-hot middle, so you can always see yourself.
 - **Krathong.** Craft a krathong (banana, marigold and colok) at the spirit house, or buy one from Mbak Dewi. Float it on any water after dark for a big boost to Pelita's glow and bond.
 
 ### Nenek's house, helpers and a bigger bag (v1.8)
