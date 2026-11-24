@@ -20,12 +20,13 @@ window.LC = window.LC || {};
   // v3.17.2: one of each person. While Pak Mat, Abang Zul or Tukang Leong is sleepwalking (or, woken, still standing at the
   // gelanggang in this visit), or sitting at the majlis, the everyday one is away from his usual spot. Mamai.js only kept
   // them away when the kampung loaded, so the sleepwalking starting while you were here (waking in a tent) showed both.
-  var AWAY = { mat: 1, zul: 1, leong: 1 }, away = W.jerebuAway;
+  // (v3.17.3: Tok Penghulu sleepwalks too; he is not among the majlis images, so only the sleepwalking hides him.)
+  var AWAY = { mat: 1, zul: 1, leong: 1, penghulu: 1 }, MAJLIS = { mat: 1, zul: 1, leong: 1 }, away = W.jerebuAway;
   W.jerebuAway = function (vid) {
     if (away && away.apply(this, arguments)) return true;
     var m = this.mamai;
     if (!AWAY[vid] || this.area !== 'kampung' || !m) return false;
-    return !!m.decor || C.asleep(this.S, vid) || m.sleepers.some(function (s) { return s.who === vid && s.spr.active; });
+    return (MAJLIS[vid] && !!m.decor) || C.asleep(this.S, vid) || m.sleepers.some(function (s) { return s.who === vid && s.spr.active; });
   };
 
   var objectAction = W.objectAction;
@@ -117,7 +118,11 @@ window.LC = window.LC || {};
     mamaiNeed: function (need) { return Object.keys(need).map(function (id) { return LC.ITEMS[id].name + ' x' + need[id]; }).join(', '); },
     createMamai: function () {
       this.mamai = { sleepers: [], decor: null, decorT: 0, styled: null, spirit: null, finalePending: false, born: this.time.now };
-      var s = step(this);
+      var s = step(this), q = this.S.quests;
+      if (s === 10) {   // v3.17.3: a save that brewed six cups before Tok Penghulu joined the sleepwalkers gets his cup too
+        var left = C.sleepers.length - C.count(this.S, 'c16woke');
+        if ((q.c16jamu || 0) < left) { q.c16jamu = left; LC.State.save(); }
+      }
       if (this.area === 'kampung' && s >= 7 && s <= 10) this.mamaiSpawnSleepers();
     },
 

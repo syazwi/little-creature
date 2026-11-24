@@ -6,7 +6,8 @@
  * She knows the cure, Jamu Bangun, brewed on Si Bara's fire. Wake everyone; the kampung forgives her.
  * Steps (S.quests.ch16): 0 rest after Chapter 15 · 1 Tok Penghulu's request · 2 invite six people · 3 hire Amin and
  * Si Bara (then Nek Lampir arrives) · 4 cook three pots · 5 the majlis (after 6 PM) · 6 rest · 7 the sleepwalkers and
- * three clues · 8 Nek Lampir's confession · 9 brew Jamu Bangun · 10 wake six people · 11 done. */
+ * three clues · 8 Nek Lampir's confession · 9 brew Jamu Bangun · 10 wake seven people · 11 done.
+ * (v3.17.3: Tok Penghulu ate the ayam too, so he is the seventh sleepwalker: everyone at the majlis who ate it.) */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -28,7 +29,8 @@ window.LC = window.LC || {};
     sleepers: [
       { who: 'jusoh', name: 'Jusoh', tex: 'npc14_jusoh_0', x: 10, y: 13 }, { who: 'bahar', name: 'Cikgu Bahar', tex: 'npc14_bahar_0', x: 20, y: 13 },
       { who: 'senah', name: 'Kak Senah', tex: 'npc14_senah_0', x: 30, y: 13 }, { who: 'mat', name: 'Pak Mat', tex: 'npc_mat_0', x: 28, y: 19 },
-      { who: 'zul', name: 'Abang Zul', tex: 'npc_zul_0', x: 37, y: 17 }, { who: 'leong', name: 'Tukang Leong', tex: 'npc_leong_0', x: 22, y: 13 }
+      { who: 'zul', name: 'Abang Zul', tex: 'npc_zul_0', x: 37, y: 17 }, { who: 'leong', name: 'Tukang Leong', tex: 'npc_leong_0', x: 22, y: 13 },
+      { who: 'penghulu', name: 'Tok Penghulu', tex: 'npc_penghulu_0', x: 11, y: 10 }
     ],
     gelanggang: { x: 16.5, y: 18 }
   };
@@ -62,7 +64,7 @@ window.LC = window.LC || {};
     var who = SN[o.id], when = o.when;
     if (who) o.when = function (S) { return (!when || when(S)) && !C.asleep(S, who); };
   });
-  var villager = LC.villager, VID = { mat: 1, zul: 1, leong: 1 };
+  var villager = LC.villager, VID = { mat: 1, zul: 1, leong: 1, penghulu: 1 };
   LC.villager = function (vid) {
     var v = villager.apply(this, arguments), S = LC.State.s;
     if (v && S && VID[vid] && C.asleep(S, vid)) return Object.assign({}, v, { area: 'none' });
@@ -129,6 +131,7 @@ window.LC = window.LC || {};
       ['', 'Tok Imam leads the doa kesyukuran. The whole kampung is quiet and grateful, and hopes the fire never comes again.'],
       ['', 'Then the dulang are uncovered: golden nasi minyak, ayam masak merah and rows of seri muka. Everyone eats together.'],
       ['jusoh14', 'Second helping of the ayam! Look how yellow and pretty the sauce is!'],
+      ['penghulu15', 'Jusoh, leave some for your elders. ...Hm! Pass the ayam down here, please. And again. A penghulu must taste everything.'],
       ['amin14', 'No ayam for me. The cili makes my ears hot.'],
       ['', 'Nek Lampir watches everyone eat. For the first time in years, she smiles.'],
       ['', 'The majlis ends with full bellies and warm goodbyes. Go home and rest.']
@@ -138,7 +141,8 @@ window.LC = window.LC || {};
     mumble: {
       jusoh: ['zombiii...', 'nasiii...', 'not... scared...'], bahar: ['fine... particulate... matter...', 'sci... ence...'],
       senah: ['HA... HA... HA...', 'seri... muka...'], mat: ['ikan... besar...', 'nasiii...'],
-      zul: ['basikal... saya...', 'ting... ting...'], leong: ['kayu... jati...', 'smooth... very... smooth...']
+      zul: ['basikal... saya...', 'ting... ting...'], leong: ['kayu... jati...', 'smooth... very... smooth...'],
+      penghulu: ['gotong... royong...', 'and... in... conclusion...', 'one... more... ayam...']
     },
     shake: ['Mmm... five more minutes...', 'Nasiii...', '(a sleepy snore)'],
     clue: {
@@ -160,7 +164,7 @@ window.LC = window.LC || {};
     ],
     brewed: [
       ['sibara15', 'Hotter? HOTTER? Yes!'],
-      ['lampirspirit16', 'Six cups of Jamu Bangun. One for each sleepwalker. Go! And don\'t let Jusoh have seconds.']
+      ['lampirspirit16', 'Seven cups of Jamu Bangun. One for each sleepwalker, Tok Penghulu too. Go! And don\'t let Jusoh have seconds.']
     ],
     lampir: {
       4: 'Chop, chop! The guests won\'t feed themselves.',
@@ -176,7 +180,8 @@ window.LC = window.LC || {};
       senah: [['senah14', 'HAHAHAHA! I dreamed I was a seri muka. A very sleepy seri muka.']],
       mat: [['mat16', 'I dreamed of the biggest ikan in the river... Why am I standing in the chicken coop?']],
       zul: [['zul16', 'Was my radio playing all morning? No? That was me humming? For three hours?']],
-      leong: [['leong16', 'I have been sanding the same post since dawn. It is very smooth now.']]
+      leong: [['leong16', 'I have been sanding the same post since dawn. It is very smooth now.']],
+      penghulu: [['penghulu15', 'I dreamed I gave the finest speech of my life... to the chickens? Well. Nobody interrupted me once.']]
     },
     finale: [
       ['', 'The last sleepwalker blinks awake. All over the kampung, people are rubbing their eyes.'],

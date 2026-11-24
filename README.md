@@ -337,7 +337,7 @@ The day after Chapter 15, Kampung Tepian wants to give thanks that everyone is s
 - **Hands for the kitchen:** ask Amin at Kak Senah's house and Si Bara at your dapur. Then an old friend's lantern glows by the dapur: **Nek Lampir's spirit** comes to help make amends.
 - **Cook the feast** beside your dapur: Nasi Minyak (3 padi), Ayam Masak Merah (3 cili) and Seri Muka (2). The majlis begins at the gelanggang **after 6 PM**.
 - **The morning after**, everyone who ate the ayam masak merah is sleepwalking, arms out, mumbling "nasiii...". Nobody is hurt, and nobody can be fought: weapons only go *Boing!*, Pelita's light holds them still, Lagu Mayang sits them down, and your sun spell makes them sneeze. Find three clues (Amin, a jar by your dapur, Si Bara).
-- **The cure:** Nek Lampir mixed up her old sleeping powder with kunyit (a ghost cannot smell!). Bring her Madu Tualang and 2 Herba from Hutan Rimba and a Pandan to brew **Jamu Bangun** on Si Bara's fire, then give a cup to each of the six sleepwalkers.
+- **The cure:** Nek Lampir mixed up her old sleeping powder with kunyit (a ghost cannot smell!). Bring her Madu Tualang and 2 Herba from Hutan Rimba and a Pandan to brew **Jamu Bangun** on Si Bara's fire, then give a cup to each of the seven sleepwalkers (Tok Penghulu went back for more ayam, so he is one of them).
 - **Rewards:** the **Senduk Lampir** (home-cooked dishes give half as much energy again), the Jamu Bangun recipe at the dapur, 1000 kepeng, and Nek Lampir's lantern on the farm porch.
 
 ### Chapter 15 — Jerebu dan Bunga Api (v3.15)
