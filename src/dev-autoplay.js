@@ -2,7 +2,7 @@
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
-  var W = LC.WorldScene.prototype, U = LC.UIScene.prototype, runner = null;
+  var W = LC.WorldScene.prototype, U = LC.UIScene.prototype, runner = null, speed = 1;
   var T = 16, directions = [[1, 0, 'right'], [0, 1, 'down'], [-1, 0, 'left'], [0, -1, 'up']];
   function range(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
   function point(x, y) { return { x: (x + 0.5) * T, y: (y + 0.8) * T }; }
@@ -527,24 +527,34 @@ window.LC = window.LC || {};
   var routes = LC.DevRoutes = { 12: storm, 13: mantera, 14: senah, 15: jerebu, 16: mamai, 17: penyamun };
   var methods = LC.DevAutoplay = {
     supports: function (chapter) { return !!routes[chapter]; },
-    start: function (speed, onStatus, onStop) {
-      runner = { speed: speed, status: onStatus, stop: onStop, vector: null, last: '', action: '', stepAt: performance.now() };
+    setSpeed: function (value) { speed = value; },
+    start: function (onStatus, onStop) {
+      runner = { status: onStatus, stop: onStop, vector: null, last: '', action: '', stepAt: performance.now() };
     },
     stop: function (message) { var old = runner; runner = null; if (old) old.stop(message); }
   };
   var touch = U.touchVec;
   U.touchVec = function () { return runner ? runner.vector : touch.apply(this, arguments); };
   var move = W.updatePlayer;
+  var movementKeys = ['W', 'A', 'S', 'D', 'UP', 'DOWN', 'LEFT', 'RIGHT'];
   W.updatePlayer = function (dt, blocked) {
-    if (!runner || !this.ui || !this.ui.ready) return move.apply(this, arguments);
-    var s = runner, world = this, q = world.S.quests;
+    var world = this;
+    var movementDt = !LC.Net.active() && speed > 1 ? Math.min(dt * speed, 0.08) : dt;
+    if (runner && !blocked && this.ui && this.ui.ready) {
+      var stick = touch.call(this.ui);
+      if (movementKeys.some(function (key) { return world.keys[key].isDown; }) || stick && Math.hypot(stick.x, stick.y) > 0.15) {
+        methods.stop('Manual control. Resume autoplay whenever you’re ready.');
+      }
+    }
+    if (!runner || !this.ui || !this.ui.ready) return move.call(this, movementDt, blocked);
+    var s = runner, q = world.S.quests;
     s.vector = null;
-    var chapter = q.ch2 ? LC.CHAPTER_LIST.find(function (item) { return (q[item.key] || 0) < item.end; }) : LC.DevStory.chapters[0];
+    var chapter = LC.DevStory.current(world.S);
     var finished = !chapter;
     var rain = world.jerebu && world.jerebu.rain;
     var spirit = world.mamai && world.mamai.spirit;
     var finalePending = world.penyamun && world.penyamun.finalePending;
-    if (finished && !blocked && !world.ui.modal && (!rain || rain.time >= 3) && (!spirit || !spirit.active) && !finalePending) { methods.stop('Story complete.'); return move.call(this, dt, blocked); }
+    if (finished && !blocked && !world.ui.modal && (!rain || rain.time >= 3) && (!spirit || !spirit.active) && !finalePending) { methods.stop('Story complete.'); return move.call(this, movementDt, blocked); }
     if (finished) chapter = LC.CHAPTER_LIST[LC.CHAPTER_LIST.length - 1];
     var step = q[chapter.key] || 0;
     var key = [chapter.n, step, world.area, world.war && world.war.wave, q.c4wave, q.c13Reflected, q.c12Rescued].join(':');
@@ -553,7 +563,7 @@ window.LC = window.LC || {};
     var play = routes[chapter.n];
     if (!play) { methods.stop('Manual play starts at Chapter ' + chapter.n + '.'); return; }
     if (world.ui.modal && world.ui.modal.type === 'dialog') {
-      if (world.time.now - (s.lastDialogue || 0) > 105 / s.speed()) {
+      if (world.time.now - (s.lastDialogue || 0) > 105 / speed) {
         s.lastDialogue = world.time.now;
         var modal = world.ui.modal, answer = modal.devAnswer;
         var choice = answer ? { test: function (label) { return label === answer; } } : s.choice;
@@ -573,8 +583,8 @@ window.LC = window.LC || {};
         console.error(error);
       }
     }
-    s.status(chapter.n, step, finished ? 'Finishing the story' : s.action || chapter.steps[step]);
-    return move.call(this, Math.min(dt * s.speed(), 0.08), blocked);
+    if (runner === s) s.status(chapter.n, step, finished ? 'Finishing the story' : s.action || chapter.steps[step]);
+    return move.call(this, movementDt, blocked);
   };
 
   var bond = LC.State.addBond;

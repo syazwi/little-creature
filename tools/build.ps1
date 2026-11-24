@@ -1,6 +1,7 @@
 # Little Creature: rebuilds everything that ships.
 #   dist/LittleCreature.html  single self-contained file, double-click to play on any computer
 #   dist/LittleCreature.apk   Android app (release-signed if android/keystore.properties exists)
+#   dist/LittleCreature_dev.apk   Android developer app with chapter jumps and autoplay
 # Usage (PowerShell, from the project folder):  .\tools\build.ps1        add -SkipApk to only rebuild the HTML
 param([switch]$SkipApk)
 $ErrorActionPreference = 'Stop'
@@ -29,9 +30,10 @@ if (-not (Test-Path 'android/local.properties')) {
 if (-not (Test-Path 'android/keystore.properties')) { Write-Warning 'android/keystore.properties missing: the APK will be signed with the debug key.' }
 
 Push-Location android
-try { & .\gradlew.bat assembleRelease --no-daemon --console=plain; if ($LASTEXITCODE) { throw 'Gradle build failed' } }
+try { & .\gradlew.bat assembleRelease assembleDeveloper --no-daemon --console=plain; if ($LASTEXITCODE) { throw 'Gradle build failed' } }
 finally { Pop-Location }
 
 New-Item -ItemType Directory -Force dist | Out-Null
 Copy-Item 'android/app/build/outputs/apk/release/app-release.apk' 'dist/LittleCreature.apk' -Force
-Get-Item dist/LittleCreature.html, dist/LittleCreature.apk | Select-Object Name, @{n = 'MB'; e = { [math]::Round($_.Length / 1MB, 2) } }
+Copy-Item 'android/app/build/outputs/apk/developer/app-developer.apk' 'dist/LittleCreature_dev.apk' -Force
+Get-Item dist/LittleCreature.html, dist/LittleCreature.apk, dist/LittleCreature_dev.apk | Select-Object Name, @{n = 'MB'; e = { [math]::Round($_.Length / 1MB, 2) } }

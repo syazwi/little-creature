@@ -62,7 +62,7 @@ LC.TitleScene = class extends Phaser.Scene {
     this.hint = this.add.text(cx, 600 + dy, touch ? 'Tap to choose  ·  drag the left side to walk  ·  USE to interact  ·  II to pause'
       : 'WASD / Arrows to move  ·  E to interact  ·  1-9 hotbar  ·  Tab bag  ·  N music' + (LC.canFullscreen() ? '  ·  F fullscreen' : ''),
       { fontFamily: LC.FONT, fontSize: '16px', color: '#cdb8a0', stroke: '#1a120c', strokeThickness: 4 }).setOrigin(0.5);
-    if (data && data.menu === 'slots') this.slotMenu(data.mode, data.sel); else this.mainMenu(data && data.sel);
+    if (data && data.menu === 'slots') this.slotMenu(data.mode, data.sel, data.page); else this.mainMenu(data && data.sel);
     this.add.text(W - 10, H - 8, 'Made with Phaser 3 · art & music generated in code', { fontFamily: LC.FONT, fontSize: '12px', color: '#8a7a9a' }).setOrigin(1, 1);
     // v1.7.1: this version and when it was built, and a button when a newer one is on GitHub
     this.add.text(10, H - 8, LC.Update.versionLine(), { fontFamily: LC.FONT, fontSize: '13px', color: '#b8a8c8', stroke: '#1a120c', strokeThickness: 3 }).setOrigin(0, 1);
@@ -89,7 +89,7 @@ LC.TitleScene = class extends Phaser.Scene {
     var w0 = W, h0 = H;
     function onResize() {
       if (self.starting || (self.scale.width === w0 && self.scale.height === h0)) return;
-      self.scene.restart({ quiet: true, sel: self.sel, menu: self.inSlots ? 'slots' : 'main', mode: self.slotMode });
+      self.scene.restart({ quiet: true, sel: self.sel, menu: self.inSlots ? 'slots' : 'main', mode: self.slotMode, page: self.slotPage });
     }
     this.scale.on('resize', onResize);
     this.events.once('shutdown', function () { self.scale.off('resize', onResize); });
@@ -121,12 +121,15 @@ LC.TitleScene = class extends Phaser.Scene {
     this.setOptions(opts, sel || 0, has ? 28 : 30, has ? 40 : 44, has ? 446 : 458);
   }
   // pick a save slot to load, or to start a new farm in (a used slot asks twice before it is overwritten)
-  slotMenu(mode, sel) {
+  slotMenu(mode, sel, page) {
     var self = this, opts = [];
-    this.inSlots = true; this.slotMode = mode;
+    var size = LC.SAVE_SLOTS > 4 ? 3 : LC.SAVE_SLOTS, pages = Math.ceil(LC.SAVE_SLOTS / size);
+    var last = mode === 'load' ? LC.State.lastSlot() - 1 : 0;
+    if (page === undefined) page = Math.floor(last / size);
+    this.inSlots = true; this.slotMode = mode; this.slotPage = page;
     this.heading.setText(mode === 'load' ? 'Load which farm?' : 'Start a new farm in which slot?');
     if (this.hint) this.hint.setVisible(false);
-    for (var n = 1; n <= LC.SAVE_SLOTS; n++) (function (n) {
+    for (var n = page * size + 1; n <= Math.min(LC.SAVE_SLOTS, (page + 1) * size); n++) (function (n) {
       var info = LC.State.slotInfo(n);
       var label = 'Slot ' + n + ':  ' + (info ? 'Day ' + info.day + '  ·  Pelita Lv ' + info.level + '  ·  ' + info.kepeng + ' kepeng' : 'empty');
       opts.push({ label: label, slot: n, used: !!info, fn: function () {
@@ -135,9 +138,10 @@ LC.TitleScene = class extends Phaser.Scene {
         self.begin(n, true);
       } });
     })(n);
+    if (pages > 1) opts.push({ label: 'Next slots (' + (page + 1) + ' / ' + pages + ')', fn: function () { self.slotMenu(mode, 0, (page + 1) % pages); } });
     opts.push({ label: 'Back', fn: function () { LC.Audio.sfx('click'); self.mainMenu(); } });
     this.armed = 0;
-    this.setOptions(opts, sel === undefined ? (mode === 'load' ? LC.State.lastSlot() - 1 : 0) : sel, 22, 40, 446);
+    this.setOptions(opts, sel === undefined ? last % size : sel, 22, 40, 446);
   }
 
   renderOpts() {

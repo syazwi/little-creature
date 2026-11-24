@@ -18,8 +18,8 @@ android {
         applicationId 'com.syazwi.littlecreature'
         minSdk 24
         targetSdk 35
-        versionCode 75
-        versionName '3.17.3'
+        versionCode 76
+        versionName '3.17.4'
     }
 
     signingConfigs {
@@ -39,6 +39,12 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig ksFile.exists() ? signingConfigs.release : signingConfigs.debug
+        }
+        developer {
+            initWith release
+            applicationIdSuffix '.developer'
+            versionNameSuffix '-dev'
+            matchingFallbacks = ['release']
         }
     }
 
@@ -61,6 +67,9 @@ dependencies {
 // The game itself lives in the repository root (index.html, src/, lib/ ...). Copy it into the
 // APK's assets/www at build time, so the web version and the Android version never drift apart.
 abstract class SyncWebAssets extends DefaultTask {
+    @Input
+    abstract Property<Boolean> getDeveloper()
+
     @InputFiles @PathSensitive(PathSensitivity.RELATIVE)
     abstract ConfigurableFileCollection getWebFiles()
 
@@ -78,25 +87,41 @@ abstract class SyncWebAssets extends DefaultTask {
         fs.sync { spec ->
             spec.from(webRoot) {
                 it.include('index.html', 'src/**', 'lib/**', 'icons/**')
-                it.exclude('src/dev-*.js')
+                if (!developer.get()) it.exclude('src/dev-*.js')
             }
             spec.into(outputDir.dir('www'))
+        }
+        if (developer.get()) {
+            def index = outputDir.file('www/index.html').get().asFile
+            def page = index.getText('UTF-8')
+            def main = '<script src="src/main.js"></script>'
+            if (!page.contains(main)) throw new GradleException('Could not find the game entry script in index.html')
+            def scripts = ['dev-story', 'dev-autoplay', 'dev-routes-early', 'dev-routes-late', 'dev-tools']
+                .collect { name -> "<script src=\"src/${name}.js\"></script>" }
+            def entry = ['<script>LC.DEV_ANDROID = true;</script>'] + scripts + [main]
+            index.setText(page.replace(main, entry.join('\n  ')), 'UTF-8')
         }
     }
 }
 
 def webRootDir = rootProject.layout.projectDirectory.dir('..')
-def syncWeb = tasks.register('syncWebAssets', SyncWebAssets) {
-    webRoot.set(webRootDir)
-    webFiles.from(fileTree(webRootDir) {
-        include 'index.html', 'src/**', 'lib/**', 'icons/**'
-        exclude 'src/dev-*.js'
-    })
-    outputDir.set(layout.buildDirectory.dir('generated/webAssets'))
+def registerWebAssets = { String name, boolean dev ->
+    tasks.register(name, SyncWebAssets) {
+        developer.set(dev)
+        webRoot.set(webRootDir)
+        webFiles.from(fileTree(webRootDir) {
+            include 'index.html', 'src/**', 'lib/**', 'icons/**'
+            if (!dev) exclude 'src/dev-*.js'
+        })
+        outputDir.set(layout.buildDirectory.dir(dev ? 'generated/developerWebAssets' : 'generated/webAssets'))
+    }
 }
+def syncWeb = registerWebAssets('syncWebAssets', false)
+def syncDeveloperWeb = registerWebAssets('syncDeveloperWebAssets', true)
 
 androidComponents {
     onVariants(selector().all()) { variant ->
-        variant.sources.assets.addGeneratedSourceDirectory(syncWeb, { it.outputDir })
+        def assets = variant.buildType == 'developer' ? syncDeveloperWeb : syncWeb
+        variant.sources.assets.addGeneratedSourceDirectory(assets, { it.outputDir })
     }
 }

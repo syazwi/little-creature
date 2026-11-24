@@ -3,10 +3,10 @@ window.LC = window.LC || {};
 (function (LC) {
   'use strict';
   var State = LC.State, full = !!LC.CHEATS;
-  var slot = LC.SAVE_SLOTS + 1;
+  var slot = (LC.DEV_ANDROID ? 11 : LC.SAVE_SLOTS) + 1;
   LC.DEVELOPER_HTML = true;
   LC.SAVE_SLOTS = slot;
-  if (!full) LC.SAVE_KEY = 'littleCreature.save.developer-web';
+  if (!full) LC.SAVE_KEY = LC.DEV_ANDROID ? 'littleCreature.save.developer' : 'littleCreature.save.developer-web';
 
   function unlimited(s) {
     Object.defineProperty(s, 'kepeng', { configurable: true, enumerable: false,
@@ -175,5 +175,9 @@ window.LC = window.LC || {};
     }
     return s;
   }
-  LC.DevStory = { slot: slot, chapters: chapters, checkpoint: checkpoint, entry: entry };
+  function current(s) {
+    if (!s.quests.ch2) return chapters[0];
+    return LC.CHAPTER_LIST.find(function (chapter) { return (s.quests[chapter.key] || 0) < chapter.end; });
+  }
+  LC.DevStory = { slot: slot, chapters: chapters, checkpoint: checkpoint, entry: entry, current: current };
 })(window.LC);
