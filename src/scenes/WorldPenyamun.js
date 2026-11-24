@@ -97,6 +97,16 @@ window.LC = window.LC || {};
     }
     return r;
   };
+  // v3.17.2: while a story Tok Penghulu waits somewhere in the kampung (Chapters 15 to 17), the everyday one is away from
+  // his house, so there is only one of him. Chapter 15 already did this for its own scenes; 16 and 17 did not.
+  var standIns = LC.AREAS.kampung.objects.filter(function (o) { return o.tex === 'npc_penghulu_0' && o.when; });
+  var away = W.jerebuAway;
+  W.jerebuAway = function (vid) {
+    if (away && away.apply(this, arguments)) return true;
+    if (vid !== 'penghulu' || this.area !== 'kampung') return false;
+    var S = this.S;
+    return standIns.some(function (o) { return o.when(S); });
+  };
 
   Object.assign(W, {
     penyamunLines: function (lines) { this.ui.say(lines.map(function (l) { return Object.assign({ text: l[1] }, LC.SPEAKERS[l[0]] || {}); })); },

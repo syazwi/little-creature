@@ -17,6 +17,17 @@ window.LC = window.LC || {};
   W.createKampong = function () { create.apply(this, arguments); LC.mamaiRecipe(this.S); this.createMamai(); };
   W.updateKampong = function (time, dt) { update.apply(this, arguments); this.updateMamai(time, dt); };
 
+  // v3.17.2: one of each person. While Pak Mat, Abang Zul or Tukang Leong is sleepwalking (or, woken, still standing at the
+  // gelanggang in this visit), or sitting at the majlis, the everyday one is away from his usual spot. Mamai.js only kept
+  // them away when the kampung loaded, so the sleepwalking starting while you were here (waking in a tent) showed both.
+  var AWAY = { mat: 1, zul: 1, leong: 1 }, away = W.jerebuAway;
+  W.jerebuAway = function (vid) {
+    if (away && away.apply(this, arguments)) return true;
+    var m = this.mamai;
+    if (!AWAY[vid] || this.area !== 'kampung' || !m) return false;
+    return !!m.decor || C.asleep(this.S, vid) || m.sleepers.some(function (s) { return s.who === vid && s.spr.active; });
+  };
+
   var objectAction = W.objectAction;
   W.objectAction = function (o) {
     var self = this, s = step(this);
