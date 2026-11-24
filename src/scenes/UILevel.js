@@ -3,6 +3,7 @@
  * body wrapped in an aura (its colour from your strongest attribute, its size and flames from your overall power and
  * level), Pelita beside you, an octagon chart of eight attributes (red at the centre, green at the edge), and your
  * level, title and XP. The user asked for a chart "like the image" (an attribute octagon) and then for the aura.
+ * v3.17.7: a villager's name above their head too, but only once you have talked to them (folk[vid].met).
  * Mixed into LC.UIScene. See level.js. */
 window.LC = window.LC || {};
 (function (LC) {
@@ -85,6 +86,7 @@ window.LC = window.LC || {};
     if (!this.ready || !this.S) return;
     this.updateLevelHUD();
     this.updateLvTags();
+    this.updateNameTags();
   };
   var onKey = U.onKey;
   U.onKey = function (ev) {
@@ -150,6 +152,33 @@ window.LC = window.LC || {};
         t.setPosition(Math.round(sx), Math.round(sy)).setVisible(true);
       });
       for (; i < tags.length; i++) tags[i].setVisible(false);
+    },
+    // v3.17.7: a villager's name above their head, once you have talked to them. One tag per villager sprite:
+    // a new sprite (another area, a house built, the story changing who they are) gets a fresh tag.
+    updateNameTags: function () {
+      var self = this, W = this.world, cam = W && W.cameras && W.cameras.main, folk = (this.S && this.S.folk) || {};
+      var tags = this.nameTags = this.nameTags || {}, npcs = (W && W.npcs) || {};
+      Object.keys(tags).forEach(function (vid) {
+        var t = tags[vid], n = npcs[vid];
+        if (!n || n.spr !== t.lcSpr || !n.spr.active) { t.destroy(); delete tags[vid]; }
+      });
+      if (!cam || this.modal || W.sleeping || W.cutscene || W.leaving) {
+        Object.keys(tags).forEach(function (vid) { tags[vid].setVisible(false); });
+        return;
+      }
+      var wv = cam.worldView, z = cam.zoom;
+      Object.keys(npcs).forEach(function (vid) {
+        var s = npcs[vid].spr, t = tags[vid], f = folk[vid];
+        var show = f && f.met && s && s.active && s.visible && s.alpha >= 0.4 &&
+          s.x > wv.x - 40 && s.x < wv.right + 40 && s.y > wv.y - 8 && s.y < wv.bottom + 48;
+        if (!show) { if (t) t.setVisible(false); return; }
+        if (!t) {
+          var v = LC.villager(vid);
+          t = tags[vid] = self.txt(0, 0, (v && v.name) || vid, 15, npcs[vid].ghost ? '#cfe6ff' : '#fff6de', { ox: 0.5, oy: 1, stroke: 4 }).setDepth(-0.65);
+          t.lcSpr = s;
+        }
+        t.setPosition(Math.round((s.x - wv.x) * z), Math.round((s.y - s.displayHeight - 1 - wv.y) * z)).setVisible(true);
+      });
     },
 
     // My stats: your aura, the attribute octagon, your level
