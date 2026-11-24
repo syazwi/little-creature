@@ -318,6 +318,17 @@ An original kampung comedy ghost story. After Chapter 13, Kampung Tepian whisper
 - After the chapter, talk to Amin in Kak Senah's yard at night to **light the bunga api** again (one show a night).
 - **Rewards:** 5 Seri Muka, Kak Senah's **seri muka recipe** at the dapur (padi, pandan and kelapa), 800 kepeng, and the Penunggu's blessing (+15 max energy). And try casting Mantera Suria at an auntie...
 
+### Chapter 17 — Penyamun Empat Puluh? (v3.17)
+
+The day after Chapter 16, things vanish from Kampung Tepian overnight, with a note signed **the Geng Empat Puluh** (the Forty). Jusoh only counts four pairs of footprints.
+
+- **Ali Baba**, a shy firewood seller, turns up at your farm. He saw four masked men open a cliff at **Bukit Kapur** (the eastern trail in Hutan Rimba) with a mantera.
+- **Hide in the bushes** and watch the gang. Then say their mantera at the cliff door: **"Niat enson matakaji semar ngiseng!"** Speak it into your **microphone**: the game only measures how loud you are, moment by moment, on your device (it cannot understand words, and nothing is recorded or sent). No microphone? **Tap the words** in order instead.
+- **Stuck in the cave!** The rock slams shut, and **Tok Batu**, its grumpy guardian, wants today's word in the gang's **secret code**. Three wrong tries and he naps for an hour. Ali Baba wastes your tries shouting outside, until Pelita squeezes out through the crack to stop him.
+- **Crack the code:** the shopping list (today's word), the chalk wall (an example, and a key that is a lie), the **Roda Rahsia** (a cipher wheel) and Kopak's coded diary (turn the wheel until it reads). Then **encrypt** the word yourself on Tok Batu's dial.
+- **Twelve "forty" jars of honey** arrive at the gelanggang with a merchant in a fake beard. Tap the jars and listen: three thieves are hiding inside. Then duel **Panglima Garong**, who gives up rather than falls.
+- **Rewards:** the **Kapak Ali Baba** (a weapon, and twice the wood from fallen branches), the Roda Rahsia, the **Kuih Bijan** recipe (padi, bijan, telur) and 10 Bijan, 1000 kepeng, **Gua Empat Puluh** as your storage vault, and Ali Baba's firewood and bijan every morning. The four thieves become the kampung's night watchmen.
+
 ### Chapter 16 — Kampung Mamai? (v3.16)
 
 The day after Chapter 15, Kampung Tepian wants to give thanks that everyone is safe, and Tok Penghulu asks **you** to host the **majlis doa kesyukuran** at the gelanggang.

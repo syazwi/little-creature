@@ -791,5 +791,6 @@ window.LC = window.LC || {};
     if (Art.generate27) Art.generate27(scene);   // v3.13: Chapter 14, Hantu Kak Senah?
     if (Art.generate28) Art.generate28(scene);   // Chapter 15, Jerebu dan Bunga Api
     if (Art.generate29) Art.generate29(scene);   // v3.16: Chapter 16, Kampung Mamai?
+    if (Art.generate30) Art.generate30(scene);   // v3.17: Chapter 17, Penyamun Empat Puluh?
   };
 })(window.LC);

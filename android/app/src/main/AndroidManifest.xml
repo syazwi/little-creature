@@ -5,6 +5,10 @@
          ("Play with Friends"): PeerJS matchmaking + WebRTC connections between players. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- v3.17: Chapter 17's cliff door listens for the mantera. The game only measures how loud the voice is, moment
+         by moment, on the device; nothing is recorded or sent. Android asks the player the first time. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <application
         android:allowBackup="true"
