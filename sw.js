@@ -6,7 +6,7 @@
  * dist/ (the version news and the downloads) always comes from the internet. */
 
 // ---- stamped by tools/build-web.mjs on every build (do not edit by hand): the version, and every file the game needs
-var CACHE = 'little-creature-79-20261124230532';
+var CACHE = 'little-creature-80-20261125002654';
 var FILES = [
   './', 'index.html', 'manifest.webmanifest', 'lib/phaser.min.js', 'lib/peerjs.min.js', 'src/version.js',
   'src/update.js', 'src/data.js', 'src/areas.js', 'src/folk.js', 'src/data2.js', 'src/areas2.js', 'src/undersea.js',
@@ -39,8 +39,8 @@ var FILES = [
   'src/scenes/WorldFireworks.js', 'src/scenes/WorldSenah.js', 'src/scenes/UISenah.js', 'src/jerebu.js',
   'src/scenes/WorldJerebu.js', 'src/scenes/UIJerebu.js', 'src/scenes/UICompanionProfiles.js', 'src/mamai.js',
   'src/scenes/WorldMamai.js', 'src/scenes/UIMamai.js', 'src/penyamun.js', 'src/scenes/WorldPenyamun.js',
-  'src/scenes/UIPenyamun.js', 'src/main.js', 'lib/fonts/PixelifySans-latin.woff2', 'lib/fonts/PixelifySans-latin-ext.woff2',
-  'icons/icon-192.png', 'icons/icon-512.png'
+  'src/scenes/UIPenyamun.js', 'src/scenes/WorldBunianMirror.js', 'src/main.js', 'lib/fonts/PixelifySans-latin.woff2',
+  'lib/fonts/PixelifySans-latin-ext.woff2', 'icons/icon-192.png', 'icons/icon-512.png'
 ];
 // ---- end of stamp
 
