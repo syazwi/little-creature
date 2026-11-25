@@ -18,8 +18,8 @@ android {
         applicationId 'com.syazwi.littlecreature'
         minSdk 24
         targetSdk 35
-        versionCode 83
-        versionName '3.20.1'
+        versionCode 84
+        versionName '3.21.0'
     }
 
     signingConfigs {

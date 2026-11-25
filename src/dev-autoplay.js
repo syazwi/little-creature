@@ -557,7 +557,7 @@ window.LC = window.LC || {};
     if (finished && !blocked && !world.ui.modal && (!rain || rain.time >= 3) && (!spirit || !spirit.active) && !finalePending) { methods.stop('Story complete.'); return move.call(this, movementDt, blocked); }
     if (finished) chapter = LC.CHAPTER_LIST[LC.CHAPTER_LIST.length - 1];
     var step = q[chapter.key] || 0;
-    var key = [chapter.n, step, world.area, world.war && world.war.wave, q.c4wave, q.c13Reflected, q.c12Rescued].join(':');
+    var key = [chapter.n, step, world.area, world.war && world.war.wave, q.c4wave, q.c13Reflected, q.c12Rescued, q.c18round, q.c19round].join(':');
     if (s.last !== key) { s.last = key; s.stepAt = performance.now(); s.routeKey = null; s.action = ''; }
     if (performance.now() - s.stepAt > 120000) { methods.stop('Autoplay paused. Take over at the current objective.'); return; }
     var play = routes[chapter.n];

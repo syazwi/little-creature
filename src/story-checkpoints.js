@@ -1,0 +1,164 @@
+/* The start of any chapter, built from a new game by completing every chapter before it (v3.21). This used to live in
+ * dev-story.js for the developer builds' chapter jumps; the normal game now uses it too, to replay a finished chapter
+ * (chapter-replay.js). Each ending sets what a chapter leaves behind: its quest keys, its rewards and the places it
+ * opened. entry() puts you where (and when) a chapter begins. Loaded after every chapter's UI file. */
+window.LC = window.LC || {};
+(function (LC) {
+  'use strict';
+  var State = LC.State;
+  var ONE = { n: 1, name: 'Little Creature', end: 1, steps: ['Help Pelita become a Legend of the Kampung'] };
+  function chapters() { return [ONE].concat(LC.CHAPTER_LIST); }   // (read when used: later files add their chapters to the list)
+  var entryHours = { 5: 19.5, 9: 20.5, 11: 20.5, 14: 19, 19: 19.2 };
+  var delays = { 4: 'ch3day', 5: 'ch4day', 6: 'ch5day', 7: 'c7wait', 8: 'c8wait', 9: 'c9wait', 10: 'c10wait', 11: 'c11wait', 15: 'c15wait', 16: 'c16wait', 17: 'c17wait', 18: 'c18wait', 19: 'c19wait' };
+  function grant(map) {
+    Object.keys(map).forEach(function (id) {
+      if (!LC.ITEMS[id]) throw new Error('Unknown chapter reward ' + id);
+      var count = map[id] - State.count(id);
+      if (count > 0 && (State.room(id) < count || !State.add(id, count))) throw new Error('The bag is full.');
+    });
+  }
+  function visit(s, areas) { areas.forEach(function (area) { s.visited[area] = true; }); }
+  function earn(s, amount) { s.kepeng += amount; s.stats.earned += amount; }
+  function pelita(s, level) {
+    var before = State.level(), g = s.ghost;
+    if (before >= level) return;
+    g.bond = LC.LEVELS[level - 1];
+    g.level = level;
+    g.stage = LC.STAGES.reduce(function (stage, info, i) { return g.bond >= info.bond ? i : stage; }, 0);
+    State.recalc();
+    for (var n = before + 1; n <= level; n++) State.levelGift(n);
+  }
+
+  var endings = {
+    1: function (s) {
+      var q = s.quests;
+      Object.assign(s.flags, { introDone: true, fedOnce: true, incense: true, tilled: true, planted: true,
+        watered: true, slept: true, harvested: true, cooked: true, metAni: true, keris: true, guardian: true, kidul: true, poseidon: true });
+      Object.assign(q, { bunian: 2, tanggang: 4, stoneTold: 1, badang: 3 });
+      LC.SPIRIT_ORDER.forEach(function (id) { s.spirits[id] = { friend: true, playDay: 0 }; });
+      s.wear.glasses = true;
+      s.str = Math.max(s.str, LC.STR_KERIS);
+      s.ghost.full = s.ghost.joy = s.ghost.glow = 85;
+      pelita(s, LC.LEGEND_LEVEL);
+      s.fieldStage = LC.fieldStageFor(State.level());
+      grant({ joran: 1, keris: 1, trisula: 1, cermin_mata: 1, basikal: 1, bubu: 2, nasi_lemak: 6 });
+      visit(s, ['kampung', 'forest', 'bunian', 'island', 'laut', 'kapal', 'kidul', 'atlantis', 'mountain', 'lombong', 'desert']);
+    },
+    2: function (s) {
+      var brothers = {};
+      LC.BROTHERS.forEach(function (id) { brothers[id] = 1; State.addFriendship(id, 4); });
+      Object.assign(s.quests, { ch2found: brothers, ch2t1: LC.CH2.trail1.length, ch2t2: LC.CH2.trail2.length,
+        ch2bird: 1, ch2ship: 1, ch2day: s.day - 1 });
+      grant({ kain_tenun: 2, tembaga: 1, emas: 1 });
+      visit(s, ['barunai']); earn(s, 1000);
+    },
+    3: function (s) {
+      Object.assign(s.quests, { kaStage: 3, ch3train: 3, buluMutiara: 1, asmara: 1, tempered: 1, gembor: 1,
+        perahu: 1, ch3day: s.day, jinn: 1, tourOn: 1, tour: { 0: 1, 1: 1, 2: 1 }, lantakaGot: 1 });
+      grant({ bulu_mutiara: 1, emas: State.count('emas') + 3, kain_tenun: State.count('kain_tenun') + 2, catatan_antonio: 1, lantaka: 1 });
+      visit(s, ['teluk', 'kayer']); earn(s, 9500);
+    },
+    4: function (s) {
+      Object.assign(s.quests, { ch4day: s.day, c4pagar: 1, c4meriam: 1, c4allies: 1, c4wave: 5 });
+      grant({ keris_majapahit: 1 }); earn(s, 6000);
+    },
+    5: function (s) {
+      Object.assign(s.quests, { ch5day: s.day, c5lamps: 1, c5witch: 1 });
+      grant({ pelita_purnama: 1 }); visit(s, ['jawa', 'kelam']); earn(s, LC.C5.reward);
+    },
+    6: function (s) {
+      Object.assign(s.quests, { c6day: s.day, c6bridge: 1, nekLampir: 1, c7wait: s.day });
+      State.folk('lampir').pts = Math.max(State.folk('lampir').pts, 40);
+      grant({ diari_nenek: 1 }); visit(s, ['ledang']); earn(s, LC.C6.reward1 + LC.C6.reward2);
+    },
+    7: function (s) {
+      Object.assign(s.quests, { c7sat: 1, bualang: 1, pelitaSun: 1, c8wait: s.day });
+      pelita(s, LC.MAX_LEVEL); visit(s, ['santubong', 'satang']); earn(s, LC.C7.reward1 + LC.C7.reward2);
+    },
+    8: function (s) {
+      Object.assign(s.quests, { c8floodDay: s.day - LC.C8.floodMax, c8calmN: 1, c8calmK: 1, c8duel: 'done', nagaRide: 1,
+        c8sealed: LC.C8.jarSpots.length, c8silt: LC.C8.silt, c9wait: s.day });
+      grant({ seruling_naga: 1 }); visit(s, ['gelora']); earn(s, LC.C8.reward1 + LC.C8.reward2 + LC.C8.reward3);
+    },
+    9: function (s) {
+      Object.assign(s.quests, { laguMayang: 1, c10wait: s.day });
+      grant({ mutiara: State.count('mutiara') + 3 });
+      visit(s, ['kabus', 'bakau', 'guatujuh']); earn(s, LC.C9.reward);
+    },
+    10: function (s) {
+      Object.assign(s.quests, { c10sultan: 1, c10won: 1, c10heard: 1, c11wait: s.day });
+      grant({ sumpit: 1, delima: 2 }); visit(s, ['tanjung']); earn(s, LC.C10.reward + LC.C10.onTime);
+    },
+    11: function (s) {
+      Object.assign(s.quests, { c11arrive: 1, c11gong: 1, c11pedoman: 1, c11prov: 1, c11helm: 1, c11leg: 3,
+        c11won: 1, c11p2arrive: 1, c11p2leg: 2, c11rope: { 0: 1, 1: 1, 2: 1 }, c11cut: 1, c11signal: 1, c11won2: 1 });
+      grant({ pedoman: 1, kalis: 1, mutiara: State.count('mutiara') + 5 }); visit(s, ['sulu', 'bulan', 'sauh11', 'kapal11']);
+      earn(s, LC.C11.reward + LC.C11.p2.reward);
+    },
+    12: function (s) {
+      Object.assign(s.quests, { c12Rescued: 7, c12Jack: true, stormVoyage: 0 });
+      visit(s, ['stormsea', 'stormdeck']);
+    },
+    13: function (s) {
+      Object.assign(s.quests, { c13Learned: true, c13Lesson: true, c13Reflected: 3, c13Golems: true, c13NekGone: true });
+      visit(s, ['mantera', 'manteraVault']);
+    },
+    14: function (s) {
+      s.quests.c14found = { jusoh: true, bahar: true, amin: true };
+      grant({ seri_muka: 5 }); visit(s, ['senah']); earn(s, 800);
+    },
+    15: function (s) {
+      s.quests.siBara = 1;
+      s.quests.c15calm = {};
+      s.quests.c15fuses = {};
+      LC.C15.people.forEach(function (person) { s.quests.c15calm[person.id] = true; });
+      LC.C15.fuses.forEach(function (_, i) { s.quests.c15fuses[i] = true; });
+      grant({ topeng_jerebu: 1 }); earn(s, 1000);
+    },
+    16: function (s) {
+      Object.assign(s.quests, { c16inv: {}, c16help: { amin: true, bara: true }, c16cook: {},
+        c16clue: { amin: true, jar: true, bara: true }, c16woke: {}, c16jamu: 0 });
+      LC.C16.invites.forEach(function (v) { s.quests.c16inv[v.who] = true; });
+      Object.keys(LC.C16.pots).forEach(function (key) { s.quests.c16cook[key] = true; });
+      LC.C16.sleepers.forEach(function (v) { s.quests.c16woke[v.who] = true; });
+      grant({ senduk_lampir: 1 }); earn(s, 1000);
+    },
+    17: function (s) {   // v3.20: Chapters 17 to 19 (a jump past Chapter 16 had no ending to run)
+      grant({ kapak_alibaba: 1, roda_rahsia: 1, bijan: 10 }); visit(s, ['kapur', 'gua17']); earn(s, 1000);
+    },
+    18: function (s) {
+      grant({ selempang18: 1 }); visit(s, ['gelap18']); earn(s, 2000);
+    },
+    19: function (s) {
+      Object.assign(s.quests, { c19spot: 0, c19day: s.day - 1, c19signs: { buaian: true, jemuran: true, pisang: true }, c19welcome: true,
+        c19lamps: { 0: true, 1: true, 2: true, 3: true }, c19bunga: true, c19inah: true, c19scared: true, c19round: 3 });
+      grant({ sisir_maya: 1, benih_sundal: 5 }); visit(s, ['kubur19', 'besar19', 'dalam19']); earn(s, LC.C19.reward + 300);
+    }
+  };
+
+  function complete(s, chapter) {
+    if (chapter.key) s.quests[chapter.key] = chapter.end;
+    endings[chapter.n](s);
+    State.recalc();
+    s.hp = s.maxHp;
+    s.energy = s.maxEnergy;
+    s.water = s.maxWater;
+  }
+  function entry(s, n) {
+    var areas = { 3: 'barunai', 14: 'kampung' };
+    s.area = areas[n] || 'farm';
+    s.minutes = (entryHours[n] || 7) * 60 + 5;
+    if (delays[n]) s.quests[delays[n]] = s.day - 1;
+    return { area: s.area };
+  }
+  // a new game (in memory) at the start of chapter n; slot: the save slot it belongs to (none: State.slot is unchanged)
+  function build(n, slot) {
+    var s = State.newGame(slot), list = chapters();
+    for (var i = 0; i < n - 1; i++) {
+      complete(s, list[i]);
+      s.day++;
+    }
+    return s;
+  }
+  LC.StoryCheckpoints = { chapters: chapters, endings: endings, complete: complete, entry: entry, build: build };
+})(window.LC);

@@ -1,4 +1,4 @@
-/* Playable developer routes for Chapters 7–11. */
+/* Playable developer routes for Chapters 7–11, 18 and 19. */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -177,5 +177,147 @@ window.LC = window.LC || {};
     var action = w.shipAction2();
     if (action && Math.hypot(sh.x - x * T, sh.y - y * T) < 10 * T) w.doAction();
     else p.sail(x, y, 8, 'Follow the fleet’s bells');
+  };
+
+  // ================================================================ v3.21: Chapters 18 and 19
+  function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+  function toward(p, target, label) {   // far away: find a path; close: walk straight at it
+    var d = dist(p.world.player, target);
+    if (d > 48) { p.near(target.x / T - 0.5, target.y / T - 0.8, label, 20); return; }
+    p.state.action = label;
+    if (d > 3) p.state.vector = p.vector(target);
+  }
+  function away(p, from, label) {
+    var pl = p.world.player, dx = pl.x - from.x, dy = pl.y - from.y, d = Math.hypot(dx, dy) || 1;
+    p.state.action = label; p.state.vector = { x: dx / d, y: dy / d };
+  }
+
+  // Chapter 18, Bujang Belajar Mantera?
+  R[18] = function (p, step) {
+    var w = p.world, q = w.S.quests, C = LC.C18, b = w.bujang, L = b && b.lesson, pl = w.player;
+    p.state.choice = /^(Join them!|I vouch for them)$/;
+    function school() {
+      if (w.area === 'mantera') return true;
+      if (w.area === 'gelap18') { p.prop('g18_out', 'Climb back up to the courtyard'); return false; }
+      if (w.area === 'ujian18') { p.prop('u18_out', 'Leave the exam hall'); return false; }
+      if (p.travel('farm')) p.object('mantera_letter', 'Take Jack’s enchanted letter to Sekolah Mantera');
+      return false;
+    }
+    if (step === 0) { openNextDay(p, 'c18wait', 9); return; }
+    if (step === 1) { if (p.travel('kampung')) p.prop('k_bujang18_kudin', 'Talk to the three bachelors'); return; }
+    if (step === 2) { if (school()) p.object('mantera_suraya', 'Vouch for the bachelors with Suraya'); return; }
+    if (step === 3) {   // Ilmu Terapung: stand on the feather's shadow when it sinks low, and dodge Leman's durians
+      if (!school()) return;
+      if (!L || L.kind !== 'float') { p.object('mantera_suraya', 'Ask Suraya for the first lesson'); return; }
+      var drop = L.durians.find(function (d) { return d.left < 0.8 && dist(d, pl) < 17; });
+      if (drop && L.h > 0.3) { away(p, drop, 'Dodging a durian'); return; }
+      if (L.h <= 0.6 && dist(pl, L) < 15) { w.doAction(); return; }
+      toward(p, L, 'Keeping the feather up (' + L.lifts + ' / ' + C.feather.lifts + ')');
+      return;
+    }
+    if (step === 4) {   // Kelas Gelap: walk slowly enough for Sani, and wake each rune with him beside you
+      if (w.area === 'mantera') { p.object('m_gelap18', 'Go down to the dark room with Sani'); return; }
+      if (w.area !== 'gelap18') { school(); return; }
+      var sani = b && b.sani, lit = q.c18runes || {}, next = C.runes.findIndex(function (r, i) { return !lit[i]; });
+      if (!sani || next < 0) return;
+      if (sani.scared) { toward(p, sani.spr, 'Going back for Sani'); return; }
+      if (dist(sani.spr, pl) > 60) { p.state.action = 'Waiting for Sani'; return; }   // (he is coming along your trail)
+      p.object('g18_rune' + next, 'Wake rune ' + (next + 1) + ' with Sani');
+      if (p.state.vector) { p.state.vector.x *= 0.34; p.state.vector.y *= 0.34; }   // a gentle walk (a half-pushed stick), so Sani keeps up
+
+      return;
+    }
+    if (step === 5) {   // Kelas Pantul: step in front of the bachelor the rune aims at, and send the bolt back
+      if (w.area === 'gelap18') { p.prop('g18_out', 'Climb back up to the courtyard'); return; }
+      if (!school()) return;
+      if (!L || L.kind !== 'pantul') { p.object('mantera_suraya', 'Ask Suraya for the last lesson'); return; }
+      var rx = (C.rune.x + 0.5) * T, ry = (C.rune.y + 1) * T - 12, aim = L.bolt && !L.bolt.back ? L.bolt.img : L.aim ? L.aim.img : null;
+      if (L.bolt && !L.bolt.back && dist({ x: pl.x, y: pl.y - 8 }, L.bolt) < 26 && w.pantulAvailable() && !w.pantulLeft()) w.ui.pressKey('KeyP');
+      if (!aim) { toward(p, { x: 12.5 * T, y: 14 * T }, 'Waiting for the rune (' + L.count + ' / ' + C.pantul + ')'); return; }
+      var tx = aim.x, ty = aim.y - 10, dx = rx - tx, dy = ry - ty, d = Math.hypot(dx, dy) || 1;
+      toward(p, { x: tx + dx / d * 16, y: ty + dy / d * 16 + 8 }, 'Shielding the bachelors (' + L.count + ' / ' + C.pantul + ')');
+      return;
+    }
+    if (step === 6) { if (school()) p.object('m_pintu18', 'Sit by the fire, then open Pintu Empat Penjuru'); return; }
+    if (step === 7) {   // Ujian Cermin: fight beside them, and step out of every marked attack
+      if (w.area === 'ujian18') {
+        var F = b && b.fight;
+        if (q.c18exam || !F || F.phase !== 'fight') { p.state.action = 'Ujian Cermin'; return; }
+        var mark = F.marks.find(function (m) { return m.left > 0 && m.kind !== 'song' && dist(m, pl) < m.r + 8; });
+        if (mark) { away(p, mark, 'Stepping out of a marked attack'); return; }
+        p.foes(/^bayang18_/);
+        return;
+      }
+      if (!school()) return;
+      if (!q.c18exam) p.object('m_pintu18', 'Enter the exam hall');
+      else p.state.action = 'Graduation';
+    }
+  };
+
+  // Chapter 19, Harum Sundal Malam
+  R[19] = function (p, step) {
+    var w = p.world, S = w.S, q = S.quests, C = LC.C19, m = w.maya, pl = w.player;
+    p.state.choice = /^(He could never grow up|Your mother, Mak Kiah|Hold up the sisir)$/;
+    function dark() { if (!C.isNight(S)) p.clock(19.4); }
+    function kubur() {
+      if (w.area === 'kubur19') return true;
+      if (p.travel('kampung')) p.prop('k_kubur19', 'Walk up the lane to the old graveyard');
+      return false;
+    }
+    function besar() {
+      if (w.area === 'besar19') return true;
+      if (w.area === 'dalam19') { p.prop('d_out19', 'Go back outside'); return false; }
+      if (p.travel('kampung')) p.prop('k_besar19', 'Go up the hill to Tuan Hashim’s house');
+      return false;
+    }
+    function dalam() {
+      if (w.area === 'dalam19') return true;
+      if (besar()) p.prop('b_pintu19', 'Go inside');
+      return false;
+    }
+    if (step === 0) { openNextDay(p, 'c19wait', 19.4); return; }
+    if (step === 1) { dark(); if (kubur()) p.prop('kb_maya', 'Talk to the woman under the kemboja tree'); return; }
+    if (step === 2) { dark(); if (kubur()) p.prop(C.spots[q.c19spot || 0].id, 'Follow the scent to Maya’s sisir'); return; }
+    if (step === 3) {
+      if (S.day <= (q.c19day || 0)) { if (w.area === 'kubur19') p.prop('kb_back', 'Head home for the night'); else p.sleep(); return; }
+      dark(); if (kubur()) p.prop('kb_maya', 'Sit with Maya');
+      return;
+    }
+    if (step === 4) {
+      dark();
+      if (w.area === 'kubur19') { p.prop('kb_back', 'Back to Kampung Tepian'); return; }
+      if (!p.travel('kampung')) return;
+      var seen = q.c19signs || {}, sign = ['buaian', 'jemuran', 'pisang'].find(function (k) { return !seen[k]; });
+      if (sign) p.prop('k_' + sign + '19', 'Look at the signs in the night');
+      else p.prop('k_imam19', 'Talk to Tok Imam');
+      return;
+    }
+    if (step === 5) {
+      var lamps = q.c19lamps || {}, lamp = C.lamps.findIndex(function (l, i) { return !lamps[i]; });
+      if (!q.c19welcome) { if (besar()) p.prop('b_hashim19', 'Meet the Hashims'); }
+      else if (lamp >= 0) { if (dalam()) p.prop('d_lampu19_' + lamp, 'Light the lamps'); }
+      else if (!q.c19bunga) { if (besar()) p.prop('b_sundal19', 'Cut the sundal malam'); }
+      else if (!q.c19inah) { if (besar()) p.prop('b_inah19', 'Ask Mak Inah'); }
+      else if (besar()) p.prop('b_hashim19', 'Tell Tuan Hashim');
+      return;
+    }
+    if (step === 6) {
+      if (S.minutes < C.watch) p.clock(20.5);
+      if (!dalam()) return;
+      var F = m && m.fight;
+      if (!F) { p.near(14, 6, 'Keep watch by the cradle'); return; }
+      if (F.phase !== 'fight' || !F.e) { p.state.action = 'The lamps go out...'; return; }
+      var e = F.e.spr;
+      if (F.cornered) { if (dist(pl, e) < 38) w.doAction(); else toward(p, e, 'Hold up the sisir'); return; }
+      if (F.ring && dist(pl, { x: F.ring.x, y: F.ring.y - 12 }) < 92) { away(p, { x: F.ring.x, y: F.ring.y }, 'Out of her shriek'); return; }
+      if (F.tele) {   // step sideways off the red line of her hair
+        var t = F.tele, vx = Math.cos(t.ang), vy = Math.sin(t.ang), rx2 = pl.x - t.ox, ry2 = pl.y - 8 - (t.oy - 10), along = rx2 * vx + ry2 * vy;
+        var side = rx2 * -vy + ry2 * vx;
+        if (along > -10 && along < t.len + 10 && Math.abs(side) < 22) { p.state.action = 'Stepping out of her hair'; p.state.vector = side >= 0 ? { x: -vy, y: vx } : { x: vy, y: -vx }; return; }
+      }
+      p.attack(F.e);
+      return;
+    }
+    if (step === 7) { if (dalam()) p.state.action = 'Persuade Maya to let her son grow up'; }
   };
 })(window.LC);
