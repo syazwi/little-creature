@@ -202,7 +202,7 @@ window.LC = window.LC || {};
         story(this, 4);
         var im = this.objImgs.kb_maya;
         if (im) this.mayaPetals(im.x, im.y - 12, 20, 24);
-        LC.Audio.sfx('desir19');
+        LC.Audio.sfx('ratap19');
         this.maya.vanish = true;
         this.mayaLines(X.sorrow);
       }
@@ -249,12 +249,13 @@ window.LC = window.LC || {};
       this.refreshWhen();
       this.mayaLines(X.imam);
     },
-    mayaGlimpse: function () {   // a pale shape at the edge of your sight
+    mayaGlimpse: function (wail) {   // a pale shape at the edge of your sight
       var p = this.player, self = this, ang = Math.random() * Math.PI * 2, d = 120 + Math.random() * 40;
       var x = p.x + Math.cos(ang) * d, y = p.y + Math.sin(ang) * d * 0.6;
       var g = this.add.image(x, y, 'pontianak19_0').setOrigin(0.5, 1).setDepth(y).setAlpha(0);
       this.tweens.add({ targets: g, alpha: 0.55, duration: 400, yoyo: true, hold: 500, onComplete: function () { g.destroy(); } });
       this.tweens.add({ targets: g, x: x + (Math.random() < 0.5 ? -30 : 30), y: y - 8, duration: 1300 });
+      if (wail) LC.Audio.sfx('ratap19');   // (not after a cry: the two would talk over each other)
       void self;
     },
     mayaCry: function () {
@@ -542,7 +543,7 @@ window.LC = window.LC || {};
         c.phase = 'gone';
         var ma = c.actors.maya;
         if (ma) { this.mayaPetals(ma.x, ma.y - 14, 26, 26); this.tweens.add({ targets: ma, alpha: 0, y: ma.y - 10, duration: 1800 }); }
-        LC.Audio.sfx('desir19');
+        LC.Audio.sfx('ratap19');
         ['hashim', 'rokiah', 'inah'].forEach(function (k, i) { var a = c.actors[k]; if (a) self.tweens.add({ targets: a, alpha: 0, duration: 900, delay: 600 + i * 200 }); });
         this.time.delayedCall(2200, function () {
           Object.keys(c.actors).forEach(function (k) { if (c.actors[k] && c.actors[k].active) c.actors[k].destroy(); });
@@ -642,7 +643,7 @@ window.LC = window.LC || {};
           story(this, 1);
           this.refreshWhen();
           this.mayaPetals(this.player.x, this.player.y - 10, 20, 60);
-          LC.Audio.sfx('desir19');
+          LC.Audio.sfx('ratap19');
           this.toast(X.hookToast, 'i_bunga_sundal');
           this.mayaLines(X.hook);
           return;
@@ -676,7 +677,7 @@ window.LC = window.LC || {};
       // Kampung Tepian at night, while the kampung is afraid
       if (this.area === 'kampung' && s === 4 && nt) {
         if ((m.cryT -= dt) <= 0) { m.cryT = 16 + Math.random() * 12; this.mayaCry(); }
-        if ((m.glimpseT -= dt) <= 0) { m.glimpseT = 22 + Math.random() * 16; this.mayaGlimpse(); }
+        if ((m.glimpseT -= dt) <= 0) { m.glimpseT = 22 + Math.random() * 16; this.mayaGlimpse(true); }
         var pis = this.objImgs.k_pisang19;
         if (pis && (m.shakeT = (m.shakeT || 0) - dt) <= 0) { m.shakeT = 5 + Math.random() * 4; this.tweens.add({ targets: pis, x: pis.x + 1.5, duration: 70, yoyo: true, repeat: 5 }); }
       }

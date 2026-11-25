@@ -193,12 +193,55 @@ window.LC = window.LC || {};
   }, C.watch);
 
   // ---------------------------------------------------------------- the sounds of the night
+  // v3.20.1: real recordings (sounds19.js, picked by the owner) for the baby's cry, her laugh, the scream and the wail.
+  // They are decoded once when audio starts; until then (or if a device cannot decode them) the synthesized sounds below play.
+  var REC = {
+    tangisjauh19: { k: 'cry', vol: 0.9, twice: true },    // loud: she is far away
+    tangis19: { k: 'cry', vol: 0.3, twice: true },        // soft: she is near
+    hilai19: { k: 'laugh', vol: 1.4 },
+    jerit19: { k: 'scream', vol: 0.75 },
+    ratap19: { k: 'wail', vol: 0.8 }
+  };
+  var recBuf = {}, recStarted = false;
+  function decodeRec(A) {
+    if (recStarted || !A.ctx || !LC.SOUNDS19) return;
+    recStarted = true;
+    Object.keys(LC.SOUNDS19).forEach(function (k) {
+      try {
+        var bin = atob(LC.SOUNDS19[k].mp3), u = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+        var ok = function (b) { recBuf[k] = b; }, no = function () { /* keep the synthesized sound */ };
+        var p = A.ctx.decodeAudioData(u.buffer, ok, no);
+        if (p && p.catch) p.catch(no);
+      } catch (e) { /* keep the synthesized sound */ }
+    });
+  }
+  var audioInit = LC.Audio.init;
+  LC.Audio.init = function () { var r = audioInit.apply(this, arguments); decodeRec(LC.Audio); return r; };
+  function playRec(A, r, t) {
+    var S = LC.SOUNDS19 && LC.SOUNDS19[r.k], b = recBuf[r.k];
+    if (!S || !b) return false;
+    function one(at, rate) {
+      var src = A.ctx.createBufferSource(), g = A.ctx.createGain(), len = S.dur / rate, fade = Math.min(0.3, len * 0.25);
+      src.buffer = b; src.playbackRate.value = rate;
+      g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(r.vol, at + 0.02);
+      g.gain.setValueAtTime(r.vol, at + len - fade); g.gain.exponentialRampToValueAtTime(0.0001, at + len);
+      src.connect(g); g.connect(A.sfxBus);
+      src.start(at, S.skip); src.stop(at + len + 0.03);
+      return len;
+    }
+    var len = one(t, 1);
+    if (r.twice) one(t + len + 0.12, 0.96);   // "waah... waah": the same cry again, a little lower
+    return true;
+  }
   var sfx = LC.Audio.sfx;
   LC.Audio.sfx = function (name) {
     var A = LC.Audio;
-    if (['tangis19', 'tangisjauh19', 'hilai19', 'jerit19', 'desir19'].indexOf(name) < 0) return sfx.apply(this, arguments);
+    if (['tangis19', 'tangisjauh19', 'hilai19', 'jerit19', 'desir19', 'ratap19'].indexOf(name) < 0) return sfx.apply(this, arguments);
     if (!A.ctx || A.ctx.state !== 'running' || !A.vol || !A.vol.sfx) return;
     var t = A.ctx.currentTime + 0.01, i;
+    decodeRec(A);
+    if (REC[name] && playRec(A, REC[name], t)) return;
     if (name === 'tangis19' || name === 'tangisjauh19') {   // a baby's cry: "uwaa... uwaa", loud when she is far, soft when near
       var v = name === 'tangis19' ? 0.05 : 0.13;
       for (i = 0; i < 3; i++) {
