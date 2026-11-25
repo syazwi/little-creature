@@ -138,7 +138,12 @@ window.LC = window.LC || {};
   W.mirrorIntro = function (t) {
     var self = this, m = t.mirror, por = m.pk + '_down_0';
     var who = function (text) { return { name: TWIN, portrait: por, text: text }; };
-    var lines = t.clears ? [{ text: X.again[0] }, who(pick(X.rematch))] : [{ text: X.intro[0] }, who(X.intro[1]), who(X.intro[2])];
+    var wins = t.clears, losses = this.S.quests.bunianMirrorDefeats || 0;
+    var record = who('The glass remembers. You\'ve won ' + wins + (wins === 1 ? ' time' : ' times') +
+      ' and lost ' + losses + (losses === 1 ? ' time' : ' times') + ' against me.');
+    var lines = wins || losses
+      ? [{ text: X.again[0] }, record, who(wins ? pick(X.rematch) : 'Back on your feet, I see.')]
+      : [{ text: X.intro[0] }, who(X.intro[1]), record, who(X.intro[2])];
     this.ui.say(lines, { onDone: function () { if (self.bunianTrial === t && !self.leaving) self.mirrorSpawn(t); } });
   };
   W.mirrorSpawn = function (t) {

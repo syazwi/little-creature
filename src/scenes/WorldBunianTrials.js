@@ -255,9 +255,11 @@ window.LC = window.LC || {};
       });
     },
     leaveBunianTrial: function (defeated) {
-      if (this.bunianTrial.ending) return;
-      this.bunianTrial.ending = true;
+      var t = this.bunianTrial, q = this.S.quests;
+      if (t.ending) return;
+      t.ending = true;
       B.restore(this.S);
+      if (defeated && t.door.id === 'mirror') q.bunianMirrorDefeats = (q.bunianMirrorDefeats || 0) + 1;
       LC.State.recalc();
       this.S.hp = this.S.maxHp;
       LC.State.save();
