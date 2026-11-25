@@ -800,5 +800,6 @@ window.LC = window.LC || {};
     if (Art.generate29) Art.generate29(scene);   // v3.16: Chapter 16, Kampung Mamai?
     if (Art.generate30) Art.generate30(scene);   // v3.17: Chapter 17, Penyamun Empat Puluh?
     if (Art.generate31) Art.generate31(scene);   // v3.19: Chapter 18, Bujang Belajar Mantera?
+    if (Art.generate32) Art.generate32(scene);   // v3.20: Chapter 19, Harum Sundal Malam
   };
 })(window.LC);

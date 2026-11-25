@@ -1,6 +1,7 @@
 /* Little Creature — TESTING build only (dist/LittleCreature_full.html). Everything is unlocked, with its own save
  * (so it never touches your real farm), and a few test keys:
  *   ]  sleep now (next day)      [  skip to the next season      \  skip to the next Pesta (Sabtu)      H  full health and energy
+ *      (Shift+H once Chapter 19 is done: H then laughs Hilai Maya)
  *   T  replay Si Tanggang's story (switch between "before he meets his mother" and "reunited")
  *   -  replay Badang's story (switch between "skinny, on the night watch" and "the strongest man in the land"; B was this key until v2.5)
  *   K  Chapter 2: jump to its next step
@@ -61,6 +62,7 @@ window.LC = window.LC || {};
     if (code === 'KeyP' && W.pantulAvailable && W.pantulAvailable()) return onKey.call(this, ev);
     if (code === 'KeyK' && LC.hasSuria && LC.hasSuria()) return onKey.call(this, ev);   // v3.12: K casts Mantera Suria once it is learned
     if (code === 'KeyY' && LC.hasSekawan && LC.hasSekawan()) return onKey.call(this, ev);   // v3.19: Y calls the bachelors once Chapter 18 is done
+    if (code === 'KeyH' && !ev.shiftKey && LC.hasHilai && LC.hasHilai()) return onKey.call(this, ev);   // v3.20: H laughs Hilai Maya once Chapter 19 is done (full health is then Shift+H)
     function sleepTo(day) { S.day = day - 1; W.sleep(false); }
     switch (code) {
       case 'BracketRight': sleepTo(S.day + 1); return;
