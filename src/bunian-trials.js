@@ -1,4 +1,6 @@
-/* The four doors of Kampung Bunian. Challenge stats, rooms, and saved rewards. */
+/* The doors of Kampung Bunian. Challenge stats, rooms, and saved rewards.
+ * v3.18: a fifth, bigger door (Pintu Cermin) above the four. Behind it waits Bayang Diri, your own shadow: ten levels
+ * above you, with your weapon and every combat skill you know, and stronger after each win. See WorldBunianMirror.js. */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -21,16 +23,40 @@ window.LC = window.LC || {};
       { id: 'spirit', name: 'Supernatural Creatures', arena: 'The Hollow of Shadows', x: 11, y: 13, color: 0x9ceab2, floor: 'c', edge: 'X',
         minion: ['Restless Shadow', 'bayang', 13, 32, 7], boss: ['Puaka Senja', 'puaka_emas', 70, 26, 12], count: 4,
         power: 'haunt', advice: 'Puaka Senja hunts you in a moving shadow. Keep away from the ring around it and rush in after it breaks.',
-        hp: 10, energy: 10, loot: ['serpihan_bayang', 4], kepeng: 1100 }
+        hp: 10, energy: 10, loot: ['serpihan_bayang', 4], kepeng: 1100 },
+      { id: 'mirror', name: 'Mirror', arena: 'The Hall of Mirrors', x: 7, y: 7, w: 4, big: true, mirror: true, color: 0xff5a7a, floor: 'k', edge: 'X',
+        boss: ['Bayang Diri', 'mirror_twin', 60, 54, 6], count: 0, power: 'mirror',
+        advice: 'Behind this door stands a mirror. What steps out of it is you: ten levels stronger, with your best weapon and every skill you have learned. Watch the marks on the floor, and turn your own skills against it.',
+        hp: 10, energy: 10, loot: ['emas', 3], kepeng: 1500 }
     ],
     clearCount: function (s, door) { return s.quests && s.quests.bunianClears && s.quests.bunianClears[door.id] || 0; },
     round: function (s, door) {
+      if (door.mirror) return B.mirrorRound(s, door);
       var clears = B.clearCount(s, door);
       return {
         number: clears + 1,
         minion: { level: LC.monsterLevel(door.minionKind) + clears * 2, hp: Math.round(door.minion[2] * (1 + clears * 0.35)), dmg: door.minion[4] + clears },
         boss: { level: LC.monsterLevel(door.bossKind) + clears * 3, hp: Math.round(door.boss[2] * (1 + clears * 0.75)), dmg: door.boss[4] + clears * 3 },
         specialCooldown: Math.max(3.1, 4.7 - clears * 0.4), enragedCooldown: Math.max(2.4, 3.5 - clears * 0.3),
+        kepeng: Math.round(door.kepeng * (1 + clears * 0.25)), items: door.loot[1] + clears
+      };
+    },
+    // your best weapon (the one your shadow fights with)
+    bestWeapon: function (s) {
+      var best = null;
+      (s.inv || []).forEach(function (slot) { var it = slot && LC.ITEMS[slot.id]; if (it && it.kind === 'weapon' && (!best || it.dmg > best.dmg)) best = it; });
+      return best;
+    },
+    // Bayang Diri: your level + 10 (+2 for each win); as many blows to beat as 18 of your best swings (+4 per win);
+    // hits for a tenth of your health (+2 per win); and casts its skills sooner after every win
+    mirrorRound: function (s, door) {
+      var clears = B.clearCount(s, door), best = B.bestWeapon(s), swing = best ? LC.State.weaponDamage(best) : 1;
+      var you = LC.plLevel ? LC.plLevel(s) : 1;
+      return {
+        number: clears + 1, you: you, weapon: best,
+        boss: { level: you + 10 + clears * 2, hp: Math.max(40, Math.round(swing * Math.min(40, 18 + clears * 4))),
+          dmg: Math.max(4, Math.round((s.maxHp || 60) * 0.1)) + clears * 2, speed: Math.min(70, 54 + clears * 3), sight: 600, w: 6 },
+        specialCooldown: Math.max(2.0, 4.2 - clears * 0.35), enragedCooldown: Math.max(1.5, 3.1 - clears * 0.3),
         kepeng: Math.round(door.kepeng * (1 + clears * 0.25)), items: door.loot[1] + clears
       };
     },
@@ -77,9 +103,9 @@ window.LC = window.LC || {};
     door.texture = door.area + '_door';
     door.minionKind = door.area + '_minion';
     door.bossKind = door.area + '_boss';
-    LC.ENEMIES[door.minionKind] = rival(door, 'minion');
+    if (door.minion) LC.ENEMIES[door.minionKind] = rival(door, 'minion');
     LC.ENEMIES[door.bossKind] = rival(door, 'boss');
-    village.push({ id: door.texture, type: 'bunian_trial_door', trial: door.id, x: door.x, y: door.y, w: 2, tex: door.texture, light: door.color, keep: true });
+    village.push({ id: door.texture, type: 'bunian_trial_door', trial: door.id, x: door.x, y: door.y, w: door.w || 2, tex: door.texture, light: door.color, keep: true });
     LC.AREAS[door.area] = {
       name: door.arena, sub: 'Trial of ' + door.name, trial: door, lvl: 3, home: B.start, frozenClock: true,
       build: function () { return arenaTiles(door); }, pond: 'river', amb: door.id === 'sea' ? 'beach' : 'cave',

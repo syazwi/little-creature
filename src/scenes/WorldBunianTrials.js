@@ -81,9 +81,10 @@ window.LC = window.LC || {};
   Object.assign(W, {
     speakBunianKeeper: function () {
       var collected = this.collectBunianLoot();
-      var lines = [line('Here, time stands still. Each door holds a band of minions and a boss. Bring a weapon and watch the ground before each special attack.'),
+      var lines = [line('Here, time stands still. Each of the four small doors holds a band of minions and a boss. Bring a weapon and watch the ground before each special attack.'),
         line('Start at the blue door if you’re new to the trials. If you fall or retreat, I’ll bring you back with your bag intact, even the provisions you used.'),
-        line('The first win at each door strengthens you permanently. Each win raises the level of its minions and boss and increases its prizes. Inspect a door to see the next round.')];
+        line('The first win at each door strengthens you permanently. Each win raises the level of its minions and boss and increases its prizes. Inspect a door to see the next round.'),
+        line('The great door above the others holds no minions, only a mirror. What steps out of it is you: ten levels stronger, with your weapon and every skill you know. Each time you beat it, it learns.')];
       if (collected.length) {
         LC.State.save();
         lines.unshift(line('I held these for you. Here are ' + collected.join(', ') + '.'));
@@ -282,7 +283,7 @@ window.LC = window.LC || {};
     var rows = stats.apply(this, arguments), s = this.S;
     if (!s.visited.bunian) return rows;
     var bonus = B.bonuses(s), won = B.doors.filter(function (d) { return B.clearCount(s, d); }).length;
-    rows.push({ icon: 'bunian_magic_door', label: 'Bunian trials', right: won + ' / 4',
+    rows.push({ icon: 'bunian_magic_door', label: 'Bunian trials', right: won + ' / ' + B.doors.length,
       sub: 'Permanent trial bonuses: +' + bonus.hp + ' max health and +' + bonus.energy + ' max energy.' });
     return rows;
   };

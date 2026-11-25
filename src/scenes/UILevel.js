@@ -4,6 +4,9 @@
  * level), Pelita beside you, an octagon chart of eight attributes (red at the centre, green at the edge), and your
  * level, title and XP. The user asked for a chart "like the image" (an attribute octagon) and then for the aura.
  * v3.17.7: a villager's name above their head too, but only once you have talked to them (folk[vid].met).
+ * v3.18: everyone's name, not only the kampung villagers: whoever has spoken to you in a conversation (a line with a
+ * name and a portrait) is remembered in S.quests.heard as portrait -> name, and any figure on the map drawn with that
+ * picture (its texture without the frame number) gets the name. Story people, spirits, the Bunian gatekeeper...
  * Mixed into LC.UIScene. See level.js. */
 window.LC = window.LC || {};
 (function (LC) {
@@ -11,6 +14,26 @@ window.LC = window.LC || {};
   var U = LC.UIScene.prototype, PL = LC.PL;
   function ADD() { return Phaser.BlendModes.ADD; }
   function fmt(n) { return String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
+  // ---------------------------------------------------------------- v3.18: who has spoken to you
+  function picBase(key) { return String(key || '').replace(/_\d+$/, ''); }
+  var PLAYER_PIC = /^pl\d*_(down|up|side)$/;
+  LC.noteSpeakers = function (lines) {
+    var S = LC.State && LC.State.s;
+    if (!S || !S.quests || !lines || !lines.forEach) return;
+    var heard = S.quests.heard || (S.quests.heard = {});
+    lines.forEach(function (l) {
+      if (!l || typeof l !== 'object' || !l.name || !l.portrait || l.portrait === 'ghost') return;
+      var k = picBase(l.portrait), n = String(l.name).trim();
+      if (!n || /^\?+$/.test(n) || n === 'You' || PLAYER_PIC.test(k)) return;
+      heard[k] = n;
+    });
+  };
+  var say = U.say;
+  U.say = function (lines) {
+    try { LC.noteSpeakers(lines); } catch (e) { /* a name tag is never worth a broken conversation */ }
+    return say.apply(this, arguments);
+  };
 
   // ---------------------------------------------------------------- the eight attributes (0 to 100 each)
   var AX = [
@@ -153,32 +176,43 @@ window.LC = window.LC || {};
       });
       for (; i < tags.length; i++) tags[i].setVisible(false);
     },
-    // v3.17.7: a villager's name above their head, once you have talked to them. One tag per villager sprite:
-    // a new sprite (another area, a house built, the story changing who they are) gets a fresh tag.
+    // v3.17.7 / v3.18: a name above everyone who has spoken to you. Every half second the world's figures are matched
+    // against the names you know (fighting enemies and you yourself are left out); each frame the tags follow them.
+    nameScan: function (W) {
+      var S = this.S, q = (S && S.quests) || {}, folk = (S && S.folk) || {}, names = Object.assign({}, q.heard || {});
+      Object.keys(folk).forEach(function (vid) {   // villagers you met before v3.18 (and their names as the story has them now)
+        if (!folk[vid] || !folk[vid].met || !LC.VILLAGERS[vid]) return;
+        var v = LC.villager(vid);
+        if (v) names['npc_' + (v.key || vid)] = v.name;
+      });
+      var skip = new Set([W.player]), out = [];
+      (W.enemies || []).forEach(function (e) { if (e.spr) skip.add(e.spr); });
+      W.children.list.forEach(function (o) {
+        if ((o.type !== 'Sprite' && o.type !== 'Image') || skip.has(o) || !o.texture) return;
+        var n = names[picBase(o.texture.key)];
+        if (n) out.push({ spr: o, name: n });
+      });
+      return out;
+    },
     updateNameTags: function () {
-      var self = this, W = this.world, cam = W && W.cameras && W.cameras.main, folk = (this.S && this.S.folk) || {};
-      var tags = this.nameTags = this.nameTags || {}, npcs = (W && W.npcs) || {};
-      Object.keys(tags).forEach(function (vid) {
-        var t = tags[vid], n = npcs[vid];
-        if (!n || n.spr !== t.lcSpr || !n.spr.active) { t.destroy(); delete tags[vid]; }
-      });
-      if (!cam || this.modal || W.sleeping || W.cutscene || W.leaving) {
-        Object.keys(tags).forEach(function (vid) { tags[vid].setVisible(false); });
-        return;
+      var self = this, W = this.world, cam = W && W.cameras && W.cameras.main, tags = this.npcTags = this.npcTags || [], i = 0;
+      if (cam && W.children && !this.modal && !W.sleeping && !W.cutscene && !W.leaving) {
+        var now = this.time.now;
+        if (!this.nameCands || now - (this.nameScanAt || 0) > 500) { this.nameCands = this.nameScan(W); this.nameScanAt = now; }
+        var wv = cam.worldView, z = cam.zoom;
+        this.nameCands.forEach(function (c) {
+          var s = c.spr;
+          if (!s.active || !s.visible || s.alpha < 0.4) return;
+          var top = s.y - s.displayHeight * s.originY;
+          if (s.x < wv.x - 40 || s.x > wv.right + 40 || top < wv.y - 30 || top > wv.bottom + 10) return;
+          var t = tags[i];
+          if (!t || !t.scene) t = tags[i] = self.txt(0, 0, '', 15, '#fff6de', { ox: 0.5, oy: 1, stroke: 4 }).setDepth(-0.65);
+          i++;
+          if (t.text !== c.name) t.setText(c.name);
+          t.setPosition(Math.round((s.x - wv.x) * z), Math.round((top - 1 - wv.y) * z)).setVisible(true);
+        });
       }
-      var wv = cam.worldView, z = cam.zoom;
-      Object.keys(npcs).forEach(function (vid) {
-        var s = npcs[vid].spr, t = tags[vid], f = folk[vid];
-        var show = f && f.met && s && s.active && s.visible && s.alpha >= 0.4 &&
-          s.x > wv.x - 40 && s.x < wv.right + 40 && s.y > wv.y - 8 && s.y < wv.bottom + 48;
-        if (!show) { if (t) t.setVisible(false); return; }
-        if (!t) {
-          var v = LC.villager(vid);
-          t = tags[vid] = self.txt(0, 0, (v && v.name) || vid, 15, npcs[vid].ghost ? '#cfe6ff' : '#fff6de', { ox: 0.5, oy: 1, stroke: 4 }).setDepth(-0.65);
-          t.lcSpr = s;
-        }
-        t.setPosition(Math.round((s.x - wv.x) * z), Math.round((s.y - s.displayHeight - 1 - wv.y) * z)).setVisible(true);
-      });
+      for (; i < tags.length; i++) if (tags[i] && tags[i].scene) tags[i].setVisible(false);
     },
 
     // My stats: your aura, the attribute octagon, your level
