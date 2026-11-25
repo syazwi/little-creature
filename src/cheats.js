@@ -60,6 +60,7 @@ window.LC = window.LC || {};
     if (this.modal || !W || W.sleeping || W.leaving || S.guest) return onKey.call(this, ev);
     if (code === 'KeyP' && W.pantulAvailable && W.pantulAvailable()) return onKey.call(this, ev);
     if (code === 'KeyK' && LC.hasSuria && LC.hasSuria()) return onKey.call(this, ev);   // v3.12: K casts Mantera Suria once it is learned
+    if (code === 'KeyY' && LC.hasSekawan && LC.hasSekawan()) return onKey.call(this, ev);   // v3.19: Y calls the bachelors once Chapter 18 is done
     function sleepTo(day) { S.day = day - 1; W.sleep(false); }
     switch (code) {
       case 'BracketRight': sleepTo(S.day + 1); return;

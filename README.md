@@ -108,6 +108,7 @@ PC browsers and Android phones can all play together.
 | Call Sang Bualang (after Chapter 7); with him beside you in a fight, a spin at once | B | Tap the wau (kite) above the hotbar buttons |
 | Angin Bualang, your gust (after Chapter 7) | U | Tap the gust button beside the wau |
 | Lagu Mayang, the song that calms (after Chapter 9) | L | Tap the mayang button above the wau |
+| Mantera Empat Sekawan: call Kudin, Leman and Sani (after Chapter 18) | Y | Tap the four friends beside the mayang button |
 | Sing back the Ulek Mayang (Chapter 9) | 1 2 3 4 5 | Tap the lamps |
 
 **Tap to use (v3.9).** On a phone or tablet, walk with the joystick, then just tap a person, Pelita, an animal, a crop or anything else within two steps of you: you turn to it and use it, exactly as if you faced it and pressed USE. Things you can tap glow softly at their feet. Tap something farther away and "Walk closer" appears. Tap an enemy to swing at it, and tap Pelita to pet it (or to feed it the food you hold). A press that drags still works the joystick, so walking is unchanged. It is on by default; Pause > **Tap to use** turns it off (the USE button always works). After the update, players see a one-time "What's new" note explaining it.
@@ -326,6 +327,20 @@ An original kampung comedy ghost story. After Chapter 13, Kampung Tepian whisper
 - The **next night after 10 PM**, be there when Kak Senah comes home. Round up the runaways, and let Pelita's light show her honest shadow. Then Kak Senah opens her suitcase: it is full of **bunga api**, and the kampung celebrates with a fireworks show over the yard (v3.14.1).
 - After the chapter, talk to Amin in Kak Senah's yard at night to **light the bunga api** again (one show a night).
 - **Rewards:** 5 Seri Muka, Kak Senah's **seri muka recipe** at the dapur (padi, pandan and kelapa), 800 kepeng, and the Penunggu's blessing (+15 max energy). And try casting Mantera Suria at an auntie...
+
+### Chapter 18 — Bujang Belajar Mantera? (v3.19)
+
+The day after Chapter 17, Tok Penghulu's rooster turns **purple**. Three young bachelors by the vegetable plots in Kampung Tepian look very guilty: **Kudin** (the self-appointed leader, in a tanjak far too big for him), **Leman** (always hungry: his spells only ever make food) and **Sani** (scared of the dark, the best voice in the kampung). They want to be pendekar who know magic, Suraya has failed them three times, and you are a graduate of Sekolah Mantera. "Every band of pendekar needs four: one to lead, one to fight, one to cook... and one to carry the bags." Will you join them?
+
+- **The oath** over a plate of nasi lemak (Leman eats it), and the **Selempang Bujang**, the group's sash.
+- **Suraya's interview** at Sekolah Mantera (take Jack's enchanted letter at the farm). Vouch for them, and she gives them one term.
+- **Ilmu Terapung:** keep a glowing feather in the air. When it sinks, stand on its shadow and press USE, six times, while Leman's "levitated" durians fall around you (watch for their shadows).
+- **Kelas Gelap:** take Sani down the trapdoor into the dark room. He follows your footsteps by Pelita's light, freezes if you leave him behind, and screams at bats. With him beside you, he sings each of the three rune stones awake.
+- **Kelas Pantul:** the practice rune fires at the three of them. Stand in front of the one it aims at and send the bolt back with Mantera Pantul (P), five times. Miss, and someone loses his eyebrows.
+- **By the fire**, each tells you why he really wants magic. Then **Pintu Empat Penjuru**, the exam hall door, opens only for four voices together, which is why they needed a fourth.
+- **Ujian Cermin, the mirror exam:** each mirror shows the flaw its owner hides. **Bayang Kudin** boasts, throws smoke rings and runs when hit; **Bayang Leman** drops durians and eats the food in your bag (you get it all back); **Bayang Sani** stomps, shouts and sings so loud you slow down. Three rounds of two against one, where the real bachelor has to land the last blow, then the finale: **four against four**, with your own **Bayang Diri** joining them. Each bachelor fights his own mirror; you fight yours and help whoever is losing ("Tolong!"). If you fall, Suraya pulls you out and you try again from the same round.
+- **Rewards:** **Mantera Empat Sekawan (Y)**, a new skill: the three pop in beside you, Kudin's smoke ring blinds everything close, Leman's durian stuns the nearest foe, and Sani's song makes them sway (every 30 seconds). Also 2000 kepeng and +15 max energy. Afterwards they live in Kampung Tepian with the purple rooster, and put on a magic show on Pesta days. Your Bayang Diri behind the Bunian mirror door learns the skill too.
+- **Also fixed:** Suraya in the school courtyard was drawn as a black box after Chapter 13 (her picture's name was wrong).
 
 ### Chapter 17 — Penyamun Empat Puluh? (v3.17)
 

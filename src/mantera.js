@@ -37,7 +37,7 @@ window.LC = window.LC || {};
       prop('mantera_library', 'bldg', { x: 29, y: 7 }, 'mantera_hut', { text: 'The village library. Spare slates float past the windows.' }),
       prop('mantera_desk', 'mantera_desk', C.desk, 'mantera_desk'),
       prop('mantera_rune', 'mantera_practice', C.rune, 'mantera_rune'),
-      prop('mantera_suraya', 'mantera_suraya', C.suraya, 'npc_suraya13_idle', {
+      prop('mantera_suraya', 'mantera_suraya', C.suraya, 'npc_suraya13_0', {   // (v3.19: was an animation's name, which drew a black "missing" box)
         when: function (S) { var s = C.step(S); return s < 3 || s >= 6; }
       }),
       prop('mantera_vault_door', 'mantera_door', C.vault, 'mantera_gate')], exits: [], ride: {}
