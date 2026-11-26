@@ -63,6 +63,7 @@ window.LC = window.LC || {};
     if (code === 'KeyK' && LC.hasSuria && LC.hasSuria()) return onKey.call(this, ev);   // v3.12: K casts Mantera Suria once it is learned
     if (code === 'KeyY' && LC.hasSekawan && LC.hasSekawan()) return onKey.call(this, ev);   // v3.19: Y calls the bachelors once Chapter 18 is done
     if (code === 'KeyH' && !ev.shiftKey && LC.hasHilai && LC.hasHilai()) return onKey.call(this, ev);   // v3.20: H laughs Hilai Maya once Chapter 19 is done (full health is then Shift+H)
+    if (code === 'KeyT' && !ev.shiftKey && LC.c20Putih && LC.c20Putih()) return onKey.call(this, ev);   // v3.23: T calls Harimau Cahaya once Chapter 20 is done (Si Tanggang's replay is then Shift+T)
     function sleepTo(day) { S.day = day - 1; W.sleep(false); }
     switch (code) {
       case 'BracketRight': sleepTo(S.day + 1); return;

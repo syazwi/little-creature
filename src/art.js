@@ -802,5 +802,6 @@ window.LC = window.LC || {};
     if (Art.generate31) Art.generate31(scene);   // v3.19: Chapter 18, Bujang Belajar Mantera?
     if (Art.generate32) Art.generate32(scene);   // v3.20: Chapter 19, Harum Sundal Malam
     if (Art.generate33) Art.generate33(scene);   // v3.22: Chapter 20, Janji Buaya Putih
+    if (Art.generate34) Art.generate34(scene);   // v3.23: Chapter 20, Part 2
   };
 })(window.LC);

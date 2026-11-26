@@ -321,8 +321,64 @@ window.LC = window.LC || {};
     if (step === 7) { if (dalam()) p.state.action = 'Persuade Maya to let her son grow up'; }
   };
 
+  // Chapter 20, Part 2 (v3.23)
+  function R20b(p, step) {
+    var w = p.world, S = w.S, q = S.quests, C = LC.C20, c = w.c20, b = w.c20b, sea = c && c.sea;
+    p.state.choice = /^(Tujuh \(seven\)|Tell the truth|Go home, little light|Take the photo|Never\. You are my family\.)$/;
+    function steer(tx, ty, mag) { var sh = sea.sh, d = Math.hypot(tx - sh.x, ty - sh.y) || 1; p.state.vector = { x: (tx - sh.x) / d * (mag || 1), y: (ty - sh.y) / d * (mag || 1) }; }
+    if (step === 8) {
+      if (w.area !== 'farm') { p.travel('farm'); return; }
+      if (S.day < (q.c20satDay || 0) + C.windDays) { p.sleep(); return; }
+      if (S.minutes < 7 * 60) p.clock(8);
+      p.state.action = 'Waiting for the monsoon wind'; return;
+    }
+    if (step === 9 && w.area === 'laut20b' && sea && sea.sh) {
+      var sh = sea.sh, x = sh.x / T, R = sea.raft;
+      p.state.action = 'Sailing to Sabah (' + Math.round(x / C.sabah.goalX * 100) + '%)';
+      if (R && !R.on) { steer(R.x, R.y, 0.6); p.state.action = 'Back for the raft'; return; }
+      if (R && R.on && sea.strain > 45) return;   // (let the rope rest)
+      if (sea.bajau && !sea.netDone && sea.lepa) { steer(sea.lepa.x, sea.lepa.y, 0.75); p.state.action = 'Following the lepa'; return; }
+      var WP = [[30, 18], [54, 17], [66, 15.5], [82, 15.5], [97, 18], [160, 18], [174, 20], [184, 24], [194, 28]];
+      sea.wp2 = sea.wp2 || 0;
+      while (sea.wp2 < WP.length - 1 && (Math.hypot(sh.x - WP[sea.wp2][0] * T, sh.y - WP[sea.wp2][1] * T) < 2.5 * T || x > WP[sea.wp2][0] + 1)) sea.wp2++;
+      steer(WP[sea.wp2][0] * T, WP[sea.wp2][1] * T, R ? 0.42 : 1);
+      return;
+    }
+    if (step === 9) { p.jong(/^Sail to Sabah with Seri Putih$/, 'Board the jong for Sabah'); return; }
+    if (step === 10 && w.area === 'kina20' && sea && sea.sh) {
+      if (sea.countPending && !sea.countOpen && !w.ui.modal) { w.buayaCountOpen(); return; }
+      var ax = sea.sh.x / T - 8;
+      steer(ax * T, w.buayaRiverMid(ax) * T, 0.8);
+      p.state.action = 'Upriver';
+      return;
+    }
+    if (step === 10) { p.jong(/^Sail back to the Kinabatangan$/, 'Back to the river'); return; }
+    if (step >= 11 && step <= 15 && w.area !== 'sarang20') { p.jong(/^Sail back to the nest bank$/, 'Back to the nest bank'); return; }
+    if (step === 11) { if (!b.cine) p.prop('s_putih20', 'Sit with Seri Putih'); else p.state.action = 'Long ago...'; return; }
+    if (step === 12) { if (!b.cine) p.prop('s_loceng20', 'Ring the brass bell'); return; }
+    if (step === 13) { if (!p.foes(/^kelam20b$/)) p.state.action = 'The shadows are coming'; return; }
+    if (step === 14) {
+      var Rd = b.ride;
+      if (!Rd) { p.state.action = 'Climbing onto her back'; return; }
+      var orb = Rd.orbs.filter(function (o) { return !o.done; }).map(function (o) { var L = C.nest.lake; return { x: (L.x + 0.5) * T + Math.cos(o.a + 0.5) * o.r, y: (L.y + 0.5) * T + Math.sin(o.a + 0.5) * o.r * 0.7 }; })
+        .sort(function (a, b2) { return Math.hypot(a.x - Rd.x, a.y - Rd.y) - Math.hypot(b2.x - Rd.x, b2.y - Rd.y); })[0];
+      if (orb) { var d2 = Math.hypot(orb.x - Rd.x, orb.y - Rd.y) || 1; p.state.vector = { x: (orb.x - Rd.x) / d2, y: (orb.y - Rd.y) / d2 }; }
+      p.state.action = 'Riding the White One (' + Rd.got + ' / ' + C.ride.lights + ')';
+      return;
+    }
+    if (step === 15) { if (b.heart && b.heart.open) w.doAction(); p.state.action = 'Waiting for its heart to open'; return; }
+    if (step === 16) { if (w.area === 'sarang20') { p.state.action = 'Jumping into its heart'; return; } if (w.area !== 'dalam20') { p.jong(/^Back into the shadow$/, 'Back into the shadow'); return; } p.prop('d_pelita20', b.found ? 'Feed Pelita' : 'Follow the crying'); return; }
+    if (step === 17) { if (w.area !== 'sarang20') { p.jong(/^Sail back to the nest bank$/, 'Back to the nest bank'); return; } if (!b.cine) p.prop('s_putih20', 'Let go'); else p.state.action = 'Letting go'; return; }
+    if (step === 18) {
+      if (w.area !== 'barunai') { p.jong(/^Sail to Kampong Ayer for the feast$/, 'To the feast'); return; }
+      if (!b.feast) { p.state.action = 'Kenduri Terakhir'; return; }
+      p.prop(function (o) { return o.type === 'buaya_feast' && o.nenek; }, 'Talk to Nenek for the photo');
+    }
+  }
+
   // Chapter 20, Janji Buaya Putih (Part 1)
   R[20] = function (p, step) {
+    if (step >= 8) { R20b(p, step); return; }
     var w = p.world, S = w.S, q = S.quests, C = LC.C20, c = w.c20, pl = w.player;
     p.state.choice = /^(She is here to rest|She has never hurt anyone|She is just a guardian|Trust her as Nenek does|Sail to Kampong Ayer)$/;
     function ka() { return p.travel('barunai'); }

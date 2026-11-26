@@ -408,7 +408,7 @@ window.LC = window.LC || {};
       var s = '', bright = false;
       if (this.modal) s = '';
       else if (label) { s = (this.touchOn ? '' : '[E] ') + label; bright = true; }
-      else if (this.S.riding) s = (this.S.riding === 'naga' ? 'Riding Naga Kecil' : 'Riding the basikal') + (this.touchOn ? '  (select it and press USE to get off)' : '   ·   R to get off');
+      else if (this.S.riding) s = (this.S.riding === 'naga' ? 'Riding Naga Kecil' : this.S.riding === 'buaya' ? 'Riding Anak Putih' : 'Riding the basikal') + (this.touchOn ? '  (select it and press USE to get off)' : '   ·   R to get off');   // (v3.23: Anak Putih)
       else {
         var sl = LC.State.selItem();
         if (sl) {

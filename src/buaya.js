@@ -91,7 +91,7 @@ window.LC = window.LC || {};
     thing('f_putih20', 'buaya_croc', F.croc, 'buaya20g_0', function (S) { return st(S) === 3; }, { w: 4 }),
     thing('f_nenek20', 'buaya_nenek', F.jetty.nenek, 'npc_nenek_0', function (S) { return st(S) === 3; }),
     thing('f_kancil20', 'buaya_kancil', F.jetty.kancil, 'kancil20_0', function (S) { return st(S) === 3; }),
-    thing('f_kancil20b', 'buaya_kancil', F.kancilHome, 'kancil20_0', function (S) { return st(S) >= C.part1; })
+    thing('f_kancil20b', 'buaya_kancil', F.kancilHome, 'kancil20_0', function (S) { var s = st(S); return s >= C.part1 && !(s >= 9 && s <= 18) && q(S).c20kancil !== 'with'; })   // (v3.23: he comes to Sabah; later he can travel with you)
   );
 
   // ---------------------------------------------------------------- Kampong Ayer
@@ -108,15 +108,15 @@ window.LC = window.LC || {};
     thing('k_taxi20', 'buaya_taxi', K.taxi, 'perahu_kecil', function (S) { return st(S) === 6; })
   );
   K.folk.forEach(function (f) { B.push(thing('k_' + f.id + '20', 'buaya_folk', f, 'npc20_' + f.id + '_0', function (S) { return inKA(S); }, { who: f.id })); });
-  K.lamps.forEach(function (l, i) { B.push(thing('k_lampu20_' + i, 'buaya_lamp', l, 'lampu20_on', function (S) { var s = st(S); return s >= 4 && s <= 7; }, { idx: i })); });
+  K.lamps.forEach(function (l, i) { B.push(thing('k_lampu20_' + i, 'buaya_lamp', l, 'lampu20_on', function (S) { var s = st(S); return (s >= 4 && s <= 7) || s === 18; }, { idx: i })); });   // (v3.23: and the last feast)
   // the shadows that come on the Night of Fire (WorldBuaya.js turns them on and off), and the clock stands still while
   // the village burns, so midnight never cuts the fight short
   LC.AREAS.barunai.enemies = (LC.AREAS.barunai.enemies || []).concat([{ kind: 'kelam20', n: 4, zone: K.zone, c20: true }]);
   Object.defineProperty(LC.AREAS.barunai, 'frozenClock', { configurable: true, get: function () { return !!LC.c20fireOn; } });
   // Teluk Barunai: after Part 1, the jong waits at anchor for the monsoon wind, and Seri Putih rests in the warm shallows
   LC.AREAS.teluk.objects.push(
-    thing('t_jong20', 'buaya_wait', { x: 4, y: 8 }, 'jong_majapahit', function (S) { return st(S) >= C.part1; }, { w: 5 }),
-    thing('t_putih20', 'buaya_wait', { x: 10, y: 12 }, 'buaya20_0', function (S) { return st(S) >= C.part1; }, { w: 4 })
+    thing('t_jong20', 'buaya_wait', { x: 4, y: 8 }, 'jong_majapahit', function (S) { var s = st(S); return s >= C.part1 && s <= 9; }, { w: 5 }),
+    thing('t_putih20', 'buaya_wait', { x: 10, y: 12 }, 'buaya20_0', function (S) { var s = st(S); return s >= C.part1 && s <= 9; }, { w: 4 })
   );
 
   // the people of Kampong Ayer you calm (Chapter 20 only)
@@ -147,7 +147,7 @@ window.LC = window.LC || {};
     return g;
   }
   LC.AREAS.laut20 = {
-    name: 'Laut Malam', sub: 'the night sea, along the coast of Borneo', lvl: 20, build: buildSea, objects: [], voyage20: true, frozenClock: true,
+    name: 'Laut Malam', sub: 'the night sea, along the coast of Borneo', lvl: 20, build: buildSea, objects: [], voyage20: 'night', frozenClock: true,
     pond: 'sea', amb: 'sea', decor: { n: 0, types: [], on: 's' }, exits: [], home: { x: C.sea.start.x, y: C.sea.start.y }, ride: {}
   };
 
@@ -368,12 +368,12 @@ window.LC = window.LC || {};
       ['anak20', 'Goodbye, White Grandmother! Come back and see us!'],
       ['putih20', '(Seri Putih lifts her great head, and for the first time the whole village hears her voice.) Kampong Ayer. I will remember every one of your lamps.'],
       ['', 'The fleet rows her out to Teluk Barunai, where Juragan Wira\'s jong waits at anchor. There, she settles in the warm shallows.'],
-      ['wira20', 'The monsoon wind turns in a few weeks. Until then, she rests here, and grows strong. Then: Sabah.'],
+      ['wira20', 'The monsoon wind turns in a day or two. Until then, she rests here, and grows strong. Then: Sabah.'],
       ['nenek20', 'Come, cucu. We will go home and look after the farm until the wind turns. Kancil, you too. Stop eating the jong\'s kuih.'],
-      ['', '✦ Chapter 20, Part 1 complete! Kampong Ayer\'s thanks: ' + C.reward + ' kepeng, and Dang Kemala\'s brass bell is yours to keep. ✦'],
-      ['', '✦ To be continued: the voyage to Sabah, and the end of the story, come in Part 2. Seri Putih is resting in Teluk Barunai, and Sang Kancil is staying at your farm. ✦']
+      ['', '✦ Kampong Ayer\'s thanks: ' + C.reward + ' kepeng, and Dang Kemala\'s brass bell is yours to keep. ✦'],
+      ['', '(Seri Putih is resting in Teluk Barunai. When the wind turns, in a day or two, word will come: then, Sabah.)']
     ],
-    waitJong: 'Juragan Wira\'s jong, riding at anchor. "When the monsoon wind turns, we sail for Sabah," Wira says. (Part 2 is coming.)',
+    waitJong: 'Juragan Wira\'s jong, riding at anchor. "When the monsoon wind turns, we sail for Sabah," Wira says.',
     waitCroc: ['Seri Putih dozes in the warm shallows. Her scales are whiter every day.', 'Seri Putih opens one eye. "Soon, little farmer. Soon the wind will turn."', 'Seri Putih rumbles. Pelita peeks at her from behind your shoulder, then hides again.'],
     kancilFarm: ['Sang Kancil: "I am guarding the cucumbers. From the inside, mostly."', 'Sang Kancil: "Your Nenek gave me a bowl of my own. Nobody has ever given me a bowl."', 'Sang Kancil: "When we go to Sabah I will introduce you to my cousins. They are much less handsome than me."'],
     nenekKA: ['The water people are good people, cucu. Frightened people are not bad people.', 'Look how she sleeps. Like my mother used to, in the afternoons.', 'My knees do not like walkways. My heart does.'],

@@ -29,7 +29,7 @@ window.LC = window.LC || {};
   function feet(t) { return { x: (t.x + 0.5) * T, y: (t.y + 1) * T }; }
   function tasks(q) { return q.c20task || (q.c20task = {}); }
   function calmed(q) { return q.c20calmed || (q.c20calmed = {}); }
-  var WATER = { o: 1, h: 1 };
+  var WATER = { o: 1, h: 1, w: 1 };   // (v3.23: and rivers: the Kinabatangan)
 
   var create = W.createKampong, update = W.updateKampong;
   W.createKampong = function () { create.apply(this, arguments); this.createBuaya(); };
@@ -87,7 +87,7 @@ window.LC = window.LC || {};
   var updatePlayer = W.updatePlayer;
   W.updatePlayer = function (dt, blocked) {
     var c = this.c20;
-    if (c && c.sea && this.area === 'laut20') return this.updateShip20(dt, blocked);
+    if (c && c.sea && this.A.voyage20) return this.updateShip20(dt, blocked);   // (v3.23: every voyage of the chapter)
     if (c && c.hidden) return this.updateHidden20(dt, blocked);
     return updatePlayer.apply(this, arguments);
   };
@@ -117,7 +117,7 @@ window.LC = window.LC || {};
       return;
     }
     // the shadow that is a little too long (a little longer at each step)
-    if (C.ready(S) && s >= 1 && s < C.end + 1 && this.ghostHere && this.ghostShadow.visible) {
+    if (C.ready(S) && s >= 1 && s <= 15 && this.ghostHere && this.ghostShadow.visible) {   // (v3.23: until the shadow is only a shadow again)
       var long = Math.min(2.4, 1.15 + s * 0.16);
       this.ghostShadow.setScale(long, 0.85).setAlpha(0.32).setX(this.ghostShadow.x + (long - 1) * 5);
     }
@@ -202,7 +202,7 @@ window.LC = window.LC || {};
         C.ka.lamps.forEach(function (l, i) { var p = feet(l); c.lampLights[i] = self.addLight(p.x, p.y - 20, 0xffd890, 0.9, true); });
         if (s === 7 && !q.c20sat) { c.alone = true; c.sat = false; c.pets = 0; }
       }
-      if (this.area === 'laut20') this.setupVoyage();
+      if (this.A.voyage20) this.setupVoyage();
       this.buayaCrocTex();
     },
     buayaCrocTex: function () {   // fading grey until she has rested in Kampong Ayer; white again after
@@ -452,7 +452,7 @@ window.LC = window.LC || {};
       // the island beacons, and the lights of Kampong Ayer far to the east
       C.sea.isles.forEach(function (i) { var L = self.addLight(i.x * T, (i.y - 1) * T, 0xffc070, 0.8, true); L.base = 0.7; });
       for (var k = 0; k < 7; k++) { var L2 = this.addLight((C.sea.goalX + 1 + k) * T, (25 + (k * 3) % 5) * T, 0xffd890, 0.5, true); L2.base = 0.85; }
-      this.time.delayedCall(800, function () { if (!self.leaving) self.buayaLines([['', X.helm]]); });
+      if (this.A.voyage20 === 'night') this.time.delayedCall(800, function () { if (!self.leaving) self.buayaLines([['', X.helm]]); });
     },
     seaFree20: function (px, py) {
       var tx = Math.floor(px / T), ty = Math.floor(py / T);
@@ -502,7 +502,7 @@ window.LC = window.LC || {};
     },
     buayaSeaAction: function () {
       var self = this, sea = this.c20.sea, sl = LC.State.selItem(), it = sl && LC.ITEMS[sl.id];
-      if (sea.arrived) return null;
+      if (sea.arrived || (sea.kind && sea.kind !== 'night')) return null;
       if (it && it.food) return { label: 'Feed Pelita ' + it.name, fn: function () { self.buayaSeaFeed(sl.id); } };
       return { label: 'Comfort Pelita', fn: function () { self.buayaSeaPet(); } };
     },
