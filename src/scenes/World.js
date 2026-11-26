@@ -123,7 +123,7 @@ window.LC = window.LC || {};
 
     // ================================================================ build
     buildGround() {
-      var TI = LC.Art.TI, data = [], rnd = new Phaser.Math.RandomDataGenerator([this.area === 'farm' ? 'kampung' : this.area]), self = this;
+      var art = LC.Art, TI = art.TI, data = [], rnd = new Phaser.Math.RandomDataGenerator([this.area === 'farm' ? 'kampung' : this.area]), self = this;
       this.animTiles = [];
       for (var y = 0; y < this.H; y++) {
         var row = [];
@@ -131,7 +131,7 @@ window.LC = window.LC || {};
           var ch = this.grid[y][x], idx = TI.G0, v;
           switch (ch) {
             case '.': v = rnd.frac(); idx = v < 0.55 ? TI.G0 : v < 0.82 ? TI.G1 : v < 0.9 ? TI.G2 : TI.G3; break;
-            case 'p': idx = TI.PATH; break;
+            case 'p': idx = art.sunnysidePathIndex(this.grid, x, y); break;
             case 'f': idx = TI.FIELD; break;
             case 'r': idx = TI.PADDY0; this.animTiles.push({ x: x, y: y, k: 'paddy' }); break;
             case 'b': idx = TI.BUND; break;

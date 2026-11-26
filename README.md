@@ -565,6 +565,8 @@ plan.md               design document
 
 ## Credits and licences
 
+- **Terrain and farm artwork:** selected sprites adapted from [Sunnyside World V2.1 by Daniel Diggle](https://danieldiggle.itch.io/sunnyside).
+
 - **Engine:** [Phaser 3](https://phaser.io), MIT licence.
 - **Multiplayer:** [PeerJS](https://peerjs.com), MIT licence. It uses the free public PeerJS server for matchmaking.
 - **Font:** [Pixelify Sans](https://fonts.google.com/specimen/Pixelify+Sans) by Stefie Justprince, SIL Open Font License 1.1.

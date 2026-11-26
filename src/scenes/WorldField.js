@@ -6,11 +6,11 @@ window.LC = window.LC || {};
   'use strict';
 
   LC.WorldScene.prototype.refreshField = function () {
-    var TI = LC.Art.TI, M = LC.FIELD_MAX;
+    var art = LC.Art, TI = art.TI, M = LC.FIELD_MAX;
     for (var y = M.y0; y <= LC.LADANG.y1; y++) for (var x = M.x0; x <= M.x1; x++) {
       var ch = this.grid[y][x], idx = null;
       if (ch === '.') { var v = ((x * 73 + y * 151) % 97) / 97; idx = v < 0.55 ? TI.G0 : v < 0.82 ? TI.G1 : v < 0.9 ? TI.G2 : TI.G3; }
-      else if (ch === 'p') idx = TI.PATH;
+      else if (ch === 'p') idx = art.sunnysidePathIndex(this.grid, x, y);
       else if (ch === 'f') idx = TI.FIELD;
       else if (ch === 'F') idx = this.fenceIdx(x, y);
       if (idx !== null) this.ground.putTileAt(idx, x, y);

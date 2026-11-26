@@ -7,7 +7,14 @@ LC.BootScene = class extends Phaser.Scene {
     LC.bus = this.game.events;
     var t = this.add.text(this.scale.width / 2, this.scale.height / 2, 'Painting the kampung...', { fontFamily: 'monospace', fontSize: '20px', color: '#e8cf86' }).setOrigin(0.5);
 
-    LC.Art.generate(this);
+    var sheet = new Image(), self = this;
+    sheet.onload = function () { self.prepareArt(t, sheet); };
+    sheet.onerror = function () { self.prepareArt(t, null); };
+    sheet.src = LC.Art.sunnysideImage;
+  }
+
+  prepareArt(t, sheet) {
+    LC.Art.generate(this, sheet);
     this.createAnims();
 
     var self = this, done = false;

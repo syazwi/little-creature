@@ -1,6 +1,4 @@
-/* Little Creature — procedural pixel-art generator.
- * Every texture in the game is painted here at boot, so the game ships with zero image files.
- * To swap in a real asset pack later, just load PNGs under the same texture keys in Boot. */
+/* Little Creature's pixel art. Paint the original textures at boot, then apply the Sunnyside atlas. */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -186,7 +184,7 @@ window.LC = window.LC || {};
   Art.TI = { G0: 0, G1: 1, G2: 2, G3: 3, PATH: 4, FIELD: 5, TILLED: 6, WET: 7, PADDY0: 8, PADDY1: 9, BUND: 10,
     RIV0: 11, RIV1: 12, RIV2: 13, SAND: 14, JETTY: 15, JUN0: 16, JUN1: 17, FH: 18, FV: 19, FC: 20, SHORE0: 21, SHORE1: 22 };
 
-  function buildTiles(scene) {
+  function buildTiles(scene, sunnyside) {
     var fns = [
       function (p) { grass(p, 0); }, function (p) { grass(p, 1); }, function (p) { grass(p, 2); }, function (p) { grass(p, 3); },
       pathT, field, function (p) { tilled(p, false); }, function (p) { tilled(p, true); },
@@ -196,7 +194,8 @@ window.LC = window.LC || {};
       function (p) { shore(p, 0); }, function (p) { shore(p, 1); }
     ];
     var extra = Art.extraTiles || [];   // v1.3 tiles from art2.js
-    var c = canvas(16 * (fns.length + extra.length), 16), ctx = c.getContext('2d');
+    var count = fns.length + extra.length;
+    var c = canvas(16 * (count + (sunnyside ? Art.SUNNYSIDE_PATH_TILES : 0)), 16), ctx = c.getContext('2d');
     fns.forEach(function (fn, i) {
       var t = canvas(16, 16), p = new P(t.getContext('2d'), 16, 16, 500 + (i === 9 || i === 12 || i === 13 || i === 22 ? i - 1 : i) * 31);
       fn(p); ctx.drawImage(t, i * 16, 0);
@@ -205,6 +204,8 @@ window.LC = window.LC || {};
       var i = fns.length + k, t = canvas(16, 16), p = new P(t.getContext('2d'), 16, 16, e.seed || 900 + i * 31);
       e.fn(p); ctx.drawImage(t, i * 16, 0);
     });
+    Art.sunnysidePathStart = sunnyside ? count : 0;
+    if (sunnyside) Art.paintSunnysideTiles(ctx, sunnyside, count);
     if (scene.textures.exists('tiles')) scene.textures.remove('tiles');
     scene.textures.addCanvas('tiles', c);
   }
@@ -675,8 +676,8 @@ window.LC = window.LC || {};
   HUD.ic_bond = function (p) { [[6, 1], [10, 5], [8, 10], [4, 10], [2, 5]].forEach(function (c) { p.disc(c[0], c[1], 2, '#fffaf0'); }); p.disc(6, 6, 2, '#f5c542'); };
 
   // ================================================================== GENERATE
-  Art.generate = function (scene) {
-    buildTiles(scene);
+  Art.generate = function (scene, sunnyside) {
+    buildTiles(scene, sunnyside);
     for (var pc = 0; pc < OUTFITS.length; pc++) {
       ['down', 'up', 'side'].forEach(function (d) {
         for (var f = 0; f < 3; f++) make(scene, Art.plKey(pc) + '_' + d + '_' + f, 16, 16, function (p) { drawPlayer(p, d, f, pc); });
@@ -803,5 +804,6 @@ window.LC = window.LC || {};
     if (Art.generate32) Art.generate32(scene);   // v3.20: Chapter 19, Harum Sundal Malam
     if (Art.generate33) Art.generate33(scene);   // v3.22: Chapter 20, Janji Buaya Putih
     if (Art.generate34) Art.generate34(scene);   // v3.23: Chapter 20, Part 2
+    if (sunnyside) Art.paintSunnysideSprites(scene, sunnyside);
   };
 })(window.LC);
