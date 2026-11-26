@@ -688,8 +688,7 @@ window.LC = window.LC || {};
           else make(scene, Art.plKey(pc) + '_' + d + '_' + f, 16, 16, function (p) { drawPlayer(p, d, f, pc); });
         }
       });
-      // v3.25: the Sunnyside farmer's eight walking frames, side on
-      if (Art.drawPlayerFolk) for (var w = 0; w < Art.PLAYER_SIDE_WALK; w++) make(scene, Art.plKey(pc) + '_side_w' + w, Art.PLAYER_W, Art.PLAYER_H, function (p) { Art.drawPlayerFolk(p, 'side', 'w' + w, pc, OUTFITS); });
+      if (Art.generatePlayerMoves) Art.generatePlayerMoves(scene, pc, OUTFITS);   // v3.26: the Sunnyside farmer's own animations (art-folk.js)
     }
     for (var st = 0; st < 5; st++) GHOST_EXPR.forEach(function (ex) { make(scene, 'ghost_' + st + '_' + ex, 20, 22, function (p) { drawGhost(p, st, ex); }); });
     make(scene, 'npc_ani_0', 16, 20, function (p) { drawAni(p, false); });

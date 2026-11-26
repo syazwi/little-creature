@@ -271,7 +271,7 @@ window.LC = window.LC || {};
       this.bobber = this.add.image(bx, by, 'bobber').setOrigin(0.5, 1).setDepth(9004);
       this.bobberY = by;
       this.fishLine = this.add.graphics().setDepth(9004);
-      this.bump();
+      this.bump('cast');
       LC.Audio.sfx('cast');
       this.fx.drop.explode(5, bx, by);
       if (!LC.Net.active()) S.minutes += 8;   // each cast takes a little while
@@ -349,7 +349,7 @@ window.LC = window.LC || {};
         this.compGlow.setPosition(Math.round(this.cpos.x), cy - 10).setAlpha(0.15 + (this.nightF || 0) * 0.45);
       }
       if (this.fishLine && this.bobber) {
-        var rx = p.x + (this.dir === 'left' ? -8 : this.dir === 'right' ? 8 : 4), ry = p.y - 14;
+        var tip = this.rodTip ? this.rodTip() : null, rx = tip ? tip[0] : p.x + (this.dir === 'left' ? -8 : this.dir === 'right' ? 8 : 4), ry = tip ? tip[1] : p.y - 14;
         this.fishLine.clear(); this.fishLine.lineStyle(1, 0xf5f5f0, 0.8);
         this.fishLine.lineBetween(rx, ry, this.bobber.x, this.bobber.y - 6);
       }

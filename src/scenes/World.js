@@ -405,19 +405,30 @@ window.LC = window.LC || {};
         else if (ay > ax * 1.25) this.dir = vy < 0 ? 'up' : 'down';
         else if (!((this.dir === 'left' && vx < 0) || (this.dir === 'right' && vx > 0) || (this.dir === 'up' && vy < 0) || (this.dir === 'down' && vy > 0)))
           this.dir = vx < 0 ? 'left' : 'right';
-        p.play(this.walkKey + '_' + (this.dir === 'left' || this.dir === 'right' ? 'side' : this.dir), true);
         this.moving = true;
-      } else {
-        p.stop();
-        p.setTexture(this.plKey + '_' + (this.dir === 'left' || this.dir === 'right' ? 'side' : this.dir) + '_0');
-        this.moving = false;
-      }
-      p.setFlipX(this.dir === 'left');
+      } else this.moving = false;
+      this.animPlayer(p);
       p.setDepth(p.y);
       this.pShadow.setPosition(Math.round(p.x), Math.round(p.y - 1));
       this.drawRider(p, this.S.riding, this.dir, this.moving, this.veh, this.pc);
-      if (this.specs) this.specs.setVisible(LC.State.wearing('glasses') && this.dir !== 'up' && !this.A.underwater).setPosition(Math.round(p.x + (this.dir === 'left' ? -1 : this.dir === 'right' ? 1 : 0)), Math.round(p.y - 9 - (this.S.riding === 'bike' ? 5 : this.S.riding === 'naga' ? 8 : 0))).setFlipX(this.dir === 'left').setDepth(p.y + 0.3);
-      if (this.A.underwater) this.mask.setVisible(this.dir !== 'up').setPosition(Math.round(p.x + (this.dir === 'left' ? -1 : this.dir === 'right' ? 1 : 0)), Math.round(p.y - 9 - (this.S.riding === 'naga' ? 8 : 0))).setFlipX(this.dir === 'left').setDepth(p.y + 0.2);
+      var fd = this.S.riding ? this.dir : this.faceDir(), busy = !!this.acting;   // (v3.26: you face left or right, except on a ride)
+      if (this.specs) this.specs.setVisible(LC.State.wearing('glasses') && fd !== 'up' && !busy && !this.A.underwater).setPosition(Math.round(p.x + (fd === 'left' ? -1 : fd === 'right' ? 1 : 0)), Math.round(p.y - 9 - (this.S.riding === 'bike' ? 5 : this.S.riding === 'naga' ? 8 : 0))).setFlipX(fd === 'left').setDepth(p.y + 0.3);
+      if (this.A.underwater) this.mask.setVisible(fd !== 'up' && !busy).setPosition(Math.round(p.x + (fd === 'left' ? -1 : fd === 'right' ? 1 : 0)), Math.round(p.y - 9 - (this.S.riding === 'naga' ? 8 : 0))).setFlipX(fd === 'left').setDepth(p.y + 0.2);
+    }
+    faceDir() { return this.dir; }   // the way your picture faces (WorldMoves.js: always left or right)
+    // which picture you are: walking or standing, facing your way (WorldMoves.js plays the Sunnyside farmer's moves instead)
+    animPlayer(p) {
+      var key = this.dir === 'left' || this.dir === 'right' ? 'side' : this.dir;
+      if (this.moving) p.play(this.walkKey + '_' + key, true);
+      else { p.stop(); p.setTexture(this.plKey + '_' + key + '_0'); }
+      p.setFlipX(this.dir === 'left');
+    }
+    // a co-op friend's picture (WorldMoves.js: their moves too)
+    animRemote(s, o, r) {
+      var side = o.dir === 'left' || o.dir === 'right', key = side ? 'side' : (o.dir || 'down');
+      if (o.mv) s.play(LC.Art.walkKey(o.color) + '_' + key, true);
+      else { s.stop(); s.setTexture(LC.Art.plKey(o.color) + '_' + key + '_0'); }
+      s.setFlipX(o.dir === 'left');
     }
     // a bicycle under the rider. Used for you and for co-op friends.
     drawRider(spr, ride, dir, moving, veh, color) {
@@ -582,10 +593,8 @@ window.LC = window.LC || {};
         var s = r.spr, k = Math.min(1, dt * 12);
         if (Math.hypot(o.x - s.x, o.y - s.y) > 80) { s.x = o.x; s.y = o.y; }
         else { s.x += (o.x - s.x) * k; s.y += (o.y - s.y) * k; }
-        var side = o.dir === 'left' || o.dir === 'right', key = side ? 'side' : (o.dir || 'down');
-        if (o.mv) s.play(LC.Art.walkKey(o.color) + '_' + key, true);
-        else { s.stop(); s.setTexture(LC.Art.plKey(o.color) + '_' + key + '_0'); }
-        s.setFlipX(o.dir === 'left').setDepth(s.y);
+        self.animRemote(s, o, r);
+        s.setDepth(s.y);
         r.sh.setPosition(Math.round(s.x), Math.round(s.y - 1));
         r.name = o.name; r.color = o.color;
         if (o.rd && !r.veh) r.veh = self.add.image(s.x, s.y, 'bike_side_0').setOrigin(0.5, 1).setVisible(false);
@@ -1208,14 +1217,14 @@ window.LC = window.LC || {};
       if (this.S.energy < n) { this.toast('You are exhausted... Eat something (X) or go to sleep.'); LC.Audio.sfx('error'); return false; }
       this.S.energy -= n; return true;
     }
-    bump() { var p = this.player; this.tweens.add({ targets: p, scaleY: 0.88, duration: 70, yoyo: true }); }
+    bump(kind) { var p = this.player; this.tweens.add({ targets: p, scaleY: 0.88, duration: 70, yoyo: true }); }   // kind: dig, water, mine, doing, cast (WorldMoves.js plays it)
 
     // Personal costs (energy, water, seeds) are paid here; the shared world changes via doShared/LC.Sim.
     till(tx, ty) {
       var S = this.S, self = this;
       if (!this.useEnergy(2)) return;
       this.fx.dirt.explode(7, tx * T + 8, ty * T + 10);
-      LC.Audio.sfx('till'); this.bump(); S.flags.tilled = true;
+      LC.Audio.sfx('till'); this.bump('dig'); S.flags.tilled = true;
       this.doShared('till', { x: tx, y: ty }, function (ok) { if (!ok) S.energy += 2; else if (self.companionTill) self.companionTill(); });
     }
     water(tx, ty) {
@@ -1223,14 +1232,14 @@ window.LC = window.LC || {};
       if (!this.useEnergy(1)) return;
       S.water--;
       this.fx.drop.explode(9, tx * T + 8, ty * T + 6);
-      LC.Audio.sfx('water'); this.bump(); S.flags.watered = true;
+      LC.Audio.sfx('water'); this.bump('water'); S.flags.watered = true;
       this.doShared('water', { x: tx, y: ty }, function (ok) { if (!ok) { S.water++; S.energy += 1; } });
     }
     plant(tx, ty, seedId) {
       var self = this;
       LC.State.remove(seedId, 1);
       this.fx.leaf.explode(3, tx * T + 8, ty * T + 10);
-      LC.Audio.sfx('plant'); this.S.flags.planted = true;
+      LC.Audio.sfx('plant'); this.bump('doing'); this.S.flags.planted = true;
       var cd = LC.CROPS[LC.ITEMS[seedId].crop];
       this.doShared('plant', { x: tx, y: ty, crop: LC.ITEMS[seedId].crop }, function (ok) {
         if (!ok) { LC.State.add(seedId, 1); self.toast('Someone beat you to that spot!'); return; }
@@ -1241,7 +1250,7 @@ window.LC = window.LC || {};
       var self = this, t = LC.State.tile(tx, ty), def = LC.CROPS[t.crop.id];
       if (!LC.State.canAdd(def.item)) { this.toast('Your bag is full!'); LC.Audio.sfx('error'); return; }
       this.fx.leaf.explode(8, tx * T + 8, ty * T + 8);
-      LC.Audio.sfx('harvest'); this.bump();
+      LC.Audio.sfx('harvest'); this.bump('doing');
       this.doShared('harvest', { x: tx, y: ty }, function (res) {
         if (!res || !res.item) { self.toast('Too slow! A friend already harvested that one.'); return; }
         LC.State.add(res.item, res.count);
@@ -1254,7 +1263,7 @@ window.LC = window.LC || {};
       if (!LC.State.count('can')) { this.toast('You need the gembor to carry water.'); return; }
       if (this.S.water >= this.S.maxWater) { this.toast('The gembor is already full.'); return; }
       this.S.water = this.S.maxWater;
-      LC.Audio.sfx('water'); this.fx.drop.explode(6, this.player.x, this.player.y - 10);
+      LC.Audio.sfx('water'); this.bump('doing'); this.fx.drop.explode(6, this.player.x, this.player.y - 10);
       this.toast('The gembor is full. (' + this.S.maxWater + ' waterings)', 'i_can');
     }
     shakeTree(o) {
@@ -1281,7 +1290,7 @@ window.LC = window.LC || {};
       var S = this.S, fg = LC.FORAGE[o.kind], spr = this.trees[o.id].spr, self = this;
       if (!LC.State.canAdd(fg.item)) { this.toast('Your bag is full!'); LC.Audio.sfx('error'); return; }
       if (fg.energy && !this.useEnergy(fg.energy)) return;
-      LC.Audio.sfx(o.kind === 'boulder' || o.kind === 'clay' || o.kind === 'glint' ? 'till' : 'harvest'); this.bump();
+      LC.Audio.sfx(o.kind === 'boulder' || o.kind === 'clay' || o.kind === 'glint' ? 'till' : 'harvest'); this.bump(o.kind === 'boulder' || o.kind === 'clay' || o.kind === 'glint' || o.kind === 'goldvein' || o.kind === 'crystal' ? 'mine' : 'doing');
       this.doShared('shake', { id: o.id }, function (res) {
         if (!res || !res.item) { S.energy += fg.energy || 0; if (res && res.days) self.toast(fg.name + ': picked clean. More in ' + res.days + ' day(s).'); return; }
         var bonus = S.flags.kidul && (self.area === 'laut' || self.area === 'island' || self.area === 'kidul' || self.area === 'atlantis' || self.area === 'kapal') ? 1 : 0;   // the Queen's blessing

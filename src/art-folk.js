@@ -1,8 +1,9 @@
 /* Little Creature's people, in the style of Daniel Diggle's Sunnyside World (v3.25): a big round head, two tall dot
  * eyes, rosy cheeks, a small body, and a dark #181425 outline.
- * Your side view is the pack's own farmer (its idle and eight walking frames, kept here as pixel rows, with your shirt,
- * trousers and skin recoloured for each co-op outfit). The front and back views, every villager and the chapter casts
- * are drawn here in the same style. The pack's licence lets a game use and change its art; the pack itself must not be
+ * You are the pack's own farmer: since v3.26 every move of yours (standing, walking, carrying, digging, watering,
+ * mining, fishing, a swing, a flinch) is the pack's animation, from the rows in folk-moves.js, with your shirt, trousers
+ * and skin recoloured for each co-op outfit (WorldMoves.js plays them). The front and back views (portraits and rides),
+ * every villager and the chapter casts are drawn here in the same style. The pack's licence lets a game use and change its art; the pack itself must not be
  * resold or shared, so only these few rows are kept, inside the game's code. */
 window.LC = window.LC || {};
 (function (LC) {
@@ -14,9 +15,11 @@ window.LC = window.LC || {};
   var prevNews = LC.NEWS, seenNews = null;
   try { seenNews = localStorage.getItem('littleCreature.newsSeen'); } catch (e) { /* storage blocked */ }
   LC.NEWS = {
-    id: 'v3.25-folk',
-    lines: (prevNews && seenNews !== prevNews.id && seenNews !== 'v3.25-folk' ? prevNews.lines : []).concat([
+    id: 'v3.26-moves',
+    lines: (prevNews && seenNews !== prevNews.id && seenNews !== 'v3.25-folk' && seenNews !== 'v3.26-moves' ? prevNews.lines : []).concat(seenNews === 'v3.25-folk' ? [] : [
       { text: '✦ A new look for everyone ✦  You are now the little farmer of Daniel Diggle\'s Sunnyside World (each co-op friend has a hairstyle of their own), and every villager, guest, hero and foe of all twenty chapters has been redrawn to match.' }
+    ]).concat([
+      { text: '✦ The farmer moves ✦  You now move like the Sunnyside farmer: you face left or right as you walk (the square in front still shows where you will act), breathe while you stand, lift what you hold over your head, and dig, water, mine, pick, fish and swing with the pack\'s own animations.' }
     ])
   };
 
@@ -33,57 +36,6 @@ window.LC = window.LC || {};
     return { 1: mix(h, O, 0.42), 2: h, 3: mix(h, lum(h) > 0.6 ? '#ffffff' : '#c08a6a', lum(h) > 0.6 ? 0.45 : 0.3) };
   }
   function skinSet(s) { s = s || '#e4a672'; return { s: s, S: mix(s, '#6a3040', 0.22), h: mix(s, '#6a3040', 0.34), b: mix(s, '#f6757a', 0.6) }; }
-
-  // ------------------------------------------------------------------ the pack's farmer, side view (facing right)
-  // 18 x 19 rows; o outline, s/S/h skin (light, shade, hand), b blush, c/C shirt (shade, light), p/P trousers, f shoes;
-  // digits are the hair, in the pack's own colours.
-  var HAIRPAL = { 1: '#3e2731', 2: '#733e39', 3: '#b86f50', 4: '#c28569', 5: '#f77622', 6: '#feae34', 7: '#be4a2f', 8: '#a22633', 9: '#e43b44', 0: '#d77643' };
-  var SIDE = {
-    short: [
-      ['..................', '..................', '..................', '......ooooooo.....', '.....o1122222o....', '....o111122221o...', '....o111111111o...', '....o11s111111o...', '....o11ssssssso...', '....o11ssssssso...', '....o22ssossoso...', '....ossssossoso...', '....ossssbssbso...', '.....oSsssssso....', '......ocPccPoo....', '......oCpCCposo...', '......opppppoho...', '......oppoPPoo....', '......fooooof.....'],
-      ['..................', '..................', '..................', '..................', '......ooooooo.....', '.....o1122222o....', '....o111122221o...', '....o111111111o...', '....o11s111111o...', '....o11ssssssso...', '....o11ssssssso...', '....o22ssossoso...', '....ossssossoso...', '....ossssbssbso...', '.....oSsssssso....', '......ocPccPoso...', '......opppppoho...', '......fppPPPoo....', '......ooooofo.....'],
-      ['..................', '..................', '..................', '..................', '..................', '......ooooooo.....', '.....o1122222o....', '....o111111111o...', '....o11s111111o...', '....o11ssssssso...', '....o11ssssssso...', '....o22ssossoso...', '....ossssossoso...', '....ossssbssbso...', '.....oSsssssso....', '......occPccoo....', '......oppppposo...', '......ofppPPoho...', '.......ooofooo....'],
-      ['..................', '..................', '..................', '..................', '......ooooooo.....', '.....o1122222o....', '....o111111111o...', '....o111s11111o...', '....o111sssssso...', '....o111sssssso...', '....o222sSosSoo...', '....ossssSosSoo...', '....osssssbssbo...', '.....oSsssssso....', '......occcPco.....', '......oCCCpCoo....', '......opppppoo....', '.......oPPpfo.....', '.......ofooo......'],
-      ['..................', '..................', '..................', '......ooooooo.....', '.....o1122222o....', '....o111122221o...', '....o111111111o...', '....o111s11111o...', '....o111sssssso...', '....o111sssssso...', '....o222ssossoo...', '....osssssossoo...', '....osssssbssbo...', '.....oSsssssso....', '......occcPco.....', '......oCCCpCo.....', '......opppppo.....', '......oPPPppo.....', '......fooooof.....'],
-      ['..................', '..................', '..................', '..................', '......ooooooo.....', '.....o1122222o....', '....o111122221o...', '....o111111111o...', '....o111s11111o...', '....o111sssssso...', '....o111sssssso...', '....o222ssossoo...', '....osssssossoo...', '....osssssbssbo...', '.....oSsssssso....', '......occcPco.....', '......opppppo.....', '......fPPPppo.....', '......ooooofo.....'],
-      ['..................', '..................', '..................', '..................', '..................', '......ooooooo.....', '.....o1122222o....', '....o111111111o...', '....o111s11111o...', '....o111sssssso...', '....o111sssssso...', '....o222ssossoo...', '....osssssossoo...', '....osssssbssbo...', '.....oSsssssso....', '......occPcco.....', '......opppppo.....', '......ofPpppo.....', '.......ooofo......'],
-      ['..................', '..................', '..................', '..................', '......ooooooo.....', '.....o1122222o....', '....o111111111o...', '....o11s111111o...', '....o11ssssssso...', '....o11ssssssso...', '....o22ssoSsoSo...', '....ossssoSsoSo...', '....ossssbssbso...', '.....oSsssssso....', '......ocPccPo.....', '......oCpCCpoo....', '......opppppoo....', '.......oppPfo.....', '.......ofooo......'],
-      ['..................', '..................', '..................', '......ooooooo.....', '.....o1122222o....', '....o111122221o...', '....o111111111o...', '....o11s111111o...', '....o11ssssssso...', '....o11ssssssso...', '....o22ssossoso...', '....ossssossoso...', '....ossssbssbso...', '.....oSsssssso....', '......ocPccPoso...', '......oCpCCpoho...', '......opppppoo....', '......oppoPPo.....', '......fooooof.....']
-    ],
-    long: [
-      ['...oooo...........', '..o5665o..........', '.o55552oooooo.....', '.o85585556655o....', '.o882555555557o...', '.o8855555555557o..', 'oo8265556565655o..', 'o88286575575575o..', 'o88288575575577o..', '.oo28887777777o...', '...o888ssossoso...', '....os8ssossoso...', '....ossssbssbso...', '.....oSsssssso....', '......ocPccPoo....', '......oCpCCposo...', '......opppppoho...', '......oppoPPoo....', '......fooooof.....'],
-      ['..................', '...oooo...........', '..o5665o..........', '.o55552oooooo.....', '.o85585556655o....', '.o882555555557o...', '.o8855555555557o..', 'oo8265556565655o..', 'o88286575575575o..', 'o88288575575577o..', '.oo28887777777o...', '...o888ssossoso...', '....os8ssossoso...', '....ossssbssbso...', '.....oSsssssso....', '......ocPccPoso...', '......opppppoho...', '......fppPPPoo....', '......ooooofo.....'],
-      ['..................', '...oooo...........', '..o5665o..........', '.o55552oooooo.....', '.o85585556655o....', '.o882555555557o...', '.o8855555555557o..', '.o8265555555557o..', 'o88286556565655o..', 'o88288575575575o..', 'o88288875575577o..', '.ooo88877o77o7o...', '....os8ssossoso...', '....ossssbssbso...', '.....oSsssssso....', '......occPccoo....', '......oppppposo...', '......ofppPPoho...', '.......ooofooo....'],
-      ['..................', '...oooo...........', '..o5665oooooo.....', '.o55585556655o....', '.o852555555557o...', '.o8855555555557o..', '.o8265556565655o..', '.o8286575575575o..', 'o88288575575577o..', 'o8828887777777o...', '.ooo888ssSosSoo...', '....os8ssSosSoo...', '....osssssbssbo...', '.....oSsssssso....', '......occcPco.....', '......oCCCpCoo....', '......opppppoo....', '.......oPPpfo.....', '.......ofooo......'],
-      ['...oooo...........', '..o5665o..........', '.o55552oooooo.....', '.o85585556655o....', '.o882555555557o...', '.o8855555555557o..', 'oo8265556565655o..', 'o88286575575575o..', 'o88288575575577o..', '.oo28887777777o...', '...o888sssossoo...', '....os8sssossoo...', '....osssssbssbo...', '.....oSsssssso....', '......occcPco.....', '......oCCCpCo.....', '......opppppo.....', '......oPPPppo.....', '......fooooof.....'],
-      ['..................', '...oooo...........', '..o5665o..........', '.o55552oooooo.....', '.o85585556655o....', '.o882555555557o...', '.o8855555555557o..', 'oo8265556565655o..', 'o88286575575575o..', 'o88288575575577o..', '.oo28887777777o...', '...o888sssossoo...', '....os8sssossoo...', '....osssssbssbo...', '.....oSsssssso....', '......occcPco.....', '......opppppo.....', '......fPPPppo.....', '......ooooofo.....'],
-      ['..................', '...oooo...........', '..o5665o..........', '.o55552oooooo.....', '.o85585556655o....', '.o882555555557o...', '.o8855555555557o..', '.o8265555555557o..', 'o88286556565655o..', 'o88288575575575o..', 'o88288875575577o..', '.ooo888777o77oo...', '....os8sssossoo...', '....osssssbssbo...', '.....oSsssssso....', '......occPcco.....', '......opppppo.....', '......ofPpppo.....', '.......ooofo......'],
-      ['..................', '...oooo...........', '..o5665oooooo.....', '.o55585556655o....', '.o852555555557o...', '.o8855555555557o..', '.o8265556565655o..', '.o8286575575575o..', 'o88288575575577o..', 'o8828887777777o...', '.ooo888ssoSsoSo...', '....os8ssoSsoSo...', '....ossssbssbso...', '.....oSsssssso....', '......ocPccPo.....', '......oCpCCpoo....', '......opppppoo....', '.......oppPfo.....', '.......ofooo......'],
-      ['...oooo...........', '..o5665o..........', '.o55552oooooo.....', '.o85585556655o....', '.o882555555557o...', '.o8855555555557o..', 'oo8265556565655o..', 'o88286575575575o..', 'o88288575575577o..', '.oo28887777777o...', '...o888ssossoso...', '....os8ssossoso...', '....ossssbssbso...', '.....oSsssssso....', '......ocPccPoso...', '......oCpCCpoho...', '......opppppoo....', '......oppoPPo.....', '......fooooof.....']
-    ],
-    bowl: [
-      ['..................', '.......oo.oo......', '.......o3o3o......', '.....oo2222ooo....', '....o222332222o...', '...o22222333222o..', '...o22222233322o..', '...o12122222222o..', '...o11112222221o..', '...o1114444444o...', '...o111ssossoso...', '....os2ssossoso...', '....ossssbssbso...', '.....oSsssssso....', '......ocPccPoo....', '......oCpCCposo...', '......opppppoho...', '......oppoPPoo....', '......fooooof.....'],
-      ['..................', '..................', '.......oo.oo......', '.......o3o3o......', '.....oo2222ooo....', '....o222332222o...', '...o22222333222o..', '...o22222233322o..', '...o12122222222o..', '...o11112222221o..', '...o1114444444o...', '...o111ssossoso...', '....os2ssossoso...', '....ossssbssbso...', '.....oSsssssso....', '......ocPccPoso...', '......opppppoho...', '......fppPPPoo....', '......ooooofo.....'],
-      ['..................', '..................', '..................', '.......oo.oo......', '.....ooo3o3ooo....', '....o222332222o...', '...o22222333222o..', '...o22222233322o..', '...o12122222222o..', '...o11112222221o..', '...o1114444444o...', '...o111ssossoso...', '....os2ssossoso...', '....ossssbssbso...', '.....oSsssssso....', '......occPccoo....', '......oppppposo...', '......ofppPPoho...', '.......ooofooo....'],
-      ['..................', '.......oo.oo......', '.......o3o3o......', '.....oo2222ooo....', '....o222332222o...', '...o22222333222o..', '...o22222233322o..', '...o12122222222o..', '...o11112222221o..', '...o1111444444o...', '...o1111sSosSoo...', '....os22sSosSoo...', '....osssssbssbo...', '.....oSsssssso....', '......occcPco.....', '......oCCCpCoo....', '......opppppoo....', '.......oPPpfo.....', '.......ofooo......'],
-      ['..................', '.......oo.oo......', '.......o3o3o......', '.....oo2222ooo....', '....o222332222o...', '...o22222333222o..', '...o22222233322o..', '...o12122222222o..', '...o11112222221o..', '...o1111444444o...', '...o1111ssossoo...', '....os22ssossoo...', '....osssssbssbo...', '.....oSsssssso....', '......occcPco.....', '......oCCCpCo.....', '......opppppo.....', '......oPPPppo.....', '......fooooof.....'],
-      ['..................', '..................', '.......oo.oo......', '.......o3o3o......', '.....oo2222ooo....', '....o222332222o...', '...o22222333222o..', '...o22222233322o..', '...o12122222222o..', '...o11112222221o..', '...o1111444444o...', '...o1111ssossoo...', '....os22ssossoo...', '....osssssbssbo...', '.....oSsssssso....', '......occcPco.....', '......opppppo.....', '......fPPPppo.....', '......ooooofo.....'],
-      ['..................', '..................', '..................', '.......oo.oo......', '.....ooo3o3ooo....', '....o222332222o...', '...o22222333222o..', '...o22222233322o..', '...o12122222222o..', '...o11112222221o..', '...o1111444444o...', '...o1111ssossoo...', '....os22ssossoo...', '....osssssbssbo...', '.....oSsssssso....', '......occPcco.....', '......opppppo.....', '......ofPpppo.....', '.......ooofo......'],
-      ['..................', '.......oo.oo......', '.......o3o3o......', '.....oo2222ooo....', '....o222332222o...', '...o22222333222o..', '...o22222233322o..', '...o12122222222o..', '...o11112222221o..', '...o1114444444o...', '...o111ssoSsoSo...', '....os2ssoSsoSo...', '....ossssbssbso...', '.....oSsssssso....', '......ocPccPo.....', '......oCpCCpoo....', '......opppppoo....', '.......oppPfo.....', '.......ofooo......'],
-      ['..................', '.......oo.oo......', '.......o3o3o......', '.....oo2222ooo....', '....o222332222o...', '...o22222333222o..', '...o22222233322o..', '...o12122222222o..', '...o11112222221o..', '...o1114444444o...', '...o111ssossoso...', '....os2ssossoso...', '....ossssbssbso...', '.....oSsssssso....', '......ocPccPoso...', '......oCpCCpoho...', '......opppppoo....', '......oppoPPo.....', '......fooooof.....']
-    ],
-    spiky: [
-      ['..................', '.......oo.oo......', '...ooo.o9o9oo.....', '...o99o999999o....', '...o9999999999o...', '...o99999999999o..', '...o99999999999o..', '...o89899999999o..', '...o8888999999oo..', '...o888ssssssso...', '...o888ssossoso...', '....os8ssossoso...', '....ossssbssbso...', '.....oSsssssso....', '......ocPccPoo....', '......oCpCCposo...', '......opppppoho...', '......oppoPPoo....', '......fooooof.....'],
-      ['..................', '..................', '.......oo.oo......', '...ooo.o9o9oo.....', '...o99o999999o....', '...o9999999999o...', '...o99999999999o..', '...o99999999999o..', '...o89899999999o..', '...o8888999999oo..', '...o888ssssssso...', '...o888ssossoso...', '....os8ssossoso...', '....ossssbssbso...', '.....oSsssssso....', '......ocPccPoso...', '......opppppoho...', '......fppPPPoo....', '......ooooofo.....'],
-      ['..................', '..................', '.......oo.oo......', '.......o9o9oo.....', '...oooo999999o....', '...o9999999999o...', '...o99999999999o..', '...o99999999999o..', '...o89899999999o..', '...o8888999999oo..', '...o888ssssssso...', '...o888ssossoso...', '....os8ssossoso...', '....ossssbssbso...', '.....oSsssssso....', '......occPccoo....', '......oppppposo...', '......ofppPPoho...', '.......ooofooo....'],
-      ['..................', '..................', '...ooo.oooooo.....', '...o99o999999o....', '...o9999999999o...', '...o99999999999o..', '...o99999999999o..', '...o89899999999o..', '...o8888999999oo..', '...o8888sssssso...', '...o8888sSosSoo...', '....oss8sSosSoo...', '....osssssbssbo...', '.....oSsssssso....', '......occcPco.....', '......oCCCpCoo....', '......opppppoo....', '.......oPPpfo.....', '.......ofooo......'],
-      ['..................', '.......oo.oo......', '...ooo.o9o9oo.....', '...o99o999999oo...', '...o99999999999o..', '...o99999999999o..', '...o99999999999o..', '...o8989999999oo..', '...o8888999999o...', '...o8888sssssso...', '...o8888ssossoo...', '....oss8ssossoo...', '....osssssbssbo...', '.....oSsssssso....', '......occcPco.....', '......oCCCpCo.....', '......opppppo.....', '......oPPPppo.....', '......fooooof.....'],
-      ['..................', '..................', '.......oo.oo......', '...ooo.o9o9oo.....', '...o99o999999oo...', '...o99999999999o..', '...o99999999999o..', '...o99999999999o..', '...o8989999999oo..', '...o8888999999o...', '...o8888sssssso...', '...o8888ssossoo...', '....oss8ssossoo...', '....osssssbssbo...', '.....oSsssssso....', '......occcPco.....', '......opppppo.....', '......fPPPppo.....', '......ooooofo.....'],
-      ['..................', '..................', '.......oo.oo......', '...ooo.o9o9oo.....', '...o99o999999o....', '...o9999999999o...', '...o99999999999o..', '...o99999999999o..', '...o89899999999o..', '...o8888999999oo..', '...o8888sssssso...', '...o8888ssossoo...', '....oss8ssossoo...', '....osssssbssbo...', '.....oSsssssso....', '......occPcco.....', '......opppppo.....', '......ofPpppo.....', '.......ooofo......'],
-      ['..................', '.......oo.oo......', '...ooo.o9o9oo.....', '...o99o999999o....', '...o9999999999o...', '...o99999999999o..', '...o99999999999o..', '...o89899999999o..', '...o8888999999oo..', '...o888ssssssso...', '...o888ssoSsoSo...', '....os8ssoSsoSo...', '....ossssbssbso...', '.....oSsssssso....', '......ocPccPo.....', '......oCpCCpoo....', '......opppppoo....', '.......oppPfo.....', '.......ofooo......'],
-      ['..................', '.......oo.oo......', '...ooo.o9o9oo.....', '...o99o999999o....', '...o9999999999o...', '...o99999999999o..', '...o99999999999o..', '...o89899999999o..', '...o8888999999oo..', '...o888ssssssso...', '...o888ssossoso...', '....os8ssossoso...', '....ossssbssbso...', '.....oSsssssso....', '......ocPccPoso...', '......oCpCCpoho...', '......opppppoo....', '......oppoPPo.....', '......fooooof.....']
-    ]
-  };
 
   // ------------------------------------------------------------------ front and back heads (rows y2..y14, columns x1..x14)
   // 1/2/3 are the hair's shade, base and light; 4 a light fringe shadow; s skin; '.' leaves what is under it.
@@ -360,19 +312,107 @@ window.LC = window.LC || {};
     var st = PLAYER_STYLE[c % 4];
     return { skin: O6[4], shirt: O6[0], shirt2: O6[1], bottom: O6[2], bottom2: O6[3], straps: O6[3], style: st, hairPal: PLAYER_PAL[st] };
   }
-  function sideFrame(p, c, O6, frame) {
-    var rows = SIDE[PLAYER_STYLE[c % 4]][frame], K = skinSet(O6[4]);
-    var pal = { o: O, s: K.s, S: K.S, h: K.h, b: K.b, c: O6[1], C: O6[0], p: O6[2], P: O6[3], f: '#733e39' };
-    Object.keys(HAIRPAL).forEach(function (k) { pal[k] = HAIRPAL[k]; });
-    rows.forEach(function (row, yy) { for (var xx = 0; xx < row.length; xx++) { var col = pal[row[xx]]; if (col) p.px(xx, yy + 1, col); } });
+  // ------------------------------------------------------------------ you, moving (v3.26): the pack's own animations
+  // folk-moves.js keeps the farmer's frames as run-length rows; here they become textures `<pl>_m_<move>_<i>` (and
+  // the anims `<pl>_m_<move>`), each cropped evenly round the feet so every one stands at origin (0.5, 1).
+  var MOVE_RATE = { idle: 8, walk: 12, carry: 12, dig: 22, water: 10, mine: 20, doing: 16, cast: 24, wait: 7, reel: 16, caught: 16, attack: 28, hurt: 20 };
+  var MOVE_LOOP = { idle: 1, walk: 1, carry: 1, wait: 1, reel: 1 };
+  var NO_FX = { attack: { U: 1, V: 1, T: 1, L: 1 } };   // the swing's slash and spark: the game draws its own, round your own weapon
+  var ARM_TOOLS = { carry: 1 };   // the carrying arm is in the tool layer: give it your sleeve and skin
+  var rgbCache = {};
+  function rgbOf(c) { return rgbCache[c] || (rgbCache[c] = rgb(c)); }
+  function unpack(s) {   // '3s2.o|...' -> ['ssso..o', ...]
+    return s ? s.split('|').map(function (r) { return r.replace(/(\d*)(\D)/g, function (m, n, ch) { return new Array((n ? +n : 1) + 1).join(ch); }); }) : [];
   }
-  // dir: down / up / side; f: 0 standing, 1 and 2 walking; side also has w0..w7 (the pack's walk)
+  function packPal() {
+    var M = LC.FOLK_MOVES, out = {}, list = M.pal.split(' '), L = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef';
+    list.forEach(function (h, i) { out[L[i]] = '#' + h; });
+    return out;
+  }
+  function bodyPal(O6, PP) {
+    var K = skinSet(O6[4]), pal = {};
+    Object.keys(PP).forEach(function (k) { pal[k] = PP[k]; });
+    var roles = { o: O, s: K.s, S: K.S, h: K.h, b: K.b, c: O6[1], C: O6[0], p: O6[2], P: O6[3], f: '#733e39' };
+    Object.keys(roles).forEach(function (k) { pal[k] = roles[k]; });
+    return pal;
+  }
+  // the pack's body colours in a tool layer, as yours
+  function armPal(O6, ppal) {
+    var K = skinSet(O6[4]), map = { '#a22633': O6[1], '#e43b44': O6[0], '#e4a672': K.s, '#b86f50': K.h, '#c28569': K.S, '#3a4466': O6[2], '#262b44': O6[3], '#f6757a': K.b }, out = {};
+    Object.keys(ppal).forEach(function (k) { out[k] = map[ppal[k]] || ppal[k]; });
+    return out;
+  }
+  // the even crop round the feet (x 48, bottom of row 38) for one move
+  function moveBox(a) { var half = Math.max(48 - a.x, a.x + a.w - 48); return { x0: 48 - half, w: 2 * half, y0: a.y, h: 39 - a.y }; }
+  // paints frame i of move a into an ImageData whose top-left is the pack's (x0, y0)
+  function paintMove(img, w, h, x0, y0, a, i, style, bpal, ppal, tools, tpal) {
+    var layers = [[a.base[i], bpal], [a.hair[style][i], ppal]];
+    if (tools && a.tools) layers.push([a.tools[i], tpal || ppal]);
+    layers.forEach(function (L) {
+      unpack(L[0]).forEach(function (row, ry) {
+        var yy = a.y + ry - y0;
+        if (yy < 0 || yy >= h) return;
+        for (var rx = 0; rx < row.length; rx++) {
+          var ch = row[rx]; if (ch === '.') continue;
+          var col = L[1][ch], xx = a.x + rx - x0;
+          if (!col || xx < 0 || xx >= w) continue;
+          var c = rgbOf(col), k = (yy * w + xx) * 4;
+          img.data[k] = c[0]; img.data[k + 1] = c[1]; img.data[k + 2] = c[2]; img.data[k + 3] = 255;
+        }
+      });
+    });
+  }
+  function drawMove(p, ctx, x0, y0, a, i, c, O6) {
+    var img = ctx.createImageData(p.w, p.h);
+    paintMove(img, p.w, p.h, x0, y0, a, i, PLAYER_STYLE[c % 4], bodyPal(O6, packPal()), packPal(), true);
+    ctx.putImageData(img, 0, 0);
+  }
+  Art.MOVES = {};   // per move: frames, rate, and per frame where the rod's tip and the held item are (from your feet)
+  Art.generatePlayerMoves = function (scene, c, outfits) {
+    var M = LC.FOLK_MOVES; if (!M) return;
+    var O6 = outfits[c || 0], pk = Art.plKey(c), style = PLAYER_STYLE[c % 4], ppal = packPal(), bpal = bodyPal(O6, ppal);
+    Object.keys(M.anims).forEach(function (name) {
+      var a = M.anims[name], b = moveBox(a), info = Art.MOVES[name] = { n: a.n, rate: MOVE_RATE[name] || 12, loop: !!MOVE_LOOP[name], tip: [], hold: [] };
+      for (var i = 0; i < a.n; i++) (function (i) {
+        Art.make(scene, pk + '_m_' + name + '_' + i, b.w, b.h, function (p, ctx) {
+          var img = ctx.createImageData(b.w, b.h);
+          var bp = bpal;
+          if (NO_FX[name]) { bp = {}; Object.keys(bpal).forEach(function (k) { if (!NO_FX[name][k]) bp[k] = bpal[k]; }); }
+          paintMove(img, b.w, b.h, b.x0, b.y0, a, i, style, bp, ppal, true, ARM_TOOLS[name] ? armPal(O6, ppal) : null);
+          ctx.putImageData(img, 0, 0);
+        });
+        if (a.tools) {   // the rod's tip: the tool's right-most pixel
+          var best = null;
+          unpack(a.tools[i]).forEach(function (row, ry) { for (var rx = row.length - 1; rx >= 0; rx--) if (row[rx] !== '.') { if (!best || rx > best[0]) best = [rx, ry]; break; } });
+          info.tip[i] = best ? [a.x + best[0] - 48 + 0.5, a.y + best[1] - 39 + 0.5] : [8, -14];
+        }
+        if (a.hold) info.hold[i] = [a.hold[i][0] - 48, a.hold[i][1] - 39];
+      })(i);
+    });
+  };
+  Art.createPlayerMoves = function (anims) {
+    var M = LC.FOLK_MOVES; if (!M) return;
+    for (var c = 0; c < 4; c++) {
+      var pk = Art.plKey(c);
+      Object.keys(M.anims).forEach(function (name) {
+        var key = pk + '_m_' + name, info = Art.MOVES[name], fr = [];
+        if (!info || anims.exists(key)) return;
+        for (var i = 0; i < info.n; i++) fr.push({ key: key + '_' + i });
+        anims.create({ key: key, frames: fr, frameRate: info.rate, repeat: info.loop ? -1 : 0 });
+      });
+      if (!anims.exists(pk + '_m_hold')) anims.create({ key: pk + '_m_hold', frames: [{ key: pk + '_m_carry_0' }], frameRate: 1, repeat: -1 });   // standing still with it
+    }
+  };
+  // dir: down / up / side; f: 0 standing, 1 and 2 walking. Side on, the frames come from the pack (standing, two strides).
   Art.drawPlayerFolk = function (p, dir, f, c, outfits) {
-    var O6 = outfits[c || 0];
-    if (dir === 'side') { sideFrame(p, c || 0, O6, typeof f === 'string' ? 1 + (+f.slice(1)) : f === 0 ? 0 : f === 1 ? 4 : 8); return; }
+    var O6 = outfits[c || 0], M = LC.FOLK_MOVES;
+    if (dir === 'side' && M) {
+      var a = f === 0 ? M.anims.idle : M.anims.walk;
+      drawMove(p, p.ctx, 48 - p.w / 2, 39 - p.h, a, f === 0 ? 0 : f === 1 ? 3 : 7, c || 0, O6);
+      return;
+    }
     chibi(p, outfitLook(O6, c || 0), { dir: dir, step: f, headBob: 0 });
   };
-  Art.PLAYER_SIDE_WALK = 8;
   // ------------------------------------------------------------------ the chapters' own characters, redrawn
   // Art.make() looks here first: a key listed here is drawn by chibi() instead of its old picture, on the same canvas.
   var FOLK = Art.FOLK = {};

@@ -567,6 +567,7 @@ plan.md               design document
 
 - **Terrain and farm artwork:** selected sprites adapted from [Sunnyside World V2.1 by Daniel Diggle](https://danieldiggle.itch.io/sunnyside).
 - **The people (v3.25):** you are the farmer from the same pack: its side-on idle and eight walking frames, recoloured for each co-op outfit, with four of its hairstyles (short, ponytail, bowl and spiky), kept as pixel rows in `src/art-folk.js`. The front and back views, every villager, the chapters' casts and the human bosses are drawn by code in the pack's style (a big round head, tall dot eyes, rosy cheeks, a small body and its dark outline).
+- **Your moves (v3.26):** standing, walking, carrying, digging, watering, mining, busy hands, casting, waiting, reeling and catching a fish, a swing and a flinch are the same pack's own animations, kept as run-length pixel rows in `src/folk-moves.js` (four hairstyles, recoloured for each co-op outfit). The fishing frames keep only the rod (the game draws its own line); the swing keeps only the body (your own weapon sweeps in front of you); its fall-down animation (a skull) is left out, since you only faint.
 - **Grass details (v3.24.1):** the little leafy clumps, tufts, flowers and pebbles scattered over the grass are 33 small pieces from the same pack, stored inside the game as pixel rows (`src/grass-details.js`). The pack's own files are not in this repository: its licence allows use in games but not redistributing the asset files.
 
 - **Engine:** [Phaser 3](https://phaser.io), MIT licence.

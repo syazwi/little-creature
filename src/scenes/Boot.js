@@ -33,13 +33,14 @@ LC.BootScene = class extends Phaser.Scene {
       var pk = LC.Art.plKey(c), wk = LC.Art.walkKey(c);
       ['down', 'up', 'side'].forEach(function (d) {
         if (a.exists(wk + '_' + d)) return;
-        if (d === 'side' && LC.Art.PLAYER_SIDE_WALK && tx.exists(pk + '_side_w0')) {   // v3.25: the Sunnyside farmer's own walk
-          var fr = []; for (var w = 0; w < LC.Art.PLAYER_SIDE_WALK; w++) fr.push({ key: pk + '_side_w' + w });
+        if (d === 'side' && tx.exists(pk + '_m_walk_0')) {   // v3.25: the Sunnyside farmer's own walk
+          var fr = []; for (var w = 0; w < 8; w++) fr.push({ key: pk + '_m_walk_' + w });
           a.create({ key: wk + '_side', frames: fr, frameRate: 12, repeat: -1 }); return;
         }
         a.create({ key: wk + '_' + d, frames: [{ key: pk + '_' + d + '_1' }, { key: pk + '_' + d + '_0' }, { key: pk + '_' + d + '_2' }, { key: pk + '_' + d + '_0' }], frameRate: 8, repeat: -1 });
       });
     }
+    if (LC.Art.createPlayerMoves) LC.Art.createPlayerMoves(a);   // v3.26: standing, carrying, digging, fishing...
     if (!a.exists('kerbau_walk')) a.create({ key: 'kerbau_walk', frames: [{ key: 'kerbau_0' }, { key: 'kerbau_1' }], frameRate: 3, repeat: -1 });
     if (!a.exists('chicken_walk')) a.create({ key: 'chicken_walk', frames: [{ key: 'chicken_0' }, { key: 'chicken_2' }], frameRate: 6, repeat: -1 });
     if (!a.exists('chicken_peck')) a.create({ key: 'chicken_peck', frames: [{ key: 'chicken_0' }, { key: 'chicken_1' }, { key: 'chicken_0' }, { key: 'chicken_0' }], frameRate: 4, repeat: -1 });
