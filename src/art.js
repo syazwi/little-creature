@@ -805,5 +805,6 @@ window.LC = window.LC || {};
     if (Art.generate33) Art.generate33(scene);   // v3.22: Chapter 20, Janji Buaya Putih
     if (Art.generate34) Art.generate34(scene);   // v3.23: Chapter 20, Part 2
     if (sunnyside) Art.paintSunnysideSprites(scene, sunnyside);
+    if (Art.generateGrass) Art.generateGrass(scene);   // v3.24.1: grass details (Sunnyside World, see grass-details.js)
   };
 })(window.LC);

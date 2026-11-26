@@ -566,6 +566,7 @@ plan.md               design document
 ## Credits and licences
 
 - **Terrain and farm artwork:** selected sprites adapted from [Sunnyside World V2.1 by Daniel Diggle](https://danieldiggle.itch.io/sunnyside).
+- **Grass details (v3.24.1):** the little leafy clumps, tufts, flowers and pebbles scattered over the grass are 33 small pieces from the same pack, stored inside the game as pixel rows (`src/grass-details.js`). The pack's own files are not in this repository: its licence allows use in games but not redistributing the asset files.
 
 - **Engine:** [Phaser 3](https://phaser.io), MIT licence.
 - **Multiplayer:** [PeerJS](https://peerjs.com), MIT licence. It uses the free public PeerJS server for matchmaking.
