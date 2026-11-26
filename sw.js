@@ -6,7 +6,7 @@
  * dist/ (the version news and the downloads) always comes from the internet. */
 
 // ---- stamped by tools/build-web.mjs on every build (do not edit by hand): the version, and every file the game needs
-var CACHE = 'little-creature-87-20261126005416';
+var CACHE = 'little-creature-88-20261126015529';
 var FILES = [
   './', 'index.html', 'manifest.webmanifest', 'lib/phaser.min.js', 'lib/peerjs.min.js', 'src/version.js',
   'src/update.js', 'src/data.js', 'src/areas.js', 'src/folk.js', 'src/data2.js', 'src/areas2.js', 'src/undersea.js',
@@ -20,7 +20,7 @@ var FILES = [
   'src/art12.js', 'src/art13.js', 'src/art14.js', 'src/art15.js', 'src/art16.js', 'src/art17.js', 'src/art18.js',
   'src/art19.js', 'src/art20.js', 'src/art21.js', 'src/art22.js', 'src/art23.js', 'src/art24.js', 'src/art25.js',
   'src/art26.js', 'src/art27.js', 'src/art28.js', 'src/art29.js', 'src/art30.js', 'src/art31.js', 'src/art32.js',
-  'src/art33.js', 'src/audio.js', 'src/lagu.js', 'src/lobby.js', 'src/scenes/Boot.js', 'src/scenes/Title.js',
+  'src/art33.js', 'src/art34.js', 'src/audio.js', 'src/lagu.js', 'src/lobby.js', 'src/scenes/Boot.js', 'src/scenes/Title.js',
   'src/scenes/World.js', 'src/scenes/WorldLife.js', 'src/scenes/WorldFarm.js', 'src/scenes/WorldCombat.js',
   'src/scenes/WorldTanggang.js', 'src/scenes/WorldBadang.js', 'src/scenes/WorldHome.js', 'src/scenes/WorldBarunai.js',
   'src/scenes/WorldKampong.js', 'src/scenes/WorldKampong2.js', 'src/scenes/WorldMajapahit.js', 'src/scenes/WorldBayang.js',
@@ -41,9 +41,9 @@ var FILES = [
   'src/mamai.js', 'src/scenes/WorldMamai.js', 'src/scenes/UIMamai.js', 'src/penyamun.js', 'src/scenes/WorldPenyamun.js',
   'src/scenes/UIPenyamun.js', 'src/scenes/WorldBunianMirror.js', 'src/bujang.js', 'src/scenes/WorldBujang.js',
   'src/scenes/UIBujang.js', 'src/sounds19.js', 'src/maya.js', 'src/scenes/WorldMaya.js', 'src/scenes/UIMaya.js',
-  'src/buaya.js', 'src/scenes/WorldBuaya.js', 'src/scenes/UIBuaya.js', 'src/story-checkpoints.js', 'src/chapter-replay.js',
-  'src/main.js', 'lib/fonts/PixelifySans-latin.woff2', 'lib/fonts/PixelifySans-latin-ext.woff2', 'icons/icon-192.png',
-  'icons/icon-512.png'
+  'src/buaya.js', 'src/scenes/WorldBuaya.js', 'src/scenes/UIBuaya.js', 'src/buaya2.js', 'src/scenes/WorldBuaya2.js',
+  'src/scenes/UIBuaya2.js', 'src/story-checkpoints.js', 'src/chapter-replay.js', 'src/main.js', 'lib/fonts/PixelifySans-latin.woff2',
+  'lib/fonts/PixelifySans-latin-ext.woff2', 'icons/icon-192.png', 'icons/icon-512.png'
 ];
 // ---- end of stamp
 
