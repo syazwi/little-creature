@@ -14,26 +14,25 @@ window.LC = window.LC || {};
     kecik: { skin: '#9a5e36', shirt: '#2a2a30', shirt2: '#1e1e24', bottom: '#3a3a52', bottom2: '#2a2a3e', hair: '#1a1210' },
     saudagar: { skin: '#9a6440', shirt: '#d0a848', shirt2: '#a8802a', bottom: '#5a2a6a', bottom2: '#40204e', hair: '#d8d4cc', hat: 'songkok' }
   };
-  function extras(p, who) {
+  function extras(p, who) {   // (v3.25: on the Sunnyside-style face; eyes at 6 and 9, rows 11-12)
     if (who === 'garong' || who === 'kopak' || who === 'senget' || who === 'kecik') {   // the bandit mask
-      p.rect(4, 4, 8, 2, '#141418'); p.px(6, 5, '#f4f4f4'); p.px(9, 5, '#f4f4f4');
+      p.rect(3, 10, 10, 3, '#141418'); p.rect(6, 11, 1, 2, '#f4f4f4'); p.rect(9, 11, 1, 2, '#f4f4f4'); p.px(13, 11, '#141418'); p.px(14, 12, '#141418');
     }
-    if (who === 'garong') { p.rect(5, 6, 6, 1, '#1a1210'); p.px(4, 7, '#1a1210'); p.px(11, 7, '#1a1210'); p.px(3, 6, '#1a1210'); p.px(12, 6, '#1a1210'); }   // a magnificent moustache
-    if (who === 'alibaba') { p.rect(6, 6, 4, 1, '#2a1e14'); }
-    if (who === 'kopak') { p.rect(5, 10, 2, 2, '#9a8a6a'); p.px(10, 12, '#5a7a9a'); }   // patches
-    if (who === 'kecik') { p.rect(3, 9, 1, 4, '#2a2a30'); p.rect(12, 9, 1, 4, '#1e1e24'); }   // big shoulders
-    if (who === 'saudagar') { p.rect(5, 6, 6, 3, '#f4f4f0'); p.rect(6, 9, 4, 2, '#f4f4f0'); p.px(7, 11, '#e8e8e0'); p.px(8, 11, '#e8e8e0'); p.rect(4, 12, 8, 1, '#7a2a8a'); }   // a long fake beard and a sash
+    if (who === 'garong') { p.rect(5, 13, 6, 1, '#1a1210'); p.px(4, 14, '#1a1210'); p.px(11, 14, '#1a1210'); p.px(3, 13, '#1a1210'); p.px(12, 13, '#1a1210'); }   // a magnificent moustache
+    if (who === 'alibaba') { p.rect(6, 13, 4, 1, '#2a1e14'); }
+    if (who === 'kopak') { p.rect(5, 15, 2, 2, '#9a8a6a'); p.px(10, 17, '#5a7a9a'); }   // patches
+    if (who === 'kecik') { p.rect(3, 15, 2, 1, '#2a2a30'); p.rect(11, 15, 2, 1, '#1e1e24'); }   // big shoulders
+    if (who === 'saudagar') { p.rect(4, 13, 8, 2, '#f4f4f0'); p.rect(5, 15, 6, 2, '#f4f4f0'); p.px(7, 17, '#e8e8e0'); p.px(8, 17, '#e8e8e0'); p.rect(5, 17, 2, 1, '#7a2a8a'); p.rect(9, 17, 2, 1, '#7a2a8a'); }   // a long fake beard and a sash
   }
   function prop(p, kind) {
-    if (kind === 'axe') { p.line(13, 6, 13, 15, '#7a4b28'); p.rect(12, 4, 3, 3, '#a8a8b0'); p.px(15, 5, '#d8d8e0'); }
-    if (kind === 'pole') { p.line(14, 1, 14, 18, '#8a5a30'); p.px(14, 0, '#6a4420'); }
-    if (kind === 'sack') { p.ell(13, 11, 3, 3.4, '#d8c090'); p.px(13, 7, '#a88a50'); p.px(12, 10, '#b89a60'); }
+    if (kind === 'axe') { p.line(13, 10, 13, 18, '#7a4b28'); p.rect(12, 8, 3, 3, '#a8a8b0'); p.px(15, 9, '#d8d8e0'); }
+    if (kind === 'pole') { p.line(13, 2, 13, 19, '#8a5a30'); p.px(13, 1, '#6a4420'); }
+    if (kind === 'sack') { p.ell(13, 14, 2.6, 3, '#d8c090'); p.px(13, 11, '#a88a50'); p.px(12, 14, '#b89a60'); }
   }
   function person(scene, key, who, blink, step, pr) {
     Art.make(scene, key, 16, 20, function (p) {
-      Art.drawVillager(p, CAST[who], blink, step);
+      Art.chibi(p, CAST[who], { blink: blink, step: step, extra: function (p) { if (pr) prop(p, pr); } });
       extras(p, who);
-      if (pr) prop(p, pr);
     });
   }
 

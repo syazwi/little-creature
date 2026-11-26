@@ -289,7 +289,7 @@ window.LC = window.LC || {};
         y += 64;
         line('Chapter ' + ch.n + ' · ' + ch.name, 18, '#fbecc8', 40);
       });
-      line('Most pictures and every tune in this game are made by code, one pixel and one note at a time. The grass, paths, trees, farm animals and grass details come from Sunnyside World by Daniel Diggle. The recorded sounds of Chapter 19 are CC0, from BigSoundBank and Freesound.', 14, '#a89a88', 60);
+      line('Most pictures and every tune in this game are made by code, one pixel and one note at a time. The grass, paths, trees, farm animals, grass details and the farmer you play come from Sunnyside World by Daniel Diggle, and everyone else is drawn in its style. The recorded sounds of Chapter 19 are CC0, from BigSoundBank and Freesound.', 14, '#a89a88', 60);
       line('Pelita, Nenek, Sang Kancil, Seri Putih, Anak Putih, and everyone in the kampung, the water village and beyond.', 16, '#e8d8c0', 60);
       line(X.credits.thanks, 24, '#ffd166', 120);
       var tamat = line(X.credits.tamat, 64, '#fff6d8', 40);

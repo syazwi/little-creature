@@ -9,31 +9,29 @@ window.LC = window.LC || {};
   'use strict';
   var Art = LC.Art;
   var CAST = {
-    maya: { skin: '#c08a5a', shirt: '#f6f2ec', shirt2: '#dcd6cc', bottom: '#f0ece4', bottom2: '#d6d0c4', hair: '#141010' },
+    maya: { skin: '#c08a5a', shirt: '#f6f2ec', shirt2: '#dcd6cc', bottom: '#f0ece4', bottom2: '#d6d0c4', hair: '#141010', style: 'loose', dress: true },
     hashim: { skin: '#a8703e', shirt: '#5a2a6a', shirt2: '#42204e', bottom: '#c4922f', bottom2: '#9a6e1e', hair: '#2a1a10', hat: 'songkok' },
     rokiah: { skin: '#b5784e', shirt: '#c8323a', shirt2: '#a01e28', bottom: '#e9c46a', bottom2: '#c4922f', hair: '#1a1210', hat: 'bun' },
     inah: { skin: '#8a5a36', shirt: '#8a7a6a', shirt2: '#6a5a4a', bottom: '#4a3a2e', bottom2: '#3a2e24', hair: '#a8a8a8', hat: 'tudung', hatColor: '#6a5a4a' },
     khalid: { skin: '#a8703e', shirt: '#3a6a9a', shirt2: '#2a4e7a', bottom: '#2a2a32', bottom2: '#1e1e26', hair: '#1a1210' }
   };
-  function extras(p, who, sad) {
+  function extras(p, who, sad) {   // (v3.25: drawn before the outline, on the Sunnyside-style body)
     if (who === 'maya') {   // hair to her knees, and a white flower behind her ear
-      p.rect(5, 1, 6, 3, '#141010'); p.px(4, 2, '#141010'); p.px(11, 2, '#141010');               // the crown, parted in the middle
-      p.rect(4, 3, 1, 8, '#141010'); p.rect(11, 3, 1, 8, '#141010');                             // beside her face...
-      p.rect(3, 6, 1, 10, '#141010'); p.rect(12, 6, 1, 10, '#141010'); p.px(4, 11, '#141010'); p.px(11, 12, '#141010');   // ...and down to her knees
-      p.px(8, 1, '#4a3a3a'); p.line(4, 4, 4, 9, '#3a2e2e'); p.line(12, 8, 12, 14, '#3a2e2e');     // a sheen on the hair
-      p.px(5, 3, '#141010'); p.px(10, 3, '#141010');
-      p.px(12, 3, '#ffffff'); p.px(13, 2, '#ffffff'); p.px(13, 3, '#f0ead8'); p.px(12, 2, '#fffbe8');
-      if (sad) { p.rect(6, 5, 2, 1, '#2a1a10'); p.rect(9, 5, 2, 1, '#2a1a10'); p.px(6, 6, '#9ad8ff'); p.px(9, 7, '#9ad8ff'); }
+      p.rect(2, 15, 1, 4, '#141010'); p.rect(13, 15, 1, 4, '#141010'); p.rect(3, 15, 1, 3, '#141010'); p.rect(12, 15, 1, 3, '#141010');
+      p.px(8, 5, '#4a3a3a'); p.line(2, 10, 2, 17, '#3a2e2e');                                    // a sheen on the hair
+      p.px(13, 6, '#ffffff'); p.px(14, 5, '#ffffff'); p.px(14, 6, '#f0ead8'); p.px(13, 5, '#fffbe8');
+      if (sad) { p.px(6, 11, '#c08a5a'); p.px(9, 11, '#c08a5a'); p.px(6, 13, '#9ad8ff'); p.px(9, 13, '#9ad8ff'); p.px(9, 14, '#9ad8ff'); }
     }
-    if (who === 'hashim') { p.rect(6, 7, 4, 1, '#2a1a10'); p.px(12, 13, '#e9c46a'); p.rect(4, 13, 8, 1, '#e9c46a'); }   // a moustache, a gold sampin and a ring
-    if (who === 'rokiah') { p.px(6, 9, '#e9c46a'); p.px(7, 10, '#e9c46a'); p.px(8, 10, '#e9c46a'); p.px(9, 9, '#e9c46a'); p.px(4, 4, '#e9c46a'); p.px(11, 4, '#e9c46a'); }   // gold necklace and earrings
-    if (who === 'khalid') { p.px(4, 9, '#e8e0d0'); p.rect(12, 11, 3, 4, '#8a6a4a'); p.rect(12, 11, 3, 1, '#a88a6a'); }   // a sea bag
+    if (who === 'hashim') { p.rect(6, 13, 4, 1, '#2a1a10'); p.px(11, 17, '#e9c46a'); p.rect(5, 17, 6, 1, '#e9c46a'); }   // a moustache, a gold sampin and a ring
+    if (who === 'rokiah') { p.px(6, 15, '#e9c46a'); p.px(7, 16, '#e9c46a'); p.px(8, 16, '#e9c46a'); p.px(9, 15, '#e9c46a'); p.px(3, 12, '#e9c46a'); p.px(12, 12, '#e9c46a'); }   // gold necklace and earrings
+    if (who === 'khalid') { p.px(5, 15, '#e8e0d0'); p.rect(12, 13, 3, 5, '#8a6a4a'); p.rect(12, 13, 3, 1, '#a88a6a'); }   // a sea bag
   }
   function person(scene, key, who, blink, step, prop, sad) {
     Art.make(scene, key, 16, 20, function (p) {
-      Art.drawVillager(p, CAST[who], blink, step);
-      extras(p, who, sad);
-      if (prop === 'broom') { p.line(13, 6, 14, 18, '#8a6a3a'); p.poly([[12, 17], [16, 17], [15, 20], [12, 20]], '#c8a860'); }
+      Art.chibi(p, CAST[who], { blink: blink, step: step, extra: function (p) {
+        extras(p, who, sad);
+        if (prop === 'broom') { p.line(13, 9, 14, 17, '#8a6a3a'); p.poly([[12, 17], [16, 17], [15, 20], [12, 20]], '#c8a860'); }
+      } });
     });
   }
 

@@ -290,7 +290,7 @@ window.LC = window.LC || {};
     p.outline(OUT);
   }
 
-  Art.drawVillager = drawVillager;
+  if (!Art.drawVillager) Art.drawVillager = drawVillager;   // art-folk.js draws them in the Sunnyside style now
 
   // ================================================================== CRITTERS
   function drawKancil(p, f) {
@@ -484,8 +484,8 @@ window.LC = window.LC || {};
     Object.keys(LC.VILLAGERS).forEach(function (vid) {
       if (LC.VILLAGERS[vid].sprite) return;   // the sea folk have their own sprites (art3.js)
       var L = LC.VILLAGERS[vid].look;
-      make(scene, 'npc_' + vid + '_0', 16, 20, function (p) { drawVillager(p, L, false); });
-      make(scene, 'npc_' + vid + '_1', 16, 20, function (p) { drawVillager(p, L, true); });
+      make(scene, 'npc_' + vid + '_0', 16, 20, function (p) { Art.drawVillager(p, L, false); });
+      make(scene, 'npc_' + vid + '_1', 16, 20, function (p) { Art.drawVillager(p, L, true); });
     });
     // critters
     [['kancil', 18, 14, drawKancil], ['ketam', 12, 9, drawKetam], ['penyu', 20, 12, drawPenyu], ['biawak', 26, 11, drawBiawak]].forEach(function (c) {

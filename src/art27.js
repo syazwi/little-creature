@@ -12,21 +12,23 @@ window.LC = window.LC || {};
     amin: { skin: '#a8703e', shirt: '#4aa0d0', shirt2: '#3080b0', bottom: '#3a3a3a', bottom2: '#262626', hair: '#1a1210', hat: 'cap' },
     imam: { skin: '#9a6440', shirt: '#f4f0e4', shirt2: '#d8d0c0', bottom: '#5a4a3a', bottom2: '#3e3226', hair: '#d0d0d0', hat: 'kopiah', beard: '#e0e0e0' }
   };
-  function extras(p, who, mask) {
-    if (who === 'bahar') { p.rect(5, 5, 6, 1, '#2a2a2a'); p.px(6, 5, '#cfe8ff'); p.px(9, 5, '#cfe8ff'); }
-    if (who === 'amin') { p.px(6, 6, '#ffffff'); p.px(10, 4, '#ffffff'); p.px(9, 7, '#f0f0f0'); }   // flour
+  function extras(p, who, mask) {   // (v3.25: on the Sunnyside-style face; eyes at 6 and 9, rows 11-12)
+    if (who === 'bahar') { p.rect(5, 11, 6, 1, '#2a2a2a'); p.px(6, 11, '#cfe8ff'); p.px(9, 11, '#cfe8ff'); }
+    if (who === 'amin') { p.px(5, 12, '#ffffff'); p.px(10, 7, '#ffffff'); p.px(9, 15, '#f0f0f0'); }   // flour
     if (mask) {   // bedak sejuk: a pale rice-powder mask, and hair escaping the tudung
-      p.rect(5, 4, 6, 4, '#f3efe2'); p.px(6, 5, '#2a1a10'); p.px(9, 5, '#2a1a10'); p.px(7, 7, '#c06a5a'); p.px(8, 7, '#c06a5a');
-      p.px(6, 4, '#ffffff'); p.px(10, 6, '#e6e0d0'); p.px(3, 3, '#1a1210'); p.px(12, 2, '#1a1210'); p.px(13, 4, '#1a1210');
+      p.rect(4, 9, 8, 5, '#f3efe2'); p.rect(6, 11, 1, 2, '#2a1a10'); p.rect(9, 11, 1, 2, '#2a1a10'); p.px(7, 13, '#c06a5a'); p.px(8, 13, '#c06a5a');
+      p.px(5, 9, '#ffffff'); p.px(10, 12, '#e6e0d0'); p.px(2, 4, '#1a1210'); p.px(13, 3, '#1a1210'); p.px(14, 5, '#1a1210');
     }
+  }
+  function props(p, prop) {
+    if (prop === 'pot') { p.rect(12, 14, 4, 3, '#9aa0a8'); p.rect(12, 14, 4, 1, '#c8ccd2'); p.px(15, 13, '#5a5a62'); }
+    if (prop === 'radio') { p.rect(12, 14, 4, 3, '#7a4a2a'); p.px(13, 15, '#e9c46a'); p.line(15, 13, 15, 9, '#c8c8c8'); }
+    if (prop === 'beg') { p.rect(0, 14, 4, 5, '#3a6ab0'); p.rect(0, 14, 4, 1, '#5a8ad0'); p.px(1, 13, '#2a2a2a'); p.px(2, 13, '#2a2a2a'); }
   }
   function person(scene, key, who, mask, blink, step, prop) {
     Art.make(scene, key, 16, 20, function (p) {
-      Art.drawVillager(p, CAST[who], blink, step);
+      Art.chibi(p, CAST[who], { blink: blink, step: step, extra: function (p) { props(p, prop); } });
       extras(p, who, mask);
-      if (prop === 'pot') { p.rect(12, 10, 4, 3, '#9aa0a8'); p.rect(12, 10, 4, 1, '#c8ccd2'); p.px(15, 9, '#5a5a62'); }
-      if (prop === 'radio') { p.rect(12, 10, 4, 3, '#7a4a2a'); p.px(13, 11, '#e9c46a'); p.line(15, 9, 15, 5, '#c8c8c8'); }
-      if (prop === 'beg') { p.rect(0, 12, 4, 6, '#3a6ab0'); p.rect(0, 12, 4, 1, '#5a8ad0'); p.px(1, 11, '#2a2a2a'); p.px(2, 11, '#2a2a2a'); }
     });
   }
   function overlay(scene, key, base, draw) {   // an existing picture with someone hiding in it

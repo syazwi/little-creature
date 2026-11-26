@@ -12,24 +12,24 @@ window.LC = window.LC || {};
     leman: { skin: '#b07a52', shirt: '#e07a3a', shirt2: '#b85a24', bottom: '#5a4632', bottom2: '#463624', hair: '#1a1210' },
     sani: { skin: '#c08a5a', shirt: '#6a9ad0', shirt2: '#4a7ab0', bottom: '#3a3a52', bottom2: '#2a2a3e', hair: '#2a1a10' }
   };
-  function extras(p, who) {
+  function extras(p, who) {   // (v3.25: drawn before the outline, on the Sunnyside-style body)
     if (who === 'kudin') {   // the gold sash, and a tanjak far too big
-      p.rect(4, 11, 8, 1, '#e9c46a'); p.px(11, 12, '#e9c46a'); p.px(11, 13, '#c4922f');
-      p.poly([[4, 3], [9, 0], [13, 0], [12, 3]], '#e9c46a'); p.line(4, 3, 12, 3, '#c4922f'); p.px(13, 0, '#c4922f');
-      p.px(6, 7, '#2a1a10'); p.px(9, 7, '#2a1a10');   // a thin moustache
+      p.rect(5, 17, 6, 1, '#e9c46a'); p.px(10, 18, '#c4922f');
+      p.poly([[2, 8], [7, 0], [14, 0], [13, 8]], '#e9c46a'); p.line(2, 7, 13, 7, '#c4922f'); p.px(14, 0, '#c4922f'); p.px(6, 4, '#f4dc90'); p.px(7, 3, '#f4dc90');
+      p.rect(6, 13, 4, 1, '#2a1a10');   // a thin moustache
     }
     if (who === 'leman') {   // a round belly, and a grain of rice on his cheek
-      p.rect(3, 10, 10, 4, '#e07a3a'); p.rect(11, 10, 2, 4, '#b85a24'); p.px(8, 12, '#b85a24'); p.rect(2, 11, 1, 2, '#e07a3a'); p.rect(13, 11, 1, 2, '#b85a24');
-      p.px(10, 6, '#fffaf0');
+      p.rect(4, 15, 8, 2, '#e07a3a'); p.rect(10, 15, 2, 2, '#b85a24'); p.px(8, 16, '#b85a24'); p.px(3, 16, '#e07a3a'); p.px(12, 16, '#b85a24');
+      p.px(11, 12, '#fffaf0');
     }
     if (who === 'sani') {   // messy hair, a long scarf, a nervous drop of sweat
-      p.px(6, 1, '#2a1a10'); p.px(9, 1, '#2a1a10'); p.px(11, 2, '#2a1a10');
-      p.rect(5, 8, 6, 1, '#e8e0d0'); p.px(10, 9, '#e8e0d0'); p.px(10, 10, '#d0c8b8');
-      p.px(12, 4, '#8fd3ff'); p.px(12, 5, '#5ab0e0');
+      p.px(5, 4, '#2a1a10'); p.px(9, 4, '#2a1a10'); p.px(11, 4, '#2a1a10');
+      p.rect(5, 15, 6, 1, '#e8e0d0'); p.px(10, 16, '#e8e0d0'); p.px(10, 17, '#d0c8b8');
+      p.px(14, 8, '#8fd3ff'); p.px(14, 9, '#5ab0e0');
     }
   }
   function person(scene, key, who, blink, step) {
-    Art.make(scene, key, 16, 20, function (p) { Art.drawVillager(p, CAST[who], blink, step); extras(p, who); });
+    Art.make(scene, key, 16, 20, function (p) { Art.chibi(p, CAST[who], { blink: blink, step: step, extra: function (p) { extras(p, who); } }); });
   }
   // a mirror self: the same frame, every colour pushed into one shade, and red eyes
   var SHADE = {
@@ -61,7 +61,7 @@ window.LC = window.LC || {};
       var k = 'npc18_' + who, m = 'mirror18_' + who;
       person(scene, k + '_0', who, false, 0); person(scene, k + '_1', who, true, 0);
       person(scene, k + '_w1', who, false, 1); person(scene, k + '_w2', who, false, 2);
-      ['_0', '_1', '_w1', '_w2'].forEach(function (f) { Art.mirrorCopy(scene, k + f, m + f, SHADE[who], f === '_1' ? [] : [[6, 5], [9, 5]]); });
+      ['_0', '_1', '_w1', '_w2'].forEach(function (f) { Art.mirrorCopy(scene, k + f, m + f, SHADE[who], f === '_1' ? [] : [[6, 11], [6, 12], [9, 11], [9, 12]]); });
       [k, m].forEach(function (b) {
         if (!a.exists(b + '_walk')) a.create({ key: b + '_walk', frames: [{ key: b + '_w1' }, { key: b + '_w2' }], frameRate: 7, repeat: -1 });
         if (!a.exists(b + '_idle')) a.create({ key: b + '_idle', frames: [{ key: b + '_0', duration: 2200 }, { key: b + '_1', duration: 160 }], repeat: -1 });

@@ -81,7 +81,7 @@ window.LC = window.LC || {};
     make(scene, 'meriam11', 16, 16, drawMeriam);
     make(scene, 'kapten11_0', 20, 26, function (p) { drawKapten(p, 0); });
     make(scene, 'kapten11_1', 20, 26, function (p) { drawKapten(p, 1); });
-    function person(key, L) { make(scene, key, 16, 24, function (p) { p.ctx.save(); p.ctx.translate(0, 4); dv(p, L, false); p.ctx.restore(); }); }
+    function person(key, L) { make(scene, key, 16, 24, function (p) { dv(p, L, false); }); }
     person('npc11_barunai', { skin: '#9a6440', shirt: '#e9c46a', shirt2: '#c4922f', bottom: '#2a2a2a', bottom2: '#1a1a1a', hair: '#1a1210', hat: 'tanjak_gold' });
     person('npc11_tausug', { skin: '#8a5634', shirt: '#2a6a4a', shirt2: '#1e5038', bottom: '#8a1e2a', bottom2: '#6a141e', hair: '#1a1210', hat: 'headband', beard: '#1a1210' });
     make(scene, 'i_kalis', 16, 16, function (p) {

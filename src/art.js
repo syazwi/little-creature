@@ -84,6 +84,8 @@ window.LC = window.LC || {};
 
   var seedCounter = 1000;
   function make(scene, key, w, h, fn, outline) {
+    var ov = Art.FOLK && Art.FOLK[key];   // v3.25: people redrawn in the Sunnyside style (art-folk.js)
+    if (ov) { w = ov.w || w; h = ov.h || h; fn = ov.draw; outline = false; }
     var c = canvas(w, h), ctx = c.getContext('2d', { willReadFrequently: true });
     var p = new P(ctx, w, h, seedCounter += 37);
     fn(p, ctx);
@@ -93,6 +95,7 @@ window.LC = window.LC || {};
     return c;
   }
   Art.make = make;
+  Art.Painter = P;
   // texture / animation key prefixes for player outfit c (0 keeps the original single-player keys)
   Art.plKey = function (c) { return c ? 'pl' + c : 'pl'; };
   Art.walkKey = function (c) { return c ? 'walk' + c : 'walk'; };
@@ -680,8 +683,13 @@ window.LC = window.LC || {};
     buildTiles(scene, sunnyside);
     for (var pc = 0; pc < OUTFITS.length; pc++) {
       ['down', 'up', 'side'].forEach(function (d) {
-        for (var f = 0; f < 3; f++) make(scene, Art.plKey(pc) + '_' + d + '_' + f, 16, 16, function (p) { drawPlayer(p, d, f, pc); });
+        for (var f = 0; f < 3; f++) {
+          if (Art.drawPlayerFolk) make(scene, Art.plKey(pc) + '_' + d + '_' + f, Art.PLAYER_W, Art.PLAYER_H, function (p) { Art.drawPlayerFolk(p, d, f, pc, OUTFITS); });
+          else make(scene, Art.plKey(pc) + '_' + d + '_' + f, 16, 16, function (p) { drawPlayer(p, d, f, pc); });
+        }
       });
+      // v3.25: the Sunnyside farmer's eight walking frames, side on
+      if (Art.drawPlayerFolk) for (var w = 0; w < Art.PLAYER_SIDE_WALK; w++) make(scene, Art.plKey(pc) + '_side_w' + w, Art.PLAYER_W, Art.PLAYER_H, function (p) { Art.drawPlayerFolk(p, 'side', 'w' + w, pc, OUTFITS); });
     }
     for (var st = 0; st < 5; st++) GHOST_EXPR.forEach(function (ex) { make(scene, 'ghost_' + st + '_' + ex, 20, 22, function (p) { drawGhost(p, st, ex); }); });
     make(scene, 'npc_ani_0', 16, 20, function (p) { drawAni(p, false); });

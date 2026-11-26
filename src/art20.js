@@ -248,13 +248,11 @@ window.LC = window.LC || {};
     })(f);
     // the herald, the foreign fortune teller and his captain (portraits, in the villagers' own style)
     var dv = Art.drawVillager;
-    function person(key, L, extra) { make(scene, key, 16, 24, function (p) { p.ctx.save(); p.ctx.translate(0, 4); dv(p, L, false); p.ctx.restore(); if (extra) extra(p); }); }
+    function person(key, L) { make(scene, key, 16, 24, function (p) { dv(p, L, false); }); }
     person('npc10_bentara', { skin: '#a8714a', shirt: '#2a4a8a', shirt2: '#1e3a6e', bottom: '#c8a040', bottom2: '#a88030', hair: '#1a1210', hat: 'tanjak_red' });
     person('npc10_nakhoda', { skin: '#8a5a38', shirt: '#8a2a2a', shirt2: '#6a1e1e', bottom: '#e8e0d0', bottom2: '#1e1a22', hair: '#1a1210', hat: 'headband', beard: '#1a1210' });
-    person('npc10_jambul', { skin: '#b8845a', shirt: '#5a2a6a', shirt2: '#3e1e4e', bottom: '#5a2a6a', bottom2: '#3e1e4e', hair: '#e8e4dc', hat: 'kopiah', beard: '#e8e4dc' }, function (p) {
-      p.rect(4, 4, 8, 4, '#f2ece0'); p.rect(4, 6, 8, 1, '#d8cebc'); p.disc(8, 4, 2, '#f2ece0'); p.px(8, 5, '#b8322a');   // a tall white turban...
-      p.line(9, 3, 12, 0, '#3a8a6a'); p.line(10, 3, 13, 1, '#5ab88a'); p.px(13, 0, '#f2c94c');                          // ...with a feather on top
-    });
+    person('npc10_jambul', { skin: '#b8845a', shirt: '#5a2a6a', shirt2: '#3e1e4e', bottom: '#5a2a6a', bottom2: '#3e1e4e', hair: '#e8e4dc', hat: 'turban', beard: '#e8e4dc',
+      extra: function (p, g) { p.line(g.x + 9, g.y + 3, g.x + 12, g.y + 0, '#3a8a6a'); p.line(g.x + 10, g.y + 3, g.x + 13, g.y + 1, '#5ab88a'); p.px(g.x + 13, g.y + 0, '#f2c94c'); } });   // a tall white turban, with a feather on top
     var IC = { belalang_anyam: function (p) { drawAnyam(p, true); }, peti_diraja: function (p) { p.rect(1, 5, 14, 9, '#c89a2a'); p.rect(1, 3, 14, 3, '#e8c050'); p.rect(4, 3, 1, 11, '#8a2a1e'); p.rect(11, 3, 1, 11, '#8a2a1e'); p.rect(7, 6, 2, 3, GOLDL); p.px(7, 11, '#d8283a'); }, sumpit: drawSumpit };
     Object.keys(IC).forEach(function (id) { make(scene, 'i_' + id, 16, 16, IC[id], true); });
     var a = scene.anims;

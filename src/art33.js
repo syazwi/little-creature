@@ -186,8 +186,9 @@ window.LC = window.LC || {};
       var k = 'npc20_' + who, look = F[who].look;
       [['_0', false, 0], ['_1', true, 0], ['_w1', false, 1], ['_w2', false, 2]].forEach(function (v) {
         make(k + v[0], 16, 20, function (p) {
-          Art.drawVillager(p, look, v[1], v[2]);
-          if (who === 'anak') { p.line(13, 4, 15, 0, '#8a6a3a'); p.poly([[14, 0], [16, 2], [15, 5], [12, 2]], '#e84a3a'); }   // his kite
+          Art.chibi(p, look, { blink: v[1], step: v[2], extra: function (p) {
+            if (who === 'anak') { p.line(12, 16, 14, 7, '#8a6a3a'); p.poly([[13, 1], [16, 3], [15, 7], [12, 4]], '#e84a3a'); }   // his kite
+          } });
         });
       });
       if (!a.exists(k + '_idle')) a.create({ key: k + '_idle', frames: [{ key: k + '_0', duration: 2200 }, { key: k + '_1', duration: 160 }], repeat: -1 });

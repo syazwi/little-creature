@@ -28,11 +28,16 @@ LC.BootScene = class extends Phaser.Scene {
   }
 
   createAnims() {
-    var a = this.anims;
+    var a = this.anims, tx = this.textures;
     for (var c = 0; c < 4; c++) {
       var pk = LC.Art.plKey(c), wk = LC.Art.walkKey(c);
       ['down', 'up', 'side'].forEach(function (d) {
-        if (!a.exists(wk + '_' + d)) a.create({ key: wk + '_' + d, frames: [{ key: pk + '_' + d + '_1' }, { key: pk + '_' + d + '_0' }, { key: pk + '_' + d + '_2' }, { key: pk + '_' + d + '_0' }], frameRate: 8, repeat: -1 });
+        if (a.exists(wk + '_' + d)) return;
+        if (d === 'side' && LC.Art.PLAYER_SIDE_WALK && tx.exists(pk + '_side_w0')) {   // v3.25: the Sunnyside farmer's own walk
+          var fr = []; for (var w = 0; w < LC.Art.PLAYER_SIDE_WALK; w++) fr.push({ key: pk + '_side_w' + w });
+          a.create({ key: wk + '_side', frames: fr, frameRate: 12, repeat: -1 }); return;
+        }
+        a.create({ key: wk + '_' + d, frames: [{ key: pk + '_' + d + '_1' }, { key: pk + '_' + d + '_0' }, { key: pk + '_' + d + '_2' }, { key: pk + '_' + d + '_0' }], frameRate: 8, repeat: -1 });
       });
     }
     if (!a.exists('kerbau_walk')) a.create({ key: 'kerbau_walk', frames: [{ key: 'kerbau_0' }, { key: 'kerbau_1' }], frameRate: 3, repeat: -1 });

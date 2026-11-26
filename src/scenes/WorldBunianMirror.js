@@ -108,7 +108,8 @@ window.LC = window.LC || {};
             px[i] = 26 + l * 190; px[i + 1] = 10 + l * 104; px[i + 2] = 52 + l * 190;   // you, in violet shadow
           }
           ctx.putImageData(img, 0, 0);
-          if (d !== 'up') { ctx.fillStyle = '#ff3b4f'; (d === 'down' ? [[6, 7], [9, 7]] : [[9, 7]]).forEach(function (e) { ctx.fillRect(e[0], e[1], 1, 1); }); }
+          var eyes = LC.Art.PLAYER_EYES ? LC.Art.PLAYER_EYES[d] : (d === 'down' ? [[6, 7], [9, 7]] : d === 'side' ? [[9, 7]] : []);
+          ctx.fillStyle = '#ff3b4f'; eyes.forEach(function (e) { ctx.fillRect(e[0], e[1], 1, 1); });
         });
       })(f);
     });
