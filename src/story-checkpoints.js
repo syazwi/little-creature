@@ -8,8 +8,8 @@ window.LC = window.LC || {};
   var State = LC.State;
   var ONE = { n: 1, name: 'Little Creature', end: 1, steps: ['Help Pelita become a Legend of the Kampung'] };
   function chapters() { return [ONE].concat(LC.CHAPTER_LIST); }   // (read when used: later files add their chapters to the list)
-  var entryHours = { 5: 19.5, 9: 20.5, 11: 20.5, 14: 19, 19: 19.2 };
-  var delays = { 4: 'ch3day', 5: 'ch4day', 6: 'ch5day', 7: 'c7wait', 8: 'c8wait', 9: 'c9wait', 10: 'c10wait', 11: 'c11wait', 15: 'c15wait', 16: 'c16wait', 17: 'c17wait', 18: 'c18wait', 19: 'c19wait' };
+  var entryHours = { 5: 19.5, 9: 20.5, 11: 20.5, 14: 19, 19: 19.2, 20: 21.2 };
+  var delays = { 4: 'ch3day', 5: 'ch4day', 6: 'ch5day', 7: 'c7wait', 8: 'c8wait', 9: 'c9wait', 10: 'c10wait', 11: 'c11wait', 15: 'c15wait', 16: 'c16wait', 17: 'c17wait', 18: 'c18wait', 19: 'c19wait', 20: 'c20wait' };
   function grant(map) {
     Object.keys(map).forEach(function (id) {
       if (!LC.ITEMS[id]) throw new Error('Unknown chapter reward ' + id);
@@ -133,6 +133,13 @@ window.LC = window.LC || {};
       Object.assign(s.quests, { c19spot: 0, c19day: s.day - 1, c19signs: { buaian: true, jemuran: true, pisang: true }, c19welcome: true,
         c19lamps: { 0: true, 1: true, 2: true, 3: true }, c19bunga: true, c19inah: true, c19scared: true, c19round: 3 });
       grant({ sisir_maya: 1, benih_sundal: 5 }); visit(s, ['kubur19', 'besar19', 'dalam19']); earn(s, LC.C19.reward + 300);
+    },
+    20: function (s) {   // v3.22: Chapter 20, Part 1 (Part 2 adds its own keys after these)
+      var d = s.day - 2;
+      Object.assign(s.quests, { c20hookDay: d, c20morning: true, c20set: true, c20stuck: true, c20fedF: LC.C20.fishFarm, c20arrive: 1,
+        c20calmed: { esah: true, jalil: true, tijah: true, semaun: true }, c20calm: 4, c20proof: true,
+        c20task: { askL: true, askK: true, rakit: true, loceng: true, ikan: LC.C20.fishKA, done: true }, c20restDay: d, c20fireDay: d, c20sat: true, c20satDay: d });
+      grant({ loceng20: 1 }); visit(s, ['barunai', 'teluk']); earn(s, LC.C20.reward - 400);
     }
   };
 

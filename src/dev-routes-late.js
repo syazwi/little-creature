@@ -1,4 +1,4 @@
-/* Playable developer routes for Chapters 7–11, 18 and 19. */
+/* Playable developer routes for Chapters 7–11 and 18 to 20. */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -319,5 +319,94 @@ window.LC = window.LC || {};
       return;
     }
     if (step === 7) { if (dalam()) p.state.action = 'Persuade Maya to let her son grow up'; }
+  };
+
+  // Chapter 20, Janji Buaya Putih (Part 1)
+  R[20] = function (p, step) {
+    var w = p.world, S = w.S, q = S.quests, C = LC.C20, c = w.c20, pl = w.player;
+    p.state.choice = /^(She is here to rest|She has never hurt anyone|She is just a guardian|Trust her as Nenek does|Sail to Kampong Ayer)$/;
+    function ka() { return p.travel('barunai'); }
+    function faceAt(x, y, dir, label) {   // stand on a tile, face a direction, press USE
+      p.walk([{ x: x, y: y, dir: dir }], label, function (at) { w.dir = at.dir; w.doAction(); });
+    }
+    if (step === 0) { openNextDay(p, 'c20wait', 21.2); return; }
+    if (step === 1) {
+      if (!p.travel('farm')) return;
+      if (!q.c20morning) { if (S.day <= (q.c20hookDay || 0)) p.sleep(); else { if (S.minutes >= C.watchAt) p.clock(8); p.state.action = 'Nenek is calling'; } return; }
+      if (!q.c20set) { p.object('f_timun20b', 'Set the sticky scarecrow by Nenek’s vines'); return; }
+      if (q.c20stuck) { p.object('f_orang20', 'Catch the thief'); return; }
+      if (c && c.hidden) { p.state.action = 'Keeping very still in the straw'; return; }
+      if (S.minutes < C.watchAt && S.minutes >= 6 * 60) p.clock(20.2);
+      p.object('f_jerami20', 'Hide in the straw');
+      return;
+    }
+    if (step === 2) { if (p.travel('farm')) p.near(C.farm.reeds.x + 1, C.farm.reeds.y - 1, 'Follow Sang Kancil to the reeds', 12); return; }
+    if (step === 3 && w.area === 'laut20') {   // the voyage: sail the lane east, wait for her, and keep Pelita brave
+      var sea = c && c.sea;
+      if (!sea || sea.arrived) { p.state.action = 'Kampong Ayer!'; return; }
+      var sh = sea.sh, cr = sea.cr, R2 = C.ring(sea.calm);
+      if (sea.calm < 70 && sea.petCd <= 0) w.buayaSeaPet();
+      var WP = [[20, 21], [60, 20], [80, 16.5], [96, 18], [110, 20], [148, 22], [164, 22], [182, 22], [200, 27]];   // (round the reefs and headlands)
+      sea.wp = sea.wp || 0;
+      while (sea.wp < WP.length - 1 && Math.hypot(sh.x - WP[sea.wp][0] * T, sh.y - WP[sea.wp][1] * T) < 2.5 * T) sea.wp++;
+      if (sea.wp > 0 && sh.x < WP[sea.wp - 1][0] * T - 6 * T) sea.wp = 0;   // (turned back to an island to rest)
+      if (Math.hypot(cr.x - sh.x, cr.y - sh.y) > R2 - 26) { p.state.action = 'Waiting for Seri Putih'; return; }
+      var tx = WP[sea.wp][0] * T, ty = WP[sea.wp][1] * T, d = Math.hypot(tx - sh.x, ty - sh.y) || 1;
+      p.state.action = 'Sailing to Kampong Ayer (' + Math.round(sh.x / (C.sea.goalX * T) * 100) + '%)';
+      p.state.vector = { x: (tx - sh.x) / d, y: (ty - sh.y) / d };
+      return;
+    }
+    if (step === 3) {
+      if (!p.travel('farm')) return;
+      if ((q.c20fedF || 0) < C.fishFarm) { p.supply({ ikan_tilapia: C.fishFarm }); p.object('f_putih20', 'Feed Seri Putih'); return; }
+      if (!C.isNight(S)) p.clock(19.5);
+      p.object('f_nenek20', 'Sail by night with Nenek');
+      return;
+    }
+    if (step === 4) {
+      if (!ka()) return;
+      var cd = q.c20calmed || {}, who = ['esah', 'jalil', 'tijah'].find(function (k) { return !cd[k]; });
+      if (who) { p.prop('k_' + who + '20', 'Calm the water village'); return; }
+      if (!cd.semaun) { p.prop('k_semaun20', 'Talk to Awang Semaun'); return; }
+      if (!q.c20proof) { p.prop('k_berbai20', 'Talk to Pateh Berbai'); return; }
+      p.prop('k_sari20', 'Talk to Damang Sari');
+      return;
+    }
+    if (step === 5) {
+      var t = q.c20task || {};
+      if (!t.rakit) { p.supply({ nibong: 6, belian: 3 }); p.npc('lajak'); return; }
+      if (!t.loceng) { p.npc('kemala'); return; }
+      p.supply({ ikan_kembung: C.fishKA });
+      if (ka()) p.prop('k_putih20', 'Feed Seri Putih');
+      return;
+    }
+    if (step === 6) {   // the Night of Fire
+      if (!ka()) return;
+      var f = c && c.fire;
+      if (!f) { if (S.minutes < C.fireAt) p.clock(21.05); p.near(24, 18, 'Waiting for the night', 20); return; }
+      if (!f.started || f.done) { p.state.action = 'The lamps go out...'; return; }
+      if (!f.family) { p.prop('k_taxi20', 'Row to the trapped family'); return; }
+      var side = { '16,21': [17, 21, 'left'], '32,21': [31, 21, 'right'], '20,26': [20, 25, 'down'], '28,26': [28, 25, 'down'] };
+      var cut = C.ka.cuts.find(function (ct) { var k = ct.x + ',' + ct.y; return !f.cut[k] && !f.tiles[k]; });
+      if (cut) { var sd = side[cut.x + ',' + cut.y]; faceAt(sd[0], sd[1], sd[2], 'Cut the planks'); return; }
+      if (!f.bucket) { p.stand(24, 19, 'Take a bucket from the chain'); return; }
+      var fires = Object.keys(f.tiles).map(function (k) { return f.tiles[k]; }), goals = [];
+      fires.forEach(function (ft) {
+        [[1, 0, 'left'], [-1, 0, 'right'], [0, 1, 'up'], [0, -1, 'down']].forEach(function (o) {
+          var x = ft.x + o[0], y = ft.y + o[1];
+          if (w.grid[y] && w.grid[y][x] === 'j' && !f.tiles[x + ',' + y] && !f.cut[x + ',' + y]) goals.push({ x: x, y: y, dir: o[2] });
+        });
+      });
+      if (!goals.length) { p.state.action = 'Fighting the fire'; return; }
+      p.walk(goals, 'Throwing water on the fire (' + f.n + ' left)', function (at) { w.dir = at.dir; w.doAction(); });
+      return;
+    }
+    if (step === 7) {
+      if (!ka()) return;
+      if (c && c.cine) { p.state.action = 'The White One'; return; }
+      if (!q.c20sat) { if (c && c.alone) faceAt(18, 21, 'left', 'Sit with Pelita'); else p.state.action = 'After the fire'; return; }
+      if (S.day <= (q.c20satDay || 0)) { p.sleep(true); return; }
+      p.state.action = 'The send-off';
+    }
   };
 })(window.LC);
