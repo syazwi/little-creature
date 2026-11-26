@@ -425,14 +425,14 @@ After Chapter 14, rest at the farm and visit Tok Penghulu when the sky turns ora
 - **Pause > My stats** opens on a new **Me** page: your body wrapped in an **aura** (its colour comes from your strongest attribute, and it grows from a thin glow into flames as you get stronger), Pelita beside you, an octagon chart of eight attributes (Attack, Strength, Health, Energy, Speed, Spirit, Wisdom and Magic; red at the centre, green at the edge), and your level, title and XP. The old list is on the **My stats** tab.
 - **Magic: Mantera Suria.** Once Chapter 13 is complete, speak to Suraya at Sekolah Mantera (the enchanted letter by the farmhouse takes you there) to learn it. Press **K** or tap the sun above the hotbar: a sun of light seeks the nearest foe (every 3 seconds). Its damage grows with your level; you cast two suns from Lv 15 and three from Lv 30.
 
-### Chapter 13 — Nakhoda Idris and the School of Sorcery (v3.6)
+### Chapter 13 — Nakhoda Idris and the School of Sorcery (updated in v3.28)
 
-After Storm Reef, read Idris’s enchanted letter at Nenek’s farm to visit Kampung Mantera. Train with Nek Lampir, defend the school against Suraya’s stone soldiers and illusions, and retrieve Batu Ikrar from the Collector’s sealed vault. Press **P** or tap the mirror to cast **Mantera Pantul**. Time it just before a bolt reaches you. The spell remains available after the chapter.
+After Storm Reef, read the enchanted letter addressed to Idris near the farmhouse to visit Kampung Mantera. Train with Nek Lampir, defend the school from the ward’s reflections, lead the students out, and retrieve Batu Ikrar from the Collector’s sealed vault. Press **P** or tap the mirror to cast **Mantera Pantul** just before a bolt reaches you. The spell stays with you. After the chapter, visit Nenek’s jetty after 7 PM for new conversations.
 
-### Chapter 12 — Nakhoda Idris and the Kraken of Storm Reef (updated in v3.27)
+### Chapter 12 — Nakhoda Idris and the Kraken of Storm Reef (updated in v3.28)
 
-- After Chapter 11, meet Nakhoda Idris and Lina at Nenek’s jetty. Take Lina’s lantern and sail out to rescue three stranded fishing crews. Follow the Pedoman, steer clear of the waterspouts, and use **E** or **USE** when you close with the rival ship. Then board and win the fight on its deck.
-- Dodge the Kraken’s marked arm attacks and tail smashes. Strike its eye while Pelita illuminates it. Take the helm, follow Pak Yusof’s flashing lantern, bring all three crews aboard, and return Lina’s lantern at the farm jetty.
+- After Chapter 11, meet Nakhoda Idris and Lina at Nenek’s jetty. Open Nenek’s house menu, select **Enter house**, and pick up the brass bell by your bed. Take Lina’s lantern out to sea. Follow the Pedoman, steer clear of the waterspouts, and use **E** or **USE** when you close with the rival ship. Then board and win the fight on its deck.
+- Dodge the Kraken’s marked arm attacks and tail smashes. Strike its eye while Pelita illuminates it. Take the helm, flash Lina’s lantern near the sandbar, bring all three crews aboard, and return the lantern at the farm jetty.
 - **Lampu Pulang** lights the jetty every evening. The captured ship and upgraded **Pedoman** unlock free sailing. Each compass signal leads to rare wreck salvage or a sea boss. **Treasure Hunter’s Luck** gives one bonus loot roll on a boss defeat. **Pause → Companions** lets you bring or dismiss Idris.
 
 ### Chapter 11: Bulan dan Mutiara, "The Moon and the Pearls" (v3.3 - v3.4)

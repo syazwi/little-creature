@@ -10,6 +10,7 @@ window.LC = window.LC || {};
   function heading(a, b) { return Math.atan2(b.y - a.y, b.x - a.x); }
   function active(e) { return !e.dead && !e.away; }
   function returning(world) { return step(world) === 4 && world.S.quests.c12Rescued === 7; }
+  function lanternBeat(t) { return t >= 0 && t < 1.25 && Math.floor(t * 4) % 2 === 0; }
   function armRibbon(g, spine, inset, width, color) {
     var left = [], right = [];
     spine.forEach(function (pt, i) {
@@ -38,7 +39,12 @@ window.LC = window.LC || {};
   var objectAction = W.objectAction;
   W.objectAction = function (o) {
     var self = this, s = step(this);
-    if (o.type === 'storm_dock') return { label: s === 0 ? 'Meet Nakhoda Idris' : s === 5 ? 'Take the helm for an open-sea voyage' :
+    if (o.type === 'farmhouse_bell') return { label: this.S.quests.c12Bell ? 'Inspect the bell hook' :
+      C.ready(this.S) ? 'Take the brass bell' : 'Examine your parents’ bell',
+      fn: function () { self.takeFamilyBell(); } };
+    if (o.type === 'storm_dock') return { label: s === 0 ? 'Meet Nakhoda Idris' :
+      s === 5 ? (this.stormFamilyAvailable() ? 'Use the jetty' : 'Take the helm for an open-sea voyage') :
+      C.needsBell(this.S.quests) ? 'Talk to Idris' :
       returning(this) ? 'Return Lina’s lantern' : 'Return to Storm Reef',
       fn: function () { self.useStormDock(); } };
     if (o.type === 'storm_helm') return { label: s === 4 ? 'Sail to the stranded crews' : 'Take the helm', fn: function () {
@@ -69,7 +75,7 @@ window.LC = window.LC || {};
   };
 
   Object.assign(W, {
-    stormLines: function (lines, onDone) { this.ui.say(this.ch2Lines(lines), onDone ? { onDone: onDone } : undefined); },
+    stormLines: function (lines, options) { this.ui.say(this.ch2Lines(lines), options); },
     createStormReef: function () {
       this.storm = null;
       if (!C.ready(this.S)) return;
@@ -103,11 +109,37 @@ window.LC = window.LC || {};
     useStormDock: function () {
       var q = this.S.quests, s = step(this);
       if (!C.ready(this.S)) return;
-      if (s === 0) { q.ch12 = 1; LC.State.save(); this.stormLines(X.meet); return; }
+      if (s === 0) {
+        q.ch12 = 1; q.c12BellAsked = true; LC.State.save();
+        this.stormLines(q.c12Bell ? X.meet : X.meet.concat([X.bellHint]));
+        return;
+      }
+      if (C.needsBell(q)) { this.stormLines([X.bellHint]); return; }
       if (returning(this)) { this.finishStormReef(); return; }
+      if (s === 5 && this.stormFamilyAvailable()) { this.openStormJetty(); return; }
+      this.sailStormReef();
+    },
+    sailStormReef: function () {
+      var s = step(this);
       var place = s >= 2 && s <= 3 ? 'stormdeck' : 'stormsea';
       LC.Audio.sfx('creak11');
       this.goArea(place, undefined, 'right');
+    },
+    takeFamilyBell: function () {
+      var q = this.S.quests;
+      if (q.c12Bell) { this.stormLines([{ text: 'The hook is empty. The little brass bell is safe with you.' }]); return; }
+      LC.Audio.sfx('familyBell');
+      if (!C.ready(this.S)) { this.stormLines(X.bellOld); return; }
+      q.c12Bell = true; LC.State.save();
+      this.objImgs.farmhouse_bell.setTexture('family_bell_empty');
+      this.stormLines(X.bell);
+    },
+    stormFatherReveal: function () {
+      var q = this.S.quests;
+      if (q.c12FatherKnown) return [];
+      q.c12FatherKnown = true;
+      var connection = q.c12Bell ? [] : [{ who: 'idris12', text: 'There’s a little brass bell by your bed. I hung it there the night Nenek took you in.' }];
+      return connection.concat([X.secondBell], X.fatherReveal);
     },
     updateStormReef: function (time, dt) {
       var state = this.storm;
@@ -142,6 +174,9 @@ window.LC = window.LC || {};
       if (s === 4 && !(q.c12Rescued & 1)) {
         var first = point(C.crews[0]);
         sea.lantern = this.add.image(first.x, first.y - 9, 'fishing_lamp12_1').setDepth(1201);
+        sea.wreckLamp = this.add.image(reef.x + 84, reef.y + 13, 'fishing_lamp12_1').setTint(0x96b9e6).setDepth(1201).setAlpha(0.55);
+        sea.playerLamp = this.add.image(p.x, p.y, 'fishing_lamp12_1').setDepth(1251).setVisible(false);
+        sea.signalAt = -Infinity;
         if (!q.c12Chest) {
           sea.chest = this.add.image(p.x - 55, p.y, 'peti11').setDepth(1199);
           sea.tow = this.add.graphics().setDepth(1198);
@@ -223,7 +258,10 @@ window.LC = window.LC || {};
         sea.tow.lineBetween(sternX, sternY, sea.chest.x, sea.chest.y);
       }
       if (sea.lantern) {
-        var beat = Math.floor(t * 4) % 10, flash = beat === 0 || beat === 2 || beat === 4;
+        var elapsed = this.time.now / 1000 - sea.signalAt;
+        var answered = !C.needsSignal(this.S.quests), flash = answered && lanternBeat(elapsed < 2.9 ? elapsed - 1.65 : (t % 2.5));
+        sea.playerLamp.setPosition(sea.x, sea.y - 8).setVisible(lanternBeat(elapsed));
+        sea.wreckLamp.setAlpha(0.48 + Math.sin(t * 2.5) * 0.22);
         sea.lantern.setTexture(flash ? 'fishing_lamp12_1' : 'fishing_lamp12_0').y = sea.crews[0].y - 9 + Math.sin(t * 3);
         if (flash) {
           g.fillStyle(0xffc876, 0.23); g.fillCircle(sea.lantern.x, sea.lantern.y, 15);
@@ -292,6 +330,9 @@ window.LC = window.LC || {};
       if (s === 2 && distance(sea, sea.rival || point(C.rival)) < 78) return { label: 'Board the treasure ship', fn: function () { self.goArea('stormdeck', undefined, 'right'); } };
       if (s === 4) {
         if (!(q.c12Rescued & 1)) {
+          if (sea.reply) return null;
+          if (C.needsSignal(q)) return distance(sea, point(C.crews[0])) < 125 ?
+            { label: 'Flash Lina’s lantern', fn: function () { self.signalStormFather(); } } : null;
           if (distance(sea, point(C.crews[0])) >= 58) return null;
           return sea.tow ? { label: 'Pull alongside Pak Yusof', fn: function () { self.cutStormTowline(); } } :
             { label: 'Bring Pak Yusof aboard', fn: function () { self.takeStormCrew(0); } };
@@ -309,17 +350,30 @@ window.LC = window.LC || {};
       var s = step(this), q = this.S.quests, sea = this.storm.sea;
       if (s === 1 || s === 2) return { point: sea.rival || point(C.rival), label: s === 2 ? 'Board the rival ship' : 'Rival ship' };
       if (s === 4) {
-        if (!(q.c12Rescued & 1)) return { point: point(C.crews[0]), label: 'Pak Yusof’s lantern' };
+        if (!(q.c12Rescued & 1)) return { point: point(C.crews[0]), label: C.needsSignal(q) ? 'Light on the sandbar' : 'Pak Yusof’s lantern' };
         var crew = C.crews.find(function (c, i) { return !(q.c12Rescued & (1 << i)); });
         return crew ? { point: point(crew), label: 'Stranded fishers' } : { point: point(C.port), label: 'Home jetty' };
       }
       if (sea.signal) return { point: point(sea.signal), label: sea.beacon ? (sea.signal.kind === 'wreck' ? 'Wreck sighted' : 'Sea boss ahead') : 'Uncharted signal' };
       return { point: point(C.port), label: 'Home jetty' };
     },
+    signalStormFather: function () {
+      var sea = this.storm.sea;
+      if (!C.needsSignal(this.S.quests)) return;
+      this.S.quests.c12LitSignal = true; LC.State.save();
+      sea.signalAt = this.time.now / 1000;
+      sea.reply = this.time.delayedCall(2890, function () {
+        sea.reply = null;
+        if (!this.leaving) {
+          LC.Audio.sfx('chime');
+          this.toast('Three flashes. Sail closer to Pak Yusof’s boat.', 'fishing_lamp12_1');
+        }
+      }, [], this);
+    },
     cutStormTowline: function () {
       var self = this, sea = this.storm.sea;
       if (!sea.tow) return;
-      this.stormLines(X.cut.slice(0, 2), function () {
+      this.stormLines(X.cut.slice(0, 2), { onDone: function () {
         self.S.quests.c12Chest = 1; LC.State.save();
         var chest = sea.chest;
         sea.tow.destroy(); sea.tow = null;
@@ -329,7 +383,7 @@ window.LC = window.LC || {};
         self.fx.drop.explode(14, chest.x, chest.y);
         LC.Audio.sfx('splash');
         self.stormLines(X.cut.slice(2));
-      });
+      } });
     },
     takeStormCrew: function (i) {
       var q = this.S.quests, boat = this.storm.sea.crews[i], sea = this.storm.sea;
@@ -338,6 +392,8 @@ window.LC = window.LC || {};
       this.tweens.add({ targets: boat, x: sea.x, y: sea.y, alpha: 0, duration: 460, onComplete: function () { boat.setVisible(false); } });
       LC.Audio.sfx('chime'); this.toast(q.c12Rescued === 7 ? 'All three crews are safe. Follow the compass home.' : 'The fishers climb aboard.', 'ic_bond');
       if (i === 0) {
+        if (sea.reply) sea.reply.remove();
+        sea.wreckLamp.destroy(); sea.playerLamp.destroy();
         sea.lantern.destroy(); sea.lantern = null;
         this.stormLines(X.father);
       }
@@ -345,16 +401,23 @@ window.LC = window.LC || {};
     finishStormReef: function () {
       if (!returning(this)) return;
       var q = this.S.quests, state = this.storm, self = this;
+      var reveal = this.stormFatherReveal();
       q.ch12 = 5; q.c12Jack = true; q.stormVoyage = 0;
       LC.State.save();
       this.updateStormLamp();
       this.tweens.add({ targets: state.lina, x: state.yusof.x - 9, y: state.yusof.y + 1, duration: 430, ease: 'Quad.easeOut',
         onUpdate: function () { state.lina.setDepth(state.lina.y); } });
-      LC.Audio.sfx('stage');
-      this.stormLines(X.finish, function () {
-        self.refreshStormJack();
-        self.tweens.add({ targets: [state.lina, state.yusof], alpha: 0, duration: 500,
-          onComplete: function () { state.lina.destroy(); state.yusof.destroy(); } });
+      var lines = X.reunion.concat(reveal, X.finish);
+      this.stormLines(lines, {
+        onLine: function (i) {
+          if (lines[i] === X.secondBell) LC.Audio.sfx('familyBells');
+          if (lines[i] === X.finish[0]) LC.Audio.sfx('stage');
+        },
+        onDone: function () {
+          self.refreshStormJack();
+          self.tweens.add({ targets: [state.lina, state.yusof], alpha: 0, duration: 500,
+            onComplete: function () { state.lina.destroy(); state.yusof.destroy(); } });
+        }
       });
     },
     claimStormWreck: function () {

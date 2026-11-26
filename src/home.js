@@ -55,6 +55,25 @@ window.LC = window.LC || {};
   ];
   LC.OBJECTS.push({ id: 'h_wing', type: 'house_wing', x: 7, y: 3, w: 2, h: 5, tex: 'wing_1', when: function (S) { return (S.house || 0) >= 1; } });
   LC.HOUSE_ZONE = { x0: 7, y0: 2, x1: 9, y1: 7 };   // kept free of grass tufts and bushes, for the new wing
+  LC.AREAS.farmhouse = {
+    name: 'Nenek’s House', sub: 'inside the farmhouse', lvl: 1, home: { x: 10, y: 11 },
+    amb: 'river', dim: 0.12, decor: { n: 0, types: [], on: 'W' }, exits: [], ride: {},
+    build: function () {
+      return Array.from({ length: 15 }, function (_, y) {
+        return Array.from({ length: 21 }, function (_, x) {
+          if (x < 2 || x > 18 || y < 3 || y > 12 || x === 8 && y <= 6) return 'H';
+          return 'W';
+        });
+      });
+    },
+    objects: [
+      { id: 'farmhouse_exit', type: 'farmhouse_exit', x: 10, y: 12, tex: 'farmhouse_door' },
+      { id: 'farmhouse_bed', type: 'farmhouse_bed', x: 4, y: 4, w: 2, h: 2, tex: 'farmhouse_bed' },
+      { id: 'farmhouse_bell', type: 'farmhouse_bell', x: 6, y: 4, tex: 'family_bell_hook', light: 0xffd185 },
+      { id: 'farmhouse_cupboard', type: 'bldg', x: 15, y: 4, w: 2, tex: 'almari19', text: 'Nenek keeps the guest bowls on the lowest shelf.' },
+      { id: 'farmhouse_table', type: 'bldg', x: 13, y: 7, w: 2, tex: 'farmhouse_table', text: 'The tabletop is smooth where Nenek used to roll out dough.' }
+    ]
+  };
   LC.HELPERS = {
     masak: { name: 'Mak Som', role: 'Tukang Masak (cook)', wage: 80, spot: { x: 6, y: 9 },
       look: { skin: '#a8714a', shirt: '#c8506a', shirt2: '#a03a52', bottom: '#5a3a5a', bottom2: '#42283a', hair: '#1a1210', hat: 'tudung', hatColor: '#f2d0a0' },

@@ -29,6 +29,13 @@ window.LC = window.LC || {};
       { text: 'Already finished Chapter 12? Go to Pause → Chapter → All chapters and select Replay on Chapter 12 to play the new story.' }
     ].concat(seenNews === LC.NEWS.id || seenNews === 'v3.27-storm-reef' ? [] : LC.NEWS.lines)
   };
+  LC.NEWS = {
+    id: 'v3.28-farmhouse',
+    lines: [
+      { text: '✦ The farmhouse door is open ✦  Choose Enter house from Nenek’s house menu. There’s a keepsake by your bed that has a part to play in the new Storm Reef story.' },
+      { text: 'Chapters 12 and 13 have new scenes at Storm Reef and Sekolah Mantera. To play them again, open Pause → Chapter → All chapters and choose Replay on a completed chapter.' }
+    ].concat(seenNews === LC.NEWS.id || seenNews === 'v3.28-farmhouse' ? [] : LC.NEWS.lines)
+  };
 
   // ------------------------------------------------------------------ colours
   function rgb(h) { h = h.replace('#', ''); if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]; }

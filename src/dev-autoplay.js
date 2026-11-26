@@ -246,9 +246,15 @@ window.LC = window.LC || {};
   };
 
   function storm(pilot, step) {
-    var w = pilot.world, s = pilot.state, storm = w.storm, C = LC.C12;
+    var w = pilot.world, s = pilot.state, storm = w.storm, C = LC.C12, q = w.S.quests;
     if (w.area === 'farm') {
-      pilot.object('storm_dock12', step === 0 ? 'Walking to Idris at the jetty' : w.S.quests.c12Rescued === 7 ? 'Returning Lina’s lantern' : 'Walking to the vinta');
+      if (C.needsBell(q)) pilot.prop('house', 'Going inside for the brass bell', /^Enter house$/);
+      else pilot.object('storm_dock12', step === 0 ? 'Walking to Idris at the jetty' : q.c12Rescued === 7 ? 'Returning Lina’s lantern' : 'Walking to the vinta');
+      return;
+    }
+    if (w.area === 'farmhouse') {
+      if (C.needsBell(q)) pilot.object('farmhouse_bell', 'Taking the family bell');
+      else pilot.object('farmhouse_exit', 'Leaving Nenek’s house');
       return;
     }
     if (!storm || !storm.deck && !storm.sea) { pilot.travel('farm'); return; }
@@ -309,6 +315,7 @@ window.LC = window.LC || {};
       if (!pilot.dodge(m.meteors)) pilot.attack(m.boss || m.golems.find(function (e) { return !e.dead; }));
       return;
     }
+    if (step === 4 && w.area === 'mantera') { pilot.object('mantera_evac', 'Leading the students out'); return; }
     if (step === 5 && w.area === 'mantera') { pilot.object('mantera_vault_door', 'Walking to the sealed vault'); return; }
     if (step === 5 && m.boss) {
       pilot.block(m);

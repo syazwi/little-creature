@@ -13,6 +13,8 @@ window.LC = window.LC || {};
   LC.C12 = {
     end: 5, ready: function (S) { return (S.quests.ch11 || 0) >= LC.CH11_END; },
     step: function (S) { return S.quests.ch12 || 0; },
+    needsBell: function (q) { return q.ch12 === 1 && q.c12BellAsked && !q.c12Bell; },
+    needsSignal: function (q) { return !q.c12LitSignal && !q.c12Chest; },
     dock: { x: 22, y: 28 }, port: { x: 8, y: 29 }, rival: { x: 38, y: 26 }, reef: { x: 57, y: 30 },
     crews: [{ x: 57, y: 27 }, { x: 60, y: 29 }, { x: 58, y: 33 }],
     eye: { x: 23, y: 13 },
@@ -45,32 +47,45 @@ window.LC = window.LC || {};
       { who: 'jack12', text: 'I marked that passage safe at low tide. I should have gone with them.' },
       { who: 'lina12', text: 'Ayah said you knew the way home. Take his spare lamp. He has the other one. Three flashes is how we find each other.' },
       { text: 'Lina wraps the brass lantern in a dry cloth and presses it into your hands.' },
-      { who: 'jack12', text: 'There is gold in the wreck by that sandbar. I planned to sail for it this morning. The vinta is ready. You take the helm.' }
+      { who: 'jack12', text: 'I have been looking for the wreck beside that sandbar for years. I can chart the way. You take the helm.' }
     ],
+    bellHint: { who: 'nenek20', text: 'Cucu, before you sail, come inside. Take the brass bell from the hook by your bed. Your parents used to ring it when the fog came up.' },
+    bell: [
+      { text: 'You lift the little brass bell from the hook by your bed. A wave and a six-pointed star are scratched into the rim.' },
+      { who: 'nenek20', text: 'Your father scratched the wave. Your mother added the star when he kept sailing by the wrong one. Listen. One high note, clear as anything.' }
+    ],
+    bellOld: [{ text: 'The little brass bell by your bed has a wave and a six-pointed star scratched into its rim. You know its note by heart.' }],
     chase: [
       { who: 'jack12', text: 'Give that waterspout a wide berth. The Pedoman will hold our heading through the rain.' },
       { who: 'jack12', text: 'That striped sail has a copy of my chart. Their ship can carry all three crews. Close in and fire at the sails so we can board.' }
     ],
     board: [{ who: 'jack12', text: 'Easy on the ropes. Keep the hull in one piece. We need this deck to get those fishers home.' }],
-    surrender: [{ text: 'The rival captain surrenders. His crew lowers a boat and yields the ship.' },
-      { text: 'As he goes, the captain gives his winch a final turn. The rope hauls a gold chest out of the wreck. Something knocks back from beneath it.' }],
+    surrender: [{ text: 'The rival captain yields the deck. Before he lowers his boat, he gives the winch one last turn. A brass chest rises out of the wreck.' },
+      { text: 'Something knocks back from under the hull. The ladder breaks. The captain throws you his mooring line, and you pull his crew’s boat clear.' }],
     kraken: [{ text: 'A broad head breaks the surface. The Kraken hooks the rail with one arm and raises a ragged tail over the deck.' },
       { who: 'jack12', text: 'Move when you see the deck marked. That tail comes down hard. Pelita, show us its eye when it comes close.' }],
-    rescue: [{ text: 'Beyond the spray, a lantern flashes three times on the sandbar. Pak Yusof is holding it above his head.' },
-      { who: 'jack12', text: 'The chest is still on its towline. I will mind the rope. Steer for his light.' }],
+    rescue: [{ text: 'Two lights come through the spray. One hangs above the wreck. The other flickers low on the sandbar.' },
+      { who: 'jack12', text: 'Flash Lina’s lantern when we get close. If that is Pak Yusof, he’ll answer three times.' }],
     cut: [{ text: 'As you pull alongside Pak Yusof, the chest catches under his boat. The towline draws tight and starts to haul him under.' },
       { who: 'jack12', text: 'Hold her steady. I have the rope.' },
       { text: 'Idris cuts the line. The chest drops. Pak Yusof’s boat bobs free and the lantern rises through the spray.' }],
     father: [{ who: 'yusof12', text: 'That is Lina’s knot on your lamp. She used to tie it to my wrist so I would remember to come home.' },
       { who: 'yusof12', text: 'There are two more boats. I can see them from here.' }],
-    finish: [
+    reunion: [
       { text: 'You hand Lina’s lantern to Pak Yusof. He sets both lamps down just in time to catch her.' },
-      { who: 'lina12', text: 'Ayah! We should hang the spare right here. Then the next boat will know where home is, too.' },
-      { text: 'You hang Lampu Pulang at the jetty. It will light up every evening.' },
-      { who: 'jack12', text: 'Idris will do. And if you will have me, I would like to sail with you again.' },
+      { who: 'lina12', text: 'Ayah! We should hang the spare right here. Then the next boat will know where home is, too.' }
+    ],
+    secondBell: { who: 'idris12', text: 'I have its twin here. Listen. Your bell rings high, mine rings low. We could hear the difference even from opposite banks.' },
+    fatherReveal: [
+      { who: 'idris12', text: 'I’m your father. When the Collector came for our ship, I handed you to Nenek. I told her I would be back before you woke.' },
+      { who: 'idris12', text: 'I sank my ship with the chest aboard to keep it from him. I looked for your mother until I ran out of places to look.' },
+      { who: 'idris12', text: 'I came back to this jetty every year. I could see your farmhouse from the water. Once I saw you carrying a basket bigger than you. I should have got out of the boat.' }
+    ],
+    finish: [
+      { text: 'You and Lina hang Lampu Pulang at the jetty. It will light up every evening.' },
       { who: 'idris12', text: 'Take the ship. I fitted a brass needle from the wreck into your Pedoman. It can pick up unusual currents now. Keep an eye on what washes up when a boss goes down, too.' },
       { text: 'Free sailing unlocked. Follow the Pedoman to rare wreck salvage or a sea boss. Treasure Hunter’s Luck grants extra boss loot. Manage Idris in Pause → Companions.' },
-      { who: 'idris12', text: 'I left a letter near the farmhouse. Someone at Kampung Mantera is still waiting for me to put something right.' }
+      { text: 'By morning, a paper bird is waiting outside the farmhouse. It unfolds into a letter addressed to Nakhoda Idris.' }
     ]
   };
   LC.OBJECTS.push({ id: 'storm_dock12', type: 'storm_dock', x: C.dock.x, y: C.dock.y, tex: 'stormdock12', keep: true,

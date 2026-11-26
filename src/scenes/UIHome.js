@@ -16,6 +16,7 @@ window.LC = window.LC || {};
         footer: function () { var w = H.wages(); return w ? 'Wages: ' + w + ' kepeng every morning, paid by ' + (N.role ? 'the host' : 'you') + '. A helper you cannot pay takes the night off.' : 'Expand the house to make room for helpers.'; },
         tabs: [{ label: 'House', rows: function () {
           var rows = [], st = H.stage(), next = LC.HOUSE_STAGES[st + 1], pantry = S.chests && S.chests.pantry;
+          rows.push({ icon: 'ic_door', label: 'Enter house', action: function () { W.enterFarmhouse(); } });
           rows.push({ icon: 'ic_moon', label: 'Sleep', sub: 'Climb the tangga and end the day. (The game saves every night.)', action: function () { self.confirmSleep(); } });
           if (pantry) rows.push({ icon: 'i_' + pantry.kind, label: LC.ITEMS[pantry.kind].name + ' (the pantry)', sub: pantry.items.length + ' / ' + LC.CHESTS[pantry.kind].slots + ' stacks. Your helpers share these supplies.', action: function () { self.openChest('pantry'); } });
           if (pantry && S.helpers && S.helpers.stor && !N.isGuest()) rows.push({ icon: 'i_kepeng', label: 'Pantry Sales', sub: 'Choose which items Pak Idris sells and how many he keeps.', action: function () { self.openPantrySales(); } });

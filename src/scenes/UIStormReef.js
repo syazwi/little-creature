@@ -11,12 +11,15 @@ window.LC = window.LC || {};
     var atSea = world.area === 'stormsea', onDeck = world.area === 'stormdeck';
     var text = [
       'Meet Nakhoda Idris and Lina at the east side of Nenek’s farm jetty.',
-      atSea ? 'Follow the Pedoman to the rival ship. Avoid the waterspouts and close in to fire.' : 'Use the vinta at the farm jetty to sail to Storm Reef.',
+      C.needsBell(q) ? (world.area === 'farmhouse' ? 'Take the brass bell from the hook near your bed.' :
+        'Open Nenek’s house menu, choose Enter house, and take the brass bell by your bed.') :
+        atSea ? 'Follow the Pedoman to the rival ship. Avoid the waterspouts and close in to fire.' : 'Use the vinta at the farm jetty to sail to Storm Reef.',
       onDeck ? 'Fight the raiders and the rival captain on the deck.' : 'Pull alongside and board the rival ship. You can resume from the farm jetty.',
       onDeck ? 'Dodge the Kraken’s marked attacks. Strike its eye when Pelita reveals it.' : 'Use the farm jetty to return to the treasure ship.',
       q.c12Rescued === 7 ? (atSea ? 'Follow the Pedoman home.' : 'Return Lina’s lantern at the farm jetty.') :
         onDeck ? 'Use the helm at the stern to sail to the sandbar.' :
-        q.c12Rescued & 1 ? 'Bring the other two fishing crews aboard. Follow the Pedoman to each boat.' : 'Steer toward Pak Yusof’s lantern and pull alongside his boat.'
+        q.c12Rescued & 1 ? 'Bring the other two fishing crews aboard. Follow the Pedoman to each boat.' :
+        C.needsSignal(q) ? 'Steer toward the light on the sandbar and flash Lina’s lantern.' : 'Steer toward Pak Yusof’s answering light and pull alongside his boat.'
     ];
     return 'Chapter 12: ' + text[C.step(S)];
   };

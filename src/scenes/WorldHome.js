@@ -9,6 +9,17 @@ window.LC = window.LC || {};
   function tileAt(sprite) { return { x: Math.floor(sprite.x / T), y: Math.floor((sprite.y - 1) / T) }; }
   function spot(x, y, icon) { return { x: x, y: y, icon: icon }; }
   function walkable(world, x, y) { return world.solid[y] && world.solid[y][x] === false; }
+  var world = LC.WorldScene.prototype, objectAction = world.objectAction;
+  world.objectAction = function (o) {
+    var self = this;
+    if (o.type === 'farmhouse_exit') return { label: 'Leave house', fn: function () {
+      self.goArea('farm', self.tilePx({ x: 4, y: 8 }), 'down');
+    } };
+    if (o.type === 'farmhouse_bed') return { label: 'Sleep', fn: function () {
+      self.ui.confirmSleep({ area: 'farmhouse', x: 5, y: 6 });
+    } };
+    return objectAction.apply(this, arguments);
+  };
 
   function helperPath(world, from, to) {
     var width = world.W, start = from.y * width + from.x, best = start;
@@ -58,8 +69,20 @@ window.LC = window.LC || {};
   Object.assign(LC.WorldScene.prototype, {
     createHome: function () {
       this.helperSpr = {};
+      if (this.area === 'farmhouse') {
+        if (this.S.quests.c12Bell) this.objImgs.farmhouse_bell.setTexture('family_bell_empty');
+        this.add.image(14 * T, 8.5 * T, 'farmhouse_mat').setDepth(-1);
+        this.add.image(5 * T, 2.8 * T, 'farmhouse_window').setDepth(1);
+        this.add.image(13 * T, 2.8 * T, 'farmhouse_window').setDepth(1);
+        this.addLight(13 * T, 3.2 * T, 0xffc578, 0.75, false);
+      }
       this.refreshHouse();
       this.refreshHelpers();
+    },
+    enterFarmhouse: function () {
+      if (this.area !== 'farm') return;
+      LC.Audio.sfx('creak11');
+      this.goArea('farmhouse', undefined, 'up');
     },
     updateHome: function (time, dt) {
       if (this.area !== 'farm' || !dt) return;

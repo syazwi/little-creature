@@ -97,8 +97,55 @@ window.LC = window.LC || {};
     p.line(6, 6, 6, 11, lit ? '#fff2b0' : '#c6bb90');
     p.rect(2, 13, 9, 2, '#c28c4f'); p.px(5, 7, lit ? '#fff6cb' : '#dfcc9e');
   }
+  function farmhouseArt(scene) {
+    var make = Art.make;
+    make(scene, 'farmhouse_bed', 42, 45, function (p) {
+      p.rect(6, 3, 30, 39, '#53352a'); p.rect(7, 5, 28, 9, '#b57e4e');
+      p.rect(6, 13, 30, 25, '#9b6945'); p.rect(8, 12, 26, 22, '#efe1c2');
+      p.rect(11, 14, 20, 7, '#fff0d6'); p.rect(11, 20, 20, 2, '#c9ae94');
+      p.rect(8, 23, 26, 14, '#32776c'); p.rect(9, 24, 24, 3, '#7da989');
+      p.rect(9, 33, 24, 2, '#c4af73'); p.line(7, 38, 35, 38, '#c48c55', 2);
+      p.rect(5, 36, 4, 7, '#714831'); p.rect(33, 36, 4, 7, '#714831');
+    }, ink);
+    make(scene, 'farmhouse_table', 36, 26, function (p) {
+      p.rect(5, 11, 4, 13, '#55382b'); p.rect(27, 11, 4, 13, '#55382b');
+      p.rect(3, 4, 30, 12, '#aa7548'); p.line(4, 5, 31, 5, '#cea066');
+      p.line(3, 15, 32, 15, '#694735', 2);
+      p.ell(13, 9, 5, 3, '#e5d4a9'); p.ell(13, 9, 3, 2, '#a9886c');
+      p.ell(25, 8, 4, 2.5, '#dac3a0'); p.ell(25, 8, 2, 1.5, '#a9886c');
+    }, ink);
+    make(scene, 'farmhouse_door', 25, 29, function (p) {
+      p.rect(3, 2, 19, 26, '#734d39'); p.rect(6, 4, 13, 21, '#3d3031');
+      p.rect(7, 6, 11, 18, '#aa7548'); p.line(11, 7, 11, 23, '#86583e');
+      p.line(4, 3, 20, 3, '#d4a26a', 2); p.rect(14, 15, 3, 2, '#e1b768');
+      p.rect(2, 25, 21, 3, '#d0a174');
+    }, ink);
+    make(scene, 'farmhouse_window', 30, 19, function (p) {
+      p.rect(3, 2, 24, 15, '#9c6745'); p.rect(5, 4, 20, 11, '#74a9a4');
+      p.line(7, 6, 13, 6, '#b8d9c2'); p.line(18, 6, 22, 6, '#b8d9c2');
+      p.rect(14, 4, 2, 12, '#805137'); p.rect(3, 15, 24, 2, '#d4a36e');
+    }, ink);
+    make(scene, 'farmhouse_mat', 72, 47, function (p) {
+      p.rect(3, 3, 66, 41, '#92544f'); p.rect(7, 6, 58, 35, '#d3a173'); p.rect(10, 8, 52, 31, '#b06d59');
+      for (var x = 14; x < 59; x += 11) {
+        p.poly([[x, 16], [x + 5, 23], [x, 30], [x - 5, 23]], '#e2af78');
+        p.px(x, 23, '#8c4a4d');
+      }
+      for (var y = 6; y < 44; y += 4) { p.line(1, y, 4, y, '#eed9a6'); p.line(67, y, 70, y, '#eed9a6'); }
+    });
+    ['family_bell_hook', 'family_bell_empty'].forEach(function (key) {
+      make(scene, key, 16, 22, function (p) {
+        p.rect(3, 1, 10, 19, '#774934'); p.rect(4, 2, 8, 17, '#bd8657');
+        p.line(4, 4, 11, 4, '#d4ae74'); p.line(7, 5, 7, 8, '#55382e');
+        if (key === 'family_bell_empty') return;
+        p.poly([[4, 14], [6, 9], [9, 9], [11, 14], [12, 16], [3, 16]], '#c48f48');
+        p.line(5, 15, 10, 15, '#f0cf78'); p.rect(7, 16, 2, 2, '#e2b763');
+      }, ink);
+    });
+  }
   Art.generate24 = function (scene) {
     var make = Art.make;
+    farmhouseArt(scene);
     [0, 1].forEach(function (frame) {
       make(scene, 'npc_jack12_' + frame, 24, 28, function (p) { jack(p, frame); }, true);
       make(scene, 'stormship12_' + frame, 100, 40, function (p) { ship(p, frame * 3); }, true);

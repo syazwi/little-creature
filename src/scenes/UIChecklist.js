@@ -44,11 +44,11 @@ window.LC = window.LC || {};
       'Pelita glows again', '1578: the envoy from Sulu', 'Find the fleet', 'The anchor ropes', 'Gongs across the water', 'The flagship'],
       next: 'After Chapter 11, meet Nakhoda Idris at Nenek’s farm jetty.' },
     { n: 12, key: 'ch12', end: LC.C12.end, name: 'Nakhoda Idris and the Kraken of Storm Reef',
-      steps: ['Lina’s lantern at the jetty', 'The chase through the waterspouts', 'Board the treasure ship', 'The Kraken rises', 'Bring the fishing crews home'],
-      next: 'Read Idris’s enchanted letter at the farm to start Chapter 13. You can still sail freely from the jetty.' },
+      steps: ['Lina’s lantern at the jetty', 'The family bell and the chase', 'Board the treasure ship', 'The Kraken rises', 'Bring the fishing crews home'],
+      next: 'Read the enchanted letter near the farmhouse to start Chapter 13. You can still sail freely from the jetty.' },
     { n: 13, key: 'ch13', end: LC.C13.end, name: 'Nakhoda Idris and the School of Sorcery',
-      steps: ['Idris’s enchanted letter', 'Nek Lampir’s lesson', 'Face Supreme Sorcerer Suraya', 'Stone soldiers and falling stars', 'Save the students', 'Break the Collector’s seal', 'Return Batu Ikrar'],
-      next: 'Keep Mantera Pantul as you travel. Nek Lampir’s desk is open to visitors.' }
+      steps: ['An enchanted letter for Idris', 'Nek Lampir’s lesson', 'The cracked ward', 'Suraya’s reflection', 'Lead the students out', 'Break the Collector’s seal', 'Return Batu Ikrar'],
+      next: 'Keep Mantera Pantul as you travel. Visit Nenek’s jetty after 7 PM to see Idris and Suraya.' }
   ];
 
   // the parts of the current step (only steps with more than one part, or with things to bring)
@@ -144,7 +144,7 @@ window.LC = window.LC || {};
     },
     13: function (st, Q) {
       if (st === 1) return [c(Q.c13Lesson, 'Talk to Nek Lampir at her old desk'), c(false, 'Reflect practice bolts (' + (Q.c13Reflected || 0) + ' / 3)')];
-      if (st === 3) return [c(Q.c13Golems, 'Defeat Suraya’s stone soldiers'), c(false, 'Find the real Suraya and win the duel')];
+      if (st === 3) return [c(Q.c13Golems, 'Defeat the stone soldiers'), c(false, 'Defeat the reflection with gold sparks')];
       return null;
     }
   };

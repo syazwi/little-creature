@@ -394,6 +394,12 @@ window.LC = window.LC || {};
       case 'harvest': [0, 2, 4].forEach(function (d, k) { A.bell(A.freq(d + 5), t + k * 0.07, 0.6, 0.14); }); break;
       case 'coin': A.bell(A.freq(9), t, 0.25, 0.08); A.bell(A.freq(11), t + 0.06, 0.35, 0.08); break;
       case 'chime': [0, 1, 2, 3, 5].forEach(function (d, k) { A.bell(A.freq(d + 5), t + k * 0.09, 1.2, 0.11); }); break;
+      case 'familyBell': A.bell(1047, t, 1.25, 0.12); break;
+      case 'familyBells': A.bell(1047, t, 1.1, 0.11); A.bell(698, t + 0.48, 1.55, 0.12); break;
+      case 'familyTune': [0, 2, 3].forEach(function (d, k) {
+        var f = A.freq(d + 1);
+        A.tone(t + k * 0.32, 'sine', f * 0.998, f, k === 2 ? 0.48 : 0.27, 0.1);
+      }); break;
       case 'eat': A.noise(t, 0.06, 0.2, 'lowpass', 1800); A.noise(t + 0.12, 0.06, 0.2, 'lowpass', 1800); break;
       case 'pet': A.bell(A.freq(7), t, 0.7, 0.11); A.bell(A.freq(9), t + 0.1, 0.7, 0.1); break;
       case 'error': A.tone(t, 'triangle', 220, 180, 0.14, 0.08); break;

@@ -29,7 +29,10 @@ window.LC = window.LC || {};
     switch (o.type) {
       case 'mantera_way': return { label: s ? 'Travel to Kampung Mantera' : 'Read Idris’s enchanted letter', fn: function () {
         if (!C.ready(self.S)) return;
-        if (s === 0) { story(self, 1); self.manteraLines(X.letter); return; }
+        if (s === 0) {
+          var reveal = self.ch2Lines(self.stormFatherReveal());
+          story(self, 1); self.manteraLines(reveal.concat(X.letter)); return;
+        }
         self.goArea('mantera', undefined, 'up');
       } };
       case 'mantera_home': return { label: 'Return to Nenek’s farm', fn: function () {
@@ -47,8 +50,13 @@ window.LC = window.LC || {};
         if (s === 6) { self.finishMantera(); return; }
         self.manteraLines([['suraya13', s < 2 ? 'Nek Lampir is waiting for you at her old desk, across the courtyard.' : 'The ward is holding. We are opening the school again tomorrow.']]);
       } };
+      case 'mantera_evac': return { label: 'Lead the students out', fn: function () { self.startManteraEvacuation(); } };
       case 'mantera_door': return { label: s >= 5 ? 'Enter the sealed vault' : 'Inspect the vault gate', fn: function () {
-        if (s >= 5) self.goArea('manteraVault', undefined, 'up');
+        if (s === 5 && !q.c13MotherKnown) {
+          var reveals = self.manteraReveals();
+          LC.State.save();
+          self.manteraLines(reveals, { onDone: function () { self.goArea('manteraVault', undefined, 'up'); } });
+        } else if (s >= 5) self.goArea('manteraVault', undefined, 'up');
         else self.toast('The ward is still sealing this gate.', 'mantera_stone');
       } };
       case 'mantera_school_return': return { label: 'Return to the school courtyard', fn: function () {
@@ -78,6 +86,7 @@ window.LC = window.LC || {};
     if (e.kind === 'suraya13') {
       this.clearManteraSpells();
       this.stormBonus(); story(this, 4);
+      this.refreshWhen();
     } else if (e.kind === 'collector13') {
       this.stormBonus(); story(this, 6);
       this.mantera.stonePending = true;
@@ -85,10 +94,46 @@ window.LC = window.LC || {};
   };
 
   Object.assign(W, {
-    manteraLines: function (lines) {
+    manteraLines: function (lines, options) {
       this.ui.say(lines.map(function (line) {
-        return Object.assign({ text: line[1] }, LC.SPEAKERS[line[0]]);
-      }));
+        return Array.isArray(line) ? Object.assign({ text: line[1] }, LC.SPEAKERS[line[0]]) : line;
+      }), options);
+    },
+    manteraReveals: function (atHome) {
+      var lines = this.ch2Lines(this.stormFatherReveal()), q = this.S.quests;
+      if (q.c13MotherKnown) return lines;
+      q.c13MotherKnown = true;
+      return lines.concat(atHome ? X.motherAtHome : X.mother);
+    },
+    stormFamilyAvailable: function () {
+      var minutes = this.S.minutes;
+      return this.area === 'farm' && step(this) >= C.end && (minutes >= 19 * 60 || minutes < 6 * 60);
+    },
+    openStormJetty: function () {
+      var self = this;
+      this.ui.say([{ text: 'Lampu Pulang is lit. Idris and Suraya are at the jetty.' }], { choices: [
+        { label: 'Visit Idris and Suraya', fn: function () { self.visitManteraFamily(); } },
+        { label: 'Set sail', fn: function () { self.sailStormReef(); } },
+        { label: 'Leave' }
+      ] });
+    },
+    visitManteraFamily: function () {
+      var q = this.S.quests, day = this.S.day;
+      if (q.c13Supper === 'join' || q.c13Supper === 'time' && q.c13SupperDay === day) {
+        this.manteraLines(X.evenings[day % X.evenings.length]);
+        return;
+      }
+      var lines = this.manteraReveals(true);
+      var supper = q.c13Supper === 'time' ? [['suraya13', 'I kept your bowl. Shall I set it beside mine?']] : X.supper;
+      var self = this;
+      function choose(answer, line) {
+        q.c13Supper = answer; q.c13SupperDay = day; LC.State.save();
+        self.manteraLines([['suraya13', line]]);
+      }
+      this.manteraLines(lines.concat(supper), { choices: [
+        { label: 'Stay for supper', fn: function () { choose('join', 'Here. I saved you the crispy rice. Nenek told me you always look for it.'); } },
+        { label: 'I need more time', fn: function () { choose('time', 'I’ll leave the lantern lit. Come when you’re ready.'); } }
+      ] });
     },
     manteraActor: function (where, key, anim) {
       var p = this.tilePx(where), actor = this.add.sprite(p.x, p.y, key).setOrigin(0.5, 1).setDepth(p.y);
@@ -99,6 +144,10 @@ window.LC = window.LC || {};
       this.mantera = null;
       if (!C.ready(this.S)) return;
       var m = this.mantera = { shield: 0, clock: 0, cast: 1.4, bolts: [], copies: [], meteors: [], golems: [] };
+      if (this.area === 'farm' && step(this) >= C.end) {
+        m.jetty = this.manteraActor({ x: LC.C12.dock.x - 1, y: LC.C12.dock.y + 0.6 }, 'npc_suraya13_0', 'npc_suraya13_idle');
+        m.jetty.setVisible(this.stormFamilyAvailable());
+      }
       if (!school(this)) return;
       m.field = this.add.graphics().setDepth(5);
       m.effects = this.add.graphics().setDepth(1250);
@@ -113,6 +162,7 @@ window.LC = window.LC || {};
       }
       if (s < 5) m.nek = this.manteraActor({ x: 11, y: 16 }, 'npc_lampir_0', 'npc_lampir_idle');
       else this.lightManteraMemorial();
+      m.greetingPending = s === 1 && !this.S.quests.c13TuneHeard;
       m.students = [{ x: 25, y: 6 }, { x: 21, y: 6 }, { x: 13, y: 10 }].map(function (p, i) {
         var actor = self.manteraActor(p, 'mantera_student_0', 'mantera_student_walk');
         actor.anims.pause();
@@ -192,6 +242,12 @@ window.LC = window.LC || {};
     updateMantera: function (time, dt) {
       var m = this.mantera;
       if (!m || this.leaving || this.sleeping || !this.ui) return;
+      if (m.jetty) {
+        var atJetty = this.stormFamilyAvailable();
+        m.jetty.setVisible(atJetty);
+        if (this.storm.dockJack) this.storm.dockJack.setVisible(atJetty || !this.storm.jack);
+        if (this.storm.jack) this.storm.jack.spr.setVisible(!atJetty || distance(this.player, m.jetty) > 100);
+      }
       var blocked = this.ui.isBlocking();
       if (!blocked) m.shield = Math.max(0, m.shield - dt);
       if (m.gleam) m.gleam.setPosition(this.player.x, this.player.y - 11).setAlpha(Math.min(0.8, m.shield * 3)).setVisible(m.shield > 0);
@@ -204,14 +260,24 @@ window.LC = window.LC || {};
     },
     advanceMantera: function (dt) {
       var m = this.mantera, s = step(this), q = this.S.quests;
+      if (m.greetingPending) {
+        m.greetingPending = false;
+        q.c13TuneHeard = true; LC.State.save(); LC.Audio.sfx('familyTune'); this.manteraLines(X.greeting);
+        return;
+      }
       if (m.stonePending) {
         m.stonePending = false;
         this.clearManteraSpells();
         this.animateManteraStone();
-        this.manteraLines(X.stone);
+        var revealed = this.manteraReveals();
+        if (revealed.length) LC.State.save();
+        this.manteraLines(revealed.concat(X.stone));
         return;
       }
-      if (s === 4 && this.area === 'mantera') { this.updateManteraRift(dt); return; }
+      if (s === 4 && this.area === 'mantera') {
+        if (m.rift) this.updateManteraRift(dt);
+        return;
+      }
       if (this.cutscene) return;
       if (m.duelPending) {
         m.duelPending = false;
@@ -251,7 +317,7 @@ window.LC = window.LC || {};
       var cosmic = e.hp <= e.def.hp * 0.57;
       if (cosmic && !m.cosmic) {
         m.cosmic = true;
-        this.toast(e.kind === 'suraya13' ? 'Suraya calls down the stars. Move out of the marked circles!' : 'The Collector tears the vault ward. Watch the floor!', 'mantera_stone');
+        this.toast(e.kind === 'suraya13' ? 'The reflection calls down the stars. Move out of the marked circles!' : 'The Collector tears the vault ward. Watch the floor!', 'mantera_stone');
         this.cameras.main.shake(340, 0.005);
       }
       m.cast -= dt;
@@ -350,23 +416,31 @@ window.LC = window.LC || {};
       m.copies = [];
       if (m.trueShadow) { m.trueShadow.destroy(); m.trueShadow = null; }
     },
-    updateManteraRift: function (dt) {
+    startManteraEvacuation: function () {
       var self = this, m = this.mantera, anchor = this.tilePx(C.rift);
-      if (!m.rift) {
-        this.clearManteraSpells();
-        this.cutscene = true;
-        m.rift = { x: anchor.x, y: anchor.y, time: 0 };
-        m.nek.anims.resume();
-        this.tweens.add({ targets: m.nek, x: anchor.x, y: anchor.y + 31, duration: 950, onUpdate: function () { m.nek.setDepth(m.nek.y); } });
-        m.students.forEach(function (student, i) {
-          self.tweens.killTweensOf(student);
-          student.setVisible(true).anims.resume();
-          self.tweens.add({ targets: student, y: 344 + i * 8, x: 134 + i * 18, duration: 1800 + i * 330, ease: 'Sine.easeInOut',
-            onUpdate: function () { student.setDepth(student.y); }, onComplete: function () { student.setVisible(false); } });
-        });
-        this.manteraLines(X.rift);
-        return;
-      }
+      if (step(this) !== 4 || m.rift) return;
+      this.clearManteraSpells();
+      this.cutscene = true;
+      m.rift = { x: anchor.x, y: anchor.y, time: 0 };
+      m.nek.anims.resume();
+      this.objImgs.mantera_evac.setVisible(false);
+      m.suraya = this.manteraActor({ x: 25, y: 8 }, 'npc_suraya13_0');
+      this.tweens.add({ targets: m.nek, x: anchor.x, y: anchor.y + 31, duration: 950, onUpdate: function () { m.nek.setDepth(m.nek.y); } });
+      this.manteraLines(X.rift, { onDone: function () {
+        self.moveManteraEvacuees(m);
+      } });
+    },
+    moveManteraEvacuees: function (m) {
+      var self = this, idris = this.storm.jack ? this.storm.jack.spr : m.jack;
+      [idris].concat(m.students).forEach(function (actor, i) {
+        self.tweens.killTweensOf(actor);
+        if (i) actor.setVisible(true).anims.resume();
+        self.tweens.add({ targets: actor, y: 344 + i * 8, x: 134 + i * 18, duration: 1600 + i * 300, ease: 'Sine.easeInOut',
+          onUpdate: function () { actor.setDepth(actor.y); }, onComplete: function () { if (i) actor.setVisible(false); } });
+      });
+    },
+    updateManteraRift: function (dt) {
+      var m = this.mantera;
       m.rift.time += dt;
       if (m.rift.time < 2.8) return;
       this.fx.sparkle.explode(32, m.nek.x, m.nek.y - 13);
@@ -375,9 +449,11 @@ window.LC = window.LC || {};
       m.rift = null;
       this.cutscene = false;
       this.S.quests.c13NekGone = true;
+      var reveal = this.manteraReveals();
       story(this, 5);
+      this.refreshWhen();
       this.lightManteraMemorial();
-      this.manteraLines(X.sacrifice);
+      this.manteraLines(X.sacrifice.concat(reveal));
     },
     animateManteraStone: function () {
       var p = this.tilePx(C.collector), jack = this.storm.jack ? this.storm.jack.spr : this.mantera.jack;
@@ -387,10 +463,11 @@ window.LC = window.LC || {};
     },
     finishMantera: function () {
       var p = this.tilePx(C.suraya);
+      var reveal = this.manteraReveals();
       story(this, C.end);
       this.fx.sparkle.explode(32, p.x, p.y - 17);
       this.cameras.main.flash(500, 181, 231, 201);
-      this.manteraLines(X.finish);
+      this.manteraLines(reveal.concat(X.finish));
     },
     drawMantera: function (time) {
       var m = this.mantera, g = m.effects, floor = m.field, p = this.tilePx(C.rune);
