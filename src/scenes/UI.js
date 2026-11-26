@@ -436,7 +436,10 @@ window.LC = window.LC || {};
       bg.lineStyle(1, 0x8a6a3a, 1); bg.strokeRoundedRect(0, 0, w, h, 6);
       t.setY(Math.round((h - t.height) / 2));
       c.add([bg, t]);
-      if (hasIcon) c.add(this.add.image(25, h / 2, icon).setScale(2));
+      if (hasIcon) {   // (v3.25.1: a big picture, like a tree, shrinks to fit the icon slot instead of covering the words)
+        var ic = this.add.image(25, h / 2, icon), fit = Math.min(2, 32 / Math.max(ic.width, ic.height));
+        c.add(ic.setScale(fit >= 1 ? Math.floor(fit) : fit));
+      }
       c.h = h; c.born = now; c.msg = msg;
       c.setAlpha(0);
       this.tweens.add({ targets: c, alpha: 1, duration: 150 });
