@@ -6,7 +6,7 @@
  * dist/ (the version news and the downloads) always comes from the internet. */
 
 // ---- stamped by tools/build-web.mjs on every build (do not edit by hand): the version, and every file the game needs
-var CACHE = 'little-creature-86-20261125235329';
+var CACHE = 'little-creature-87-20261126005416';
 var FILES = [
   './', 'index.html', 'manifest.webmanifest', 'lib/phaser.min.js', 'lib/peerjs.min.js', 'src/version.js',
   'src/update.js', 'src/data.js', 'src/areas.js', 'src/folk.js', 'src/data2.js', 'src/areas2.js', 'src/undersea.js',
@@ -20,29 +20,30 @@ var FILES = [
   'src/art12.js', 'src/art13.js', 'src/art14.js', 'src/art15.js', 'src/art16.js', 'src/art17.js', 'src/art18.js',
   'src/art19.js', 'src/art20.js', 'src/art21.js', 'src/art22.js', 'src/art23.js', 'src/art24.js', 'src/art25.js',
   'src/art26.js', 'src/art27.js', 'src/art28.js', 'src/art29.js', 'src/art30.js', 'src/art31.js', 'src/art32.js',
-  'src/audio.js', 'src/lagu.js', 'src/lobby.js', 'src/scenes/Boot.js', 'src/scenes/Title.js', 'src/scenes/World.js',
-  'src/scenes/WorldLife.js', 'src/scenes/WorldFarm.js', 'src/scenes/WorldCombat.js', 'src/scenes/WorldTanggang.js',
-  'src/scenes/WorldBadang.js', 'src/scenes/WorldHome.js', 'src/scenes/WorldBarunai.js', 'src/scenes/WorldKampong.js',
-  'src/scenes/WorldKampong2.js', 'src/scenes/WorldMajapahit.js', 'src/scenes/WorldBayang.js', 'src/scenes/WorldLedang.js',
-  'src/scenes/WorldNek.js', 'src/scenes/WorldSantubong.js', 'src/scenes/WorldBualang.js', 'src/scenes/WorldGelora.js',
-  'src/scenes/WorldNaga.js', 'src/scenes/WorldMayang.js', 'src/scenes/WorldShared.js', 'src/scenes/WorldMasjid.js',
-  'src/scenes/WorldLombong.js', 'src/scenes/WorldMinePassages.js', 'src/scenes/WorldBelalang.js', 'src/scenes/WorldSulu.js',
-  'src/scenes/WorldSulu2.js', 'src/scenes/UI.js', 'src/scenes/UIMenus.js', 'src/scenes/UIGames.js', 'src/scenes/UISettings.js',
-  'src/scenes/UIBadang.js', 'src/scenes/UIHome.js', 'src/scenes/UIBarunai.js', 'src/scenes/UIKampong.js',
-  'src/scenes/UIKampong2.js', 'src/scenes/UIBarunaiActivities.js', 'src/scenes/UIMajapahit.js', 'src/scenes/UIBayang.js',
-  'src/scenes/UILedang.js', 'src/scenes/UINek.js', 'src/scenes/UISantubong.js', 'src/scenes/UIBualang.js',
-  'src/scenes/UIGelora.js', 'src/scenes/UIMayang.js', 'src/scenes/UIGuide.js', 'src/scenes/UIChecklist.js',
-  'src/scenes/UIMasjid.js', 'src/scenes/UICompanions.js', 'src/scenes/UIBelalang.js', 'src/scenes/UISulu.js',
-  'src/scenes/UISulu2.js', 'src/scenes/WorldField.js', 'src/scenes/WorldKhemah.js', 'src/scenes/WorldStormReef.js',
-  'src/scenes/UIStormReef.js', 'src/scenes/WorldMantera.js', 'src/scenes/UIMantera.js', 'src/scenes/WorldBunianTrials.js',
-  'src/scenes/WorldTap.js', 'src/scenes/UITap.js', 'src/level.js', 'src/scenes/WorldLevel.js', 'src/scenes/UILevel.js',
-  'src/senah.js', 'src/scenes/WorldFireworks.js', 'src/scenes/WorldSenah.js', 'src/scenes/UISenah.js', 'src/jerebu.js',
-  'src/scenes/WorldJerebu.js', 'src/scenes/UIJerebu.js', 'src/scenes/UICompanionProfiles.js', 'src/mamai.js',
-  'src/scenes/WorldMamai.js', 'src/scenes/UIMamai.js', 'src/penyamun.js', 'src/scenes/WorldPenyamun.js',
+  'src/art33.js', 'src/audio.js', 'src/lagu.js', 'src/lobby.js', 'src/scenes/Boot.js', 'src/scenes/Title.js',
+  'src/scenes/World.js', 'src/scenes/WorldLife.js', 'src/scenes/WorldFarm.js', 'src/scenes/WorldCombat.js',
+  'src/scenes/WorldTanggang.js', 'src/scenes/WorldBadang.js', 'src/scenes/WorldHome.js', 'src/scenes/WorldBarunai.js',
+  'src/scenes/WorldKampong.js', 'src/scenes/WorldKampong2.js', 'src/scenes/WorldMajapahit.js', 'src/scenes/WorldBayang.js',
+  'src/scenes/WorldLedang.js', 'src/scenes/WorldNek.js', 'src/scenes/WorldSantubong.js', 'src/scenes/WorldBualang.js',
+  'src/scenes/WorldGelora.js', 'src/scenes/WorldNaga.js', 'src/scenes/WorldMayang.js', 'src/scenes/WorldShared.js',
+  'src/scenes/WorldMasjid.js', 'src/scenes/WorldLombong.js', 'src/scenes/WorldMinePassages.js', 'src/scenes/WorldBelalang.js',
+  'src/scenes/WorldSulu.js', 'src/scenes/WorldSulu2.js', 'src/scenes/UI.js', 'src/scenes/UIMenus.js', 'src/scenes/UIGames.js',
+  'src/scenes/UISettings.js', 'src/scenes/UIBadang.js', 'src/scenes/UIHome.js', 'src/scenes/UIBarunai.js',
+  'src/scenes/UIKampong.js', 'src/scenes/UIKampong2.js', 'src/scenes/UIBarunaiActivities.js', 'src/scenes/UIMajapahit.js',
+  'src/scenes/UIBayang.js', 'src/scenes/UILedang.js', 'src/scenes/UINek.js', 'src/scenes/UISantubong.js',
+  'src/scenes/UIBualang.js', 'src/scenes/UIGelora.js', 'src/scenes/UIMayang.js', 'src/scenes/UIGuide.js',
+  'src/scenes/UIChecklist.js', 'src/scenes/UIMasjid.js', 'src/scenes/UICompanions.js', 'src/scenes/UIBelalang.js',
+  'src/scenes/UISulu.js', 'src/scenes/UISulu2.js', 'src/scenes/WorldField.js', 'src/scenes/WorldKhemah.js',
+  'src/scenes/WorldStormReef.js', 'src/scenes/UIStormReef.js', 'src/scenes/WorldMantera.js', 'src/scenes/UIMantera.js',
+  'src/scenes/WorldBunianTrials.js', 'src/scenes/WorldTap.js', 'src/scenes/UITap.js', 'src/level.js', 'src/scenes/WorldLevel.js',
+  'src/scenes/UILevel.js', 'src/senah.js', 'src/scenes/WorldFireworks.js', 'src/scenes/WorldSenah.js', 'src/scenes/UISenah.js',
+  'src/jerebu.js', 'src/scenes/WorldJerebu.js', 'src/scenes/UIJerebu.js', 'src/scenes/UICompanionProfiles.js',
+  'src/mamai.js', 'src/scenes/WorldMamai.js', 'src/scenes/UIMamai.js', 'src/penyamun.js', 'src/scenes/WorldPenyamun.js',
   'src/scenes/UIPenyamun.js', 'src/scenes/WorldBunianMirror.js', 'src/bujang.js', 'src/scenes/WorldBujang.js',
   'src/scenes/UIBujang.js', 'src/sounds19.js', 'src/maya.js', 'src/scenes/WorldMaya.js', 'src/scenes/UIMaya.js',
-  'src/story-checkpoints.js', 'src/chapter-replay.js', 'src/main.js', 'lib/fonts/PixelifySans-latin.woff2',
-  'lib/fonts/PixelifySans-latin-ext.woff2', 'icons/icon-192.png', 'icons/icon-512.png'
+  'src/buaya.js', 'src/scenes/WorldBuaya.js', 'src/scenes/UIBuaya.js', 'src/story-checkpoints.js', 'src/chapter-replay.js',
+  'src/main.js', 'lib/fonts/PixelifySans-latin.woff2', 'lib/fonts/PixelifySans-latin-ext.woff2', 'icons/icon-192.png',
+  'icons/icon-512.png'
 ];
 // ---- end of stamp
 
