@@ -137,7 +137,7 @@ window.LC = window.LC || {};
       ['kudin18', 'We swear to stick together, through every spell, every exam and every purple rooster! Whoever gives up first... washes the plates.'],
       ['sani18', 'W-we swear!'],
       ['leman18', 'Mmf. Swear. (There is no more nasi lemak.)'],
-      ['', '✦ You joined the bachelors! Kudin ties a sash around your arm: the Selempang Bujang. ✦  Take Jack\'s enchanted letter at the farm to Sekolah Mantera. The three of them are already running there.']
+      ['', '✦ You joined the bachelors! Kudin ties a sash around your arm: the Selempang Bujang. ✦  Take Idris\'s enchanted letter at the farm to Sekolah Mantera. The three of them are already running there.']
     ],
     // in Kampung Mantera, before and after each lesson
     talk: {

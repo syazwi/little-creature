@@ -24,7 +24,7 @@ window.LC = window.LC || {};
   var SUMMON_INTERVAL = 8, ALLY_WINDUP = 0.85;
   var ALLIES = {
     badang: { name: 'Badang', tex: 'npc_badangK_0', anim: 'npc_badangK_idle' },
-    jack: { name: 'Jack Separaw', tex: 'npc_jack12_0', anim: 'npc_jack12_idle' },
+    jack: { name: 'Nakhoda Idris', tex: 'npc_jack12_0', anim: 'npc_jack12_idle' },
     lada: { name: 'Nek Lampir', tex: 'npc_lampir_0', anim: 'npc_lampir_idle' },
     bualang: { name: 'Sang Bualang', tex: 'npc_bualang_0', anim: 'bualang_fly' },
     naga: { name: 'Naga Kecil', tex: 'naga_ride_side_0' },

@@ -1,4 +1,4 @@
-/* The Chapter 12 journal, ship compass, and Jack's companion controls. */
+/* The Chapter 12 journal, ship compass, and Idris's companion controls. */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -10,11 +10,13 @@ window.LC = window.LC || {};
     var world = LC.game.scene.getScene('World'), q = S.quests;
     var atSea = world.area === 'stormsea', onDeck = world.area === 'stormdeck';
     var text = [
-      'Meet Jack Separaw at the east side of Nenek’s farm jetty.',
+      'Meet Nakhoda Idris and Lina at the east side of Nenek’s farm jetty.',
       atSea ? 'Follow the Pedoman to the rival ship. Avoid the waterspouts and close in to fire.' : 'Use the vinta at the farm jetty to sail to Storm Reef.',
       onDeck ? 'Fight the raiders and the rival captain on the deck.' : 'Pull alongside and board the rival ship. You can resume from the farm jetty.',
-      onDeck ? 'Dodge the marked slams. Strike the Kraken’s eye when Pelita reveals it.' : 'Use the farm jetty to return to the treasure ship.',
-      q.c12Rescued === 7 ? 'Follow the Pedoman home, then speak to Jack at the farm jetty.' : onDeck ? 'Use the helm at the stern to sail to the sandbar.' : 'Rescue all three fishing crews at the sandbar. Follow the Pedoman to each boat.'
+      onDeck ? 'Dodge the Kraken’s marked attacks. Strike its eye when Pelita reveals it.' : 'Use the farm jetty to return to the treasure ship.',
+      q.c12Rescued === 7 ? (atSea ? 'Follow the Pedoman home.' : 'Return Lina’s lantern at the farm jetty.') :
+        onDeck ? 'Use the helm at the stern to sail to the sandbar.' :
+        q.c12Rescued & 1 ? 'Bring the other two fishing crews aboard. Follow the Pedoman to each boat.' : 'Steer toward Pak Yusof’s lantern and pull alongside his boat.'
     ];
     return 'Chapter 12: ' + text[C.step(S)];
   };
@@ -26,10 +28,10 @@ window.LC = window.LC || {};
     var list = rows.apply(this, arguments), self = this, world = this.world, q = this.S.quests;
     if (C.step(this.S) < C.end) return list;
     list.push({ companionId: 'jack', companionStatus: q.c12Jack ? 'In your party' : 'At the jetty',
-      icon: 'npc_jack12_0', label: 'Jack Separaw' + (q.c12Jack ? ' (with you)' : ''), right: q.c12Jack ? 'Dismiss' : 'Bring',
-      sub: 'Jack follows you and fights nearby enemies whenever you go into battle.', action: function () {
+      icon: 'npc_jack12_0', label: 'Nakhoda Idris' + (q.c12Jack ? ' (with you)' : ''), right: q.c12Jack ? 'Dismiss' : 'Bring',
+      sub: 'Idris follows you and fights nearby enemies whenever you go into battle.', action: function () {
         q.c12Jack = !q.c12Jack; world.refreshStormJack(); LC.State.save();
-        self.toast(q.c12Jack ? 'Jack Separaw is ready to fight at your side.' : 'Jack Separaw heads back to the jetty.', 'npc_jack12_0');
+        self.toast(q.c12Jack ? 'Idris is ready to fight at your side.' : 'Idris heads back to the jetty.', 'npc_jack12_0');
       } });
     return list;
   };
@@ -74,7 +76,8 @@ window.LC = window.LC || {};
       h.port.setText('Home jetty · ' + LC.compassName(home));
     } else {
       h.title.setText('Kraken');
-      h.target.setText(boss.phase === 'eye' ? 'Eye exposed' : 'Watch the deck');
+      h.target.setText(boss.phase === 'eye' ? 'Eye exposed' :
+        boss.phase === 'windup' && boss.tailTarget ? 'Tail smash incoming' : 'Watch the deck');
       h.hull.setText('Health ' + Math.max(0, boss.eye.hp) + ' / ' + boss.eye.def.hp);
       h.port.setText('');
     }

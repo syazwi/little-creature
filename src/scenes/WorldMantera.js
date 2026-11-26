@@ -27,7 +27,7 @@ window.LC = window.LC || {};
   W.objectAction = function (o) {
     var self = this, s = step(this), q = this.S.quests;
     switch (o.type) {
-      case 'mantera_way': return { label: s ? 'Travel to Kampung Mantera' : 'Read Jack’s enchanted letter', fn: function () {
+      case 'mantera_way': return { label: s ? 'Travel to Kampung Mantera' : 'Read Idris’s enchanted letter', fn: function () {
         if (!C.ready(self.S)) return;
         if (s === 0) { story(self, 1); self.manteraLines(X.letter); return; }
         self.goArea('mantera', undefined, 'up');

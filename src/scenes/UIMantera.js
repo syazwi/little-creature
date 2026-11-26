@@ -9,10 +9,10 @@ window.LC = window.LC || {};
     if (!C.ready(S) || s >= C.end) return previousGoal.apply(this, arguments);
     var world = LC.game.scene.getScene('World'), q = S.quests, campus = world.area === 'mantera', vault = world.area === 'manteraVault';
     var goals = [
-      'Read Jack’s enchanted letter near Nenek’s farmhouse.',
+      'Read Idris’s enchanted letter near Nenek’s farmhouse.',
       !campus ? 'Use the enchanted letter to travel to Kampung Mantera.' : q.c13Lesson ? 'Stand between the desk and rune. Cast Pantul just before each bolt hits.' : 'Study with Nek Lampir at her desk by the western classroom.',
       campus ? 'Speak to Suraya in the stone courtyard east of the classroom.' : 'Return to the school to face Suraya.',
-      !campus ? 'Return to Kampung Mantera to resume the duel.' : q.c13Golems ? 'Look for the gold sparks at the real Suraya’s feet. Dodge the marked circles.' : 'Defend Jack from Suraya’s stone soldiers.',
+      !campus ? 'Return to Kampung Mantera to resume the duel.' : q.c13Golems ? 'Look for the gold sparks at the real Suraya’s feet. Dodge the marked circles.' : 'Defend Idris from Suraya’s stone soldiers.',
       campus ? 'Follow Nek Lampir’s lead as the students escape.' : 'Return to the school courtyard to help the students.',
       vault ? 'Reflect the Collector’s own bolt to break his seal, then defeat him.' : campus ? 'Enter the sealed vault at the east edge of the school.' : 'Use the enchanted letter to return to Kampung Mantera.',
       vault ? 'Take the south gate back to the school courtyard.' : campus ? 'Return Batu Ikrar to Suraya in the courtyard.' : 'Return to Kampung Mantera with Batu Ikrar.'

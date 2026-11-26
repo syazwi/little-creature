@@ -22,6 +22,13 @@ window.LC = window.LC || {};
       { text: '✦ The farmer moves ✦  You now move like the Sunnyside farmer: you face left or right as you walk (the square in front still shows where you will act), breathe while you stand, lift what you hold over your head, and dig, water, mine, pick, fish and swing with the pack\'s own animations.' }
     ])
   };
+  LC.NEWS = {
+    id: 'v3.27-storm-reef',
+    lines: [
+      { text: '✦ Chapter 12 has changed ✦  Meet Nakhoda Idris at Nenek’s jetty and follow a fisher’s lantern through Storm Reef. The Kraken has new pixel art and a tail smash. Dodge the mark on the deck before it lands.' },
+      { text: 'Already finished Chapter 12? Go to Pause → Chapter → All chapters and select Replay on Chapter 12 to play the new story.' }
+    ].concat(seenNews === LC.NEWS.id || seenNews === 'v3.27-storm-reef' ? [] : LC.NEWS.lines)
+  };
 
   // ------------------------------------------------------------------ colours
   function rgb(h) { h = h.replace('#', ''); if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]; }
@@ -498,9 +505,13 @@ window.LC = window.LC || {};
   // the Capitán: a morion, a red doublet under a breastplate, a white collar, a gold sash and a rapier
   cast(['kapten11_0', 'kapten11_1'], { build: 'tall', skin: '#e0b08a', hair: '#3a2418', style: 'short', shirt: '#9a9aa8', shirt2: '#a82a2a', sleeve: '#a82a2a', bottom: '#1e1a1a', bottom2: '#141010', shoes: '#141010', belt: '#e9c46a', hat: 'morion', beard: '#3a2418',
     extra: function (p, g) { box(p, g, g.b0 + 1, g.sT, 4, 1, '#f2ece0'); line(p, g, g.hr + 1, g.sE, g.hr + 4, 19, '#d8d8e4'); box(p, g, g.hr, g.sE - 1, 2, 1, '#e9c46a'); } }, WALK);
-  // Jack, the storm captain: a red bandana, a teal coat, a red sash, a gold earring and a cutlass
+  // Idris, the storm captain: a red bandana, a teal coat, a red sash, a gold earring and a cutlass
   cast(['npc_jack12_0', 'npc_jack12_1'], { build: 'tall', skin: '#b97952', hair: '#39252a', style: 'loose', shirt: '#d2aa68', shirt2: '#b08a50', coat: '#28575a', bottom: '#28575a', bottom2: '#1e4446', sash: '#973942', hat: 'bandana', hatColor: '#a04447', shoes: '#291d23',
     extra: function (p, g) { dot(p, g, 12, 13 + g.hb, '#efca72'); line(p, g, g.hl - 1, g.sE, g.hl - 4, g.sE - 5 - g.f, '#ccb494'); dot(p, g, g.hl, g.sE + 1, '#553a31'); } }, SWAY);
+  cast(['npc_lina12'], { skin: '#ba8259', hair: '#40262c', style: 'loose', shirt: '#edba6e', shirt2: '#bb8349',
+    bottom: '#7d587d', bottom2: '#523b60', shoes: '#372b35' }, [{ headBob: 2 }]);
+  cast(['npc_yusof12'], { skin: '#af7550', hair: '#3b3030', beard: '#574637', shirt: '#4d8a85', shirt2: '#39625e',
+    bottom: '#66504b', bottom2: '#443641', hat: 'bandana', hatColor: '#b48b5e', shoes: '#3e2b36' }, [{ f: 0 }]);
   // the sorcerer of Chapter 13, and the masked Collector
   function sorcerer(masked) {
     var robe = masked ? '#382849' : '#354b78', trim = masked ? '#db79ac' : '#e8b66e';

@@ -200,7 +200,7 @@ window.LC = window.LC || {};
       if (w.area === 'mantera') return true;
       if (w.area === 'gelap18') { p.prop('g18_out', 'Climb back up to the courtyard'); return false; }
       if (w.area === 'ujian18') { p.prop('u18_out', 'Leave the exam hall'); return false; }
-      if (p.travel('farm')) p.object('mantera_letter', 'Take Jack’s enchanted letter to Sekolah Mantera');
+      if (p.travel('farm')) p.object('mantera_letter', 'Take Idris’s enchanted letter to Sekolah Mantera');
       return false;
     }
     if (step === 0) { openNextDay(p, 'c18wait', 9); return; }

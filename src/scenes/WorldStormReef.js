@@ -1,14 +1,26 @@
-/* Chapter 12 sailing, the shipboard encounter and Jack's companion AI. */
+/* Chapter 12 sailing, the shipboard encounter and Idris's companion AI. */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
-  var T = 16, W = LC.WorldScene.prototype, C = LC.C12, X = LC.CH12TEXT;
+  var T = 16, W = LC.WorldScene.prototype, C = LC.C12, X = LC.CH12TEXT, TAIL_RADIUS = 38;
   function step(world) { return C.step(world.S); }
   function point(value) { return { x: (value.x + 0.5) * T, y: (value.y + 0.5) * T }; }
   function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
   function heading(a, b) { return Math.atan2(b.y - a.y, b.x - a.x); }
   function active(e) { return !e.dead && !e.away; }
+  function returning(world) { return step(world) === 4 && world.S.quests.c12Rescued === 7; }
+  function armRibbon(g, spine, inset, width, color) {
+    var left = [], right = [];
+    spine.forEach(function (pt, i) {
+      var normal = heading(spine[Math.max(0, i - 1)], spine[Math.min(spine.length - 1, i + 1)]) + Math.PI / 2;
+      var dx = Math.cos(normal), dy = Math.sin(normal), r = pt.radius * width;
+      left.push({ x: pt.x + dx * (inset - r), y: pt.y + dy * (inset - r) });
+      right.push({ x: pt.x + dx * (inset + r), y: pt.y + dy * (inset + r) });
+    });
+    g.fillStyle(color, 1);
+    g.fillPoints(left.concat(right.reverse()), true);
+  }
 
   var create = W.createKampong, tick = W.updateKampong;
   W.createKampong = function () { create.apply(this, arguments); this.createStormReef(); };
@@ -26,7 +38,8 @@ window.LC = window.LC || {};
   var objectAction = W.objectAction;
   W.objectAction = function (o) {
     var self = this, s = step(this);
-    if (o.type === 'storm_dock') return { label: s === 0 ? 'Talk to Jack Separaw' : s === 5 ? 'Take the helm for an open-sea voyage' : 'Return to Storm Reef',
+    if (o.type === 'storm_dock') return { label: s === 0 ? 'Meet Nakhoda Idris' : s === 5 ? 'Take the helm for an open-sea voyage' :
+      returning(this) ? 'Return Lina’s lantern' : 'Return to Storm Reef',
       fn: function () { self.useStormDock(); } };
     if (o.type === 'storm_helm') return { label: s === 4 ? 'Sail to the stranded crews' : 'Take the helm', fn: function () {
       if (s === 2 || s === 3) { self.toast('The fight is still going.', 'ic_hp'); return; }
@@ -56,25 +69,42 @@ window.LC = window.LC || {};
   };
 
   Object.assign(W, {
-    stormLines: function (lines) { this.ui.say(this.ch2Lines(lines)); },
+    stormLines: function (lines, onDone) { this.ui.say(this.ch2Lines(lines), onDone ? { onDone: onDone } : undefined); },
     createStormReef: function () {
       this.storm = null;
       if (!C.ready(this.S)) return;
       var state = this.storm = { sea: null, deck: null, boss: null, jack: null, talk: null };
       var s = step(this), d = this.S.quests;
-      if (this.area === 'farm' && this.objImgs.storm_dock12) {
-        state.dockJack = this.add.sprite(C.dock.x * T + 9, C.dock.y * T + 6, 'npc_jack12_0').setOrigin(0.5, 1).setDepth(C.dock.y * T + 6);
-        state.dockJack.play('npc_jack12_idle');
-      }
+      if (this.area === 'farm' && this.objImgs.storm_dock12) this.createStormDock();
       if (this.area === 'stormsea') this.startStormSea();
       if (this.area === 'stormdeck') this.startStormDeck();
       if (this.area === 'stormdeck' || (s === 5 && d.c12Jack)) this.refreshStormJack();
+    },
+    createStormDock: function () {
+      var state = this.storm, dock = this.objImgs.storm_dock12, x = dock.x, y = dock.y;
+      state.dockJack = this.add.sprite(x + 1, y - 10, 'npc_jack12_0').setOrigin(0.5, 1).setDepth(y - 10);
+      state.dockJack.play('npc_jack12_idle');
+      state.homeLamp = this.add.image(x + 26, y + 2, 'lampu_pulang12_0').setOrigin(0.5, 1).setDepth(y + 2);
+      state.homeLight = this.addLight(x + 22, y - 15, 0xffbe67, 0.65, true);
+      state.homeLight.base = 0;
+      this.updateStormLamp();
+      if (step(this) >= C.end) return;
+      state.lina = this.add.image(x - 18, y + 2, 'npc_lina12').setOrigin(0.5, 1).setDepth(y + 2);
+      if (returning(this)) state.yusof = this.add.image(x + 20, y + 6, 'npc_yusof12').setOrigin(0.5, 1).setDepth(y + 6);
+    },
+    updateStormLamp: function () {
+      var state = this.storm, installed = step(this) >= C.end, mins = this.S.minutes;
+      var lit = installed && (mins >= 19 * 60 || mins < 6 * 60);
+      state.homeLamp.setVisible(installed);
+      if (!installed) return;
+      state.homeLamp.setTexture(lit ? 'lampu_pulang12_1' : 'lampu_pulang12_0');
+      state.homeLight.base = lit ? 0.8 : 0;
     },
     useStormDock: function () {
       var q = this.S.quests, s = step(this);
       if (!C.ready(this.S)) return;
       if (s === 0) { q.ch12 = 1; LC.State.save(); this.stormLines(X.meet); return; }
-      if (s === 4 && q.c12Rescued === 7) { this.finishStormReef(); return; }
+      if (returning(this)) { this.finishStormReef(); return; }
       var place = s >= 2 && s <= 3 ? 'stormdeck' : 'stormsea';
       LC.Audio.sfx('creak11');
       this.goArea(place, undefined, 'right');
@@ -86,6 +116,7 @@ window.LC = window.LC || {};
       if (state.sea) this.drawStormSea(time, dt, blocked);
       if (state.deck) this.updateStormDeck(time, dt, blocked);
       if (state.jack) this.updateStormJack(dt, blocked);
+      if (state.homeLamp) this.updateStormLamp();
       if (!blocked && state.talk) {
         var lines = state.talk; state.talk = null;
         this.stormLines(lines);
@@ -108,17 +139,18 @@ window.LC = window.LC || {};
         picture.setVisible(!(q.c12Rescued & (1 << i)));
         return picture;
       });
+      if (s === 4 && !(q.c12Rescued & 1)) {
+        var first = point(C.crews[0]);
+        sea.lantern = this.add.image(first.x, first.y - 9, 'fishing_lamp12_1').setDepth(1201);
+        if (!q.c12Chest) {
+          sea.chest = this.add.image(p.x - 55, p.y, 'peti11').setDepth(1199);
+          sea.tow = this.add.graphics().setDepth(1198);
+          this.storm.talk = X.rescue;
+        }
+      }
       sea.funnel = this.add.graphics().setDepth(1250);
       sea.spout = [{ x: 504, y: 438 }, { x: 977, y: 405 }];
       if (s === 1 && !q.c12Sailed) { q.c12Sailed = 1; this.storm.talk = X.chase; }
-      if (s === 4 && !q.c12Chest) {
-        sea.chest = this.add.image(p.x - 16, p.y - 6, 'peti11').setDepth(1251);
-        this.tweens.add({ targets: sea.chest, x: p.x - 42, y: p.y + 17, angle: -18, duration: 850, ease: 'Quad.easeIn',
-          onComplete: function () {
-            self.fx.drop.explode(12, sea.chest.x, sea.chest.y); LC.Audio.sfx('splash'); sea.chest.destroy(); sea.chest = null;
-            q.c12Chest = 1; self.storm.talk = X.rescue;
-          } });
-      }
     },
     moveStormShip: function (dt, blocked) {
       var sea = this.storm.sea, keys = this.keys, p = this.player, vx = 0, vy = 0;
@@ -152,11 +184,11 @@ window.LC = window.LC || {};
       sea.hull = Math.max(0, sea.hull - damage);
       this.fx.drop.explode(8, sea.x, sea.y); this.cameras.main.shake(220, 0.006); LC.Audio.sfx('bump11');
       if (sea.hull > 0) return;
-      this.toast('Jack hauls you back to the jetty. The crew patches the hull so you can try again.', 'ic_hp');
+      this.toast('Idris hauls you back to the jetty. The crew patches the hull so you can try again.', 'ic_hp');
       this.goArea('farm', { x: 21.5 * T, y: 29 * T + 12 }, 'down');
     },
     drawStormSea: function (time, dt, blocked) {
-      var sea = this.storm.sea, t = time / 1000, q = this.S.quests, self = this;
+      var sea = this.storm.sea, t = time / 1000, self = this;
       sea.cooldown -= dt; sea.stormAt -= dt; sea.wakeAt -= dt;
       sea.ship.setPosition(sea.x, sea.y + Math.sin(t * 3) * 1.8).setRotation(sea.angle + Math.sin(t * 2.7) * 0.06);
       sea.ship.setTexture(sea.texture + (Math.floor(t * 5) % 2));
@@ -183,7 +215,21 @@ window.LC = window.LC || {};
         sea.beacon = this.add.image(mark.x, mark.y, sea.signal.kind === 'wreck' ? 'stormwreck12' : 'swirl11').setDepth(1250).setAlpha(0.85);
       }
       sea.crews.forEach(function (boat, i) { if (boat.visible) boat.setRotation(i * 0.37 + Math.sin(t * 3 + i) * 0.13); });
-      if (q.c12Chest && sea.chest) { sea.chest.destroy(); sea.chest = null; }
+      if (sea.tow) {
+        var cos = Math.cos(sea.angle), sin = Math.sin(sea.angle), sternX = sea.x - cos * 43, sternY = sea.y - sin * 43;
+        sea.chest.setPosition(sternX - cos * 28, sternY - sin * 28 + Math.sin(t * 4) * 2).setRotation(sea.angle + Math.sin(t * 3) * 0.15);
+        sea.tow.clear();
+        sea.tow.lineStyle(2, 0xc9a06c, 1);
+        sea.tow.lineBetween(sternX, sternY, sea.chest.x, sea.chest.y);
+      }
+      if (sea.lantern) {
+        var beat = Math.floor(t * 4) % 10, flash = beat === 0 || beat === 2 || beat === 4;
+        sea.lantern.setTexture(flash ? 'fishing_lamp12_1' : 'fishing_lamp12_0').y = sea.crews[0].y - 9 + Math.sin(t * 3);
+        if (flash) {
+          g.fillStyle(0xffc876, 0.23); g.fillCircle(sea.lantern.x, sea.lantern.y, 15);
+          g.lineStyle(1, 0xffe1a0, 0.8); g.strokeCircle(sea.lantern.x, sea.lantern.y, 12);
+        }
+      }
       if (!blocked && sea.shots.length) this.updateStormShots(dt);
     },
     drawWaterspout: function (g, f, t, i) {
@@ -239,12 +285,17 @@ window.LC = window.LC || {};
     },
     stormSeaAction: function () {
       var self = this, sea = this.storm.sea, s = step(this), q = this.S.quests;
-      if (distance(sea, point(C.port)) < 64) return { label: s === 4 && q.c12Rescued === 7 ? 'Bring the fishers home' : 'Moor at the farm jetty', fn: function () {
+      if (distance(sea, point(C.port)) < 64) return { label: returning(this) ? 'Bring the fishers home' : 'Moor at the farm jetty', fn: function () {
         self.goArea('farm', { x: 21.5 * T, y: 29 * T + 12 }, 'down');
       } };
       if (s === 1 && sea.rival && distance(sea, sea.rival) < 155) return { label: sea.cooldown > 0 ? 'Ready the next shot' : 'Fire at the rival ship', fn: function () { self.stormFire(); } };
       if (s === 2 && distance(sea, sea.rival || point(C.rival)) < 78) return { label: 'Board the treasure ship', fn: function () { self.goArea('stormdeck', undefined, 'right'); } };
       if (s === 4) {
+        if (!(q.c12Rescued & 1)) {
+          if (distance(sea, point(C.crews[0])) >= 58) return null;
+          return sea.tow ? { label: 'Pull alongside Pak Yusof', fn: function () { self.cutStormTowline(); } } :
+            { label: 'Bring Pak Yusof aboard', fn: function () { self.takeStormCrew(0); } };
+        }
         var crew = C.crews.findIndex(function (c, i) { return !(q.c12Rescued & (1 << i)) && distance(sea, point(c)) < 58; });
         if (crew >= 0) return { label: 'Bring the stranded fishers aboard', fn: function () { self.takeStormCrew(crew); } };
       }
@@ -258,11 +309,27 @@ window.LC = window.LC || {};
       var s = step(this), q = this.S.quests, sea = this.storm.sea;
       if (s === 1 || s === 2) return { point: sea.rival || point(C.rival), label: s === 2 ? 'Board the rival ship' : 'Rival ship' };
       if (s === 4) {
+        if (!(q.c12Rescued & 1)) return { point: point(C.crews[0]), label: 'Pak Yusof’s lantern' };
         var crew = C.crews.find(function (c, i) { return !(q.c12Rescued & (1 << i)); });
         return crew ? { point: point(crew), label: 'Stranded fishers' } : { point: point(C.port), label: 'Home jetty' };
       }
       if (sea.signal) return { point: point(sea.signal), label: sea.beacon ? (sea.signal.kind === 'wreck' ? 'Wreck sighted' : 'Sea boss ahead') : 'Uncharted signal' };
       return { point: point(C.port), label: 'Home jetty' };
+    },
+    cutStormTowline: function () {
+      var self = this, sea = this.storm.sea;
+      if (!sea.tow) return;
+      this.stormLines(X.cut.slice(0, 2), function () {
+        self.S.quests.c12Chest = 1; LC.State.save();
+        var chest = sea.chest;
+        sea.tow.destroy(); sea.tow = null;
+        LC.Audio.sfx('swing');
+        self.tweens.add({ targets: chest, y: chest.y + 15, angle: chest.angle - 32, alpha: 0, duration: 570,
+          onComplete: function () { chest.destroy(); sea.chest = null; } });
+        self.fx.drop.explode(14, chest.x, chest.y);
+        LC.Audio.sfx('splash');
+        self.stormLines(X.cut.slice(2));
+      });
     },
     takeStormCrew: function (i) {
       var q = this.S.quests, boat = this.storm.sea.crews[i], sea = this.storm.sea;
@@ -270,12 +337,25 @@ window.LC = window.LC || {};
       q.c12Rescued = (q.c12Rescued || 0) | 1 << i; LC.State.save();
       this.tweens.add({ targets: boat, x: sea.x, y: sea.y, alpha: 0, duration: 460, onComplete: function () { boat.setVisible(false); } });
       LC.Audio.sfx('chime'); this.toast(q.c12Rescued === 7 ? 'All three crews are safe. Follow the compass home.' : 'The fishers climb aboard.', 'ic_bond');
+      if (i === 0) {
+        sea.lantern.destroy(); sea.lantern = null;
+        this.stormLines(X.father);
+      }
     },
     finishStormReef: function () {
-      var q = this.S.quests;
-      if (step(this) !== 4 || q.c12Rescued !== 7) return;
+      if (!returning(this)) return;
+      var q = this.S.quests, state = this.storm, self = this;
       q.ch12 = 5; q.c12Jack = true; q.stormVoyage = 0;
-      this.refreshStormJack(); LC.State.save(); LC.Audio.sfx('stage'); this.stormLines(X.finish);
+      LC.State.save();
+      this.updateStormLamp();
+      this.tweens.add({ targets: state.lina, x: state.yusof.x - 9, y: state.yusof.y + 1, duration: 430, ease: 'Quad.easeOut',
+        onUpdate: function () { state.lina.setDepth(state.lina.y); } });
+      LC.Audio.sfx('stage');
+      this.stormLines(X.finish, function () {
+        self.refreshStormJack();
+        self.tweens.add({ targets: [state.lina, state.yusof], alpha: 0, duration: 500,
+          onComplete: function () { state.lina.destroy(); state.yusof.destroy(); } });
+      });
     },
     claimStormWreck: function () {
       var sea = this.storm.sea, q = this.S.quests, id = sea.signal.item;
@@ -327,8 +407,9 @@ window.LC = window.LC || {};
       if (this.storm.boss) this.updateStormKraken(time, dt, blocked);
     },
     raiseStormKraken: function () {
-      var at = point(C.eye), b = this.storm.boss = { phase: 'rise', timer: 1.5, age: 0, dive: 0, lift: 0, attackNo: 0,
+      var at = point(C.eye), b = this.storm.boss = { phase: 'rise', timer: 1.5, age: 0, dive: 0, attackNo: 0,
         head: this.add.image(at.x, 11.8 * T, 'kraken12_head').setOrigin(0.5, 1).setScale(1.7).setDepth(13).setAlpha(0),
+        tail: this.add.image(at.x, at.y, 'kraken12_tail_0').setOrigin(12 / 144, 82 / 101).setDepth(419).setVisible(false),
         arms: this.add.graphics().setDepth(414), warning: this.add.graphics().setDepth(10), eye: null, line: 0 };
       b.eye = this.spawnEnemy({ kind: 'kraken12', fixed: C.eye }, true);
       b.eye.respawn = Infinity; b.eye.spr.setVisible(false); b.eye.light.base = 0;
@@ -339,49 +420,92 @@ window.LC = window.LC || {};
     updateStormKraken: function (time, dt, blocked) {
       var b = this.storm.boss, p = this.player;
       if (!blocked || b.phase === 'sink' || b.phase === 'rise') { b.age += dt; b.timer -= dt; }
+      if (b.phase !== 'rise' && b.phase !== 'sink') b.head.y = 12.8 * T + Math.sin(b.age * 2.4) * 2.6;
       if (b.phase === 'sink') {
         b.dive = Math.min(1, b.dive + dt * 0.62); this.drawStormArms(b, time / 1000);
         return;
       }
       this.drawStormArms(b, time / 1000);
+      this.drawStormTail(b);
       if (blocked || b.timer > 0) return;
+      if (b.phase === 'tailImpact') { this.openStormEye(); return; }
       if (b.phase === 'windup') {
+        if (b.tailTarget) {
+          this.slamStormTail();
+          return;
+        }
         var impact = b.horizontal ? { x: p.x - 12, y: b.line } : { x: b.line, y: p.y - 10 };
         this.shockwave(impact.x, impact.y, 64, 0x96dfe8); this.fx.drop.explode(18, impact.x, impact.y);
         this.cameras.main.shake(320, 0.008); LC.Audio.sfx('spout11');
         if (Math.abs((b.horizontal ? p.y : p.x) - b.line) < 25) this.playerHurt(b.eye.hp <= 54 ? 19 : 14, { spr: impact });
-        if (this.leaving) return;
-        if (b.eye.hp <= 54 && b.attackNo % 2) { this.warnStormKraken(); return; }
-        b.phase = 'eye'; b.timer = 5.4;
-        b.eye.away = false; b.eye.spr.setVisible(true).setDepth(b.eye.spr.y + 1).setAlpha(1);
-        b.eye.light.base = 1; b.eye.light.img.setTint(0xffd58c);
-        this.fx.sparkle.explode(12, b.eye.spr.x, b.eye.spr.y - 12);
-        this.toast('Pelita reveals the Kraken’s eye by the bow. Strike while it is exposed!', 'ic_glow');
+        if (!this.leaving) this.openStormEye();
         return;
       }
       b.eye.away = true; b.eye.spr.setVisible(false); b.eye.light.base = 0;
       this.warnStormKraken();
     },
+    openStormEye: function () {
+      var b = this.storm.boss;
+      b.tail.setVisible(false);
+      if (b.eye.hp <= 54 && b.attackNo % 2) { this.warnStormKraken(); return; }
+      b.phase = 'eye'; b.timer = 5.4;
+      b.eye.away = false; b.eye.kx = 0; b.eye.ky = 0;
+      var at = this.tilePx(C.eye);
+      b.eye.spr.setPosition(at.x, at.y).setVisible(true).setDepth(at.y + 1).setAlpha(1);
+      b.eye.light.base = 1; b.eye.light.img.setTint(0xffd58c);
+      this.fx.sparkle.explode(12, at.x, at.y - 12);
+      this.toast('Pelita reveals the Kraken’s eye by the bow. Strike while it is exposed!', 'ic_glow');
+    },
     warnStormKraken: function () {
       var b = this.storm.boss, p = this.player;
       b.attackNo++; b.horizontal = b.attackNo % 3 === 0;
       b.line = b.horizontal ? clamp(p.y, 12 * T + 14, 25 * T - 14) : clamp(p.x, 6 * T + 12, 42 * T - 12);
-      b.phase = 'windup'; b.timer = b.eye.hp <= 54 ? 1.15 : 1.5;
+      b.tailTarget = b.attackNo % 3 === 1 ? {
+        x: clamp(p.x, 6 * T + 18, 42 * T - 18),
+        y: clamp(p.y, 12 * T + 18, 25 * T - 18),
+        radius: TAIL_RADIUS
+      } : null;
+      b.phase = 'windup';
+      b.windup = b.tailTarget ? (b.eye.hp <= 54 ? 1.35 : 1.65) : (b.eye.hp <= 54 ? 1.15 : 1.5);
+      b.timer = b.windup;
       LC.Audio.sfx('lunge');
+    },
+    drawStormTail: function (b) {
+      var target = b.tailTarget, landed = b.phase === 'tailImpact';
+      var visible = target && (landed || b.phase === 'windup');
+      b.tail.setVisible(!!visible);
+      if (!visible) return;
+      var side = target.x < b.head.x ? -1 : 1, base = { x: b.head.x - side * 49, y: b.head.y - 48 };
+      var progress = landed ? 1 : clamp(1 - b.timer / b.windup, 0, 1);
+      var frame = landed ? 4 : progress < 0.15 ? 0 : progress < 0.38 ? 1 : progress < 0.79 ? 2 : 3;
+      b.tail.setTexture('kraken12_tail_' + frame).setPosition(base.x, base.y).setRotation(heading(base, target))
+        .setScale(distance(base, target) / 110, side * (landed ? 1 : 1 + 0.2 * progress)).setAlpha(landed ? clamp(b.timer / 0.28, 0, 1) : 1);
+    },
+    slamStormTail: function () {
+      var b = this.storm.boss, at = b.tailTarget;
+      b.phase = 'tailImpact'; b.timer = 0.48;
+      b.warning.clear();
+      this.drawStormTail(b);
+      this.shockwave(at.x, at.y, at.radius + 12, 0xc4f2e3);
+      this.fx.drop.explode(28, at.x, at.y);
+      this.fx.pebble.explode(9, at.x, at.y);
+      this.cameras.main.shake(370, 0.01);
+      LC.Audio.sfx('spout11'); LC.Audio.sfx('bump11');
+      if (distance(this.player, at) < at.radius) this.playerHurt(b.eye.hp <= 54 ? 21 : 17, { spr: b.head });
     },
     drawStormArms: function (b, time) {
       if (b.lastFrame !== undefined && time - b.lastFrame < 1 / 30 && b.lastPose === b.phase) return;
       b.lastFrame = time; b.lastPose = b.phase;
-      var arms = b.arms, warn = b.warning, moving = b.phase === 'windup';
+      var arms = b.arms, warn = b.warning, winding = b.phase === 'windup', moving = winding && !b.tailTarget;
       arms.clear(); warn.clear();
       if (b.dive >= 1) return;
       arms.setAlpha(1 - b.dive);
-      var progress = moving ? clamp(1 - b.timer / (b.eye.hp <= 54 ? 1.15 : 1.5), 0, 1) : 0;
+      var progress = winding ? clamp(1 - b.timer / b.windup, 0, 1) : 0;
       var strike = Math.pow(clamp((progress - 0.61) / 0.39, 0, 1), 2);
       var rise = b.phase === 'rise' ? clamp(b.age / 1.45, 0, 1) : 1;
       for (var i = 0; i < 6; i++) {
         var side = i < 3 ? -1 : 1, dist = i % 3, center = 23.5 * T;
-        var x0 = center + side * (62 + dist * 57), y0 = (7.5 - dist * 1.5) * T;
+        var x0 = center + side * (107 + dist * 44), y0 = (7.5 - dist * 1.5) * T;
         var x1 = center + side * (292 - dist * 64), y1 = (24 + dist * 1.25) * T;
         if (moving && i === b.attackNo % 6) {
           var tx = b.horizontal ? (side < 0 ? 43 : 4) * T : b.line;
@@ -390,19 +514,30 @@ window.LC = window.LC || {};
           y1 += (ty - y1) * strike - Math.sin(progress * Math.PI) * 43;
         }
         y1 = y0 + (y1 - y0) * rise * (1 - b.dive * 0.68);
-        var ax = x0, ay = y0;
-        for (var j = 1; j <= 9; j++) {
-          var p = j / 9, bend = Math.sin(p * Math.PI) * (36 + dist * 10);
-          var nx = x0 + (x1 - x0) * p + Math.sin(time * 2.4 + p * 4 + i) * bend * rise;
-          var ny = y0 + (y1 - y0) * p + Math.cos(time * 2.9 + p * 5 + i) * bend * 0.57 * rise;
-          var thick = 32 * (1 - p) + 5;
-          arms.lineStyle(thick + 4, 0x222a48, 0.94); arms.lineBetween(ax, ay, nx, ny);
-          arms.lineStyle(thick, i % 2 ? 0x73547d : 0x535b8a, 0.98); arms.lineBetween(ax, ay, nx, ny);
-          if (j % 2 === 0) { arms.fillStyle(0x9b86aa, 0.9); arms.fillCircle(nx, ny, thick * 0.16); }
-          ax = nx; ay = ny;
+        var spine = [];
+        for (var j = 0; j <= 12; j++) {
+          var p = j / 12, bend = Math.sin(p * Math.PI) * (36 + dist * 10);
+          spine.push({
+            x: x0 + (x1 - x0) * p + Math.sin(time * 2.4 + p * 4 + i) * bend * rise,
+            y: y0 + (y1 - y0) * p + Math.cos(time * 2.9 + p * 5 + i) * bend * 0.57 * rise,
+            radius: 18 * Math.pow(1 - p, 0.82) + 1
+          });
+        }
+        armRibbon(arms, spine, 0, 1.16, 0x181425);
+        armRibbon(arms, spine, 0, 1, i % 2 ? 0x30646d : 0x3f7a79);
+        armRibbon(arms, spine, -1.8, 0.4, i % 2 ? 0x407a79 : 0x549586);
+        for (var k = 3; k < spine.length - 1; k += 2) {
+          var spot = spine[k];
+          arms.fillStyle(0x7b4f69, 1); arms.fillCircle(spot.x, spot.y, spot.radius * 0.53);
+          arms.fillStyle(0xd2968a, 1); arms.fillCircle(spot.x - 1, spot.y - 1, spot.radius * 0.34);
         }
       }
-      if (moving) {
+      if (winding && b.tailTarget) {
+        var target = b.tailTarget;
+        warn.fillStyle(0xc84c5f, 0.31); warn.fillCircle(target.x, target.y, target.radius);
+        warn.lineStyle(2, 0xffb99a, 0.95); warn.strokeCircle(target.x, target.y, target.radius);
+        warn.lineStyle(2, 0xffdec4, 0.85); warn.strokeCircle(target.x, target.y, Math.max(3, target.radius * (1 - progress)));
+      } else if (moving) {
         warn.fillStyle(0xc84c5f, 0.24 + 0.19 * Math.sin(progress * 21));
         if (b.horizontal) warn.fillRect(6 * T, b.line - 22, 36 * T, 44); else warn.fillRect(b.line - 22, 12 * T, 44, 13 * T);
         warn.lineStyle(2, 0xff9b8b, 0.9);
@@ -412,6 +547,7 @@ window.LC = window.LC || {};
     dropStormKraken: function (e) {
       var b = this.storm.boss, q = this.S.quests, story = step(this) === 3;
       this.removeStormEnemy(e); b.phase = 'sink'; b.dive = 0; b.warning.clear();
+      b.tail.setVisible(false);
       this.tweens.add({ targets: b.head, y: b.head.y - 32, alpha: 0, duration: 1600, ease: 'Sine.easeIn' });
       this.fx.drop.explode(30, e.spr.x, e.spr.y); LC.Audio.sfx('roar11'); this.cameras.main.shake(520, 0.007);
       if (story) {
@@ -464,7 +600,7 @@ window.LC = window.LC || {};
       var arc = this.add.image(foe.spr.x, foe.spr.y - 9, 'slash_right').setDepth(9598).setTint(0xffd298).setAlpha(0.9).setScale(0.8);
       this.tweens.add({ targets: arc, alpha: 0, scale: 1.2, duration: 240, onComplete: function () { arc.destroy(); } });
       this.tweens.add({ targets: spr, angle: spr.flipX ? -9 : 9, duration: 85, yoyo: true });
-      LC.Audio.sfx('swing'); this.ui.floatText(foe.spr.x, foe.spr.y - 19, 'Jack ' + fight.dmg, '#ffdd9f');
+      LC.Audio.sfx('swing'); this.ui.floatText(foe.spr.x, foe.spr.y - 19, 'Idris ' + fight.dmg, '#ffdd9f');
       foe.hp -= fight.dmg; foe.hurtT = 0.15; foe.spr.setTintFill(0xffffff);
       if (foe.hp <= 0) this.enemyDie(foe);
     }

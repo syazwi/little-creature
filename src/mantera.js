@@ -68,9 +68,9 @@ window.LC = window.LC || {};
 
   LC.MANTERA_TEXT = {
     letter: [
-      ['suraya13', 'Jack Separaw. Return Batu Ikrar to Kampung Mantera. You have until sunset. You know how long I can make a sunset last.'],
+      ['suraya13', 'Nakhoda Idris. Return Batu Ikrar to Kampung Mantera. You have until sunset. You know how long I can make a sunset last.'],
       ['jack12', 'We used to date. I borrowed her ward stone for a card game. The masked fellow who won it called himself the Collector.'],
-      ['nek13', 'My old school! I shall come. Jack, shall we share a broom?'],
+      ['nek13', 'My old school! I shall come. Idris, shall we share a broom?'],
       ['jack12', 'Three brooms, please. And for the record, I like women closer to my age.'],
       ['nek13', 'Such a shy boy. Fold the letter twice and it will take us to the village.']
     ],
@@ -81,10 +81,10 @@ window.LC = window.LC || {};
     ],
     trained: [['nek13', 'Good. Your mirror lasts only a moment. Keep it for the spells that matter. And take Pelita with you. A lamp casts only one honest shadow.']],
     challenge: [
-      ['suraya13', 'You promised to return it by dawn, Jack. The children are doing lessons under a cracked ward.'],
+      ['suraya13', 'You promised to return it by dawn, Idris. The children are doing lessons under a cracked ward.'],
       ['jack12', 'I was hoping the apology could arrive before the stone.'],
       ['suraya13', 'Then it can apologize to my soldiers. Stand back, both of you.'],
-      ['', 'You step between Suraya and Jack. Four figures begin to pull themselves out of the courtyard.']
+      ['', 'You step between Suraya and Idris. Four figures begin to pull themselves out of the courtyard.']
     ],
     illusions: [['suraya13', 'You learned that shield from Lampir, did you? Show me you can tell which of us is casting.'],
       ['', 'Pelita lights up the feet of the real Suraya. The other figures have no shadows.']],
@@ -94,7 +94,7 @@ window.LC = window.LC || {};
       ['nek13', 'Then get them to the gate. I know exactly how long this old roof can hold.']
     ],
     sacrifice: [
-      ['nek13', 'Jack? If you ever tell them about me, make me taller.'],
+      ['nek13', 'Idris? If you ever tell them about me, make me taller.'],
       ['jack12', 'I will tell them you were the tallest person here.'],
       ['', 'The last student makes it through. Nek Lampir holds the breach until the ward seals. She dies as the last of her light fades.'],
       ['suraya13', 'She held it long enough for every student. Come to the vault. I can contain his rift while you turn his magic back on him.']
@@ -108,7 +108,7 @@ window.LC = window.LC || {};
       ['jack12', 'I have Batu Ikrar. No pockets this time. Let us take it back to Suraya.']
     ],
     finish: [
-      ['', 'Jack returns Batu Ikrar with both hands. Light travels along the roofs of Kampung Mantera and the ward holds again.'],
+      ['', 'Idris returns Batu Ikrar with both hands. Light travels along the roofs of Kampung Mantera and the ward holds again.'],
       ['suraya13', 'Your debt is settled when you finish the roof. The school could use you for at least one more honest job.'],
       ['jack12', 'Nek would have fixed it from a broom. I suppose I had better get the ladder.'],
       ['', 'A lantern burns at Nek Lampir’s desk. Her old frog sits on the slate as the children come back to class.'],

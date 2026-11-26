@@ -247,7 +247,10 @@ window.LC = window.LC || {};
 
   function storm(pilot, step) {
     var w = pilot.world, s = pilot.state, storm = w.storm, C = LC.C12;
-    if (w.area === 'farm') { pilot.object('storm_dock12', step ? 'Walking to the vinta' : 'Walking to Jack at the jetty'); return; }
+    if (w.area === 'farm') {
+      pilot.object('storm_dock12', step === 0 ? 'Walking to Idris at the jetty' : w.S.quests.c12Rescued === 7 ? 'Returning Lina’s lantern' : 'Walking to the vinta');
+      return;
+    }
     if (!storm || !storm.deck && !storm.sea) { pilot.travel('farm'); return; }
     if (storm.sea) {
       var action = w.stormSeaAction(), destination = w.stormDestination();
@@ -271,6 +274,15 @@ window.LC = window.LC || {};
     if (step === 3 && storm.boss) {
       var boss = storm.boss, p = w.player;
       if (boss.phase === 'windup') {
+        if (boss.tailTarget) {
+          var target = boss.tailTarget, center = tile(target);
+          if (range(p, target) > target.radius + 3) { s.action = 'Waiting beyond the tail smash'; return; }
+          var escape = directions.map(function (d) { return { x: center.x + d[0] * 3, y: center.y + d[1] * 3 }; });
+          pilot.walk(escape.filter(function (spot) {
+            var at = point(spot.x, spot.y); return !w.blockedAt(at.x, at.y) && range(at, target) > target.radius + 3;
+          }), 'Dodging the Kraken’s tail', function () {});
+          return;
+        }
         var delta = (boss.horizontal ? p.y : p.x) - boss.line;
         if (Math.abs(delta) >= 29) { s.action = 'Waiting beyond the Kraken’s reach'; return; }
         var here = tile(p), line = Math.floor((boss.line - (boss.horizontal ? 3 : 0)) / T);
@@ -284,7 +296,7 @@ window.LC = window.LC || {};
   }
   function mantera(pilot, step) {
     var w = pilot.world, m = w.mantera, q = w.S.quests, C = LC.C13;
-    if (w.area === 'farm') { pilot.object('mantera_letter', 'Walking to Jack’s enchanted letter'); return; }
+    if (w.area === 'farm') { pilot.object('mantera_letter', 'Walking to Idris’s enchanted letter'); return; }
     if (w.area !== 'mantera' && w.area !== 'manteraVault') { pilot.travel('farm'); return; }
     if (step === 1 && !q.c13Lesson) { pilot.object('mantera_desk', 'Walking to Nek Lampir’s lesson'); return; }
     if (step === 1) {

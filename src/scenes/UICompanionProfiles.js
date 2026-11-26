@@ -100,9 +100,9 @@ window.LC = window.LC || {};
   function jack() {
     var fight = LC.C12.jackFight;
     return {
-      name: 'Jack Separaw', role: 'Captain and treasure hunter', sprite: 'npc_jack12_0', color: 0xffb984,
+      name: 'Nakhoda Idris', role: 'Captain and treasure hunter', sprite: 'npc_jack12_0', color: 0xffb984,
       stats: [['Attack damage', fight.dmg], ['Attack interval', seconds(fight.cd)], ['Boss loot bonus', '+1 roll']],
-      skills: [['Deckhand’s strike', 'While in your party, Jack follows you and attacks nearby enemies.'],
+      skills: [['Deckhand’s strike', 'While in your party, Idris follows you and attacks nearby enemies.'],
         ['Treasure Hunter’s Luck', 'Your Chapter 12 reward gives one extra rare loot or kepeng roll when you defeat a boss.']]
     };
   }

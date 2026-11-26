@@ -265,7 +265,7 @@ window.LC = window.LC || {};
       ['semaun20', 'Kampong Ayer heard the bell! Did you think we would let you do this alone? The whole fleet came!'],
       ['badang20', '(Badang wades out of the mangroves with a boulder on each shoulder.) The jong was too slow. I walked. Mostly through the sea.'],
       ['', 'Overhead, something huge and silver slides across the sky. Bakunawa, the moon serpent, pulls the clouds off the moon, and the lake turns to silver.'],
-      ['', 'One by one, the others come, or send what they can: Jack Separaw\'s ship lights its lanterns at the river mouth; Kudin, Leman and Sani shout a spell from a sampan (it fizzles, then works); Mak Kiah sends sundal malam flowers, and the shadows shrink from their scent; and an old voice cackles from nowhere, "Pepper, child! Throw it in its eyes!": Nek Lampir\'s spirit.'],
+      ['', 'One by one, the others come, or send what they can: Nakhoda Idris\'s ship lights its lanterns at the river mouth; Kudin, Leman and Sani shout a spell from a sampan (it fizzles, then works); Mak Kiah sends sundal malam flowers, and the shadows shrink from their scent; and an old voice cackles from nowhere, "Pepper, child! Throw it in its eyes!": Nek Lampir\'s spirit.'],
       ['nenek20', 'Now, cucu. Go and get our little light back.']
     ],
     fightHow: 'The shadows are coming onto the bank! Fight them with your friends (hold a weapon and press USE).',
@@ -381,7 +381,7 @@ window.LC = window.LC || {};
     ['npc_berbai_0', 'Pateh Berbai', 'I thought about it carefully, and I have decided: you are family.'],
     ['npc_sari_0', 'Damang Sari', 'I found her in the fog at last. Thanks to you.'],
     ['npc_badangK_0', 'Badang', 'When you need a boulder moved, you know where I am.'],
-    ['npc_jack12_0', 'Jack Separaw', 'A crocodile, a mousedeer and a ghost. That is a crew, mate.'],
+    ['npc_jack12_0', 'Nakhoda Idris', 'A crocodile, a mousedeer and a ghost. That is a crew, mate.'],
     ['npc_kiah19_0', 'Mak Kiah', 'Maya would have loved this. The scent of sundal malam is everywhere tonight.'],
     ['npc_belalang_0', 'Belalang', 'I predicted all of this. (I did not.)'],
     ['npc_tanggang_0', 'Si Tanggang', 'Go home to your Nenek every day. Every single day.'],

@@ -35,30 +35,43 @@ window.LC = window.LC || {};
   var C = LC.C12;
   LC.ITEMS.serpihan_ribut = { id: 'serpihan_ribut', icon: 'i_serpihan_ribut', name: 'Serpihan Ribut', kind: 'material', sell: 680,
     desc: 'A rare shard of green sea glass worn smooth by the currents around Storm Reef.' };
-  LC.SPEAKERS.jack12 = { name: 'Jack Separaw', portrait: 'npc_jack12_0' };
+  LC.SPEAKERS.jack12 = { name: 'Nakhoda Idris', portrait: 'npc_jack12_0' };
+  LC.SPEAKERS.lina12 = { name: 'Lina', portrait: 'npc_lina12' };
+  LC.SPEAKERS.yusof12 = { name: 'Pak Yusof', portrait: 'npc_yusof12' };
+  LC.SPEAKERS.idris12 = { name: 'Idris', portrait: 'npc_jack12_0' };
   LC.CH12TEXT = {
     meet: [
-      { who: 'mat', text: 'Three fishing boats never came back from Storm Reef. Their families have been at this jetty all morning.' },
-      { who: 'jack12', text: 'They are stranded beyond the reef. I know a passage. I drew it right here on my old sail.' },
-      { who: 'jack12', text: 'There is a chest in the wreck beside them. Years I have chased that gold. Lend me Pelita\'s light and I will get you to the fishers.' },
-      { text: 'You agree to the bargain. Use the vinta at the jetty when you are ready.' }
+      { who: 'mat', text: 'Three boats followed your chart through Storm Reef, Nakhoda. None came home.' },
+      { who: 'jack12', text: 'I marked that passage safe at low tide. I should have gone with them.' },
+      { who: 'lina12', text: 'Ayah said you knew the way home. Take his spare lamp. He has the other one. Three flashes is how we find each other.' },
+      { text: 'Lina wraps the brass lantern in a dry cloth and presses it into your hands.' },
+      { who: 'jack12', text: 'There is gold in the wreck by that sandbar. I planned to sail for it this morning. The vinta is ready. You take the helm.' }
     ],
     chase: [
-      { who: 'jack12', text: 'See that column of spray? A waterspout. Keep to calmer water and watch the heading on your Pedoman.' },
-      { who: 'jack12', text: 'And that striped sail is following my chart. Close with them. I will help you take the deck.' }
+      { who: 'jack12', text: 'Give that waterspout a wide berth. The Pedoman will hold our heading through the rain.' },
+      { who: 'jack12', text: 'That striped sail has a copy of my chart. Their ship can carry all three crews. Close in and fire at the sails so we can board.' }
     ],
-    board: [{ who: 'jack12', text: 'Easy on the ropes, captain. It is the deck we want. Let us give their crew a reason to surrender.' }],
+    board: [{ who: 'jack12', text: 'Easy on the ropes. Keep the hull in one piece. We need this deck to get those fishers home.' }],
     surrender: [{ text: 'The rival captain surrenders. His crew lowers a boat and yields the ship.' },
-      { who: 'jack12', text: 'There are the fishers, on the sandbar! And there is my chest. That reef behind it... was it there a moment ago?' }],
-    kraken: [{ text: 'A shadow larger than the reef rises from the sea. One arm longer than the ship curls around the rail and lifts the bow.' },
-      { who: 'jack12', text: 'That is a Kraken. Watch where its arms land. Pelita, if you find its eye, let us see it.' }],
-    rescue: [{ text: 'The Kraken sinks, and the ship settles back into the sea. Jack has the gold chest aboard when the waterspout turns for the sandbar.' },
-      { who: 'jack12', text: 'There is only room to lower one boat... and I said I would bring those crews home.' },
-      { text: 'Jack pockets a handful of coins, pushes the chest overboard, and helps you bring the fishers aboard.' }],
-    finish: [{ who: 'jack12', text: 'This ship is yours, captain. I found this brass needle in the wreck. With it, your Pedoman will pick up unusual currents out at sea.' },
-      { text: 'Sail freely from the jetty. Follow the Pedoman to a wreck with a rare item or a roaming sea boss.' },
-      { who: 'jack12', text: 'When a boss goes down, check what the current carried out of sight. I call it Treasure Hunter’s Luck. And if that needle finds my chest, come get me.' },
-      { text: 'Jack Separaw has joined you as a battle companion. Manage him from Pause → Companions.' }]
+      { text: 'As he goes, the captain gives his winch a final turn. The rope hauls a gold chest out of the wreck. Something knocks back from beneath it.' }],
+    kraken: [{ text: 'A broad head breaks the surface. The Kraken hooks the rail with one arm and raises a ragged tail over the deck.' },
+      { who: 'jack12', text: 'Move when you see the deck marked. That tail comes down hard. Pelita, show us its eye when it comes close.' }],
+    rescue: [{ text: 'Beyond the spray, a lantern flashes three times on the sandbar. Pak Yusof is holding it above his head.' },
+      { who: 'jack12', text: 'The chest is still on its towline. I will mind the rope. Steer for his light.' }],
+    cut: [{ text: 'As you pull alongside Pak Yusof, the chest catches under his boat. The towline draws tight and starts to haul him under.' },
+      { who: 'jack12', text: 'Hold her steady. I have the rope.' },
+      { text: 'Idris cuts the line. The chest drops. Pak Yusof’s boat bobs free and the lantern rises through the spray.' }],
+    father: [{ who: 'yusof12', text: 'That is Lina’s knot on your lamp. She used to tie it to my wrist so I would remember to come home.' },
+      { who: 'yusof12', text: 'There are two more boats. I can see them from here.' }],
+    finish: [
+      { text: 'You hand Lina’s lantern to Pak Yusof. He sets both lamps down just in time to catch her.' },
+      { who: 'lina12', text: 'Ayah! We should hang the spare right here. Then the next boat will know where home is, too.' },
+      { text: 'You hang Lampu Pulang at the jetty. It will light up every evening.' },
+      { who: 'jack12', text: 'Idris will do. And if you will have me, I would like to sail with you again.' },
+      { who: 'idris12', text: 'Take the ship. I fitted a brass needle from the wreck into your Pedoman. It can pick up unusual currents now. Keep an eye on what washes up when a boss goes down, too.' },
+      { text: 'Free sailing unlocked. Follow the Pedoman to rare wreck salvage or a sea boss. Treasure Hunter’s Luck grants extra boss loot. Manage Idris in Pause → Companions.' },
+      { who: 'idris12', text: 'I left a letter near the farmhouse. Someone at Kampung Mantera is still waiting for me to put something right.' }
+    ]
   };
   LC.OBJECTS.push({ id: 'storm_dock12', type: 'storm_dock', x: C.dock.x, y: C.dock.y, tex: 'stormdock12', keep: true,
     when: C.ready });

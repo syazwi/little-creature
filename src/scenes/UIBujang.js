@@ -18,7 +18,7 @@ window.LC = window.LC || {};
     var t = [
       'Rest at the farm. Something purple is happening in Kampung Tepian.',
       'Three young men are practising magic by the vegetable plots in Kampung Tepian (west of the gelanggang). Go and see.',
-      'Take Jack\'s enchanted letter at the farm to Sekolah Mantera, then speak to Suraya in the courtyard.',
+      'Take Idris\'s enchanted letter at the farm to Sekolah Mantera, then speak to Suraya in the courtyard.',
       L && L.kind === 'float' ? 'Ilmu Terapung: keep the feather up (' + L.lifts + ' / ' + C.feather.lifts + '). When it sinks low, stand on its shadow and press USE. Dodge the durians!'
         : 'Speak to Suraya in the school courtyard for the first lesson: Ilmu Terapung.',
       area === 'gelap18' ? 'Kelas Gelap: light the runes with Sani right beside you (' + Object.keys(q.c18runes || {}).length + ' / 3). Do not leave him behind!'

@@ -42,12 +42,12 @@ window.LC = window.LC || {};
       next: 'When Chapter 10 is complete, be at Nenek\'s farm after 8 PM the next night: Chapter 11 begins.' },
     { n: 11, key: 'ch11', end: 13, name: 'Bulan dan Mutiara', steps: ['Rest at the farm', 'The dark moon', 'The Sultan of Sulu', 'Ready the vinta', 'Captain of the vinta', 'The Bakunawa', 'Two little moons',
       'Pelita glows again', '1578: the envoy from Sulu', 'Find the fleet', 'The anchor ropes', 'Gongs across the water', 'The flagship'],
-      next: 'After Chapter 11, meet Jack Separaw at Nenek’s farm jetty.' },
-    { n: 12, key: 'ch12', end: LC.C12.end, name: 'Jack Separaw and the Kraken of Storm Reef',
-      steps: ['The bargain at the jetty', 'The chase through the waterspouts', 'Board the treasure ship', 'The Kraken rises', 'Bring the fishing crews home'],
-      next: 'Read Jack’s enchanted letter at the farm to start Chapter 13. You can still sail freely from the jetty.' },
-    { n: 13, key: 'ch13', end: LC.C13.end, name: 'Jack Separaw and the School of Sorcery',
-      steps: ['Jack’s enchanted letter', 'Nek Lampir’s lesson', 'Face Supreme Sorcerer Suraya', 'Stone soldiers and falling stars', 'Save the students', 'Break the Collector’s seal', 'Return Batu Ikrar'],
+      next: 'After Chapter 11, meet Nakhoda Idris at Nenek’s farm jetty.' },
+    { n: 12, key: 'ch12', end: LC.C12.end, name: 'Nakhoda Idris and the Kraken of Storm Reef',
+      steps: ['Lina’s lantern at the jetty', 'The chase through the waterspouts', 'Board the treasure ship', 'The Kraken rises', 'Bring the fishing crews home'],
+      next: 'Read Idris’s enchanted letter at the farm to start Chapter 13. You can still sail freely from the jetty.' },
+    { n: 13, key: 'ch13', end: LC.C13.end, name: 'Nakhoda Idris and the School of Sorcery',
+      steps: ['Idris’s enchanted letter', 'Nek Lampir’s lesson', 'Face Supreme Sorcerer Suraya', 'Stone soldiers and falling stars', 'Save the students', 'Break the Collector’s seal', 'Return Batu Ikrar'],
       next: 'Keep Mantera Pantul as you travel. Nek Lampir’s desk is open to visitors.' }
   ];
 
