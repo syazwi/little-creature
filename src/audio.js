@@ -453,6 +453,8 @@ window.LC = window.LC || {};
       case 'punch': A.tone(t, 'sine', 120, 45, 0.2, 0.4); A.noise(t, 0.1, 0.3, 'lowpass', 900); break;
       case 'dash': A.noise(t, 0.22, 0.22, 'bandpass', 2200, 900); A.tone(t, 'sine', 300, 700, 0.14, 0.06); break;
       case 'throw': A.noise(t, 0.5, 0.18, 'bandpass', 1800, 900); A.tone(t, 'sine', 500, 180, 0.4, 0.04); break;
+      case 'bowRelease': A.tone(t, 'triangle', 310, 115, 0.18, 0.1); A.noise(t + 0.03, 0.2, 0.1, 'bandpass', 2100, 750); break;
+      case 'slingRelease': A.tone(t, 'sine', 480, 230, 0.14, 0.12); A.noise(t, 0.08, 0.08, 'bandpass', 1400, 650); break;
       // v2.4.1: Nek Lampir
       case 'toss': A.noise(t, 0.16, 0.12, 'bandpass', 2400, 1200); break;
       case 'sneeze': A.tone(t, 'sine', 380, 520, 0.16, 0.05); A.noise(t + 0.16, 0.18, 0.22, 'highpass', 2200); break;   // ah... CHOO!

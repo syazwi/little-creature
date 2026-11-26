@@ -19,6 +19,28 @@ window.LC = window.LC || {};
   }
   function door(p) { p.rect(28, 16, 9, 12, '#5a3720'); p.rect(29, 17, 7, 11, '#7a4b28'); }
   function win(p, x) { p.rect(x, 17, 8, 7, '#5a3720'); p.rect(x + 1, 18, 6, 5, '#2a1a10'); }
+  function drawWeaponShop(p) {
+    var ink = '#181425';
+    p.ell(20, 39, 17, 3, '#396566');
+    p.rect(5, 27, 4, 13, '#584038'); p.rect(31, 26, 4, 13, '#584038');
+    p.rect(6, 29, 1, 8, '#b28053'); p.rect(32, 28, 1, 9, '#b28053');
+    p.rect(4, 14, 32, 19, '#ad7752');
+    for (var x = 5; x < 34; x += 4) p.line(x, 16, x, 31, '#855739');
+    p.poly([[1, 15], [18, 3], [23, 3], [39, 15], [36, 18], [3, 18]], '#235854');
+    p.poly([[5, 14], [19, 5], [22, 5], [35, 14]], '#458278');
+    p.line(6, 14, 19, 6, '#a2bc8a'); p.line(23, 7, 33, 14, '#72a18b');
+    p.rect(4, 16, 32, 2, '#c89a65'); p.rect(15, 13, 11, 5, '#643b31');
+    p.line(17, 16, 22, 14, '#e0b978'); p.line(19, 14, 22, 16, '#efe3bf'); p.px(23, 14, '#f6e6aa');
+    p.rect(8, 19, 23, 12, ink); p.rect(9, 20, 21, 8, '#64464b');
+    p.line(11, 26, 17, 21, '#cad9c4', 2); p.px(12, 26, '#efbc63');
+    p.line(24, 21, 27, 22, '#e9b26c'); p.line(27, 22, 27, 25, '#e9b26c'); p.line(27, 25, 24, 27, '#e9b26c');
+    p.line(24, 21, 24, 27, '#d2d3b4');
+    p.rect(7, 27, 25, 3, '#bd8756'); p.line(7, 27, 31, 27, '#e8b777');
+    p.rect(2, 31, 36, 4, '#73503a'); p.line(3, 31, 37, 31, '#c78d57');
+    p.line(14, 34, 25, 34, '#b67a50'); p.rect(13, 36, 13, 2, '#80573c');
+    p.rect(34, 20, 3, 5, '#ffcf7c'); p.px(35, 21, '#fff0bf');
+    p.line(2, 41, 14, 41, '#83b8af'); p.line(28, 40, 38, 39, '#5d9b98');
+  }
   var WORK = {
     bengkel_besi: function (p) {   // forge and anvil
       house(p, '#8a6a4a', '#6a4a30', '#5a5a5a', '#3a3a3a'); door(p);
@@ -91,6 +113,37 @@ window.LC = window.LC || {};
     p.disc(12, 5, 2.2, body); p.px(13, 4, '#1a120c'); p.px(14, 5, '#e9a33a'); p.px(15, 5, '#e9a33a');
     p.rect(11, 2, 3, 1, comb); p.px(12, 1, comb); p.px(13, 7, comb);
   }
+  var WEAPON_ICONS = {
+    parang_arus: function (p) {
+      p.poly([[6, 10], [9, 9], [13, 3], [17, 1], [17, 5], [14, 10], [9, 13]], '#8cb3b8');
+      p.poly([[8, 11], [13, 8], [16, 3], [16, 5], [13, 10], [9, 12]], '#e7f0d8');
+      p.line(6, 11, 10, 14, '#e1b66d', 2);
+      p.line(7, 13, 3, 17, '#4e7f71', 3); p.line(7, 12, 3, 16, '#87b197');
+      p.rect(2, 16, 3, 2, '#b4774b');
+    },
+    gada_tambatan: function (p) {
+      p.line(3, 16, 13, 7, '#82533e', 4); p.line(4, 15, 13, 6, '#c4905e', 2);
+      p.poly([[8, 6], [12, 2], [16, 2], [18, 5], [18, 9], [15, 12], [11, 12]], '#795354');
+      p.poly([[9, 6], [13, 3], [17, 3], [17, 6], [13, 8], [10, 7]], '#b38972');
+      p.line(11, 5, 15, 10, '#d3ab73', 2); p.px(12, 5, '#e7c38e');
+      p.line(3, 14, 6, 17, '#536c62', 2); p.line(3, 15, 5, 17, '#8fbd9c');
+    },
+    busur_tenggiri: function (p) {
+      p.line(4, 3, 15, 15, '#dcdab2'); p.line(4, 3, 9, 2, '#c0824c', 2);
+      p.line(9, 2, 13, 4, '#dca96b', 2); p.line(13, 4, 16, 8, '#a16d49', 2);
+      p.line(16, 8, 16, 12, '#975e41', 2); p.line(16, 12, 15, 15, '#dca96b', 2);
+      p.rect(14, 6, 3, 4, '#327c78');
+      p.line(3, 15, 14, 4, '#aa825d'); p.poly([[13, 3], [17, 2], [16, 6], [14, 6]], '#dce3d3');
+      p.line(3, 14, 6, 13, '#65bab0'); p.px(4, 16, '#397d77');
+    },
+    pelontar_damar: function (p) {
+      p.line(5, 12, 8, 17, '#6f4a38', 4); p.line(5, 12, 8, 17, '#c39158', 2);
+      p.line(5, 12, 4, 4, '#b38455', 3); p.line(6, 12, 12, 8, '#805440', 3); p.line(12, 8, 14, 4, '#ac7950', 2);
+      p.line(4, 4, 8, 3, '#d1b693'); p.line(8, 3, 14, 4, '#d1b693');
+      p.disc(8, 4, 2.5, '#d27c43'); p.px(7, 3, '#ffe0a3');
+      p.line(5, 14, 8, 13, '#3b7771', 2); p.line(6, 15, 8, 14, '#67a58e');
+    }
+  };
   var IC = {
     nibong: function (p) { for (var i = 0; i < 3; i++) { p.rect(3 + i * 4, 2 + i, 3, 13 - i, '#7a6a4a'); p.rect(3 + i * 4, 2 + i, 3, 1, '#c8b88a'); } },
     belian: function (p) { p.ell(8, 9, 7, 4, '#5a2e1e'); p.ell(8, 8, 6, 2.6, '#7a3e28'); p.ell(14, 9, 1.6, 3.4, '#c8784a'); },
@@ -104,6 +157,17 @@ window.LC = window.LC || {};
   Art.generate9 = function (scene) {
     var make = Art.make;
     Object.keys(WORK).forEach(function (k) { make(scene, k, 48, 48, WORK[k], true); });
+    Object.keys(WEAPON_ICONS).forEach(function (id) { make(scene, 'i_' + id, 20, 20, WEAPON_ICONS[id], '#181425'); });
+    make(scene, 'ayer_weapon_shop', 40, 43, drawWeaponShop, '#181425');
+    make(scene, 'arrow_ayer', 16, 7, function (p) {
+      p.line(3, 3, 12, 3, '#c99b65'); p.poly([[11, 1], [15, 3], [11, 6]], '#c6dade');
+      p.line(1, 1, 5, 3, '#82c8b4'); p.line(1, 5, 5, 3, '#39887b');
+      p.px(13, 3, '#f0f3d5');
+    });
+    make(scene, 'damar_shot', 9, 7, function (p) {
+      p.line(0, 3, 4, 3, '#ebbf70'); p.disc(5.5, 3.5, 2.7, '#5d4544');
+      p.disc(5.5, 3.5, 1.9, '#d18b4e'); p.px(6, 2, '#ffdb88');
+    });
     make(scene, 'fg_nibong', 16, 24, function (p) { drawNibong(p, true); }, true);
     make(scene, 'fg_nibong_e', 16, 24, function (p) { drawNibong(p, false); }, true);
     make(scene, 'fg_belian', 20, 14, function (p) { drawBelian(p, true); }, true);

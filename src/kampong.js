@@ -59,6 +59,7 @@ window.LC = window.LC || {};
   LC.KA_HOUSES = { rumah_air: 'Rumah Atap Nipah (a palm-thatched house)', rumah_air2: 'Rumah Atap Hijau (a house with a green roof)', rumah_air3: 'Rumah Papan Biru (a blue plank house)' };
   LC.KA_HOUSE_COST = { nibong: 4, atap: 3 }; LC.KA_HOUSE_KEPENG = 300;
   LC.AREAS.barunai.objects.push(
+    { id: 'b_weapon_shop', type: 'ayer_weapons', x: 24, y: 25, w: 2, h: 2, tex: 'ayer_weapon_shop', keep: true, shared: true, when: stage(1) },
     { id: 'b_race', type: 'perahu_race', x: 1, y: 24, tex: 'perahu_race_dock', keep: true, shared: true, when: stage(2) },
     { id: 'b_jong', type: 'bldg', x: 39, y: 29, w: 5, h: 3, tex: 'jong_majapahit', when: function (S) { var c = S.quests.ch3 || 0; return c >= 4 && c <= 6; }, text: 'The flagship of Majapahit, its sails painted red and white. Forty more ships wait at the river mouth.' },
     { id: 'b_perahu_teluk', type: 'sampan', x: 3, y: 19, w: 2, h: 1, to: 'teluk', when: function (S) { return (S.quests.ch3 || 0) >= 7; } }

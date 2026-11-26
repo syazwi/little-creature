@@ -4,16 +4,16 @@
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
-  // icon: the item whose picture is on the button. Anything of a kind not listed here counts as Materials.
+  // Anything of a kind not listed here counts as Materials.
   LC.BAG_SORTS = [
-    { k: 'tools', name: 'Tools', icon: 'hoe', lv: 4, kinds: ['tool', 'weapon', 'gear', 'vehicle', 'wear', 'trap', 'tent', 'chest', 'fixture', 'quest'] },
-    { k: 'seeds', name: 'Seeds', icon: 'seed_ubi', lv: 4, kinds: ['seed', 'fert', 'feed'] },
-    { k: 'harvest', name: 'Harvest', icon: 'pisang', lv: 4, kinds: ['crop', 'flower', 'fruit', 'produce', 'forage', 'meat'] },
-    { k: 'meals', name: 'Meals', icon: 'nasi_lemak', lv: 4, kinds: ['dish', 'drink'] },
-    { k: 'fish', name: 'Fish', icon: 'ikan_kelah', lv: 8, kinds: ['fish'] },
-    { k: 'offer', name: 'Offerings', icon: 'colok', lv: 8, kinds: ['offering', 'float'] },
-    { k: 'mat', name: 'Materials', icon: 'kayu', lv: 11, kinds: ['material', 'craft', 'goods', 'junk'] },
-    { k: 'treasure', name: 'Treasure', icon: 'mutiara', lv: 11, kinds: ['treasure'] }
+    { k: 'tools', name: 'Tools', lv: 4, kinds: ['tool', 'weapon', 'gear', 'vehicle', 'wear', 'trap', 'tent', 'chest', 'fixture', 'quest'] },
+    { k: 'seeds', name: 'Seeds', lv: 4, kinds: ['seed', 'fert', 'feed'] },
+    { k: 'harvest', name: 'Harvest', lv: 4, kinds: ['crop', 'flower', 'fruit', 'produce', 'forage', 'meat'] },
+    { k: 'meals', name: 'Meals', lv: 4, kinds: ['dish', 'drink'] },
+    { k: 'fish', name: 'Fish', lv: 8, kinds: ['fish'] },
+    { k: 'offer', name: 'Offerings', lv: 8, kinds: ['offering', 'float'] },
+    { k: 'mat', name: 'Materials', lv: 11, kinds: ['material', 'craft', 'goods', 'junk'] },
+    { k: 'treasure', name: 'Treasure', lv: 11, kinds: ['treasure'] }
   ];
   var BY_KIND = {}, BY_K = {};
   LC.BAG_SORTS.forEach(function (g) { BY_K[g.k] = g; g.kinds.forEach(function (kind) { BY_KIND[kind] = g.k; }); });

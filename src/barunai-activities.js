@@ -6,7 +6,17 @@ window.LC = window.LC || {};
   var weapons = {
     keris_besi: { name: 'Keris Pandai Besi', dmg: 3, reach: 19, cd: 0.29, sell: 270, desc: 'A light keris with a short, quick swing.' },
     pedang_barunai: { name: 'Pedang Barunai', dmg: 4, reach: 26, cd: 0.48, sell: 390, desc: 'A broad blade with a strong, sweeping strike.' },
-    tombak_belian: { name: 'Tombak Belian', dmg: 3, reach: 32, cd: 0.54, sell: 350, desc: 'A long ironwood spear that keeps foes at a distance.' }
+    tombak_belian: { name: 'Tombak Belian', dmg: 3, reach: 32, cd: 0.54, sell: 350, desc: 'A long ironwood spear that keeps foes at a distance.' },
+    parang_arus: { name: 'Parang Arus', dmg: 4, reach: 24, cd: 0.38, arc: -0.28, slashColor: 0x8de2cb, price: 800, sell: 400,
+      ability: 'Wide Sweep', desc: 'A wide sweep catches enemies in front and at your sides. Best when you are surrounded.' },
+    gada_tambatan: { name: 'Gada Tambatan', dmg: 6, reach: 18, cd: 0.82, stagger: 0.75, shove: 1.45, slashColor: 0xffc989, price: 1150, sell: 575,
+      ability: 'Stagger', desc: 'A heavy club that knocks foes back and briefly staggers regular enemies. Best when a foe rushes you.' },
+    busur_tenggiri: { name: 'Busur Tenggiri', ranged: true, dmg: 3, reach: 16, range: 192, speed: 340, cd: 0.73, hits: 2,
+      shot: 'arrow_ayer', shotSound: 'bowRelease', price: 950, sell: 475, ability: 'Piercing Arrow',
+      desc: 'An arrow can pass through the first foe and hit a second. Best when enemies line up on a narrow path.' },
+    pelontar_damar: { name: 'Pelontar Damar', ranged: true, dmg: 2, reach: 16, range: 128, speed: 255, cd: 0.46, slow: 2,
+      shot: 'damar_shot', shotSound: 'slingRelease', price: 780, sell: 390, ability: 'Sticky Damar',
+      desc: 'A sticky shot slows a regular enemy for two seconds. Best for keeping a quick foe at a distance.' }
   };
   Object.keys(weapons).forEach(function (id) {
     LC.ITEMS[id] = Object.assign({ id: id, icon: 'i_' + id, kind: 'weapon' }, weapons[id]);
@@ -18,6 +28,15 @@ window.LC = window.LC || {};
     { id: 'pedang_barunai', cost: { parang: 1, batu: 12, belian: 2 }, kepeng: 700 },
     { id: 'tombak_belian', cost: { parang: 1, batu: 6, belian: 4 }, kepeng: 550 }
   ];
+  LC.AYER_WEAPONS = [
+    { label: 'Melee', items: ['parang_arus', 'gada_tambatan'] },
+    { label: 'Ranged', items: ['busur_tenggiri', 'pelontar_damar'] }
+  ];
+
+  LC.weaponStatsText = function (weapon) {
+    var reach = weapon.ranged ? 'Range ' + weapon.range / 16 + ' tiles' : 'Reach ' + weapon.reach + ' px';
+    return [weapon.ability, 'Damage ' + LC.State.weaponDamage(weapon), reach, 'Cooldown ' + weapon.cd + ' s'].filter(Boolean).join(' · ');
+  };
 
   var CREW_SIZE = 5, LENGTH = 100, STROKE_PERIOD = 1.2;
   var crew = {

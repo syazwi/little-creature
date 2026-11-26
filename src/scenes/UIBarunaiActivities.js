@@ -62,6 +62,37 @@ window.LC = window.LC || {};
   }
 
   Object.assign(LC.UIScene.prototype, {
+    openAyerWeapons: function () {
+      var self = this, S = this.S;
+      this.openMenu({
+        title: 'Kedai Senjata', coins: true,
+        footer: 'Equip a weapon in the hotbar and press USE in battle. Ranged weapons need no ammo.',
+        tabs: LC.AYER_WEAPONS.map(function (tab) {
+          return { label: tab.label, rows: function () {
+            return tab.items.map(function (id) {
+              var it = LC.ITEMS[id];
+              function blocked() {
+                if (S.kepeng < it.price) return 'Not enough kepeng.';
+                if (!St.canAdd(id)) return 'Free a slot in your bag first.';
+                return '';
+              }
+              var why = blocked(), owned = St.count(id);
+              return { icon: it.icon, label: it.name + (owned ? ' (' + owned + ' owned)' : ''), right: it.price + ' k',
+                sub: LC.weaponStatsText(it) + '\n' + it.desc, enabled: !why, why: why,
+                action: function () {
+                  var reason = blocked();
+                  if (reason) { self.toast(reason); return; }
+                  if (!St.add(id, 1)) return;
+                  S.kepeng -= it.price;
+                  St.save();
+                  LC.Audio.sfx('buy');
+                  self.toast('Bought ' + it.name + '.', it.icon);
+                } };
+            });
+          } };
+        })
+      });
+    },
     openBesiForge: function () {
       var self = this, S = this.S;
       this.openMenu({

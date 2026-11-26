@@ -36,6 +36,13 @@ window.LC = window.LC || {};
       { text: 'Chapters 12 and 13 have new scenes at Storm Reef and Sekolah Mantera. To play them again, open Pause → Chapter → All chapters and choose Replay on a completed chapter.' }
     ].concat(seenNews === LC.NEWS.id || seenNews === 'v3.28-farmhouse' ? [] : LC.NEWS.lines)
   };
+  LC.NEWS = {
+    id: 'v3.29-ayer-weapons',
+    lines: [
+      { text: '✦ Kedai Senjata is open ✦  Look for the green-roofed weapon shop on the south walkway in Kampong Ayer once the craft quarter is built. It sells melee and ranged weapons with different abilities.' },
+      { text: 'Your bag filters now show their category names. Select a weapon in the bag to see its combat stats and specialty.' }
+    ].concat(seenNews === LC.NEWS.id || seenNews === 'v3.29-ayer-weapons' ? [] : LC.NEWS.lines)
+  };
 
   // ------------------------------------------------------------------ colours
   function rgb(h) { h = h.replace('#', ''); if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]; }

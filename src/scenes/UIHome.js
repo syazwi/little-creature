@@ -131,9 +131,9 @@ window.LC = window.LC || {};
       var bg = this.add.graphics(); this.panel(bg, X, Y, Wd, Hd); c.add(bg);
       var title = this.txt(480, Y + 14, 'Bag', 28, '#ffd166', { ox: 0.5 }); c.add(title);
       this.closeX(c, X + Wd, Y, function () { if (self.modal === m) m.key('Escape'); });   // v2.7.7
-      var gx0 = X + 34, gyH = Y + 70, gyB = Y + 178, chipY = Y + 132;
+      var gx0 = X + 34, gyH = Y + 70, gyB = Y + (canSort ? 195 : 178), chipY = Y + 132;
       c.add(this.txt(gx0, gyH - 20, 'Hotbar (1-9)', 13, '#a08a6a'));
-      var backT = this.txt(gx0, chipY + 10, '', 13, '#a08a6a'); c.add(backT);
+      var backT = this.txt(gx0, gyB - 19, '', 13, '#a08a6a'); c.add(backT);
       var gg = this.add.graphics(); c.add(gg);
       var cells = [];
       function cellXY(k) {   // k: 0-8 hotbar, then the visible backpack cells
@@ -155,18 +155,20 @@ window.LC = window.LC || {};
       var bx = gx0 + 9 * GAP + 8;
       var upB = this.scrollBtn(c, bx, gyB, 2 * GAP - 8, true, function () { if (top > 0) { top--; LC.Audio.sfx('click'); render(); } });
       var dnB = this.scrollBtn(c, bx, gyB + (VR - 2) * GAP, 2 * GAP - 8, false, function () { if (top + VR < rowsBack) { top++; LC.Audio.sfx('click'); render(); } });
-      // v2.7.9: the sort buttons (All, then each kind; the ones Pelita has not learned yet are dimmed), right of "Backpack"
-      var CHW = 44, CHH = 36, CHP = 48, chipG = this.add.graphics(), chips = [];
+      // Backpack filters. Locked categories keep their label and show their unlock level on hover or tap.
+      var CHH = 36, chipG = this.add.graphics(), chips = [], chipX = gx0;
       c.add(chipG);
       var sortHint = this.txt(bx + 58, chipY + 10, canSort ? '' : 'Pelita learns to sort your bag at Lv ' + LC.BAG_SORT_LV + '.', 13, '#8a7a6a', { ox: 1 }); c.add(sortHint);
-      if (canSort) [{ k: null, name: 'All', lv: 0 }].concat(LC.BAG_SORTS).forEach(function (g, i, all) {
-        var x = bx + 58 - (all.length - i) * CHP + (CHP - CHW), o = { g: g, x: x };
-        o.img = g.icon ? self.add.image(x + CHW / 2, chipY + CHH / 2, LC.ITEMS[g.icon].icon).setScale(2) : self.txt(x + CHW / 2, chipY + CHH / 2, 'All', 15, '#fbecc8', { ox: 0.5, oy: 0.5 });
-        var z = self.add.zone(x - (CHP - CHW) / 2, chipY - 4, CHP, CHH + 8).setOrigin(0).setInteractive({ useHandCursor: true });
+      if (canSort) [{ k: null, name: 'All', lv: 0 }].concat(LC.BAG_SORTS).forEach(function (g) {
+        var label = self.txt(0, chipY + CHH / 2, g.name, 15, '#fbecc8', { ox: 0.5, oy: 0.5 });
+        var width = Math.max(40, Math.ceil(label.width) + 12), x = chipX;
+        label.setX(x + width / 2);
+        chipX += width + 4;
+        var z = self.add.zone(x, chipY - 2, width, CHH + 4).setOrigin(0).setInteractive({ useHandCursor: true });
         z.on('pointerdown', function () { setFilter(g); });
         z.on('pointerover', function () { hover = g; render(); });
         z.on('pointerout', function () { if (hover === g) { hover = null; render(); } });
-        c.add([o.img, z]); chips.push(o);
+        c.add([label, z]); chips.push({ g: g, x: x, w: width, text: label });
       });
       function setFilter(g) {
         if (g.lv > lv) { self.toast('Pelita learns to sort ' + g.name + ' at Lv ' + g.lv + '.', 'ic_bond'); LC.Audio.sfx('error'); return; }
@@ -202,7 +204,7 @@ window.LC = window.LC || {};
         gbz.on('pointerdown', function () { give(); });
         c.add([gg2, gbt, gbz]);
       }
-      c.add(this.txt(480, Y + Hd - 18, this.touchOn ? 'Tap an item, then another slot to swap' + (canSort ? '  ·  tap a picture to sort' : '') + '  ·  X to close'
+      c.add(this.txt(480, Y + Hd - 18, this.touchOn ? 'Tap an item, then another slot to swap' + (canSort ? '  ·  tap a category to filter' : '') + '  ·  X to close'
         : 'Arrows/mouse move  ·  E or click: pick up, then swap  ·  T: throw away' + (canSort ? '  ·  F: sort' : '') + (coop ? '  ·  G: give' : '') + '  ·  Esc close', 12, '#8a7a6a', { ox: 0.5 }));
       function keepVisible() {
         var p = view.indexOf(cur);
@@ -239,9 +241,9 @@ window.LC = window.LC || {};
         emptyT.setText(g && !found ? 'No ' + g.name.toLowerCase() + ' in your backpack.' : '');
         chips.forEach(function (o) {
           var on = o.g.k === filt, locked = o.g.lv > lv, hv = hover === o.g;
-          chipG.fillStyle(on ? 0x6a4a1c : hv && !locked ? 0x4a3520 : 0x2e2219, 1); chipG.fillRoundedRect(o.x, chipY, CHW, CHH, 7);
-          chipG.lineStyle(on ? 3 : 1, on ? 0xffd166 : locked ? 0x4a3a2a : 0x8a6a4a, 1); chipG.strokeRoundedRect(o.x, chipY, CHW, CHH, 7);
-          o.img.setAlpha(locked ? 0.25 : 1);
+          chipG.fillStyle(on ? 0x6a4a1c : hv && !locked ? 0x4a3520 : 0x2e2219, 1); chipG.fillRoundedRect(o.x, chipY, o.w, CHH, 7);
+          chipG.lineStyle(on ? 3 : 1, on ? 0xffd166 : locked ? 0x4a3a2a : 0x8a6a4a, 1); chipG.strokeRoundedRect(o.x, chipY, o.w, CHH, 7);
+          o.text.setColor(locked ? '#a08a6a' : on ? '#ffd166' : '#fbecc8');
         });
         upB.show(more, top > 0); dnB.show(more, top + VR < rowsBack);
         var sl = S.inv[cur], fixed = sl && LC.FIXED_ITEMS[sl.id];
@@ -257,6 +259,7 @@ window.LC = window.LC || {};
           var it = LC.ITEMS[sl.id], info = [];
           tName.setText(it.name + (sl.n > 1 ? '  x' + sl.n : ''));
           tDesc.setText(it.desc || '');
+          if (it.kind === 'weapon') info.push(LC.weaponStatsText(it));
           if (it.food) info.push('Food: +' + it.food.full + ' fullness, ' + (it.food.joy >= 0 ? '+' : '') + it.food.joy + ' joy');
           if (it.glow) info.push('Offering: +' + it.glow + ' glow');
           if (it.sell) info.push('Sells for ' + it.sell + ' kepeng');

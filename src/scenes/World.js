@@ -1070,8 +1070,10 @@ window.LC = window.LC || {};
       }
       var helper = this.helperAt(tx, ty);
       if (helper) return this.helperAction(helper);
-      var wp = this.weaponOf(sl);   // swing a weapon wherever enemies roam (or the cangkul, when one comes close)
-      if (wp && this.hasEnemies() && (!wp.improvised || this.enemyNear(70))) return { label: 'Swing the ' + wp.name, swing: true, fn: function () { self.attack(); } };
+      var wp = this.weaponOf(sl);   // attack wherever enemies roam (or swing the cangkul when one comes close)
+      if (wp && this.hasEnemies() && (!wp.improvised || this.enemyNear(70))) return {
+        label: (wp.ranged ? 'Shoot the ' : 'Swing the ') + wp.name, swing: true, fn: function () { self.attack(); }
+      };
       var cr = this.critterAt(f.fx, f.fy);
       if (cr && cr.aid) { var aa = this.animalAction(cr, sl, it); if (aa) return aa; }
       else if (cr) return { label: 'Pet the ' + cr.kind, fn: function () { self.petCritter(cr); } };
@@ -1096,7 +1098,7 @@ window.LC = window.LC || {};
       switch (o.type) {
         case 'house': case 'house_wing': return { label: 'Nenek\'s house', fn: function () { self.ui.openHouse(); } };   // v1.8: sleep, the pantry, helpers, building
         case 'jejak': case 'tembadau': case 'bulu': case 'pinggai': case 'salvage': case 'vase': case 'tamu2': return this.barunaiObjAction(o);   // v1.9 (tamu2: v2.7.1)
-        case 'kplot': case 'padian': case 'hop': case 'ghost_ayam': case 'batu_ayam': case 'besi_forge': case 'perahu_race': return this.kampongObjAction(o);   // v2.0
+        case 'kplot': case 'padian': case 'hop': case 'ghost_ayam': case 'batu_ayam': case 'besi_forge': case 'ayer_weapons': case 'perahu_race': return this.kampongObjAction(o);   // v2.0
         case 'hero': case 'vision': case 'vision_back': case 'tour': case 'meriam': case 'api': case 'keluarga': return this.kampongObjAction(o);   // v2.1
         case 'ally': case 'api4': case 'jong_dagang': return this.kampongObjAction(o);   // v2.2
         case 'jong5': case 'pasar5': case 'obor5': case 'damar': case 'raja5': case 'kebo5': case 'lampir5': return this.kampongObjAction(o);   // v2.3

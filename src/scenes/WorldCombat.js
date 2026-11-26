@@ -5,12 +5,12 @@
  *  - battle music that rises when something hunts you and fades when the fight is over
  *  - Sumpahan Batu (V): Si Tanggang's stone curse freezes nearby enemies for a few seconds
  *  - Restu Ibu: once a day, Mak Deruma's prayer saves you from fainting
- * Hold a weapon (or, in a pinch, the cangkul) and press USE to swing. If your health runs out you faint and wake up
+ * Hold a weapon (or, in a pinch, the cangkul) and press USE to strike or shoot. If your health runs out you faint and wake up
  * at home. Enemies are simulated on each player's own device (co-op friends each fight their own). */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
-  var DIRV = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
+  var DIRV = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] }, TILE = 16;
   var ANG = { right: 0, down: 90, left: 180, up: -90 };
   var LOOT = ['bijih_emas', 'emas', 'kristal'];   // what you drop (half of it) when you faint
   var HOE = { name: 'Cangkul', dmg: 1, reach: 17, cd: 0.55, icon: 'i_hoe', improvised: true };
@@ -20,6 +20,7 @@ window.LC = window.LC || {};
     createEnemies: function () {
       var self = this, S = this.S;
       this.enemies = []; this.invuln = 0; this.swingCd = 0; this.battleT = 0; this.hitStop = 0; this.groupCheck = 0;
+      this.weaponShots = [];
       var groups = this.areaLayout ? this.areaLayout.enemies : this.A.enemies;
       (groups || []).forEach(function (g) {
         for (var i = 0; i < g.n; i++) self.spawnEnemy(g, true);
@@ -50,6 +51,7 @@ window.LC = window.LC || {};
       if (!first && on) this.tweens.add({ targets: e.spr, alpha: 1, duration: 600 });
       e.hp = D.hp; e.dead = false; e.away = !on; e.respawn = 0; e.kx = 0; e.ky = 0; e.hurtT = 0; e.tx = p.x; e.ty = p.y; e.wait = Math.random() * 2; e.ph = Math.random() * 6;
       e.windT = 0; e.strikeT = 0; e.restT = 0; e.stoneT = 0; e.atkCd = 0.6 + Math.random();
+      e.staggerT = 0; e.slowT = 0;
       e.light.base = on ? (D.boss ? 0.9 : 0.6) : 0;
       return e;
     },
@@ -82,8 +84,9 @@ window.LC = window.LC || {};
     updateEnemies: function (time, dt, blocked) {
       var self = this, p = this.player, S = this.S;
       if (this.invuln > 0) { this.invuln -= dt; p.setAlpha(Math.floor(time / 80) % 2 ? 0.45 : 1); if (this.invuln <= 0) { p.setAlpha(1); p.clearTint(); } }
-      if (!this.enemies || !this.enemies.length) return;
       this.swingCd = Math.max(0, this.swingCd - dt);
+      if (!blocked && !this.leaving && !this.sleeping) this.updateWeaponShots(dt);
+      if (!this.enemies || !this.enemies.length) return;
       if ((this.groupCheck -= dt) <= 0) { this.groupCheck = 1; this.checkGroups(); }
       if (this.hitStop > 0) { this.hitStop -= dt; return; }   // a tiny freeze when a blow lands
       var fighting = false, boss = false;
@@ -108,7 +111,10 @@ window.LC = window.LC || {};
         if (e.g.fixed) return;
         var vx = 0, vy = 0, sp = D.speed, mv = true;
         e.atkCd -= dt;
-        if (e.windT > 0) {            // the wind-up: shiver and flash, then lunge
+        if (e.staggerT > 0) {
+          e.staggerT -= dt;
+          mv = false;
+        } else if (e.windT > 0) {     // the wind-up: shiver and flash, then lunge
           e.windT -= dt; mv = false;
           s.x += Math.sin(time / 22) * 0.6;
           if (Math.floor(time / 70) % 2) s.setTintFill(0xffe0e0); else if (e.hurtT <= 0) s.clearTint();
@@ -141,6 +147,7 @@ window.LC = window.LC || {};
           }
         }
         if (!mv) { vx = 0; vy = 0; }
+        if (e.slowT > 0) { e.slowT -= dt; sp *= 0.55; }
         var len = Math.hypot(vx, vy) || 1, nx = s.x + (vx / len * sp * (vx || vy ? 1 : 0) + e.kx) * dt, ny = s.y + (vy / len * sp * (vx || vy ? 1 : 0) + e.ky) * dt;
         e.kx *= Math.pow(0.02, dt); e.ky *= Math.pow(0.02, dt);
         if (!self.solidPx(nx - D.w, s.y - 2) && !self.solidPx(nx + D.w, s.y - 2)) s.x = nx;
@@ -158,14 +165,17 @@ window.LC = window.LC || {};
     },
 
     // ---------------------------------------------------------------- your swing
-    attack: function () {
+    attack: function (aim) {
       var self = this, sl = LC.State.selItem(), wp = this.weaponOf(sl);
       if (!wp || this.swingCd > 0) return;
       this.swingCd = wp.cd;
+      if (wp.ranged) { this.fireWeapon(wp, aim); return; }
       var p = this.player, d = DIRV[this.dir], cx = p.x + d[0] * 12, cy = p.y - 8 + d[1] * 12, keris = sl.id === 'keris';
+      var wide = wp.arc !== undefined, arcLimit = wide ? wp.arc : 0.15, sweep = wide ? 100 : 70;
       LC.Audio.sfx('swing');
       // the weapon itself sweeps through an arc in front of you...
-      var ang = ANG[this.dir], from = this.dir === 'left' || this.dir === 'up' ? ang + 70 : ang - 70, to = this.dir === 'left' || this.dir === 'up' ? ang - 70 : ang + 70, off = keris ? 90 : 45;
+      var ang = ANG[this.dir], turn = this.dir === 'left' || this.dir === 'up' ? sweep : -sweep;
+      var from = ang + turn, to = ang - turn, off = keris ? 90 : 45;
       var wImg = this.add.image(p.x + d[0] * 3, p.y - 9, wp.icon || LC.ITEMS[sl.id].icon).setOrigin(keris ? 0.5 : 0.15, keris ? 0.92 : 0.85).setScale(0.85)
         .setDepth(this.dir === 'up' ? p.y - 1 : p.y + 1).setAngle(from + off).setFlipX(false);
       this.tweens.add({ targets: wImg, angle: to + off, duration: 130, ease: 'Quad.easeOut', onComplete: function () {
@@ -174,28 +184,100 @@ window.LC = window.LC || {};
       // ...trailing a bright arc
       var key = this.dir === 'left' || this.dir === 'right' ? 'slash_right' : 'slash_' + this.dir;
       var arc = this.add.image(cx, cy, key).setDepth(p.y + 2).setFlipX(this.dir === 'left').setAlpha(0.95);
-      if (keris || sl.id === 'trisula') arc.setTint(keris ? 0xffe8a0 : 0x8fe8ff).setBlendMode(Phaser.BlendModes.ADD);
-      this.tweens.add({ targets: arc, alpha: 0, scale: 1.25, duration: 180, onComplete: function () { arc.destroy(); } });
+      if (wp.slashColor || keris || sl.id === 'trisula') arc.setTint(wp.slashColor || (keris ? 0xffe8a0 : 0x8fe8ff)).setBlendMode(Phaser.BlendModes.ADD);
+      if (wide) arc.setScale(1.2);
+      this.tweens.add({ targets: arc, alpha: 0, scale: wide ? 1.65 : 1.25, duration: 180, onComplete: function () { arc.destroy(); } });
       this.tweens.add({ targets: p, x: p.x + d[0] * 2, y: p.y + d[1] * 2, scaleY: 0.92, duration: 60, yoyo: true });
       var dmg = LC.State.weaponDamage(wp), hit = false;
       this.enemies.forEach(function (e) {
         if (e.dead || e.away) return;
         var ex = e.spr.x - p.x, ey = (e.spr.y - e.spr.height / 2) - (p.y - 8), dist = Math.hypot(ex, ey);
         if (dist > wp.reach + e.def.w + 4) return;
-        if (dist > 10 && (ex * d[0] + ey * d[1]) / dist < 0.15) return;   // only what is in front of you
+        if (dist > 10 && (ex * d[0] + ey * d[1]) / dist < arcLimit) return;
         hit = true;
         var stone = e.stoneT > 0, n = stone ? dmg * 2 : dmg;
+        var stagger = !stone && wp.stagger && !e.def.boss && !e.g.fixed;
         e.hp -= n; e.hurtT = 0.1; e.spr.setTintFill(0xffffff);
-        if (!stone) { var k = e.def.boss ? 60 : 170; e.kx = (ex / (dist || 1)) * k; e.ky = (ey / (dist || 1)) * k; e.windT = 0; }
+        if (!stone) {
+          var k = (e.def.boss ? 60 : 170) * (wp.shove || 1);
+          e.kx = (ex / (dist || 1)) * k; e.ky = (ey / (dist || 1)) * k; e.windT = 0;
+        }
+        if (stagger) { e.staggerT = wp.stagger; e.strikeT = 0; }
         var hx = e.spr.x - ex / (dist || 1) * 4, hy = e.spr.y - e.spr.height / 2;
         var spark = self.add.image(hx, hy, 'hitfx').setDepth(9600).setBlendMode(Phaser.BlendModes.ADD).setScale(0.4).setAngle(Math.random() * 90);
         self.tweens.add({ targets: spark, scale: 1.1, alpha: 0, duration: 170, onComplete: function () { spark.destroy(); } });
         self.fx.sparkle.explode(stone ? 3 : 5, hx, hy);
         if (stone) self.fx.pebble.explode(6, hx, hy);
-        self.ui.floatText(e.spr.x, e.spr.y - e.spr.height - 2, (stone ? 'CRACK! ' : '') + n, stone ? '#cfd8ff' : '#fff2b0');
+        self.ui.floatText(e.spr.x, e.spr.y - e.spr.height - 2, (stone ? 'CRACK! ' : stagger ? 'Stagger! ' : '') + n, stone ? '#cfd8ff' : '#fff2b0');
         if (e.hp <= 0) self.enemyDie(e);
       });
       if (hit) { LC.Audio.sfx('hit'); this.cameras.main.shake(70, 0.002); this.hitStop = 0.05; }
+    },
+    fireWeapon: function (wp, aim) {
+      var p = this.player, d = DIRV[this.dir] || DIRV.down;
+      var dx = d[0], dy = d[1];
+      if (aim && Math.hypot(aim.x - p.x, aim.y - (p.y - 10)) > 1) {
+        var a = Math.atan2(aim.y - (p.y - 10), aim.x - p.x);
+        dx = Math.cos(a); dy = Math.sin(a);
+      }
+      var x = p.x + dx * 8, y = p.y - 10 + dy * 4;
+      var im = this.add.image(x, y, wp.shot).setDepth(9500).setRotation(Math.atan2(dy, dx));
+      this.weaponShots.push({ img: im, dx: dx, dy: dy, left: wp.range, wp: wp, targets: new Set(), hits: wp.hits || 1 });
+      LC.Audio.sfx(wp.shotSound || 'throw');
+      this.fx.smoke.explode(2, x, y);
+      this.tweens.add({ targets: p, x: p.x - dx * 2, y: p.y - dy * 2, duration: 50, yoyo: true });
+    },
+    updateWeaponShots: function (dt) {
+      var shots = this.weaponShots;
+      for (var i = shots.length - 1; i >= 0; i--) {
+        var shot = shots[i];
+        if (this.advanceWeaponShot(shot, dt)) continue;
+        shots.splice(i, 1);
+        shot.img.destroy();
+      }
+    },
+    advanceWeaponShot: function (shot, dt) {
+      var im = shot.img, distance = Math.min(shot.left, shot.wp.speed * dt);
+      shot.left -= distance;
+      // Sweep in small steps so a fast arrow cannot skip a wall or an enemy between frames.
+      while (distance > 0) {
+        var step = Math.min(4, distance);
+        distance -= step;
+        im.x += shot.dx * step; im.y += shot.dy * step;
+        var tx = Math.floor(im.x / TILE), ty = Math.floor((im.y + 9) / TILE);
+        if (tx < 0 || ty < 0 || tx >= this.W || ty >= this.H) return false;
+        if (this.solid[ty][tx] && (this.objAt[ty][tx] || !LC.WATER_TILES[this.grid[ty][tx]])) {
+          this.fx.pebble.explode(3, im.x, im.y);
+          return false;
+        }
+        var enemy = this.enemies.find(function (e) {
+          return !e.dead && !e.away && !shot.targets.has(e) &&
+            Math.hypot(e.spr.x - im.x, e.spr.y - e.spr.height / 2 - im.y) < e.def.w + 6;
+        });
+        if (enemy) {
+          shot.targets.add(enemy);
+          this.weaponShotHit(enemy, shot);
+          if (--shot.hits === 0) return false;
+        }
+      }
+      return shot.left > 0;
+    },
+    weaponShotHit: function (e, shot) {
+      var stone = e.stoneT > 0, dmg = LC.State.weaponDamage(shot.wp), n = stone ? dmg * 2 : dmg;
+      var slow = !stone && shot.wp.slow && !e.def.boss && !e.g.fixed;
+      e.hp -= n; e.hurtT = 0.1; e.spr.setTintFill(0xffffff);
+      if (!stone) {
+        var k = e.def.boss ? 30 : 90;
+        e.kx = shot.dx * k; e.ky = shot.dy * k; e.windT = 0;
+      }
+      var hx = shot.img.x, hy = shot.img.y;
+      if (slow) { e.slowT = shot.wp.slow; this.shockwave(hx, hy, 18, 0xffbd78); }
+      var spark = this.add.image(hx, hy, 'hitfx').setDepth(9600).setBlendMode(Phaser.BlendModes.ADD).setScale(0.3).setAngle(Math.random() * 90);
+      this.tweens.add({ targets: spark, scale: 0.9, alpha: 0, duration: 150, onComplete: function () { spark.destroy(); } });
+      this.fx.sparkle.explode(stone ? 3 : 4, hx, hy);
+      this.ui.floatText(e.spr.x, e.spr.y - e.spr.height - 2, (stone ? 'CRACK! ' : slow ? 'Slow! ' : '') + n, stone ? '#cfd8ff' : '#fff2b0');
+      LC.Audio.sfx('hit'); this.hitStop = 0.03;
+      if (e.hp <= 0) this.enemyDie(e);
     },
     enemyDie: function (e) {
       var self = this, S = this.S, D = e.def, s = e.spr, got = [], icon = null;

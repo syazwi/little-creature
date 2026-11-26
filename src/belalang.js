@@ -26,7 +26,7 @@ window.LC = window.LC || {};
   addItems({
     belalang_anyam: { name: 'Belalang Anyaman', kind: 'treasure', desc: 'A little grasshopper woven from strips of coconut leaf, the way the children of Tanjung Bunga make them. It is dusted with Pelita\'s gold.' },
     peti_diraja: { name: 'Peti Pusaka Diraja', kind: 'treasure', desc: 'The royal heirloom chest of Tanjung Bunga: carved, gilded, and heavy. Something inside rattles. (Slippers, probably.)' },
-    sumpit: { name: 'Sumpit', kind: 'weapon', ranged: true, dmg: 3, reach: 16, range: 168, speed: 300, cd: 0.62, desc: 'Belalang\'s blowpipe, made by his grandfather from a straight length of bamboo. Hold it and press USE to shoot a dart at whatever is in front of you, far away.' }
+    sumpit: { name: 'Sumpit', kind: 'weapon', ranged: true, dmg: 3, reach: 16, range: 168, speed: 300, cd: 0.62, shot: 'damak10', desc: 'Belalang\'s blowpipe, made by his grandfather from a straight length of bamboo. Hold it and press USE to shoot a dart at whatever is in front of you, far away.' }
   });
   ['belalang_anyam', 'peti_diraja', 'sumpit'].forEach(function (id) { LC.FIXED_ITEMS[id] = 1; });
 

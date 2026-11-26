@@ -95,9 +95,11 @@ window.LC = window.LC || {};
         return true;
       }
       if (t.kind === 'enemy') {
-        if (Math.hypot(t.x - p.x, t.y - p.y) > 64) { this.tapTooFar(); return true; }
+        var weapon = this.weaponOf(sl), reach = weapon && weapon.ranged ? weapon.range : 64;
+        if (Math.hypot(t.x - p.x, t.y - p.y) > reach) { this.tapTooFar(); return true; }
         this.tapLook(dirTo(t.x - p.x, t.y - p.y));
-        if (this.weaponOf(sl)) this.attack(); else this.toast('Hold a weapon (or the cangkul) in your hand to fight.', 'i_parang');
+        if (weapon) this.attack(weapon.ranged ? { x: t.x, y: t.y - t.e.spr.height / 2 } : undefined);
+        else this.toast('Hold a weapon (or the cangkul) in your hand to fight.', 'i_parang');
         return true;
       }
       var ptx = Math.floor(p.x / T), pty = Math.floor((p.y - 3) / T), d = Math.max(Math.abs(t.tx - ptx), Math.abs(t.ty - pty));

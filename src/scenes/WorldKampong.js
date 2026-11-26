@@ -88,6 +88,7 @@ window.LC = window.LC || {};
       var self = this, S = this.S, q = Q();
       switch (o.type) {
         case 'besi_forge': return { label: 'Kampong Pandai Besi smithy', fn: function () { self.ui.openBesiForge(); } };
+        case 'ayer_weapons': return { label: 'Kedai Senjata', fn: function () { self.ui.openAyerWeapons(); } };
         case 'perahu_race': return { label: 'Kampong Ayer boat race', fn: function () { self.ui.openPerahuRaceDock(); } };
         case 'kplot': {
           var built = (q.kaPlots || {})[o.id];

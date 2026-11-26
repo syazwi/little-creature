@@ -13,7 +13,7 @@ window.LC = window.LC || {};
 (function (LC) {
   'use strict';
   var T = 16, proto = LC.WorldScene.prototype, C10 = LC.C10, X = LC.CH10TEXT;
-  var DIRV = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }, ANG = { right: 0, down: 90, left: 180, up: -90 };
+  var DIRV = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
   var ADD = function () { return Phaser.BlendModes.ADD; };
   function Q() { return LC.State.s.quests; }
   function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
@@ -55,17 +55,11 @@ window.LC = window.LC || {};
     if (sum && sum.lines) for (var i = 0; i < sum.lines.length; i++) if (/^Pelita dozes off/.test(sum.lines[i])) sum.lines[i] = X.night;
     return sum;
   };
-  // the Sumpit shoots instead of swinging
-  var attack = proto.attack;
-  proto.attack = function () { var wp = this.weaponOf(LC.State.selItem()); return wp && wp.ranged ? this.shootDart(wp) : attack.apply(this, arguments); };
-  var getAction = proto.getAction;
-  proto.getAction = function () {
-    var a = getAction.apply(this, arguments);
-    if (a && a.swing) { var wp = this.weaponOf(LC.State.selItem()); if (wp && wp.ranged) a.label = 'Shoot the ' + wp.name; }
-    return a;
+  var fireWeapon = proto.fireWeapon;
+  proto.fireWeapon = function (wp) {
+    fireWeapon.apply(this, arguments);
+    if (wp.id === 'sumpit' && Math.random() < 0.3) this.ui.floatText(this.player.x, this.player.y - 28, pick(X.shoot), '#fff2b0');
   };
-  var updateEnemies = proto.updateEnemies;
-  proto.updateEnemies = function (time, dt, blocked) { updateEnemies.apply(this, arguments); if (!blocked && !this.leaving && !this.sleeping) this.updateDarts(dt); };
   // the Kerengga gang give up instead of fleeing into the wild, and never come back
   var enemyDie = proto.enemyDie;
   proto.enemyDie = function (e) { return gang(e.kind) ? this.gangDown(e) : enemyDie.apply(this, arguments); };
@@ -73,7 +67,6 @@ window.LC = window.LC || {};
     createBelalang: function () {
       var self = this, q = Q(), st = LC.ch10Step(), a = this.area;
       this.c10 = { tick: 1, hop: null, seek: null, pel: null, fol: null, prints: [], busy: false, camp: false, carry: false, bucket: null, holdGhost: false };
-      this.darts10 = [];
       var c = this.c10;
       if (a === 'farm' && st === 1 && (q.c10hop || 0) < C10.hops.length) this.showHop10(q.c10hop || 0);
       if (a === 'tanjung') {
@@ -467,52 +460,6 @@ window.LC = window.LC || {};
       }
       this.ui.say(this.ch2Lines(fin), { onLine: function (i) { if (i === settle && c.holdGhost) home(); if (i === settle + 1) self.cameras.main.flash(500, 255, 230, 160); }, onDone: end });
       var w = this.time.addEvent({ delay: 500, loop: true, callback: function () { if (done) { w.remove(); return; } if (!self.ui.isBlocking()) { w.remove(); end(); } } });
-    },
-
-    // ================================================================ the Sumpit
-    shootDart: function (wp) {
-      if (this.swingCd > 0) return;
-      this.swingCd = wp.cd;
-      var p = this.player, d = DIRV[this.dir] || DIRV.down, x = p.x + d[0] * 8, y = p.y - 10 + d[1] * 4;
-      var img = this.add.image(x, y, 'damak10').setDepth(9500).setAngle(ANG[this.dir] || 0);
-      this.darts10.push({ img: img, dx: d[0], dy: d[1], left: wp.range, wp: wp });
-      LC.Audio.sfx('throw');
-      this.fx.smoke.explode(2, x, y);
-      this.tweens.add({ targets: p, x: p.x - d[0] * 2, y: p.y - d[1] * 2, duration: 50, yoyo: true });
-      if (Math.random() < 0.3) this.ui.floatText(p.x, p.y - 28, pick(X.shoot), '#fff2b0');
-    },
-    updateDarts: function (dt) {
-      var self = this, list = this.darts10;
-      if (!list || !list.length) return;
-      for (var i = list.length - 1; i >= 0; i--) {
-        var D = list[i], im = D.img, step = D.wp.speed * dt, gone = false;
-        im.x += D.dx * step; im.y += D.dy * step; D.left -= step;
-        var tx = Math.floor(im.x / T), ty = Math.floor((im.y + 9) / T);
-        if (tx < 0 || ty < 0 || tx >= this.W || ty >= this.H) gone = true;
-        else if (this.solid[ty][tx] && !LC.WATER_TILES[this.grid[ty][tx]]) { gone = true; this.fx.pebble.explode(3, im.x, im.y); }
-        if (!gone) {
-          var hitE = null;
-          (this.enemies || []).forEach(function (e) { if (hitE || e.dead || e.away) return; if (Math.hypot(e.spr.x - im.x, (e.spr.y - e.spr.height / 2) - im.y) < e.def.w + 6) hitE = e; });
-          if (hitE) { this.dartHit(hitE, D); gone = true; }
-        }
-        if (gone || D.left <= 0) {
-          list.splice(i, 1);
-          if (gone) im.destroy(); else self.fadeOut10(im);
-        }
-      }
-    },
-    fadeOut10: function (im) { this.tweens.add({ targets: im, alpha: 0, duration: 160, onComplete: function () { im.destroy(); } }); },
-    dartHit: function (e, D) {
-      var stone = e.stoneT > 0, dmg = LC.State.weaponDamage(D.wp), n = stone ? dmg * 2 : dmg;
-      e.hp -= n; e.hurtT = 0.1; e.spr.setTintFill(0xffffff);
-      if (!stone) { var k = e.def.boss ? 30 : 90; e.kx = D.dx * k; e.ky = D.dy * k; e.windT = 0; }
-      var hx = D.img.x, hy = D.img.y;
-      var spark = this.add.image(hx, hy, 'hitfx').setDepth(9600).setBlendMode(ADD()).setScale(0.3).setAngle(Math.random() * 90);
-      this.tweens.add({ targets: spark, scale: 0.9, alpha: 0, duration: 150, onComplete: function () { spark.destroy(); } });
-      this.fx.sparkle.explode(stone ? 3 : 4, hx, hy);
-      this.ui.floatText(e.spr.x, e.spr.y - e.spr.height - 2, (stone ? 'CRACK! ' : '') + n, stone ? '#cfd8ff' : '#fff2b0');
-      LC.Audio.sfx('hit'); this.hitStop = 0.03;
-      if (e.hp <= 0) this.enemyDie(e);
     }
   });
   function S0() { return LC.State.s; }
