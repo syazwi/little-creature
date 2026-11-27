@@ -7,7 +7,7 @@ window.LC = window.LC || {};
   var T = 16;
   // how each kind of farm animal wanders (same shape as the critter table in World.js)
   var ACRIT = {
-    ayam:    { tex: 'chicken', idle: 'chicken_peck', walk: 'chicken_walk', speed: 16, w: 4, near: 8, r: 10, sfx: 'cluck', hop: true },
+    ayam:    { tex: 'chicken', idle: 'chicken_peck', walk: 'chicken_walk', speed: 16, w: 4, near: 8, r: 10, sfx: 'cluck', hop: true, fly: true },
     serama:  { tex: 'serama', idle: 'serama_peck', walk: 'serama_walk', speed: 18, w: 4, near: 8, r: 10, sfx: 'crow', hop: true },
     itik:    { tex: 'itik', idle: 'itik_peck', walk: 'itik_walk', speed: 12, w: 4, near: 8, r: 10, sfx: 'quack', hop: true },
     kambing: { tex: 'kambing', walk: 'kambing_walk', speed: 9, w: 8, near: 12, r: 14, sfx: 'bleat' },
@@ -74,7 +74,7 @@ window.LC = window.LC || {};
       (S.animals || []).forEach(function (an) {
         seen[an.id] = 1;
         var D = LC.ANIMALS[an.kind], C = critDef(an.kind), c = self.animalCrit[an.id];
-        if (c && c.akind !== an.kind) { c.spr.destroy(); self.critters.splice(self.critters.indexOf(c), 1); c = null; }   // a chick grew up
+        if (c && c.akind !== an.kind) { c.spr.destroy(); if (c.shadow) c.shadow.destroy(); self.critters.splice(self.critters.indexOf(c), 1); c = null; }   // a chick grew up
         if (c) return;
         var zone = LC.AREAS.farm.animalZone[D.home], p = self.randomFree(zone);
         var s = self.add.sprite(p.x, p.y, C.tex + '_0').setOrigin(0.5, 1).setDepth(p.y);
@@ -83,7 +83,7 @@ window.LC = window.LC || {};
       });
       Object.keys(this.animalCrit).forEach(function (id) {
         if (seen[id]) return;
-        var c = self.animalCrit[id]; c.spr.destroy(); self.critters.splice(self.critters.indexOf(c), 1); delete self.animalCrit[id];
+        var c = self.animalCrit[id]; c.spr.destroy(); if (c.shadow) c.shadow.destroy(); self.critters.splice(self.critters.indexOf(c), 1); delete self.animalCrit[id];
       });
     },
     animalAction: function (cr, sl, it) {

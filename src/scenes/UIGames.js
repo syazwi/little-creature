@@ -467,23 +467,35 @@ window.LC = window.LC || {};
       if (S.energy < 12) { this.toast('You are too tired to lift it. Eat something first.'); return; }
       S.liftDay = S.day; S.energy -= 12;
       var F = this.gameFrame('Batu Angkat', 520, 380), g = F.g, X = F.X, Y = F.Y, p = 0, sum = 0, n = 0, t0 = this.time.now, last = t0, over = false;
-      var stone = this.add.image(X + 260, Y + 230, 'batu_angkat').setScale(4).setOrigin(0.5, 1);
-      F.c.add(stone);
+      // v3.32: you, crouched gripping the stone, then holding it at your chest, then high over your head (art-silat.js)
+      var pc = this.world.pc || 0, pk = LC.Art.plKey(pc), K = 5, fx = X + 210, fy = Y + 258, stage = 0, endStage = -1;
+      LC.silatArt(this, pc);
+      var me = this.add.image(fx, fy, 'lift_' + pk + '_0').setScale(K).setOrigin(0.5, 1);
+      var stone = this.add.image(fx, fy, 'batu_angkat_s').setScale(K).setOrigin(0.5, 1);
+      F.c.add([me, stone]);
+      function pose(st, now, shake) {
+        if (st !== stage || me.texture.key !== 'lift_' + pk + '_' + st) { stage = st; me.setTexture('lift_' + pk + '_' + st); }
+        var h = LC.liftHold(st), jx = shake ? Math.round(Math.sin(now / 37) * shake) : 0;
+        me.setPosition(fx + jx, fy);
+        stone.setPosition(fx + jx + h[0] * K, fy + h[1] * K + (st === 2 ? Math.round(Math.sin(now / 90) * shake) : 0));
+      }
       F.msg.setText('Tap as fast as you can to lift the stone!');
       var close = this.runGame(F, function () { if (!over) { p = Math.min(1, p + 0.075); if (Math.random() < 0.3) LC.Audio.sfx('strain'); } }, function (now) {
         var dt = Math.min(0.05, (now - last) / 1000), el = (now - t0) / 1000; last = now;
         if (!over) {
           p = Math.max(0, p - 0.35 * dt); sum += p; n++;
-          stone.y = Y + 230 - p * 70; stone.setAngle(Math.sin(now / 60) * p * 3);
+          pose(p < 0.34 ? 0 : p < 0.67 ? 1 : 2, now, p > 0.15 ? 1 + p * 2 : 0);
           if (el >= 5) {
             over = true; var avg = sum / n, gain = avg < 0.3 ? 1 : avg < 0.5 ? 2 : avg < 0.7 ? 3 : 4, got = LC.State.gainStr(gain);
             LC.Audio.sfx(gain >= 3 ? 'cheer' : 'levelup');
+            endStage = gain >= 3 ? 2 : 0;
             F.msg.setText((gain >= 3 ? 'You hold it high above your head!' : 'You heave it up... and down. Oof.') + '  +' + got + ' strength').setColor('#b8f0c8');
             self.time.delayedCall(1500, function () { close(); self.toast('Training done! Strength ' + Math.floor(S.str) + ' / ' + LC.STR_MAX + '.', 'ic_str'); });
           }
-        }
+        } else pose(endStage, now, 0);
         g.clear();
-        self.bar(g, X + 80, Y + 270, 360, 18, p, p > 0.7 ? 0x9be15d : 0xffd166);
+        g.fillStyle(0x5a4a3a, 0.5); g.fillRect(X + 110, fy, 300, 4);   // the ground
+        self.bar(g, X + 80, Y + 274, 360, 18, p, p > 0.7 ? 0x9be15d : 0xffd166);
         self.bar(g, X + 80, Y + 60, 360, 6, Math.min(1, (now - t0) / 5000), 0xb8a8ff);
       });
     },
@@ -492,27 +504,49 @@ window.LC = window.LC || {};
       if (S.silatDay === S.day) { this.toast('Kesuma: "Rest now. A tired body learns nothing. Tomorrow!"'); return; }
       if (S.energy < 10) { this.toast('Kesuma: "You can barely stand! Eat first."'); return; }
       S.silatDay = S.day; S.energy -= 10;
-      var F = this.gameFrame('Silat with Kesuma', 560, 400), g = F.g, X = F.X, Y = F.Y, beats = 8, k = 0, score = 0, t0 = this.time.now, gap = 0.9, over = false, hitK = -1, drumK = -1;
-      var who = this.add.image(X + 140, Y + 230, 'npc_kesuma_0').setScale(5).setOrigin(0.5, 1), me = this.add.image(X + 420, Y + 230, LC.Art.plKey(this.world.pc || 0) + '_side_0').setScale(5).setOrigin(0.5, 1).setFlipX(true);
-      F.c.add([who, me]);
-      F.msg.setText('Follow the drum: tap when the ring meets the circle.');
+      var F = this.gameFrame('Silat with Kesuma', 560, 400), g = F.g, X = F.X, Y = F.Y, beats = 8, k = 0, score = 0, t0 = this.time.now, gap = 1.05, over = false, hitK = -1, drumK = -1;
+      // v3.32: every beat is a move of its own (LC.SILAT_MOVES: the salute, the horse stance, a punch, a parry, a kick,
+      // a lean away, a sweep, a lock). Kesuma shows it as the ring closes; you follow it on the beat, or lose your balance.
+      var pc = this.world.pc || 0, pk = LC.Art.plKey(pc), MV = LC.SILAT_MOVES, mine = { id: 'ready', until: 0 }, LUNGE = { tumbuk: 1, tendang: 1, kunci: 1, sapu: 1 }, hits = [];
+      LC.silatArt(this, pc);
+      var who = this.add.image(X + 150, Y + 246, 'silat_kesuma_ready').setScale(5).setOrigin(0.5, 1), me = this.add.image(X + 410, Y + 246, 'silat_' + pk + '_ready').setScale(5).setOrigin(0.5, 1).setFlipX(true);
+      var tMove = this.txt(X + 280, Y + 58, '', 22, '#ffd166', { ox: 0.5, stroke: 4 }), tWhat = this.txt(X + 280, Y + 86, '', 14, '#fbecc8', { ox: 0.5, stroke: 3 });
+      F.c.add([who, me, tMove, tWhat]);
+      F.msg.setText('Follow Kesuma: tap when the ring meets the circle.');
       function beatT(i) { return 1.2 + i * gap; }
+      function myPose(id, ms) {
+        mine = { id: id, until: self.time.now + ms };
+        me.setTexture('silat_' + pk + '_' + id);
+        if (LUNGE[id]) { self.tweens.killTweensOf(me); me.x = X + 410; self.tweens.add({ targets: me, x: me.x - 14, duration: 110, yoyo: true }); }
+      }
       var close = this.runGame(F, function () {
         if (over) return;
         var el = (self.time.now - t0) / 1000, d = Math.abs(el - beatT(k));
-        if (d < 0.32) { var pts = d < 0.12 ? 1 : 0.5; score += pts; hitK = k; F.msg.setText(pts === 1 ? 'Tepat! (perfect)' : 'Bagus! (good)').setColor('#b8f0c8'); self.tweens.add({ targets: me, x: me.x - 12, duration: 90, yoyo: true }); LC.Audio.sfx('hit'); k++; }
-        else { F.msg.setText('Too early!').setColor('#ff8a7a'); }
+        if (d < 0.32) { var pts = d < 0.12 ? 1 : 0.5; score += pts; hitK = k; hits[k] = true; F.msg.setText((pts === 1 ? 'Tepat! (perfect) ' : 'Bagus! (good) ') + MV[k].name + '!').setColor('#b8f0c8'); myPose(MV[k].id, 520); LC.Audio.sfx('hit'); k++; }
+        else { F.msg.setText('Too early!').setColor('#ff8a7a'); myPose('wobble', 380); }
       }, function (now) {
         var el = (now - t0) / 1000;
-        if (!over && el > beatT(k) + 0.32) { if (hitK !== k) F.msg.setText('Missed the beat!').setColor('#ff8a7a'); k++; }
+        if (!over && el > beatT(k) + 0.32) { if (hitK !== k) { F.msg.setText('Missed the beat! (' + MV[k].name + ')').setColor('#ff8a7a'); myPose('wobble', 450); } k++; }
+        // Kesuma: the coming move as the ring closes, ready in between; both bow at the end
+        if (!over) {
+          var show = k < beats && el >= beatT(k) - 0.6 ? MV[k] : k > 0 && el < beatT(k - 1) + 0.3 ? MV[k - 1] : null, kt = 'silat_kesuma_' + (show ? show.id : 'ready');
+          if (who.texture.key !== kt) {
+            who.setTexture(kt);
+            if (show && LUNGE[show.id]) { self.tweens.killTweensOf(who); who.x = X + 150; self.tweens.add({ targets: who, x: who.x + 14, duration: 110, yoyo: true }); }
+          }
+          var lbl = k < beats ? MV[k] : null;
+          if (lbl && tMove.text !== (k + 1) + '. ' + lbl.name) { tMove.setText((k + 1) + '. ' + lbl.name); tWhat.setText(lbl.what); }
+          if (mine.id !== 'ready' && now > mine.until) { mine.id = 'ready'; me.setTexture('silat_' + pk + '_ready'); }
+        }
         if (!over && k < beats && el >= beatT(k) - 0.03 && drumK !== k) { drumK = k; LC.Audio.sfx('drum'); }
         g.clear();
         g.lineStyle(3, 0xffd166, 1); g.strokeCircle(X + 280, Y + 170, 26);
         if (!over && k < beats) { var r = 26 + Math.max(0, (beatT(k) - el)) * 90; g.lineStyle(2, 0xfbecc8, 0.9); g.strokeCircle(X + 280, Y + 170, r); }
-        for (var i = 0; i < beats; i++) { g.fillStyle(i < k ? 0x9be15d : 0x5a4a3a, 1); g.fillCircle(X + 180 + i * 28, Y + 280, 7); }
+        for (var i = 0; i < beats; i++) { g.fillStyle(i >= k ? 0x5a4a3a : hits[i] ? 0x9be15d : 0xe76f51, 1); g.fillCircle(X + 180 + i * 28, Y + 280, 7); }
         if (!over && k >= beats) {
           over = true; var gain = Math.max(1, Math.min(5, 1 + Math.floor(score / 2))), got = LC.State.gainStr(gain);
           LC.Audio.sfx('cheer');
+          who.setTexture('silat_kesuma_sembah'); me.setTexture('silat_' + pk + '_sembah'); tMove.setText('Sembah'); tWhat.setText('you bow to each other');
           F.msg.setText('Kesuma nods. "Good." (+' + got + ' strength)').setColor('#b8f0c8');
           self.time.delayedCall(1500, function () { close(); self.toast('Silat training done! Strength ' + Math.floor(S.str) + ' / ' + LC.STR_MAX + '.', 'ic_str'); });
         }

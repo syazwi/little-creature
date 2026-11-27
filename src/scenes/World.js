@@ -19,7 +19,7 @@ window.LC = window.LC || {};
 
   // wandering animals. near: how close they let you get; r: how close you must be to pet them
   var CRIT = {
-    chicken: { idle: 'chicken_peck', walk: 'chicken_walk', speed: 16, w: 4, near: 8, r: 10, sfx: 'cluck', hop: true },
+    chicken: { idle: 'chicken_peck', walk: 'chicken_walk', speed: 16, w: 4, near: 8, r: 10, sfx: 'cluck', hop: true, fly: true },   // (fly: v3.32, WorldPanic.js)
     kerbau: { walk: 'kerbau_walk', speed: 7, w: 10, near: 14, r: 16, sfx: 'moo' },
     kancil: { walk: 'kancil_walk', speed: 24, w: 6, near: 18, r: 12, sfx: 'pet', hop: true },
     ketam: { walk: 'ketam_walk', speed: 12, w: 4, near: 6, r: 9, sfx: 'click', hop: true },
@@ -806,11 +806,12 @@ window.LC = window.LC || {};
       var self = this;
       this.critters.forEach(function (c) {
         var s = c.spr, D = c.def;
+        if (c.fly) { self.flyCritter(c, dt); return; }   // v3.32: a chicken in the air (WorldPanic.js)
         if (c.wait > 0) {
           c.wait -= dt;
           if (D.idle && c.anim !== D.idle) { s.play(D.idle); c.anim = D.idle; }
           if (!D.idle && c.anim !== 'stand') { s.stop(); s.setTexture(c.kind + '_0'); c.anim = 'stand'; }
-          if (c.wait <= 0) { var p = self.randomFree(c.zone); c.tx = p.x; c.ty = p.y; }
+          if (c.wait <= 0) { var p = self.randomFree(c.zone); c.tx = p.x; c.ty = p.y; if (self.maybeFly) self.maybeFly(c); }
           return;
         }
         var dx = c.tx - s.x, dy = c.ty - s.y, d = Math.hypot(dx, dy);
@@ -819,7 +820,7 @@ window.LC = window.LC || {};
         var near = Math.hypot(nx - self.player.x, ny - self.player.y) < D.near;
         if (self.solidPx(nx - D.w, ny - 2) || self.solidPx(nx + D.w, ny - 2) || near) { c.wait = 0.6 + Math.random(); return; }
         s.x = nx; s.y = ny;
-        s.setFlipX(dx < 0);
+        s.setFlipX(LC.FACES_LEFT && LC.FACES_LEFT[c.kind] ? dx > 0 : dx < 0);   // (v3.32: the Sunnyside chicken and duck face left)
         if (c.anim !== D.walk) { s.play(D.walk); c.anim = D.walk; }
         s.setDepth(s.y);
       });

@@ -222,6 +222,7 @@ window.LC = window.LC || {};
     ['#8e5cc4', '#6c4398', '#8a5a2b', '#6b4423', '#b8794a', '#955d34']
   ];
   Art.OUTFIT_COLORS = OUTFITS.map(function (o) { return o[0]; });
+  Art.OUTFITS = OUTFITS;   // (v3.32: the silat and batu angkat poses, art-silat.js)
   function drawPlayer(p, dir, f, c) {
     var O = OUTFITS[c || 0];
     var HAT = '#ecd28a', HAT2 = '#cdb062', HAT3 = '#a88a44', HATL = '#f7e6b0';

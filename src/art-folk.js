@@ -434,6 +434,31 @@ window.LC = window.LC || {};
     }
     chibi(p, outfitLook(O6, c || 0), { dir: dir, step: f, headBob: 0 });
   };
+  // v3.32: your head, side on (the pack's standing frame: rows 23-33, x 43-54), as rows of colours (null: clear), and
+  // which pixels are hair, for the silat and batu angkat poses (art-silat.js). o.style and o.hair (old colour -> new)
+  // dress someone else in it (Kesuma).
+  Art.folkHead = function (c, O6, o) {
+    var M = LC.FOLK_MOVES; if (!M) return null;
+    o = o || {};
+    var w = 12, h = 11, style = o.style || PLAYER_STYLE[(c || 0) % 4], ppal = packPal(), a = M.anims.idle;
+    var all = { data: new Uint8ClampedArray(w * h * 4) }, hair = { data: new Uint8ClampedArray(w * h * 4) };
+    paintMove(all, w, h, 43, 23, a, 0, style, bodyPal(O6, ppal), ppal, false);
+    paintMove(hair, w, h, 43, 23, a, 0, style, {}, ppal, false);
+    var rows = [], mask = [];
+    for (var y = 0; y < h; y++) {
+      var r = [], m = [];
+      for (var x = 0; x < w; x++) {
+        var k = (y * w + x) * 4, isHair = hair.data[k + 3] > 0;
+        var col = all.data[k + 3] ? hex([all.data[k], all.data[k + 1], all.data[k + 2]]) : null;
+        if (col && isHair && o.hair && o.hair[col]) col = o.hair[col];
+        r.push(col); m.push(isHair && col !== O);
+      }
+      rows.push(r); mask.push(m);
+    }
+    return { w: w, h: h, rows: rows, hair: mask };
+  };
+  // the body colours by role (o outline, s / S / h skin, b blush, c / C shirt, p / P trousers, f shoes)
+  Art.folkBodyPal = function (O6) { return bodyPal(O6, {}); };
   // ------------------------------------------------------------------ the chapters' own characters, redrawn
   // Art.make() looks here first: a key listed here is drawn by chibi() instead of its old picture, on the same canvas.
   var FOLK = Art.FOLK = {};
