@@ -146,6 +146,27 @@ window.LC = window.LC || {};
     g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     s.connect(fl); fl.connect(g); g.connect(dest || A.sfxBus); s.start(t, Math.random()); s.stop(t + dur + 0.05);
   };
+  function graveGroan(t) {
+    var c = A.ctx, voice = c.createOscillator(), level = c.createGain(), pitch = 60 + Math.random() * 18;
+    voice.type = 'sawtooth';
+    voice.frequency.setValueAtTime(pitch, t);
+    voice.frequency.exponentialRampToValueAtTime(pitch * 1.28, t + 0.32);
+    voice.frequency.exponentialRampToValueAtTime(pitch * 0.72, t + 0.92);
+    [320, 810].forEach(function (f, i) {
+      var throat = c.createBiquadFilter();
+      throat.type = 'bandpass'; throat.Q.value = i ? 2 : 1.55;
+      throat.frequency.setValueAtTime(f, t);
+      throat.frequency.exponentialRampToValueAtTime(f * 0.72, t + 0.95);
+      voice.connect(throat); throat.connect(level);
+    });
+    level.gain.setValueAtTime(0.0001, t);
+    level.gain.exponentialRampToValueAtTime(0.2, t + 0.17);
+    level.gain.exponentialRampToValueAtTime(0.11, t + 0.47);
+    level.gain.exponentialRampToValueAtTime(0.17, t + 0.62);
+    level.gain.exponentialRampToValueAtTime(0.0001, t + 1.05);
+    level.connect(A.sfxBus); voice.start(t); voice.stop(t + 1.06);
+    A.noise(t + 0.56, 0.45, 0.065, 'bandpass', 480, 250);
+  }
 
   // ------------------------------------------------------------- nature ambience
   A.startRiver = function () {
@@ -395,6 +416,12 @@ window.LC = window.LC || {};
       case 'coin': A.bell(A.freq(9), t, 0.25, 0.08); A.bell(A.freq(11), t + 0.06, 0.35, 0.08); break;
       case 'chime': [0, 1, 2, 3, 5].forEach(function (d, k) { A.bell(A.freq(d + 5), t + k * 0.09, 1.2, 0.11); }); break;
       case 'familyBell': A.bell(1047, t, 1.25, 0.12); break;
+      case 'graveStir': A.noise(t, 0.32, 0.14, 'bandpass', 530, 230); A.noise(t + 0.14, 0.19, 0.08, 'lowpass', 280); break;
+      case 'graveGroan': graveGroan(t); break;
+      case 'duneSnore': A.noise(t, 1.02, 0.11, 'bandpass', 130, 210); A.tone(t + 0.29, 'sine', 68, 48, 0.68, 0.09); break;
+      case 'duneWake': A.tone(t, 'triangle', 74, 52, 0.73, 0.19); A.noise(t + 0.07, 0.56, 0.18, 'bandpass', 310, 160); break;
+      case 'duneSwing': A.noise(t, 0.35, 0.25, 'bandpass', 450, 1130); A.tone(t, 'sine', 155, 47, 0.34, 0.13); break;
+      case 'duneThud': A.tone(t, 'sine', 92, 26, 0.44, 0.34); A.noise(t + 0.02, 0.43, 0.24, 'lowpass', 640, 182); break;
       case 'familyBells': A.bell(1047, t, 1.1, 0.11); A.bell(698, t + 0.48, 1.55, 0.12); break;
       case 'familyTune': [0, 2, 3].forEach(function (d, k) {
         var f = A.freq(d + 1);

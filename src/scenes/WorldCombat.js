@@ -38,7 +38,7 @@ window.LC = window.LC || {};
       var D = LC.ENEMIES[g.kind], p = g.fixed ? this.tilePx(g.fixed) : this.randomFree(g.zone), pl = this.player;
       for (var k = 0; k < 8 && !g.fixed && !first && Math.hypot(p.x - pl.x, p.y - pl.y) < 110; k++) p = this.randomFree(g.zone);
       if (!e) {
-        var texture = D.texture || g.kind;
+        var texture = g.texture || D.texture || g.kind;
         e = { kind: g.kind, def: D, zone: g.zone, g: g };
         e.spr = this.add.sprite(p.x, p.y, texture + '_0').setOrigin(0.5, 1);
         e.spr.play(texture + '_walk');
@@ -74,6 +74,7 @@ window.LC = window.LC || {};
       var p = this.player;
       return !!(this.enemies && this.enemies.some(function (e) { return !e.dead && !e.away && Math.hypot(e.spr.x - p.x, e.spr.y - p.y) < r; }));
     },
+    enemyHitY: function (e) { return e.spr.y - (e.def.hitHeight || e.spr.height / 2); },
     weaponOf: function (sl) {
       if (!sl) return null;
       var it = LC.ITEMS[sl.id];
@@ -191,7 +192,7 @@ window.LC = window.LC || {};
       var dmg = LC.State.weaponDamage(wp), hit = false;
       this.enemies.forEach(function (e) {
         if (e.dead || e.away) return;
-        var ex = e.spr.x - p.x, ey = (e.spr.y - e.spr.height / 2) - (p.y - 8), dist = Math.hypot(ex, ey);
+        var ex = e.spr.x - p.x, ey = self.enemyHitY(e) - (p.y - 8), dist = Math.hypot(ex, ey);
         if (dist > wp.reach + e.def.w + 4) return;
         if (dist > 10 && (ex * d[0] + ey * d[1]) / dist < arcLimit) return;
         hit = true;
@@ -203,7 +204,7 @@ window.LC = window.LC || {};
           e.kx = (ex / (dist || 1)) * k; e.ky = (ey / (dist || 1)) * k; e.windT = 0;
         }
         if (stagger) { e.staggerT = wp.stagger; e.strikeT = 0; }
-        var hx = e.spr.x - ex / (dist || 1) * 4, hy = e.spr.y - e.spr.height / 2;
+        var hx = e.spr.x - ex / (dist || 1) * 4, hy = self.enemyHitY(e);
         var spark = self.add.image(hx, hy, 'hitfx').setDepth(9600).setBlendMode(Phaser.BlendModes.ADD).setScale(0.4).setAngle(Math.random() * 90);
         self.tweens.add({ targets: spark, scale: 1.1, alpha: 0, duration: 170, onComplete: function () { spark.destroy(); } });
         self.fx.sparkle.explode(stone ? 3 : 5, hx, hy);
@@ -237,7 +238,7 @@ window.LC = window.LC || {};
       }
     },
     advanceWeaponShot: function (shot, dt) {
-      var im = shot.img, distance = Math.min(shot.left, shot.wp.speed * dt);
+      var im = shot.img, distance = Math.min(shot.left, shot.wp.speed * dt), self = this;
       shot.left -= distance;
       // Sweep in small steps so a fast arrow cannot skip a wall or an enemy between frames.
       while (distance > 0) {
@@ -252,7 +253,7 @@ window.LC = window.LC || {};
         }
         var enemy = this.enemies.find(function (e) {
           return !e.dead && !e.away && !shot.targets.has(e) &&
-            Math.hypot(e.spr.x - im.x, e.spr.y - e.spr.height / 2 - im.y) < e.def.w + 6;
+            Math.hypot(e.spr.x - im.x, self.enemyHitY(e) - im.y) < e.def.w + 6;
         });
         if (enemy) {
           shot.targets.add(enemy);
@@ -305,7 +306,8 @@ window.LC = window.LC || {};
         return;
       }
       var sky = this.A.cave || this.A.underwater ? 'dark' : 'wild';
-      this.toast('The ' + D.name + (sky === 'dark' || e.kind === 'bayang' ? ' fades away into the dark.' : ' flees into the ' + (this.A.underwater ? 'deep.' : 'wild.')) + (got.length ? ' You found ' + got.join(' and ') + '.' : ''), icon || 'ic_moon');
+      var message = D.defeatText || 'The ' + D.name + (sky === 'dark' || e.kind === 'bayang' ? ' fades away into the dark.' : ' flees into the ' + (this.A.underwater ? 'deep.' : 'wild.'));
+      this.toast(message + (got.length ? ' You found ' + got.join(' and ') + '.' : ''), icon || 'ic_moon');
     },
 
     // ---------------------------------------------------------------- Sumpahan Batu: the stone curse (V)

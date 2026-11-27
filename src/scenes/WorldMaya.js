@@ -108,12 +108,13 @@ window.LC = window.LC || {};
     if (this.area === 'dalam19' && this.maya && this.maya.fight && !this.maya.fight.over && !this.leaving) { this.mayaLeaveFight(true); return; }
     return faint.apply(this, arguments);
   };
-  // the chapter's nights stay dark: Pelita's daylight (Lv 30) rests in the graveyard, the frightened kampung and the
-  // big house while the story is there (as it does in Chapter 9's fog)
+  // Keep the graveyard dark when its dead can rise, and preserve the chapter's night scenes elsewhere.
   W.mayaDark = function () {
     var s = step(this), a = this.area;
-    if (!night(this) || !C.ready(this.S) || s >= C.end) return false;
-    return (a === 'kubur19' && s >= 1 && s <= 3) || (a === 'kampung' && s === 4) || ((a === 'dalam19' || a === 'besar19') && (s === 6 || s === 7));
+    if (!night(this)) return false;
+    if (a === 'kubur19') return true;
+    if (!C.ready(this.S) || s >= C.end) return false;
+    return (a === 'kampung' && s === 4) || ((a === 'dalam19' || a === 'besar19') && (s === 6 || s === 7));
   };
   var updateLighting = W.updateLighting;
   W.updateLighting = function () {

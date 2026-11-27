@@ -98,7 +98,7 @@ window.LC = window.LC || {};
         var weapon = this.weaponOf(sl), reach = weapon && weapon.ranged ? weapon.range : 64;
         if (Math.hypot(t.x - p.x, t.y - p.y) > reach) { this.tapTooFar(); return true; }
         this.tapLook(dirTo(t.x - p.x, t.y - p.y));
-        if (weapon) this.attack(weapon.ranged ? { x: t.x, y: t.y - t.e.spr.height / 2 } : undefined);
+        if (weapon) this.attack(weapon.ranged ? { x: t.x, y: this.enemyHitY(t.e) } : undefined);
         else this.toast('Hold a weapon (or the cangkul) in your hand to fight.', 'i_parang');
         return true;
       }
