@@ -5,7 +5,7 @@ window.LC = window.LC || {};
   'use strict';
   var ACCEPT = { KeyE: 1, Space: 1, Enter: 1 };
 
-  LC.PXS = 3;   // v3.31: one pixel of the round buttons and the joystick, in screen pixels (see pxDisc)
+  LC.PIE = 36;   // v3.31.1: a cooldown sweeps round in this many steps (see circTex)
   LC.UIScene = class extends Phaser.Scene {
     constructor() { super('UI'); }
 
@@ -154,62 +154,51 @@ window.LC = window.LC || {};
       g.fillStyle(color, 1); g.fillRect(x + 1, y + 1, (w - 2) * frac, h - 2);
       g.fillStyle(0xffffff, 0.22); g.fillRect(x + 1, y + 1, (w - 2) * frac, Math.max(1, Math.floor(h / 3)));
     }
-    // v3.31: pixel-art circles (the owner: "the circle should be pixelated"). Drawn from square "pixels" of PXS screen
-    // pixels, about the size of the icons' pixels, as row spans: a disc, a ring (t pixels thick), a pie (a cooldown
-    // sweeping clockwise from the top) and an arc. r is the radius in screen pixels, as for fillCircle.
-    pxRows(rr) {
-      var C = LC.pxRowsCache || (LC.pxRowsCache = {});
-      if (!C[rr]) { var rows = []; for (var j = 0; j < 2 * rr; j++) { var y = j - rr + 0.5; rows.push(Math.round(Math.sqrt(Math.max(0, rr * rr - y * y)))); } C[rr] = rows; }
-      return C[rr];
-    }
-    pxDisc(g, x, y, r, color, alpha) {
-      var P = LC.PXS, rr = Math.max(2, Math.round(r / P)), rows = this.pxRows(rr), x0 = Math.round(x), y0 = Math.round(y) - rr * P;
-      g.fillStyle(color, alpha);
-      for (var j = 0; j < rows.length; j++) if (rows[j]) g.fillRect(x0 - rows[j] * P, y0 + j * P, rows[j] * 2 * P, P);
-    }
-    pxRing(g, x, y, r, color, alpha, t) {
-      t = t || 1;
-      var P = LC.PXS, rr = Math.max(t + 1, Math.round(r / P)), out = this.pxRows(rr), inn = this.pxRows(rr - t), x0 = Math.round(x), y0 = Math.round(y) - rr * P;
-      g.fillStyle(color, alpha);
-      for (var j = 0; j < out.length; j++) {
-        var ho = out[j], ji = j - t, hi = ji >= 0 && ji < inn.length ? inn[ji] : 0, yy = y0 + j * P;
-        if (!ho) continue;
-        if (hi <= 0) g.fillRect(x0 - ho * P, yy, ho * 2 * P, P);
-        else if (ho > hi) { g.fillRect(x0 - ho * P, yy, (ho - hi) * P, P); g.fillRect(x0 + hi * P, yy, (ho - hi) * P, P); }
+    // v3.31.1: smooth round buttons (the owner: "should be perfect circle"). The game runs in pixel-art mode, where
+    // Phaser draws Graphics circles without smoothing and the phone then enlarges the whole canvas pixel by pixel, so
+    // circles came out jagged. These are drawn once on a canvas, which smooths the edge, kept as white textures and
+    // tinted. circTex(kind, r, t) makes one: 'disc', 'ring' (t px thick, centred on r like strokeCircle), 'pie' (t of
+    // PIE steps of a disc, clockwise from the top: a cooldown) or 'swap' (the round arrow). circLayer(depth) draws them
+    // frame by frame like a Graphics (begin, disc / ring / pie / tex, end); it reuses its images in the same order, so
+    // a later call is drawn on top.
+    circTex(kind, r, t) {
+      r = Math.max(1, Math.round(r)); t = t || 0;
+      var key = 'circ_' + kind + '_' + r + '_' + t;
+      if (this.textures.exists(key)) return key;
+      var m = r + Math.ceil(t / 2) + (kind === 'swap' ? 9 : 3), sz = 2 * m, c = this.textures.createCanvas(key, sz, sz), x = c.getContext(), T = Math.PI * 2;
+      x.fillStyle = x.strokeStyle = '#ffffff';
+      x.beginPath();
+      if (kind === 'disc') { x.arc(m, m, r, 0, T); x.fill(); }
+      else if (kind === 'ring') { x.lineWidth = t; x.arc(m, m, r, 0, T); x.stroke(); }
+      else if (kind === 'pie') { var a0 = -Math.PI / 2; x.moveTo(m, m); x.arc(m, m, r, a0, a0 + t / LC.PIE * T); x.closePath(); x.fill(); }
+      else if (kind === 'swap') {   // over the top, pointing clockwise
+        var e0 = Math.PI * 1.08, e1 = Math.PI * 1.9, hx = m + Math.cos(e1) * r, hy = m + Math.sin(e1) * r;
+        x.lineWidth = 2.5; x.lineCap = 'round'; x.arc(m, m, r, e0, e1); x.stroke();
+        x.beginPath(); x.moveTo(hx + 6, hy - 1); x.lineTo(hx - 3, hy - 6); x.lineTo(hx - 1, hy + 6); x.closePath(); x.fill();
       }
+      c.refresh();
+      c.setFilter(Phaser.Textures.FilterMode.LINEAR);
+      return key;
     }
-    // the pixels of a disc (ring: only its outer t pixels) whose angle (0 at the top, clockwise) is from a0 to a1, as
-    // [row, x, width] runs, kept for next time
-    pxSpans(rr, a0, a1, ring) {
-      var C = LC.pxSpanCache || (LC.pxSpanCache = {}), key = rr + ':' + a0.toFixed(3) + ':' + a1.toFixed(3) + ':' + (ring || 0);
-      if (C[key]) return C[key];
-      var rows = this.pxRows(rr), inn = ring ? this.pxRows(rr - ring) : null, sp = [], T = Math.PI * 2;
-      for (var j = 0; j < rows.length; j++) {
-        var h = rows[j], yy = j - rr + 0.5, ji = j - (ring || 0), hi = inn && ji >= 0 && ji < inn.length ? inn[ji] : 0, run = null;
-        for (var i = -h; i < h; i++) {
-          var xx = i + 0.5, a = Math.atan2(xx, -yy); if (a < 0) a += T;
-          var inside = (!ring || i < -hi || i >= hi) && (a0 <= a1 ? a >= a0 && a <= a1 : a >= a0 || a <= a1);
-          if (inside && run && run[1] + run[2] === i) run[2]++;
-          else if (inside) { if (run) sp.push(run); run = [j, i, 1]; }
-        }
-        if (run) sp.push(run);
+    circLayer(depth) {
+      var self = this, imgs = [], n = 0;
+      function put(key, x, y, color, alpha) {
+        var im = imgs[n++];
+        if (!im) { im = self.add.image(0, 0, key).setDepth(depth); imgs.push(im); }
+        if (im.texture.key !== key) im.setTexture(key);
+        return im.setPosition(Math.round(x), Math.round(y)).setTint(color).setAlpha(alpha).setVisible(true);
       }
-      return (C[key] = sp);
-    }
-    pxDraw(g, x, y, rr, sp, color, alpha) {
-      var P = LC.PXS, x0 = Math.round(x), y0 = Math.round(y) - rr * P;
-      g.fillStyle(color, alpha);
-      sp.forEach(function (s) { g.fillRect(x0 + s[1] * P, y0 + s[0] * P, s[2] * P, P); });
-    }
-    pxPie(g, x, y, r, f, color, alpha) {
-      if (f <= 0) return;
-      if (f >= 0.999) { this.pxDisc(g, x, y, r, color, alpha); return; }
-      var rr = Math.max(2, Math.round(r / LC.PXS));
-      this.pxDraw(g, x, y, rr, this.pxSpans(rr, 0, Math.round(f * 48) / 48 * Math.PI * 2), color, alpha);
-    }
-    pxArc(g, x, y, r, a0, a1, color, alpha) {   // a 1-pixel ring from angle a0 to a1 (radians, 0 at the top, clockwise)
-      var rr = Math.max(2, Math.round(r / LC.PXS));
-      this.pxDraw(g, x, y, rr, this.pxSpans(rr, a0, a1, 1), color, alpha);
+      return {
+        begin: function () { n = 0; },
+        disc: function (x, y, r, color, alpha) { return put(self.circTex('disc', r), x, y, color, alpha); },
+        ring: function (x, y, r, color, alpha, t) { return put(self.circTex('ring', r, t || 2), x, y, color, alpha); },
+        pie: function (x, y, r, f, color, alpha) {
+          var k = Math.round(Math.max(0, Math.min(1, f)) * LC.PIE);
+          if (k > 0) put(k >= LC.PIE ? self.circTex('disc', r) : self.circTex('pie', r, k), x, y, color, alpha);
+        },
+        tex: function (key, x, y, color, alpha) { return put(key, x, y, color, alpha); },
+        end: function () { for (var i = n; i < imgs.length; i++) imgs[i].setVisible(false); }
+      };
     }
 
     // ================================================================ HUD
@@ -234,7 +223,7 @@ window.LC = window.LC || {};
       var px = this.PX = 960 - 286, py = this.PY = 12;
       var pg = this.add.graphics();
       this.panel(pg, px, py, 274, 212);
-      this.pxDisc(pg, px + 50, py + 68, 39, 0x3b2f5c, 1); this.pxRing(pg, px + 50, py + 68, 39, 0xb8a8ff, 0.8);
+      var pDisc = this.add.image(px + 50, py + 68, this.circTex('disc', 38)).setTint(0x3b2f5c), pRing = this.add.image(px + 50, py + 68, this.circTex('ring', 38, 2)).setTint(0xa494e6);
       this.portrait = this.add.image(px + 50, py + 66, 'ghost_0_normal').setScale(3);
       var tName = this.txt(px + 100, py + 14, 'Pelita', 22, '#e8dcff');
       this.tStage = this.txt(px + 100, py + 42, '', 14, '#b8a8ff');
@@ -248,9 +237,9 @@ window.LC = window.LC || {};
       // you are fighting, go underneath. (The bubble is made before the bars, so they draw on top of it.)
       var sx = this.PSX = 960 - 12 - 96, sg = this.add.graphics();
       this.panel(sg, sx, 12, 96, 128);
-      this.pxDisc(sg, sx + 48, 56, 30, 0x3b2f5c, 1); this.pxRing(sg, sx + 48, 56, 30, 0xb8a8ff, 0.8);
+      var sDisc = this.add.image(sx + 48, 56, this.circTex('disc', 30)).setTint(0x3b2f5c), sRing = this.add.image(sx + 48, 56, this.circTex('ring', 30, 2)).setTint(0xa494e6);
       this.gfx = this.add.graphics();
-      this.pin('tr', [pg, this.portrait, tName, this.tStage].concat(needIcons, [this.tBond, this.tCrave, this.icCrave, this.gfx]));
+      this.pin('tr', [pg, pDisc, pRing, this.portrait, tName, this.tStage].concat(needIcons, [this.tBond, this.tCrave, this.icCrave, this.gfx]));
       this.portraitS = this.add.image(sx + 48, 55, 'ghost_0_normal').setScale(2.2);
       var zFull = this.add.zone(px, py, 274, 212).setOrigin(0).setInteractive({ useHandCursor: true }),
         zSmall = this.add.zone(sx, 12, 96, 128).setOrigin(0).setInteractive({ useHandCursor: true });
@@ -258,8 +247,8 @@ window.LC = window.LC || {};
         z.isTouchBtn = true;
         z.on('pointerdown', function () { if (!self.modal) { self.setPelitaSmall(!self.pelitaSmall); LC.Audio.sfx('click'); } });
       });
-      this.pelitaCard = { full: [pg, this.portrait, tName, this.tStage].concat(needIcons, [this.tBond, this.tCrave, this.icCrave]), small: [sg, this.portraitS], zFull: zFull, zSmall: zSmall, alpha: 1 };
-      this.pin('tr', [sg, this.portraitS, zFull, zSmall]);
+      this.pelitaCard = { full: [pg, pDisc, pRing, this.portrait, tName, this.tStage].concat(needIcons, [this.tBond, this.tCrave, this.icCrave]), small: [sg, sDisc, sRing, this.portraitS], zFull: zFull, zSmall: zSmall, alpha: 1 };
+      this.pin('tr', [sg, sDisc, sRing, this.portraitS, zFull, zSmall]);
       this.tCoop = this.txt(480, 50, '', 14, '#b8f0c8', { ox: 0.5, stroke: 4 });
       this.pin('tc', [this.tCoop]);
       this.nameTags = {};
@@ -403,24 +392,28 @@ window.LC = window.LC || {};
       var g = this.stickG, s = this.stick, show = this.touchOn && !this.modal && !this.world.sleeping;
       if (this.modal || !this.touchOn) s.id = -1;
       g.clear();
+      var L = this.stickL || (this.stickL = this.circLayer(70));   // (smooth circles: see circTex)
+      L.begin();
       if (show) {
         var bx = s.id === -1 ? this.stickHome.x : s.bx, by = s.id === -1 ? this.stickHome.y : s.by;
-        this.pxDisc(g, bx, by, 57, 0x1e1510, s.id === -1 ? 0.25 : 0.45);
-        this.pxRing(g, bx, by, 57, 0xd9a94e, s.id === -1 ? 0.35 : 0.8);
+        L.disc(bx, by, 58, 0x1e1510, s.id === -1 ? 0.25 : 0.45);
+        L.ring(bx, by, 58, 0xd9a94e, s.id === -1 ? 0.35 : 0.8, 2);
         var kx = s.id === -1 ? bx : s.x, ky = s.id === -1 ? by : s.y;
         var dx = kx - bx, dy = ky - by, d = Math.hypot(dx, dy);
         if (d > 56) { kx = bx + dx / d * 56; ky = by + dy / d * 56; }
-        this.pxDisc(g, kx, ky, 24, 0xf2d06b, s.id === -1 ? 0.3 : 0.85);
-        this.pxRing(g, kx, ky, 24, 0xb8863a, s.id === -1 ? 0.3 : 0.9);
+        L.disc(kx, ky, 24, 0xf2d06b, s.id === -1 ? 0.3 : 0.85);
       }
+      L.end();
       var bright = this.lastBright, modal = !!this.modal, touch = this.touchOn, self = this;
       this.tBtns.forEach(function (b) {
         var vis = (b.always && !(b.touchOnly && (!touch || modal))) || show;
-        b.g.clear(); b.t.setVisible(vis); b.hit.setVisible(vis);
-        if (!vis) return;
+        var BL = b.L || (b.L = self.circLayer(b.always ? 110 : 70));
+        b.g.clear(); b.t.setVisible(vis); b.hit.setVisible(vis); BL.begin();
+        if (!vis) { BL.end(); return; }
         var hot = b.code === 'KeyE' && bright;
-        self.pxDisc(b.g, b.x, b.y, b.r, hot ? 0x5a4024 : 0x1e1510, b.down ? 0.95 : 0.7);
-        self.pxRing(b.g, b.x, b.y, b.r, hot ? 0xffd166 : 0xd9a94e, 0.95, hot ? 2 : 1);
+        BL.disc(b.x, b.y, b.r, hot ? 0x5a4024 : 0x1e1510, b.down ? 0.95 : 0.7);
+        BL.ring(b.x, b.y, b.r, hot ? 0xffd166 : 0xd9a94e, 0.95, hot ? 3 : 2);
+        BL.end();
         if (b.always && !b.touchOnly) b.t.setText(modal ? 'X' : 'II');
       });
     }
