@@ -1,4 +1,4 @@
-/* The Chapter 12 journal, ship compass, and Idris's companion controls. */
+/* The Chapter 12 journal, illustrated sea and boss HUD, and Idris's companion controls. */
 window.LC = window.LC || {};
 (function (LC) {
   'use strict';
@@ -45,44 +45,82 @@ window.LC = window.LC || {};
     return list;
   };
   var draw = U.drawSkills;
-  U.drawSkills = function () { draw.apply(this, arguments); this.drawStormCompass(); };
-  U.drawStormCompass = function () {
+  U.drawSkills = function () { draw.apply(this, arguments); this.drawStormHUD(); };
+  U.createStormHUD = function () {
+    var root = this.add.container(672, 232).setDepth(55);
+    var h = {
+      root: root,
+      frame: this.add.image(0, 0, 'storm_hud12').setOrigin(0).setScale(2),
+      crest: this.add.image(226, 53, 'storm_compass12').setScale(2),
+      needle: this.add.image(226, 51, 'storm_needle12').setScale(2),
+      title: this.txt(16, 11, '', 21, '#ffdc9a'),
+      status: this.txt(16, 36, '', 17, '#a8d9d5'),
+      target: this.txt(16, 59, '', 15, '#f6ead4', { wrap: 173 }),
+      distance: this.txt(16, 81, '', 13, '#abc8cb'),
+      bar: this.add.graphics(),
+      gauge: this.txt(16, 106, '', 15, '#e9c998'),
+      number: this.txt(257, 106, '', 14, '#f7eddc', { ox: 1 }),
+      footer: this.txt(16, 123, '', 13, '#acc9c8'),
+      rival: this.txt(257, 123, '', 13, '#f4bca4', { ox: 1 })
+    };
+    root.add([h.frame, h.crest, h.needle, h.title, h.status, h.target, h.distance, h.bar, h.gauge, h.number, h.footer, h.rival]);
+    this.pin('tr', [root]);
+    this.layout();
+    return h;
+  };
+  U.drawStormHUD = function () {
     var world = this.world, state = world && world.storm, sea = state && state.sea, boss = state && state.boss;
     var show = state && !this.modal && !world.leaving && !world.sleeping && (sea || boss && boss.phase !== 'sink');
     var h = this.stormHUD;
-    if (!h || !h.panel.scene) {
+    if (!h || !h.root.scene) {
       if (!show) return;
-      var g = this.add.graphics().setDepth(55);
-      this.panel(g, 687, 230, 259, 124);
-      h = this.stormHUD = { panel: g, needle: this.add.graphics().setDepth(56),
-        title: this.txt(703, 241, '', 18, '#ffe0a0').setDepth(56),
-        target: this.txt(703, 269, '', 15, '#e8f7ed', { wrap: 167 }).setDepth(56),
-        hull: this.txt(703, 310, '', 14, '#def3e6').setDepth(56),
-        port: this.txt(703, 329, '', 13, '#bcdbd7').setDepth(56) };
-      this.pin('tr', [h.panel, h.needle, h.title, h.target, h.hull, h.port]); this.layout();
+      h = this.stormHUD = this.createStormHUD();
     }
-    [h.panel, h.needle, h.title, h.target, h.hull, h.port].forEach(function (o) { o.setVisible(!!show); });
+    h.root.setVisible(!!show);
     if (!show) return;
-    var needle = h.needle;
-    needle.clear();
+
+    var crest = sea ? 'storm_compass12' : 'storm_boss_crest12', fraction, color;
+    if (h.crest.texture.key !== crest) h.crest.setTexture(crest);
+    h.needle.setVisible(!!sea); h.distance.setVisible(!!sea);
     if (sea) {
       var dest = world.stormDestination(), dx = dest.point.x - sea.x, dy = dest.point.y - sea.y, a = Math.atan2(dy, dx);
-      var x = 907, y = 284;
-      needle.fillStyle(0x263640, 1); needle.fillCircle(x, y, 24);
-      needle.lineStyle(2, 0xd3a86e, 1); needle.strokeCircle(x, y, 24);
-      needle.fillStyle(0xffd983, 1); needle.fillTriangle(x + Math.cos(a) * 19, y + Math.sin(a) * 19,
-        x + Math.cos(a + 2.1) * 8, y + Math.sin(a + 2.1) * 8, x + Math.cos(a - 2.1) * 8, y + Math.sin(a - 2.1) * 8);
-      h.title.setText('Pedoman · ' + LC.compassName(a));
-      h.target.setText(dest.label + '\n' + Math.round(Math.hypot(dx, dy) / 16) + ' tiles away');
-      h.hull.setText('Hull ' + sea.hull + '%' + (sea.rivalHull ? ' · Rival ' + Math.ceil(sea.rivalHull / 90 * 100) + '%' : ''));
+      var tiles = Math.round(Math.hypot(dx, dy) / 16);
+      h.needle.setRotation(a);
+      h.title.setText('Pedoman');
+      h.status.setText(LC.compassName(a)).setColor('#a8d9d5');
+      h.target.setText(dest.label);
+      h.distance.setText(tiles + (tiles === 1 ? ' tile away' : ' tiles away'));
       var home = Math.atan2((C.port.y + 0.5) * 16 - sea.y, (C.port.x + 0.5) * 16 - sea.x);
-      h.port.setText('Home jetty · ' + LC.compassName(home));
+      h.gauge.setText('Hull');
+      h.number.setText(sea.hull + '%');
+      h.footer.setText('Home · ' + LC.compassName(home));
+      h.rival.setText(sea.rivalHull ? 'Rival · ' + Math.ceil(sea.rivalHull / 90 * 100) + '%' : '');
+      fraction = sea.hull / 100;
+      color = fraction <= 0.3 ? 0xe77570 : 0x65b5a5;
     } else {
+      var exposed = boss.phase === 'eye', winding = boss.phase === 'windup', tail = winding && boss.tailTarget;
+      var hp = Math.max(0, boss.eye.hp), max = boss.eye.def.hp;
       h.title.setText('Kraken');
-      h.target.setText(boss.phase === 'eye' ? 'Eye exposed' :
-        boss.phase === 'windup' && boss.tailTarget ? 'Tail smash incoming' : 'Watch the deck');
-      h.hull.setText('Health ' + Math.max(0, boss.eye.hp) + ' / ' + boss.eye.def.hp);
-      h.port.setText('');
+      h.status.setText(exposed ? 'Eye exposed' : tail ? 'Tail smash' : winding ? 'Arm slam' : boss.phase === 'rise' ? 'Rising' : 'Recovering')
+        .setColor(exposed ? '#9fe6bf' : winding ? '#ffc195' : '#a8d9d5');
+      h.target.setText(exposed ? 'Strike the eye' : tail ? 'Clear the ring' : winding ? 'Step off the marked deck' : 'Watch the deck');
+      h.gauge.setText('HP');
+      h.number.setText(hp + ' / ' + max);
+      h.footer.setText(hp <= max / 2 ? 'Enraged' : exposed ? '' : 'Wait for Pelita’s light');
+      h.rival.setText('');
+      fraction = hp / max;
+      color = exposed ? 0x7accad : 0xd27b79;
+    }
+    if (h.fraction !== fraction || h.barColor !== color) {
+      h.fraction = fraction; h.barColor = color;
+      h.bar.clear();
+      h.bar.fillStyle(0x735947, 1); h.bar.fillRoundedRect(60, 108, 124, 13, 3);
+      h.bar.fillStyle(0x0a1822, 1); h.bar.fillRoundedRect(62, 110, 120, 9, 2);
+      var fill = Math.round(fraction * 118);
+      if (fill > 0) {
+        h.bar.fillStyle(color, 1); h.bar.fillRect(63, 111, fill, 7);
+        h.bar.fillStyle(0xffffff, 0.24); h.bar.fillRect(63, 111, fill, 2);
+      }
     }
   };
 })(window.LC);

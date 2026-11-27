@@ -355,7 +355,7 @@ window.LC = window.LC || {};
       var hgn = LC.State.isHGN();
       var dayStr = 'Day ' + S.day + ' · ' + LC.State.weekday();
       if (dayStr !== this.lastDayStr) { this.tDay.setText(dayStr).setColor(hgn ? '#ff8a7a' : '#fbecc8'); this.lastDayStr = dayStr; }
-      this.tCoin.setText(String(S.kepeng));
+      this.tCoin.setText(S.kepeng === Infinity ? '∞' : String(S.kepeng));
       this.tGoal.setText(this.goalText());
 
       gf.clear(); this.gfxL.clear();

@@ -143,9 +143,58 @@ window.LC = window.LC || {};
       }, ink);
     });
   }
+  function stormInterfaceArt(scene) {
+    var make = Art.make;
+    make(scene, 'storm_hud12', 138, 76, function (p) {
+      p.poly([[1, 7], [7, 1], [131, 1], [137, 7], [137, 69], [131, 75], [7, 75], [1, 69]], '#573c37');
+      p.poly([[3, 7], [7, 3], [131, 3], [135, 7], [135, 68], [131, 72], [7, 72], [3, 68]], '#ac8155');
+      p.poly([[5, 8], [8, 5], [130, 5], [133, 8], [133, 67], [130, 70], [8, 70], [5, 67]], '#142a35');
+      p.line(8, 5, 130, 5, '#e3b87c'); p.line(7, 71, 131, 71, '#795642');
+      p.line(6, 9, 6, 67, '#32515b'); p.line(132, 9, 132, 67, '#273c4b');
+      p.line(8, 49, 130, 49, '#2a4651'); p.line(8, 50, 130, 50, '#0e202b');
+      [[7, 7], [131, 7], [7, 69], [131, 69]].forEach(function (pos) {
+        p.disc(pos[0], pos[1], 1.7, '#d5a26a'); p.px(pos[0], pos[1] - 1, '#f9d69a');
+      });
+    }, ink);
+    make(scene, 'storm_compass12', 42, 42, function (p) {
+      p.disc(21, 21, 19, '#6c4b3c'); p.disc(21, 20, 18, '#cca46e');
+      p.disc(21, 20, 15.5, '#203b49'); p.disc(21, 20, 13.5, '#2d5059');
+      p.poly([[21, 8], [24, 17], [33, 20], [24, 23], [21, 32], [18, 23], [9, 20], [18, 17]], '#38606a');
+      p.rect(20, 4, 2, 5, '#ffe3a6'); p.rect(20, 32, 2, 4, '#859f9b');
+      p.rect(5, 19, 4, 2, '#859f9b'); p.rect(33, 19, 4, 2, '#859f9b');
+      [[12, 11], [29, 11], [12, 28], [29, 28]].forEach(function (pt) { p.px(pt[0], pt[1], '#81a29d'); });
+    }, ink);
+    make(scene, 'storm_needle12', 30, 12, function (p) {
+      p.poly([[1, 6], [15, 2], [29, 6], [15, 10]], '#4a8390');
+      p.poly([[15, 2], [29, 6], [15, 10]], '#f0b875'); p.line(15, 6, 27, 6, '#ffe8b7');
+      p.disc(15, 6, 2.1, '#9d6c4d'); p.px(14, 5, '#fff0ae');
+    }, ink);
+    make(scene, 'storm_boss_crest12', 42, 42, function (p) {
+      p.disc(21, 21, 19, '#6c4b3c'); p.disc(21, 20, 18, '#caa677'); p.disc(21, 20, 16, '#283b4a');
+      p.poly([[8, 23], [9, 16], [16, 9], [23, 8], [30, 12], [34, 19], [34, 25], [30, 29], [22, 31], [13, 30], [8, 27]], teal);
+      p.poly([[11, 18], [16, 12], [23, 10], [29, 13], [31, 17], [25, 16], [20, 18], [15, 16]], jade);
+      p.line(12, 17, 18, 12, mint); p.line(24, 12, 28, 13, '#6aa991');
+      [14, 27].forEach(function (x) {
+        p.ell(x, 21, 4, 3, ink); p.ell(x, 21, 3, 2, '#ffcb72');
+        p.line(x, 19, x, 23, '#59413e'); p.px(x - 1, 20, '#fff4be');
+      });
+      p.poly([[18, 26], [23, 24], [26, 26], [24, 28], [19, 28]], ink);
+      p.line(10, 30, 7, 27, '#618c84', 2); p.line(31, 30, 35, 26, '#618c84', 2);
+      p.line(12, 33, 20, 34, '#51848a'); p.line(25, 34, 31, 32, '#72a99f');
+    }, ink);
+    ['rival', 'player'].forEach(function (owner) {
+      make(scene, 'storm_ball12_' + owner, 15, 15, function (p) {
+        p.disc(7.5, 7.5, 6, owner === 'rival' ? '#2e2c3d' : '#43323a');
+        p.disc(7, 6.5, 4.8, owner === 'rival' ? '#596878' : '#9b674c');
+        p.ell(5.5, 4.5, 3.2, 2, owner === 'rival' ? '#a1b4b1' : '#f6c381');
+        p.px(5, 3, '#fff1c6'); p.line(9, 11, 11, 9, '#414151');
+      }, ink);
+    });
+  }
   Art.generate24 = function (scene) {
     var make = Art.make;
     farmhouseArt(scene);
+    stormInterfaceArt(scene);
     [0, 1].forEach(function (frame) {
       make(scene, 'npc_jack12_' + frame, 24, 28, function (p) { jack(p, frame); }, true);
       make(scene, 'stormship12_' + frame, 100, 40, function (p) { ship(p, frame * 3); }, true);

@@ -3,6 +3,7 @@ window.LC = window.LC || {};
 (function (LC) {
   'use strict';
   var T = 16, W = LC.WorldScene.prototype, C = LC.C12, X = LC.CH12TEXT, TAIL_RADIUS = 38;
+  var BROADSIDE_RADIUS = 29, BROADSIDE_TIME = 0.85, ARM_HALF_WIDTH = 25;
   function step(world) { return C.step(world.S); }
   function point(value) { return { x: (value.x + 0.5) * T, y: (value.y + 0.5) * T }; }
   function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
@@ -11,6 +12,20 @@ window.LC = window.LC || {};
   function active(e) { return !e.dead && !e.away; }
   function returning(world) { return step(world) === 4 && world.S.quests.c12Rescued === 7; }
   function lanternBeat(t) { return t >= 0 && t < 1.25 && Math.floor(t * 4) % 2 === 0; }
+  function drawImpactRing(g, at, radius, progress) {
+    var x = at.x, y = at.y;
+    g.fillStyle(0x923b45, 0.28 + progress * 0.12);
+    g.fillCircle(x, y, radius);
+    g.lineStyle(4, 0x432a3b, 0.8); g.strokeCircle(x, y, radius);
+    g.lineStyle(2, 0xffae91, 1); g.strokeCircle(x, y, radius);
+    g.lineStyle(1.5, 0xffe2ac, 0.78);
+    g.strokeCircle(x, y, Math.max(3, (radius - 6) * (1 - progress)));
+    if (radius * (1 - progress) < 9) return;
+    g.lineBetween(x - radius, y, x - radius + 6, y);
+    g.lineBetween(x + radius, y, x + radius - 6, y);
+    g.lineBetween(x, y - radius, x, y - radius + 6);
+    g.lineBetween(x, y + radius, x, y + radius - 6);
+  }
   function armRibbon(g, spine, inset, width, color) {
     var left = [], right = [];
     spine.forEach(function (pt, i) {
@@ -286,21 +301,25 @@ window.LC = window.LC || {};
     stormBroadside: function () {
       var sea = this.storm.sea, from = sea.rival, at = { x: sea.x + Math.cos(sea.angle) * sea.speed * 0.32, y: sea.y + Math.sin(sea.angle) * sea.speed * 0.32 };
       var ring = this.add.graphics().setDepth(1198);
-      ring.fillStyle(0xce6b63, 0.25); ring.fillCircle(at.x, at.y, 26);
-      ring.lineStyle(2, 0xff9d82, 1); ring.strokeCircle(at.x, at.y, 26);
-      var shot = this.add.image(from.x, from.y, 'px').setScale(4).setTint(0x41344c).setDepth(1251);
+      drawImpactRing(ring, at, BROADSIDE_RADIUS, 0);
+      var shot = this.add.image(from.x, from.y, 'storm_ball12_rival').setDepth(1251);
       sea.shots.push({ from: { x: from.x, y: from.y }, at: at, shot: shot, ring: ring, t: 0 });
+      this.fx.smoke.explode(5, from.x, from.y);
       LC.Audio.sfx('punch');
     },
     updateStormShots: function (dt) {
       var sea = this.storm.sea, self = this;
       sea.shots = sea.shots.filter(function (s) {
         s.t += dt;
-        var p = Math.min(1, s.t / 0.85);
-        s.shot.setPosition(s.from.x + (s.at.x - s.from.x) * p, s.from.y + (s.at.y - s.from.y) * p - 38 * Math.sin(p * Math.PI));
-        if (p < 1) return true;
+        var p = Math.min(1, s.t / BROADSIDE_TIME);
+        s.shot.setPosition(s.from.x + (s.at.x - s.from.x) * p, s.from.y + (s.at.y - s.from.y) * p - 38 * Math.sin(p * Math.PI)).setAngle(p * 165);
+        if (p < 1) {
+          s.ring.clear();
+          drawImpactRing(s.ring, s.at, BROADSIDE_RADIUS, p);
+          return true;
+        }
         self.fx.drop.explode(10, s.at.x, s.at.y); s.ring.destroy(); s.shot.destroy();
-        if (distance(s.at, sea) < 29) self.damageStormShip(16);
+        if (distance(s.at, sea) < BROADSIDE_RADIUS) self.damageStormShip(16);
         return false;
       });
     },
@@ -308,10 +327,14 @@ window.LC = window.LC || {};
       var sea = this.storm.sea, self = this, enemy = sea.rival;
       if (!enemy || sea.cooldown > 0 || step(this) !== 1) return;
       sea.cooldown = 0.9;
-      var shot = this.add.image(sea.x, sea.y, 'px').setScale(4).setTint(0xffe6ad).setDepth(1250);
+      var from = { x: sea.x, y: sea.y }, hit = { x: enemy.x, y: enemy.y }, flight = { t: 0 };
+      var shot = this.add.image(from.x, from.y, 'storm_ball12_player').setDepth(1250);
+      this.fx.smoke.explode(4, from.x, from.y);
       LC.Audio.sfx('punch');
-      var hit = { x: enemy.x, y: enemy.y };
-      this.tweens.add({ targets: shot, x: hit.x, y: hit.y, duration: 240, onComplete: function () {
+      this.tweens.add({ targets: flight, t: 1, duration: 240, onUpdate: function () {
+        var p = flight.t;
+        shot.setPosition(from.x + (hit.x - from.x) * p, from.y + (hit.y - from.y) * p - 20 * Math.sin(p * Math.PI)).setAngle(p * 110);
+      }, onComplete: function () {
         shot.destroy();
         if (self.leaving || step(self) !== 1) return;
         sea.rivalHull -= 18; self.fx.sparkle.explode(8, hit.x, hit.y); LC.Audio.sfx('hit');
@@ -500,7 +523,7 @@ window.LC = window.LC || {};
         var impact = b.horizontal ? { x: p.x - 12, y: b.line } : { x: b.line, y: p.y - 10 };
         this.shockwave(impact.x, impact.y, 64, 0x96dfe8); this.fx.drop.explode(18, impact.x, impact.y);
         this.cameras.main.shake(320, 0.008); LC.Audio.sfx('spout11');
-        if (Math.abs((b.horizontal ? p.y : p.x) - b.line) < 25) this.playerHurt(b.eye.hp <= 54 ? 19 : 14, { spr: impact });
+        if (Math.abs((b.horizontal ? p.y : p.x) - b.line) < ARM_HALF_WIDTH) this.playerHurt(b.eye.hp <= 54 ? 19 : 14, { spr: impact });
         if (!this.leaving) this.openStormEye();
         return;
       }
@@ -597,14 +620,15 @@ window.LC = window.LC || {};
       }
       if (winding && b.tailTarget) {
         var target = b.tailTarget;
-        warn.fillStyle(0xc84c5f, 0.31); warn.fillCircle(target.x, target.y, target.radius);
-        warn.lineStyle(2, 0xffb99a, 0.95); warn.strokeCircle(target.x, target.y, target.radius);
-        warn.lineStyle(2, 0xffdec4, 0.85); warn.strokeCircle(target.x, target.y, Math.max(3, target.radius * (1 - progress)));
+        drawImpactRing(warn, target, target.radius, progress);
       } else if (moving) {
+        var span = ARM_HALF_WIDTH * 2;
         warn.fillStyle(0xc84c5f, 0.24 + 0.19 * Math.sin(progress * 21));
-        if (b.horizontal) warn.fillRect(6 * T, b.line - 22, 36 * T, 44); else warn.fillRect(b.line - 22, 12 * T, 44, 13 * T);
+        if (b.horizontal) warn.fillRect(4 * T, b.line - ARM_HALF_WIDTH, 40 * T, span);
+        else warn.fillRect(b.line - ARM_HALF_WIDTH, 12 * T, span, 13 * T);
         warn.lineStyle(2, 0xff9b8b, 0.9);
-        if (b.horizontal) warn.strokeRect(6 * T, b.line - 22, 36 * T, 44); else warn.strokeRect(b.line - 22, 12 * T, 44, 13 * T);
+        if (b.horizontal) warn.strokeRect(4 * T, b.line - ARM_HALF_WIDTH, 40 * T, span);
+        else warn.strokeRect(b.line - ARM_HALF_WIDTH, 12 * T, span, 13 * T);
       }
     },
     dropStormKraken: function (e) {
