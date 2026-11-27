@@ -11,37 +11,37 @@ window.LC = window.LC || {};
   ];
 
   function drawZombie(p, palette, variant, frame) {
-    var lean = [0, 1, 2, 1][frame], stride = [0, 2, 0, -2][frame], x = lean + 2;
+    var lean = [0, 1, 2, 1][frame], stride = [0, 1, 0, -1][frame], x = lean + 1;
     var skin = variant % 3 === 1 ? '#99a789' : variant % 3 === 2 ? '#80a39a' : '#a3b59b';
-    p.line(11, 24, 10 + stride, 30, '#4d5260', 4);
-    p.line(18, 24, 19 - stride, 31, '#65636b', 4);
-    p.rect(7 + stride, 29, 6, 3, '#3c3d48');
-    p.rect(17 - stride, 30, 7, 3, '#292e42');
-    p.poly([[8 + x, 14], [18 + x, 14], [20, 26], [9, 26], [7, 22]], palette[1]);
-    p.poly([[9 + x, 15], [17 + x, 15], [19, 22], [13, 24], [11, 22], [9, 23]], palette[0]);
-    p.line(11, 22, 17, 22, palette[2]);
-    p.line(9 + x, 18, 17, 21, palette[1], 4);
-    p.line(17, 21, 24, 21 - lean, '#627875', 4);
-    p.rect(22, 19 - lean, 5, 3, skin); p.px(26, 18 - lean, '#c4cead');
-    p.line(18 + x, 17, 24, 15 + lean, palette[0], 4);
-    p.rect(22, 14 + lean, 6, 3, skin);
-    p.ell(12 + x, 9, 7.4, 6.8, '#5a7673');
-    p.ell(13 + x, 8, 6.4, 5.8, skin);
-    p.poly([[6 + x, 7], [7 + x, 4], [11 + x, 2], [14 + x, 3], [19 + x, 4], [20 + x, 6],
-      [17 + x, 5], [14 + x, 7], [10 + x, 5]], '#354452');
-    if (variant % 2) p.line(6 + x, 6, 18 + x, 4, palette[2], 2);
-    if (variant === 2 || variant === 5) p.line(9 + x, 11, 15 + x, 13, '#d8d0ab', 3);
-    p.rect(12 + x, 7, 3, 3, '#4a535d'); p.rect(17 + x, 8, 2, 3, '#4a535d');
-    p.px(13 + x, 8, '#ffedc6'); p.px(17 + x, 9, '#fff8d5');
-    p.line(14 + x, 12, 18 + x, 12, '#41414e', 2);
-    p.px(16 + x, 11, '#c1cbb0');
+    p.line(8, 17, 7 + stride, 21, '#4d5260', 3);
+    p.line(13, 17, 14 - stride, 21, '#65636b', 3);
+    p.rect(5 + stride, 21, 5, 2, '#3c3d48');
+    p.rect(12 - stride, 21, 5, 2, '#292e42');
+    p.poly([[6 + x, 10], [13 + x, 10], [15, 18], [7, 19], [5, 16]], palette[1]);
+    p.poly([[7 + x, 11], [12 + x, 11], [14, 15], [10, 17], [8, 16], [7, 17]], palette[0]);
+    p.line(7, 16, 12, 16, palette[2]);
+    p.line(6 + x, 13, 12, 15, palette[1], 3);
+    p.line(12, 15, 18, 15 - lean, '#627875', 3);
+    p.rect(17, 14 - lean, 4, 2, skin); p.px(20, 13 - lean, '#c4cead');
+    p.line(13 + x, 12, 18, 11 + lean, palette[0], 3);
+    p.rect(17, 10 + lean, 4, 2, skin);
+    p.ell(9 + x, 7, 5.4, 5.1, '#5a7673');
+    p.ell(10 + x, 6, 4.8, 4.5, skin);
+    p.poly([[4 + x, 5], [5 + x, 3], [8 + x, 1], [10 + x, 2], [14 + x, 3], [15 + x, 4],
+      [12 + x, 4], [10 + x, 5], [7 + x, 4]], '#354452');
+    if (variant % 2) p.line(5 + x, 4, 13 + x, 3, palette[2]);
+    if (variant === 2 || variant === 5) p.line(6 + x, 8, 11 + x, 9, '#d8d0ab', 2);
+    p.rect(8 + x, 5, 3, 2, '#4a535d'); p.rect(12 + x, 6, 2, 2, '#4a535d');
+    p.px(9 + x, 6, '#ffedc6'); p.px(13 + x, 6, '#fff8d5');
+    p.line(10 + x, 9, 13 + x, 9, '#41414e');
+    p.px(11 + x, 9, '#c1cbb0');
   }
   function looseSoil(p, x, y, frame) {
-    p.ell(x, y + 2, 12, 3.1, '#54413a');
-    p.ell(x - 1, y, 10.5, 2.5, '#8c684f');
-    p.line(x - 8, y + 1, x - 2, y - 1, '#ba8e65');
-    p.px(x + 6, y + 2, '#bf926a'); p.rect(x + 3, y - 1, 3, 2, '#705142');
-    p.px(x - 9 - frame, y + 1, '#9b7855'); p.px(x + 10 + frame, y - frame, '#80624b');
+    p.ell(x, y + 1, 9, 2.3, '#54413a');
+    p.ell(x - 1, y, 7.5, 1.8, '#8c684f');
+    p.line(x - 6, y + 1, x - 2, y - 1, '#ba8e65');
+    p.px(x + 5, y + 1, '#bf926a'); p.rect(x + 2, y - 1, 2, 2, '#705142');
+    p.px(x - 7 - frame, y + 1, '#9b7855'); p.px(x + 7 + frame, y - frame, '#80624b');
   }
 
   var SKIN = '#a87456', LIGHT = '#d49c6d', SHADE = '#85533e', HAIR = '#403039', CLOTH = '#35665f', TRIM = '#73977d';
@@ -119,25 +119,25 @@ window.LC = window.LC || {};
     coats.forEach(function (colors, i) {
       var key = 'grave_zombie_' + i, frames = [];
       [0, 1, 2, 3].forEach(function (f) {
-        make(scene, key + '_' + f, 32, 34, function (p) { drawZombie(p, colors, i, f); }, INK);
+        make(scene, key + '_' + f, 24, 24, function (p) { drawZombie(p, colors, i, f); }, INK);
         frames.push({ key: key + '_' + f });
       });
       if (!scene.anims.exists(key + '_walk')) scene.anims.create({ key: key + '_walk', frames: frames, frameRate: 5, repeat: -1 });
-      [27, 19, 13, 7, 2].forEach(function (offset, f) {
-        make(scene, key + '_rise_' + f, 32, 35, function (p, ctx) {
+      [19, 13, 9, 5, 1].forEach(function (offset, f) {
+        make(scene, key + '_rise_' + f, 24, 25, function (p, ctx) {
           ctx.save();
-          ctx.beginPath(); ctx.rect(0, 0, 32, 30); ctx.clip(); ctx.translate(0, offset);
+          ctx.beginPath(); ctx.rect(0, 0, 24, 21); ctx.clip(); ctx.translate(0, offset);
           drawZombie(p, colors, i, 0);
           ctx.restore();
           if (f === 0) {
-            p.line(20, 30, 22, 21, '#8aa19a', 4);
-            p.line(22, 22, 25, 20, '#b5c5a4', 2); p.px(21, 18, '#c8d0ae');
+            p.line(14, 21, 16, 15, '#8aa19a', 3);
+            p.line(16, 16, 18, 14, '#b5c5a4', 2); p.px(15, 13, '#c8d0ae');
           }
-          looseSoil(p, 16, 30, f);
+          looseSoil(p, 12, 21, f);
         }, INK);
       });
     });
-    make(scene, 'grave_soil', 32, 10, function (p) { looseSoil(p, 16, 5, 1); }, INK);
+    make(scene, 'grave_soil', 24, 8, function (p) { looseSoil(p, 12, 4, 1); }, INK);
     [0, 1].forEach(function (f) {
       make(scene, 'dune_giant_sleep_' + f, 108, 108, function (p) { sleepingGiant(p, f * 2); }, INK);
     });
