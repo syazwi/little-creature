@@ -100,19 +100,23 @@ PC browsers and Android phones can all play together.
 | Ride Naga Kecil (after Chapter 8): under the sea, and anywhere a bicycle can go | R (under the sea, or holding the Seruling Naga) | Select the Seruling Naga and press **USE** |
 | Put on / take off the Bunian glasses | G | Select them and press **USE** |
 | Swing a weapon (wherever enemies roam); with the Sumpit (after Chapter 10), shoot a dart the way you face | E | **USE** |
+| Change to your next weapon (wherever enemies roam) | 1 – 9 | The round-arrow button above **USE** (it shows the weapon you will get) |
+| Fold Pelita's card into a small bubble, or open it | Click the card | Tap the card |
 | Steer the vinta at sea (Chapter 11): it turns towards where you point | WASD / Arrow keys | Drag on the left side |
-| Stone curse (Sumpahan Batu, once you have it) | V | Tap the stone beside the hotbar |
-| Magic: Mantera Suria (after Chapter 13, from Suraya) | K | Tap the sun above the hotbar |
-| Giant stride (Langkah Semaun, Chapter 2) | Shift | Tap the footprints beside the hotbar |
-| Call Nek Lampir (after Chapter 6); with her beside you in a fight, her green circle | C | Tap her face beside the hotbar |
-| Call Sang Bualang (after Chapter 7); with him beside you in a fight, a spin at once | B | Tap the wau (kite) above the hotbar buttons |
-| Angin Bualang, your gust (after Chapter 7) | U | Tap the gust button beside the wau |
-| Lagu Mayang, the song that calms (after Chapter 9) | L | Tap the mayang button above the wau |
-| Mantera Empat Sekawan: call Kudin, Leman and Sani (after Chapter 18) | Y | Tap the four friends beside the mayang button |
-| Hilai Maya: Maya's laugh, everything near you flees (after Chapter 19) | H | Tap the pale face beside the four friends |
-| Harimau Cahaya: Pelita becomes a tiger of light and fights beside you, once a day (after Chapter 20) | T | Tap the tiger beside the pale face |
+| Stone curse (Sumpahan Batu, once you have it) | V | Tap the stone in the ring round **USE** |
+| Magic: Mantera Suria (after Chapter 13, from Suraya) | K | Tap the sun in the ring round **USE** |
+| Giant stride (Langkah Semaun, Chapter 2) | Shift | Tap the footprints in the ring round **USE** |
+| Call Nek Lampir (after Chapter 6); with her beside you in a fight, her green circle | C | Tap her face in the ring round **USE** |
+| Call Sang Bualang (after Chapter 7); with him beside you in a fight, a spin at once | B | Tap the wau (kite) in the ring round **USE** |
+| Angin Bualang, your gust (after Chapter 7) | U | Tap the gust in the ring round **USE** |
+| Lagu Mayang, the song that calms (after Chapter 9) | L | Tap the mayang in the ring round **USE** |
+| Mantera Empat Sekawan: call Kudin, Leman and Sani (after Chapter 18) | Y | Tap the four friends in the ring round **USE** |
+| Hilai Maya: Maya's laugh, everything near you flees (after Chapter 19) | H | Tap the pale face in the ring round **USE** |
+| Harimau Cahaya: Pelita becomes a tiger of light and fights beside you, once a day (after Chapter 20) | T | Tap the tiger in the ring round **USE** |
 | Ride Anak Putih across water (after Chapter 20, when it is grown) | Hold the brass bell + E beside water; R to get off | Select the bell, then USE |
 | Sing back the Ulek Mayang (Chapter 9) | 1 2 3 4 5 | Tap the lamps |
+
+**The battle pad (v3.30).** On a phone or tablet your abilities sit in a ring around the **USE** button, like the skill buttons around the attack button in phone battle games, so your right thumb reaches every one without leaving the corner. They take their places in the order you earn them, so a button you know never moves. A cooldown sweeps round its button like a clock with the seconds in the middle, and a ready ability glows. Where there is something to fight, the round-arrow button above USE changes to the next weapon in your hotbar, and Restu Ibu is a small badge on USE. Pelita's card (top right) folds into a small bubble when you tap it (it starts folded on phones and tablets) and opens again with another tap; both turn see-through when you walk underneath. On a computer, with touch controls off, the abilities stay in their rows beside the hotbar, with their keys.
 
 **Tap to use (v3.9).** On a phone or tablet, walk with the joystick, then just tap a person, Pelita, an animal, a crop or anything else within two steps of you: you turn to it and use it, exactly as if you faced it and pressed USE. Things you can tap glow softly at their feet. Tap something farther away and "Walk closer" appears. Tap an enemy to swing at it, and tap Pelita to pet it (or to feed it the food you hold). A press that drags still works the joystick, so walking is unchanged. It is on by default; Pause > **Tap to use** turns it off (the USE button always works). After the update, players see a one-time "What's new" note explaining it.
 

@@ -186,8 +186,24 @@ window.LC = window.LC || {};
       this.tBond = this.txt(px + 20, py + 146, '', 13, '#f7dd8a');
       this.tCrave = this.txt(px + 20, py + 180, '', 15, '#fbecc8');
       this.icCrave = this.add.image(px + 238, py + 186, 'i_nasi').setScale(2);
+      // v3.30: tap the card to fold it into a small bubble (Pelita's face and three thin bars) so it never hides the
+      // map, and tap the bubble to open it again (kept on this device). Both turn see-through when you, or something
+      // you are fighting, go underneath. (The bubble is made before the bars, so they draw on top of it.)
+      var sx = this.PSX = 960 - 12 - 96, sg = this.add.graphics();
+      this.panel(sg, sx, 12, 96, 128);
+      sg.fillStyle(0x3b2f5c, 1); sg.fillCircle(sx + 48, 56, 30);
+      sg.lineStyle(2, 0xb8a8ff, 0.8); sg.strokeCircle(sx + 48, 56, 30);
       this.gfx = this.add.graphics();
       this.pin('tr', [pg, this.portrait, tName, this.tStage].concat(needIcons, [this.tBond, this.tCrave, this.icCrave, this.gfx]));
+      this.portraitS = this.add.image(sx + 48, 55, 'ghost_0_normal').setScale(2.2);
+      var zFull = this.add.zone(px, py, 274, 212).setOrigin(0).setInteractive({ useHandCursor: true }),
+        zSmall = this.add.zone(sx, 12, 96, 128).setOrigin(0).setInteractive({ useHandCursor: true });
+      [zFull, zSmall].forEach(function (z) {
+        z.isTouchBtn = true;
+        z.on('pointerdown', function () { if (!self.modal) { self.setPelitaSmall(!self.pelitaSmall); LC.Audio.sfx('click'); } });
+      });
+      this.pelitaCard = { full: [pg, this.portrait, tName, this.tStage].concat(needIcons, [this.tBond, this.tCrave, this.icCrave]), small: [sg, this.portraitS], zFull: zFull, zSmall: zSmall, alpha: 1 };
+      this.pin('tr', [sg, this.portraitS, zFull, zSmall]);
       this.tCoop = this.txt(480, 50, '', 14, '#b8f0c8', { ox: 0.5, stroke: 4 });
       this.pin('tc', [this.tCoop]);
       this.nameTags = {};
@@ -214,6 +230,30 @@ window.LC = window.LC || {};
       this.pin('bc', [this.hotG, this.tPrompt]);
     }
 
+    // v3.30: Pelita's card, full or folded (folded by default on touch screens, where it covers more of the map)
+    setPelitaSmall(on) {
+      var c = this.pelitaCard;
+      this.pelitaSmall = !!on;
+      c.full.forEach(function (o) { o.setVisible(!on); });
+      c.small.forEach(function (o) { o.setVisible(!!on); });
+      c.zFull.setVisible(!on); c.zSmall.setVisible(!!on);
+      try { localStorage.setItem('littleCreature.pelitaCard', on ? 'small' : 'full'); } catch (e) { /* storage blocked */ }
+    }
+    pelitaSmallPref() {
+      var p = null;
+      try { p = localStorage.getItem('littleCreature.pelitaCard'); } catch (e) { /* storage blocked */ }
+      return p ? p === 'small' : !!this.touchOn;
+    }
+    // is the farmer (or a foe nearby) under the card?
+    pelitaCovers() {
+      var W = this.world, cam = W && W.cameras && W.cameras.main, o = this.anchorOff('tr'), m = 14;
+      if (!cam || !W.player) return false;
+      var x0 = (this.pelitaSmall ? this.PSX : this.PX) + o.x - m, y0 = this.PY + o.y - m, x1 = x0 + (this.pelitaSmall ? 96 : 274) + m * 2, y1 = y0 + (this.pelitaSmall ? 128 : 212) + m * 2;
+      function under(wx, wy) { var sx = (wx - cam.worldView.x) * cam.zoom, sy = (wy - cam.worldView.y) * cam.zoom; return sx > x0 && sx < x1 && sy > y0 && sy < y1; }
+      if (under(W.player.x, W.player.y - 10)) return true;
+      return !!(W.enemies && W.enemies.some(function (e) { return !e.dead && !e.away && e.spr && under(e.spr.x, e.spr.y - 8); }));
+    }
+
     // ================================================================ touch controls (Android / touchscreens)
     buildTouch() {
       var self = this, pref = null;
@@ -235,9 +275,10 @@ window.LC = window.LC || {};
         self.tBtns.push(b);
         return b;
       }
-      this.btnUse = btn(872, 486, 46, 'USE', 'KeyE');
-      this.btnEat = btn(786, 566, 28, 'EAT', 'KeyX');
-      this.btnBag = btn(888, 594, 28, 'BAG', 'Tab');
+      // (v3.30: USE sits lower, with your abilities in a ring round it (UIBattlePad.js); EAT and BAG tucked below)
+      this.btnUse = btn(866, 542, 50, 'USE', 'KeyE');
+      this.btnEat = btn(794, 610, 22, 'EAT', 'KeyX');
+      this.btnBag = btn(924, 612, 20, 'BAG', 'Tab');
       this.btnMenu = btn(480, 26, 18, 'II', 'Escape', true);
       this.btnMap = btn(528, 26, 18, 'MAP', 'KeyM', true);
       this.btnMap.touchOnly = true;
@@ -366,18 +407,29 @@ window.LC = window.LC || {};
       this.icStr.setTexture(danger ? 'ic_hp' : 'ic_str');
       if (danger) { this.tStr.setText(''); this.bar(this.gfxL, 184, 123, 72, 12, S.hp / S.maxHp, S.hp < S.maxHp * 0.3 ? 0xe76f51 : 0xff5a6a); }
       else this.tStr.setText('Str ' + Math.floor(S.str || 0));
-      var px = this.PX, py = this.PY;
-      this.bar(gf, px + 132, py + 68, 124, 12, g.full / 100, g.full < 25 ? 0xe76f51 : 0xf2d06b);
-      this.bar(gf, px + 132, py + 93, 124, 12, g.joy / 100, g.joy < 20 ? 0xe76f51 : 0xff7aa8);
-      this.bar(gf, px + 132, py + 118, 124, 12, g.glow / 100, g.glow < 20 ? 0xe76f51 : 0xb8a8ff);
-      var lv = LC.State.level(), nb = LC.State.nextLevelBond(), pb = LC.LEVELS[lv - 1];
-      this.bar(gf, px + 20, py + 164, 234, 7, nb === null ? 1 : (g.bond - pb) / (nb - pb), 0xffd166);
+      var px = this.PX, py = this.PY, lv = LC.State.level(), nb = LC.State.nextLevelBond(), pb = LC.LEVELS[lv - 1];
+      if (this.pelitaSmall === undefined) this.setPelitaSmall(this.pelitaSmallPref());
+      if (this.pelitaSmall) {   // v3.30: the folded bubble: three thin bars, and a pulse when a need runs low
+        var sx = this.PSX + 12;
+        this.bar(gf, sx, 96, 72, 7, g.full / 100, g.full < 25 ? 0xe76f51 : 0xf2d06b);
+        this.bar(gf, sx, 106, 72, 7, g.joy / 100, g.joy < 20 ? 0xe76f51 : 0xff7aa8);
+        this.bar(gf, sx, 116, 72, 7, g.glow / 100, g.glow < 20 ? 0xe76f51 : 0xb8a8ff);
+        if (g.full < 25 || g.joy < 20 || g.glow < 20) { gf.lineStyle(3, 0xe76f51, 0.45 + 0.45 * Math.sin(this.time.now / 220)); gf.strokeRoundedRect(this.PSX - 3, 9, 102, 134, 10); }
+        this.portraitS.setTexture(LC.ghostTex(g.stage, this.world.curExpr || 'normal'));
+      } else {
+        this.bar(gf, px + 132, py + 68, 124, 12, g.full / 100, g.full < 25 ? 0xe76f51 : 0xf2d06b);
+        this.bar(gf, px + 132, py + 93, 124, 12, g.joy / 100, g.joy < 20 ? 0xe76f51 : 0xff7aa8);
+        this.bar(gf, px + 132, py + 118, 124, 12, g.glow / 100, g.glow < 20 ? 0xe76f51 : 0xb8a8ff);
+        this.bar(gf, px + 20, py + 164, 234, 7, nb === null ? 1 : (g.bond - pb) / (nb - pb), 0xffd166);
+      }
+      var card = this.pelitaCard, ca = card.alpha + ((this.pelitaCovers() ? 0.3 : 1) - card.alpha) * 0.2;
+      if (Math.abs(ca - card.alpha) > 0.002 || ca !== 1) { card.alpha = Math.abs(ca - 1) < 0.01 ? 1 : ca; card.full.concat(card.small, [gf]).forEach(function (o) { o.setAlpha(card.alpha); }); }
       this.portrait.setTexture(LC.ghostTex(g.stage, this.world.curExpr || 'normal'));
       this.tStage.setText('Lv ' + lv + ' · ' + LC.STAGES[g.stage].short);
       this.tBond.setText(nb === null ? 'Bond ' + Math.floor(g.bond) + '  (max level)' : 'Bond ' + Math.floor(g.bond) + ' / ' + nb + '  (Lv ' + (lv + 1) + ')');
       if (g.stage === 0) { this.tCrave.setText('Craving: ???'); this.icCrave.setVisible(false); }
       else if (g.cravingDone) { this.tCrave.setText('Craving: satisfied!'); this.icCrave.setVisible(false); }
-      else { this.tCrave.setText('Craving: ' + LC.ITEMS[g.craving].name); this.icCrave.setVisible(true).setTexture('i_' + g.craving); }
+      else { this.tCrave.setText('Craving: ' + LC.ITEMS[g.craving].name); this.icCrave.setVisible(!this.pelitaSmall).setTexture('i_' + g.craving); }
 
       this.drawHotbar();
       this.drawTouch();
@@ -1155,7 +1207,7 @@ window.LC = window.LC || {};
             LC.pauseExtraRow3 ? LC.pauseExtraRow3.call(self) : null,   // v2.7.1: the guide arrow on or off
             LC.pauseExtraRow4 ? LC.pauseExtraRow4.call(self) : null,   // v2.7.4: the prayer-time reminders on or off
             LC.pauseExtraRow5 ? LC.pauseExtraRow5.call(self) : null,   // v3.9: tap to use on or off
-            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact (and swing a weapon) · tap the stone by the hotbar for the stone curse · MAP · II pauses' : 'WASD/Arrows move · E use/swing · V stone curse · 1-9/wheel select · Q tool · X eat · R ride · G glasses · Tab bag · J journal · M map · N music · F fullscreen' },
+            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact (and swing a weapon) · your abilities ring USE, and the arrow above it swaps weapons · tap Pelita\'s card to fold it · MAP · II pauses' : 'WASD/Arrows move · E use/swing · V stone curse · 1-9/wheel select · Q tool · X eat · R ride · G glasses · Tab bag · J journal · M map · N music · F fullscreen' },
             { icon: 'ic_moon', label: 'Quit to title', sub: LC.Net.role ? 'Also ends the co-op session.' : 'Anything since your last sleep (or save) is lost.', action: function () { self.quitToTitle(); } }
           ]).filter(Boolean).map(gridIcon);
         } }]

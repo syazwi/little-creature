@@ -38,7 +38,7 @@ window.LC = window.LC || {};
       if (!self.touchOn || !LC.tapOn() || self.modal) return;
       if (over && over.length) return;                                   // a button, a hotbar slot...
       var w = self.scale.width, h = self.scale.height;
-      if (p.y < h * 0.27 && (p.x < w * 0.3 || p.x > w * 0.7)) return;      // the panels in the top corners
+      if (p.y < h * 0.27 && p.x < w * 0.3) return;      // the clock panel, top left (Pelita's card takes its own taps since v3.30, folded or not)
       taps[p.id] = { x: p.x, y: p.y, t: self.time.now };
     });
     this.input.on('pointerup', function (p) {
