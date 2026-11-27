@@ -11,15 +11,15 @@ if (ksFile.exists()) ksFile.withInputStream { ks.load(it) }
 
 android {
     namespace 'com.syazwi.littlecreature'
-    compileSdk 35
+    compileSdk 36   // (v3.34: Google Play asks new apps to target Android 16, API 36)
     buildToolsVersion '35.0.0'
 
     defaultConfig {
         applicationId 'com.syazwi.littlecreature'
         minSdk 24
-        targetSdk 35
-        versionCode 103
-        versionName '3.33.1'
+        targetSdk 36
+        versionCode 104
+        versionName '3.34.0'
     }
 
     signingConfigs {
@@ -46,6 +46,12 @@ android {
             versionNameSuffix '-dev'
             matchingFallbacks = ['release']
         }
+        // v3.34: the app bundle for Google Play (.\tools\build.ps1 -Play). The same app as the GitHub APK, signed
+        // with the same key (your upload key on Play), but its game files load src/store-play.js: no GitHub updater.
+        play {
+            initWith release
+            matchingFallbacks = ['release']
+        }
     }
 
     compileOptions {
@@ -66,9 +72,10 @@ dependencies {
 // ------------------------------------------------------------------------------------------
 // The game itself lives in the repository root (index.html, src/, lib/ ...). Copy it into the
 // APK's assets/www at build time, so the web version and the Android version never drift apart.
+// mode: 'release' (the GitHub APK), 'developer' (chapter jumps and autoplay) or 'play' (the Google Play bundle).
 abstract class SyncWebAssets extends DefaultTask {
     @Input
-    abstract Property<Boolean> getDeveloper()
+    abstract Property<String> getMode()
 
     @InputFiles @PathSensitive(PathSensitivity.RELATIVE)
     abstract ConfigurableFileCollection getWebFiles()
@@ -84,44 +91,52 @@ abstract class SyncWebAssets extends DefaultTask {
 
     @TaskAction
     void sync() {
+        def m = mode.get()
         fs.sync { spec ->
             spec.from(webRoot) {
                 it.include('index.html', 'src/**', 'lib/**', 'icons/**')
-                if (!developer.get()) it.exclude('src/dev-*.js')
+                if (m != 'developer') it.exclude('src/dev-*.js')
+                if (m != 'play') it.exclude('src/store-*.js')
             }
             spec.into(outputDir.dir('www'))
         }
-        if (developer.get()) {
-            def index = outputDir.file('www/index.html').get().asFile
-            def page = index.getText('UTF-8')
-            def main = '<script src="src/main.js"></script>'
-            if (!page.contains(main)) throw new GradleException('Could not find the game entry script in index.html')
+        if (m == 'release') return
+        def index = outputDir.file('www/index.html').get().asFile
+        def page = index.getText('UTF-8')
+        def main = '<script src="src/main.js"></script>'
+        if (!page.contains(main)) throw new GradleException('Could not find the game entry script in index.html')
+        def entry
+        if (m == 'developer') {
             def scripts = ['dev-story', 'dev-autoplay', 'dev-routes-early', 'dev-routes-late', 'dev-tools']
                 .collect { name -> "<script src=\"src/${name}.js\"></script>" }
-            def entry = ['<script>LC.DEV_ANDROID = true;</script>'] + scripts + [main]
-            index.setText(page.replace(main, entry.join('\n  ')), 'UTF-8')
+            entry = ['<script>LC.DEV_ANDROID = true;</script>'] + scripts + [main]
+        } else {
+            entry = ['<script src="src/store-play.js"></script>', main]
         }
+        index.setText(page.replace(main, entry.join('\n  ')), 'UTF-8')
     }
 }
 
 def webRootDir = rootProject.layout.projectDirectory.dir('..')
-def registerWebAssets = { String name, boolean dev ->
+def registerWebAssets = { String name, String kind ->
     tasks.register(name, SyncWebAssets) {
-        developer.set(dev)
+        mode.set(kind)
         webRoot.set(webRootDir)
         webFiles.from(fileTree(webRootDir) {
             include 'index.html', 'src/**', 'lib/**', 'icons/**'
-            if (!dev) exclude 'src/dev-*.js'
+            if (kind != 'developer') exclude 'src/dev-*.js'
+            if (kind != 'play') exclude 'src/store-*.js'
         })
-        outputDir.set(layout.buildDirectory.dir(dev ? 'generated/developerWebAssets' : 'generated/webAssets'))
+        outputDir.set(layout.buildDirectory.dir('generated/' + kind + 'WebAssets'))
     }
 }
-def syncWeb = registerWebAssets('syncWebAssets', false)
-def syncDeveloperWeb = registerWebAssets('syncDeveloperWebAssets', true)
+def syncWeb = registerWebAssets('syncWebAssets', 'release')
+def syncDeveloperWeb = registerWebAssets('syncDeveloperWebAssets', 'developer')
+def syncPlayWeb = registerWebAssets('syncPlayWebAssets', 'play')
 
 androidComponents {
     onVariants(selector().all()) { variant ->
-        def assets = variant.buildType == 'developer' ? syncDeveloperWeb : syncWeb
+        def assets = variant.buildType == 'developer' ? syncDeveloperWeb : variant.buildType == 'play' ? syncPlayWeb : syncWeb
         variant.sources.assets.addGeneratedSourceDirectory(assets, { it.outputDir })
     }
 }

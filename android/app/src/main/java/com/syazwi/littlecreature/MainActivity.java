@@ -20,6 +20,8 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
 
 import androidx.webkit.WebViewAssetLoader;
 import androidx.webkit.WebViewClientCompat;
@@ -38,6 +40,7 @@ public class MainActivity extends Activity {
     private WebView web;
     private String safeJs = null;   // last reported cutout insets, as a JS call
     private PermissionRequest pendingMic = null;   // the game asked for the microphone; waiting for the player's answer
+    private OnBackInvokedCallback backCallback = null;   // v3.34: Back on Android 13 and newer
 
     @Override
     protected void onCreate(Bundle state) {
@@ -128,6 +131,12 @@ public class MainActivity extends Activity {
 
         setContentView(web);
         hideSystemBars();
+        // v3.34: Android 13+ hands the Back button to a callback (an app that targets Android 16 never gets
+        // onBackPressed), so the game still decides: close a menu or open the pause menu.
+        if (Build.VERSION.SDK_INT >= 33) {
+            backCallback = this::handleBack;
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, backCallback);
+        }
         if (state != null) web.restoreState(state);
         else web.loadUrl(START_URL);
     }
@@ -238,13 +247,18 @@ public class MainActivity extends Activity {
         if (hasFocus) hideSystemBars();
     }
 
-    @Override
-    @SuppressWarnings("deprecation")
-    public void onBackPressed() {
-        // Let the game decide: close a menu / open the pause menu. On the title screen, go to the background.
+    // Let the game decide: close a menu / open the pause menu. On the title screen, go to the background.
+    private void handleBack() {
+        if (web == null) return;
         web.evaluateJavascript("(window.LC && LC.onBack) ? LC.onBack() : false", value -> {
             if (!"true".equals(value)) moveTaskToBack(true);
         });
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public void onBackPressed() {   // Android 12 and older
+        handleBack();
     }
 
     @Override
@@ -269,6 +283,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (backCallback != null && Build.VERSION.SDK_INT >= 33) getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(backCallback);
         if (web != null) {
             web.evaluateJavascript("window.LC && LC.autoSave && LC.autoSave()", null);
             web.destroy();

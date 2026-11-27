@@ -2,8 +2,10 @@
 #   dist/LittleCreature.html  single self-contained file, double-click to play on any computer
 #   dist/LittleCreature.apk   Android app (release-signed if android/keystore.properties exists)
 #   dist/LittleCreature_dev.apk   Android developer app with chapter jumps and autoplay
-# Usage (PowerShell, from the project folder):  .\tools\build.ps1        add -SkipApk to only rebuild the HTML
-param([switch]$SkipApk)
+#   play/LittleCreature.aab   (with -Play) the app bundle to upload to Google Play: no GitHub updater (src/store-play.js);
+#                             kept out of git, signed with android/keystore.properties (your upload key)
+# Usage (PowerShell, from the project folder):  .\tools\build.ps1        add -SkipApk to only rebuild the HTML, -Play for the bundle
+param([switch]$SkipApk, [switch]$Play)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
@@ -27,13 +29,23 @@ if (-not (Test-Path 'android/local.properties')) {
   if (-not (Test-Path $sdk)) { throw 'Android SDK not found. Install Android Studio or set ANDROID_HOME.' }
   "sdk.dir=$($sdk -replace '\\','\\' -replace ':','\:')" | Set-Content 'android/local.properties' -Encoding ascii
 }
-if (-not (Test-Path 'android/keystore.properties')) { Write-Warning 'android/keystore.properties missing: the APK will be signed with the debug key.' }
+if (-not (Test-Path 'android/keystore.properties')) {
+  if ($Play) { throw 'android/keystore.properties missing: Google Play needs the bundle signed with your upload key.' }
+  Write-Warning 'android/keystore.properties missing: the APK will be signed with the debug key.'
+}
 
+$tasks = @('assembleRelease', 'assembleDeveloper'); if ($Play) { $tasks += 'bundlePlay' }
 Push-Location android
-try { & .\gradlew.bat assembleRelease assembleDeveloper --no-daemon --console=plain; if ($LASTEXITCODE) { throw 'Gradle build failed' } }
+try { & .\gradlew.bat @tasks --no-daemon --console=plain; if ($LASTEXITCODE) { throw 'Gradle build failed' } }
 finally { Pop-Location }
 
 New-Item -ItemType Directory -Force dist | Out-Null
 Copy-Item 'android/app/build/outputs/apk/release/app-release.apk' 'dist/LittleCreature.apk' -Force
 Copy-Item 'android/app/build/outputs/apk/developer/app-developer.apk' 'dist/LittleCreature_dev.apk' -Force
-Get-Item dist/LittleCreature.html, dist/LittleCreature.apk, dist/LittleCreature_dev.apk | Select-Object Name, @{n = 'MB'; e = { [math]::Round($_.Length / 1MB, 2) } }
+$out = @('dist/LittleCreature.html', 'dist/LittleCreature.apk', 'dist/LittleCreature_dev.apk')
+if ($Play) {
+  New-Item -ItemType Directory -Force play | Out-Null
+  Copy-Item 'android/app/build/outputs/bundle/play/app-play.aab' 'play/LittleCreature.aab' -Force
+  $out += 'play/LittleCreature.aab'
+}
+Get-Item $out | Select-Object Name, @{n = 'MB'; e = { [math]::Round($_.Length / 1MB, 2) } }

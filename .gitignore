@@ -12,6 +12,10 @@ android/keystore.properties
 *.jks
 *.keystore
 
+# The Google Play bundle (.\tools\build.ps1 -Play): uploaded by hand, not shipped in the repository
+play/
+*.aab
+
 # misc
 node_modules/
 .DS_Store

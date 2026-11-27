@@ -50,6 +50,17 @@ From v1.7.1 the game checks GitHub for a newer version whenever it starts with i
 - Without internet, nothing changes: the game just plays as usual.
 - For whoever publishes: `tools/build.ps1` writes the version (from `android/app/build.gradle`) and the build time into `src/version.js` and `dist/version.json`, and stamps `sw.js` with the build and the list of files. Bump `versionCode`, build, and push: players see the update once `dist/version.json` is on GitHub (iPhones: once GitHub Pages has published it, a minute or two later).
 
+### Google Play (v3.34)
+`.\tools\build.ps1 -Play` also makes **`play/LittleCreature.aab`**, the app bundle to upload to Google Play (the folder is kept out of git). It is the same game and the same app (`com.syazwi.littlecreature`), signed with the same key, with two differences:
+- **No GitHub updater.** Google Play updates the app itself, and its rules do not allow an app to download and install new versions of itself. The bundle's game files load `src/store-play.js`, which switches the checks, the title screen's download button and the reminder off; Pause → Updates just says which version it is.
+- **Android 16.** Every Android build now targets API 36 (Google Play's requirement for new apps from 31 August 2026). From Android 13 the Back button reaches the game through Android's new back callback (an app targeting Android 16 is never told about Back the old way), so it still closes a menu or opens the pause menu.
+
+Before the first upload, in the Play Console:
+- **App signing:** your `android/keystore` key signs the bundle as the **upload key**. Play then signs what players install with its own **app signing key**, unless you choose to give Play your own key. If you let Play make a new key, people who installed the GitHub APK cannot update to the Play version over it: they would have to uninstall first, and an uninstall deletes their farm. Giving Play this same key (Play Console → App signing → use your own key) keeps the two interchangeable.
+- A **privacy policy** link and the **Data safety** form (co-op connects players over the internet; the microphone, only for Chapter 17's spoken mantera, is measured on the phone and never recorded or sent), the **content rating** questionnaire (ghosts and optional jump scares), and the store listing (a 512 x 512 icon, a 1024 x 500 feature graphic, phone screenshots).
+- A new personal developer account must run a **closed test** with at least 12 testers for 14 days before it can publish.
+- Each upload needs a higher `versionCode` than the last one: bump it as for every release.
+
 ### With friends (co-op, up to 4 players)
 PC browsers and Android phones can all play together.
 
