@@ -1,4 +1,4 @@
-/* Chapter 20 (the last chapter): Janji Buaya Putih, "the White Crocodile's Promise" (v3.22, Part 1). The owner asked for a
+/* Chapter 20 (Season 1 finale): Janji Buaya Putih, "the White Crocodile's Promise" (v3.22, Part 1). The owner asked for a
  * finale with the buaya putih, Kampong Ayer, a crocodile who wants to go home to Sabah, and a story that belongs to the
  * player and to Pelita. Three threads tie it together: a white crocodile saved your family nearly a hundred years ago
  * (the baby she carried out of the flood was Nenek's mother); Pelita is a spark of her light; and the shadow that

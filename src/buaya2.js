@@ -1,4 +1,4 @@
-/* Chapter 20 (the last chapter): Janji Buaya Putih, Part 2 (v3.23). See buaya.js for Part 1 and the story's threads.
+/* Chapter 20 (Season 1 finale): Janji Buaya Putih, Part 2 (v3.23). See buaya.js for Part 1 and the story's threads.
  * Steps (S.quests.ch20) after Part 1 (8): 8 wait for the monsoon wind (two days) · 9 the voyage to Sabah (the strait at
  * the tip of Borneo, towing her raft; the Bajau Laut through the coral; the net, a free-dive) · 10 the Kinabatangan
  * (upriver: monkeys, hornbills, elephants; the crocodile clan: Kancil's count; truth or trick; Tok Sisik) · 11 the nest
@@ -344,14 +344,14 @@ window.LC = window.LC || {};
     photoLabels: ['Take the photo', 'Not yet'],
     photoTaken: [['', 'Everyone squeezes onto the walkway. Badang has to crouch. Kancil stands on Badang. Pelita sits on your shoulder, and Anak Putih sits on your foot. "Senyum!"'], ['', 'FLASH.']],
     childHug: '(Awang Kecil runs to Nenek and hugs her. "White Grandmother saved me. You are her family. So you are my family too.")',
-    amin: 'Amin: "One more! Kak Senah left me one last suitcase of bunga api. For the end of the story!"',
-    credits: { title: 'Little Creature', thanks: 'Thank you for playing.', tamat: 'TAMAT', after: 'The farm, the kampung and every place you have been are still here. Pelita is waiting. Replay any chapter from Pause > Chapter.' },
+    amin: 'Amin: "One more! Kak Senah left me one last suitcase of bunga api. For everyone who lit a lamp for Pelita!"',
+    credits: { title: 'Little Creature', thanks: 'Thank you for playing.', tamat: 'TAMAT', seasonEnd: 'End of Season 1', after: 'The story continues in Season 2. Until then, the farm is yours and Pelita is waiting. Replay chapters from Pause > Chapter.' },
     epilogue: [
       ['', 'The next morning, at Nenek\'s jetty.'],
       ['', 'Anak Putih is chasing Pelita round and round the jetty, snapping at its glow and missing every time. Pelita giggles (it can giggle now).'],
       ['', 'And Pelita\'s little shadow runs along beside them, just a shadow now, playing too.'],
       ['nenek20', '(Nenek, on the steps with her tea:) Our family has a crocodile now. My mother would be so pleased.'],
-      ['', '✦ TAMAT ✦  You finished Little Creature. Your Tamat badge and the group photo are in My stats. The farm goes on: Pelita, Anak Putih, Sang Kancil and everyone are here, and Kampong Ayer gave you a house on the water. ✦']
+      ['', '✦ TAMAT ✦  Season 1 is complete. Your Tamat badge and the group photo are in My stats. The farm goes on with Pelita, Anak Putih and Sang Kancil, and you have a house on the water in Kampong Ayer. ✦']
     ],
     // after the story
     anakTalk: ['Anak Putih snaps at a dragonfly and misses. It looks very offended.', 'Anak Putih sneezes. It sneezes a lot.', 'Anak Putih rolls over to have its tummy scratched.', 'Anak Putih and Pelita are playing tag. Anak Putih is losing.'],
@@ -372,7 +372,7 @@ window.LC = window.LC || {};
     tigerNone: 'Harimau Cahaya only comes when there is something to fight.',
     tigerRest: 'Pelita is resting. Harimau Cahaya comes once a day. (Tomorrow!)',
     tigerGone: 'The tiger of light shakes its mane and becomes Pelita again.',
-    tamatRow: 'You finished Little Creature on Day {d}. Select to see the group photo.'
+    tamatRow: 'You finished Season 1 on Day {d}. Select to see the group photo.'
   };
   // the people at the last feast (each says goodbye once); textures that do not exist are left out
   C.feast = [

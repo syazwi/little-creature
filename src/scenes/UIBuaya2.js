@@ -37,7 +37,7 @@ window.LC = window.LC || {};
     if (ch.n !== 20) return;
     ch.end = C.end;
     ch.steps = ch.steps.slice(0, C.part1).concat(['The wind turns', 'The voyage to Sabah', 'The Kinabatangan', 'The spark', 'Without Pelita', 'The black river', 'Ride the White One', 'Kancil\'s trick', 'Inside the shadow', 'Letting go', 'Kenduri Terakhir']);
-    ch.next = '✦ TAMAT ✦ The story is complete. Pelita Putih, Anak Putih and Sang Kancil are with you, and every chapter can be replayed.';
+    ch.next = 'Finish both parts of Janji Buaya Putih to complete Season 1.';
   });
   var checklist = LC.checklist;
   LC.checklist = function () {
@@ -56,7 +56,7 @@ window.LC = window.LC || {};
   LC.NEWS = {
     id: 'v3.23-ch20b',
     lines: (prev && prior !== prev.id && prior !== 'v3.23-ch20b' ? prev.lines : []).concat([
-      { text: '✦ New: Chapter 20, Janji Buaya Putih, Part 2: the end of the story ✦  The monsoon wind turns. Take Seri Putih home to Sabah: through the strait at the tip of Borneo, past the Bajau Laut, up the Kinabatangan...' },
+      { text: '✦ New: Chapter 20, Janji Buaya Putih, Part 2: the Season 1 finale ✦  The monsoon wind turns. Take Seri Putih home to Sabah: through the strait at the tip of Borneo, past the Bajau Laut, up the Kinabatangan...' },
       { text: '...and find out what Pelita really is. When it is over: Pelita\'s last form, a white hatchling of your own, a house in Kampong Ayer, and the credits. Thank you for playing Little Creature.' }
     ])
   };
@@ -276,7 +276,8 @@ window.LC = window.LC || {};
     },
     // ---- the credits: every chapter, and TAMAT
     openCredits20: function (cb) {
-      var self = this, c = this.modalC(110, 0x000000, 1), list = [{ n: 1, name: 'Little Creature' }].concat(LC.CHAPTER_LIST), y = 0, speed = 46, fast = false, done = false, m;
+      var self = this, c = this.modalC(110, 0x000000, 1), y = 0, speed = 46, fast = false, done = false, m;
+      var list = [{ n: 1, name: 'Little Creature' }].concat(LC.CHAPTER_LIST.filter(function (ch) { return ch.n <= 20; }));
       var roll = this.add.container(0, 0); c.add(roll);
       function line(t, size, col, gapAfter) { var tx = self.txt(480, 0, t, size, col, { ox: 0.5, wrap: 640, align: 'center' }); tx.y = y; roll.add(tx); y += tx.height + (gapAfter || 14); return tx; }
       y = 700;
@@ -292,7 +293,8 @@ window.LC = window.LC || {};
       line('Most pictures and every tune in this game are made by code, one pixel and one note at a time. The grass, paths, trees, farm animals, grass details and the farmer you play come from Sunnyside World by Daniel Diggle, and everyone else is drawn in its style. The recorded sounds of Chapter 19 are CC0, from BigSoundBank and Freesound.', 14, '#a89a88', 60);
       line('Pelita, Nenek, Sang Kancil, Seri Putih, Anak Putih, and everyone in the kampung, the water village and beyond.', 16, '#e8d8c0', 60);
       line(X.credits.thanks, 24, '#ffd166', 120);
-      var tamat = line(X.credits.tamat, 64, '#fff6d8', 40);
+      var tamat = line(X.credits.tamat, 64, '#fff6d8', 20);
+      line(X.credits.seasonEnd, 24, '#ffd166', 24);
       line(X.credits.after, 14, '#a89a88', 40);
       var endY = tamat.y - 260;
       var hint = this.txt(940, 620, this.touchOn ? 'Tap to hurry · X to skip' : 'E: faster · Esc: skip', 12, '#6a5a4a', { ox: 1, oy: 1 }); c.add(hint);
@@ -364,7 +366,7 @@ window.LC = window.LC || {};
     var rows = statRows.apply(this, arguments), self = this;
     if (!LC.c20Tamat()) return rows;
     return [{ icon: 'ghost_6_happy', label: '✦ TAMAT ✦', right: 'Photo', sub: X.tamatRow.replace('{d}', q().c20tamat), action: function () { self.closeModal(); self.openPhoto20(null); } },
-      { icon: 'ic_chap', label: 'Watch the credits again', right: 'Watch', sub: 'Every chapter, from the first little light to the white crocodile.', action: function () { self.closeModal(); self.openCredits20(function () {}); } }].concat(rows);
+      { icon: 'ic_chap', label: 'Watch the Season 1 credits', right: 'Watch', sub: 'From the first little light to the white crocodile.', action: function () { self.closeModal(); self.openCredits20(function () {}); } }].concat(rows);
   };
   var compRows = U.companionRows;
   U.companionRows = function () {

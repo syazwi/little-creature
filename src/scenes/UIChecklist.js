@@ -149,6 +149,10 @@ window.LC = window.LC || {};
     }
   };
 
+  function chapterName(ch) {
+    return ch.name + (ch.seasonFinale ? ' (Season ' + ch.seasonFinale + ' finale)' : '');
+  }
+
   // ---------------------------------------------------------------- what to do now
   LC.checklist = function () {
     var S = LC.State.s, Q = S.quests;
@@ -160,11 +164,16 @@ window.LC = window.LC || {};
     }
     var ch = null;
     for (var i = 0; i < LC.CHAPTER_LIST.length; i++) { if ((Q[LC.CHAPTER_LIST[i].key] || 0) < LC.CHAPTER_LIST[i].end) { ch = LC.CHAPTER_LIST[i]; break; } }
-    if (!ch) return { title: 'Every chapter is complete!', step: 0, total: 0, now: 'Well done. Visit your friends across the land, befriend every spirit, and look after Pelita.', done: [], left: 0, items: [], next: 'More chapters are on the way.' };
+    if (!ch) {
+      var finale = LC.CHAPTER_LIST[LC.CHAPTER_LIST.length - 1].seasonFinale;
+      return { title: finale ? 'Season ' + finale + ' complete!' : 'Every chapter is complete!', step: 0, total: 0,
+        now: 'Visit your friends across the land, befriend every spirit, and look after Pelita.', done: [], left: 0, items: [],
+        next: finale ? 'The next chapter opens Season ' + (finale + 1) + '.' : 'More chapters are on the way.' };
+    }
     var st = Q[ch.key] || 0, parts = PARTS[ch.n] ? PARTS[ch.n](st, Q) : null;
     var goal = LC.ch2Goal ? LC.ch2Goal() : null;
     return {
-      n: ch.n, title: 'Chapter ' + ch.n + ': ' + ch.name, step: Math.min(st + 1, ch.end), total: ch.end, stepName: ch.steps[st] || '',
+      n: ch.n, title: 'Chapter ' + ch.n + ': ' + chapterName(ch), step: Math.min(st + 1, ch.end), total: ch.end, stepName: ch.steps[st] || '',
       now: goal ? goal.replace(/^Chapter \d+(, part \d)?: /, '') : (ch.steps[st] || ''),
       done: ch.steps.slice(0, st), left: Math.max(0, ch.end - st - 1),
       items: parts || [], next: ch.next
@@ -192,11 +201,11 @@ window.LC = window.LC || {};
     // the top of the Journal's Chapters page (and the first tab of Chapter Progress)
     checklistRows: function () {
       var P = LC.chapterProgress(), L = P.L, rows = [];
-      rows.push({ icon: 'ic_chap', label: 'To do now: ' + L.title + (L.total ? ' (step ' + L.step + ' of ' + L.total + ')' : ''), sub: (L.stepName ? L.stepName + ': ' : '') + L.now,
+      rows.push({ icon: 'ic_chap', label: P.n ? 'To do now: ' + L.title + ' (step ' + L.step + ' of ' + L.total + ')' : L.title, sub: (L.stepName ? L.stepName + ': ' : '') + L.now,
         right: P.pct + '%', bar: P.pct / 100 });
       L.items.forEach(function (x) { rows.push({ icon: x.ok ? 'ic_bond' : 'ic_moon', label: (x.ok ? '✓ ' : '· ') + x.t, right: x.ok ? 'Done' : '' }); });
       if (L.left) rows.push({ icon: 'ic_moon', label: L.left + ' more step' + (L.left > 1 ? 's' : '') + ' after this one in ' + L.title + '.' });
-      rows.push({ icon: 'ic_sun', label: P.n && P.n < P.total ? 'How to reach Chapter ' + (P.n + 1) : 'What opens the next chapter', sub: L.next });
+      rows.push({ icon: 'ic_sun', label: P.n && P.n < P.total ? 'How to reach Chapter ' + (P.n + 1) : 'What comes next', sub: L.next });
       return rows;
     },
     // every chapter, with how much of it is done (the names of chapters not reached yet stay a secret)
@@ -204,9 +213,9 @@ window.LC = window.LC || {};
       var P = LC.chapterProgress(), all = [ONE].concat(LC.CHAPTER_LIST);
       return all.map(function (ch, i) {
         var done = !P.n || ch.n < P.n, now = ch.n === P.n, prev = all[i - 1];
-        if (done) return { icon: 'ic_bond', label: '✓ Chapter ' + ch.n + ': ' + ch.name, right: '100%', bar: 1,
+        if (done) return { icon: 'ic_bond', label: '✓ Chapter ' + ch.n + ': ' + chapterName(ch), right: '100%', bar: 1,
           sub: ch.n === 1 ? 'Pelita became a Legend of the Kampung.' : 'All ' + ch.end + ' steps done: ' + ch.steps.slice(0, ch.end).join(', ') + '.' };
-        if (now) return { icon: 'ic_chap', label: 'Chapter ' + ch.n + ': ' + ch.name + '  (now)', right: P.pct + '%', bar: P.pct / 100,
+        if (now) return { icon: 'ic_chap', label: 'Chapter ' + ch.n + ': ' + chapterName(ch) + '  (now)', right: P.pct + '%', bar: P.pct / 100,
           sub: (ch.n === 1 ? noDot(P.L.now) + '. ' : 'Step ' + P.L.step + ' of ' + ch.end + ': ' + P.L.stepName + '. ') + P.L.next };
         return { icon: 'ic_moon', label: 'Chapter ' + ch.n + ': ???', right: 'Locked',
           sub: ch.n === P.n + 1 ? P.L.next : 'Opens after Chapter ' + prev.n + '.' };
@@ -217,7 +226,7 @@ window.LC = window.LC || {};
       var self = this, S = this.S;
       if (!S || S.guest) return null;
       var P = LC.chapterProgress(), L = P.L, tap = this.touchOn ? 'Tap' : 'Select';
-      if (!P.n) return { icon: 'ic_chap', label: 'Story: Complete', sub: 'Every chapter is complete! ' + L.now, action: function () { self.openChapter(); } };
+      if (!P.n) return { icon: 'ic_chap', label: L.title, sub: L.next, action: function () { self.openChapter(); } };
       return { icon: 'ic_chap', label: 'Chapter ' + P.n + ': ' + P.pct + '%',
         sub: P.name + (L.total > 1 ? ', step ' + L.step + ' of ' + L.total : '') + ': ' + noDot(L.stepName || L.now) + '. ' + tap + ' to see what to do now, and ' + (P.n < P.total ? 'how to reach Chapter ' + (P.n + 1) : 'what comes next') + '.',
         action: function () { self.openChapter(); } };
@@ -226,7 +235,7 @@ window.LC = window.LC || {};
       var self = this;
       this.openMenu({
         title: 'Chapter Progress',
-        footer: function () { var P = LC.chapterProgress(); return 'The whole story: ' + P.done + ' of ' + P.total + ' chapters complete. What happened so far is in the Journal (J) > Chapters.'; },
+        footer: function () { var P = LC.chapterProgress(); return P.done + ' of ' + P.total + ' chapters complete. What happened so far is in the Journal (J) > Chapters.'; },
         tabs: [{ label: 'To do now', rows: function () { return self.checklistRows(); } }, { label: 'All chapters', rows: function () { return self.chapterListRows(); } }]
       });
     },

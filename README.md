@@ -359,9 +359,11 @@ Finished a chapter and want to play it again? Open **Pause > Chapter** (or **Sto
 - When the chapter ends, the game asks if you want to go **back to your farm** (or stay and look around). You can also go home any time: **Pause > Replay: Chapter N > End the replay and go home**.
 - While replaying, the game saves the replay by itself; saving into a slot, loading and co-op wait until you are home. If you close the game during a replay, you simply start on your farm next time.
 
-### Chapter 20 — Janji Buaya Putih, "The White Crocodile's Promise" (v3.22 Part 1, v3.23 Part 2: the end of the story)
+### Chapter 20 — Janji Buaya Putih, "The White Crocodile's Promise" (Season 1 finale)
 
-The last chapter. Late on a night after Chapter 19 (after 9 PM), a white light flashes under the river behind the farm, and the water goes black. Nenek tells you why it matters: when her mother was a baby, a **white crocodile** carried her basket out of a great flood. Without her, there would be no Nenek, and no you. Built on the Malay folklore of the buaya putih (shown as a dignified guardian, with no offerings and no worship) and the old folk tales of **Sang Kancil**.
+Both parts close Season 1. Chapter 21 will open Season 2. See [Story seasons](docs/story-seasons.md) for the handoff.
+
+Late on a night after Chapter 19 (after 9 PM), a white light flashes under the river behind the farm, and the water goes black. Nenek tells you why it matters: when her mother was a baby, a **white crocodile** carried her basket out of a great flood. Without her, there would be no Nenek, and no you. Built on the Malay folklore of the buaya putih (shown as a dignified guardian, with no offerings and no worship) and the old folk tales of **Sang Kancil**.
 
 - **The cucumber thief.** In the morning Nenek's cucumber vines (beside the field) are stripped bare. Stand her old **sticky scarecrow** by them, then after 8 PM **hide in the straw pile** by the spirit house and keep still: if you move, the thief bolts. It is **Sang Kancil**, the mousedeer, stuck fast ("I am not stuck. I am guarding your scarecrow.").
 - **Seri Putih.** Kancil leads you to the reeds on the east bank, where an old crocodile lies fading, her white scales gone grey. She wants to go home to the **Kinabatangan in Sabah**, where she hatched. Feed her 5 fish (any fish), and sail by night.

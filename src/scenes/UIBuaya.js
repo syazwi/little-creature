@@ -34,10 +34,10 @@ window.LC = window.LC || {};
     ][s];
     return 'Chapter 20: ' + text;
   };
-  LC.CHAPTER_LIST.forEach(function (ch) { if (ch.n === 19) ch.next = 'Chapter 20, the last chapter, begins late on a night after Chapter 19: something happens to the river behind the farm.'; });
-  LC.CHAPTER_LIST.push({ n: 20, key: 'ch20', end: C.end, name: 'Janji Buaya Putih',
+  LC.CHAPTER_LIST.forEach(function (ch) { if (ch.n === 19) ch.next = 'The Season 1 finale begins late on a night after Chapter 19, when the river behind the farm changes.'; });
+  LC.CHAPTER_LIST.push({ n: 20, key: 'ch20', end: C.end, name: 'Janji Buaya Putih', seasonFinale: 1,
     steps: ['The river turns black', 'The cucumber thief', 'Sang Kancil\'s secret', 'Seri Putih', 'Kampong Ayer is afraid', 'A cradle, a bell, a meal', 'The Night of Fire', 'Pelita, alone'],
-    next: 'Part 1 complete! Seri Putih rests in Teluk Barunai until the monsoon wind turns. Part 2, the voyage to Sabah and the end of the story, is on the way.' });
+    next: 'Part 1 complete! Seri Putih rests in Teluk Barunai until the monsoon wind turns. The voyage to Sabah is the second part of the Season 1 finale.' });
   var checklist = LC.checklist;
   LC.checklist = function () {
     var L = checklist.apply(this, arguments);
@@ -57,8 +57,8 @@ window.LC = window.LC || {};
   LC.NEWS = {
     id: 'v3.22-ch20',
     lines: (prev && prior !== prev.id && prior !== 'v3.22-ch20' ? prev.lines : []).concat([
-      { text: '✦ New: Chapter 20, Janji Buaya Putih (Part 1) ✦  The last chapter begins. After Chapter 19, late one night, the river behind the farm turns black, and something steals Nenek\'s cucumbers...' },
-      { text: 'Sail through the night with a white crocodile beside you, keep her in Pelita\'s light, and win over Kampong Ayer. Part 2, the end of the story, comes in the next update.' }
+      { text: '✦ New: Chapter 20, Janji Buaya Putih (Part 1) ✦  The Season 1 finale begins. After Chapter 19, late one night, the river behind the farm turns black, and something steals Nenek\'s cucumbers...' },
+      { text: 'Sail through the night with a white crocodile beside you, keep her in Pelita\'s light, and win over Kampong Ayer. The voyage to Sabah continues in Part 2.' }
     ])
   };
 
