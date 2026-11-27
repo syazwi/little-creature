@@ -6,7 +6,7 @@
  * dist/ (the version news and the downloads) always comes from the internet. */
 
 // ---- stamped by tools/build-web.mjs on every build (do not edit by hand): the version, and every file the game needs
-var CACHE = 'little-creature-97-20261127012819';
+var CACHE = 'little-creature-98-20261127034533';
 var FILES = [
   './', 'index.html', 'manifest.webmanifest', 'lib/phaser.min.js', 'lib/peerjs.min.js', 'src/version.js',
   'src/update.js', 'src/data.js', 'src/areas.js', 'src/folk.js', 'src/data2.js', 'src/areas2.js', 'src/undersea.js',
@@ -44,8 +44,9 @@ var FILES = [
   'src/scenes/UIBujang.js', 'src/sounds19.js', 'src/maya.js', 'src/scenes/WorldMaya.js', 'src/scenes/UIMaya.js',
   'src/buaya.js', 'src/scenes/WorldBuaya.js', 'src/scenes/UIBuaya.js', 'src/buaya2.js', 'src/scenes/WorldBuaya2.js',
   'src/scenes/UIBuaya2.js', 'src/grass-details.js', 'src/story-checkpoints.js', 'src/chapter-replay.js',
-  'src/folk-moves.js', 'src/art-folk.js', 'src/scenes/WorldMoves.js', 'src/main.js', 'lib/fonts/PixelifySans-latin.woff2',
-  'lib/fonts/PixelifySans-latin-ext.woff2', 'icons/icon-192.png', 'icons/icon-512.png'
+  'src/folk-moves.js', 'src/art-folk.js', 'src/scenes/WorldMoves.js', 'src/scenes/UIBattlePad.js', 'src/main.js',
+  'lib/fonts/PixelifySans-latin.woff2', 'lib/fonts/PixelifySans-latin-ext.woff2', 'icons/icon-192.png',
+  'icons/icon-512.png'
 ];
 // ---- end of stamp
 
