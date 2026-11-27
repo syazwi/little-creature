@@ -5,6 +5,7 @@ window.LC = window.LC || {};
   'use strict';
   var ACCEPT = { KeyE: 1, Space: 1, Enter: 1 };
 
+  LC.PXS = 3;   // v3.31: one pixel of the round buttons and the joystick, in screen pixels (see pxDisc)
   LC.UIScene = class extends Phaser.Scene {
     constructor() { super('UI'); }
 
@@ -153,6 +154,63 @@ window.LC = window.LC || {};
       g.fillStyle(color, 1); g.fillRect(x + 1, y + 1, (w - 2) * frac, h - 2);
       g.fillStyle(0xffffff, 0.22); g.fillRect(x + 1, y + 1, (w - 2) * frac, Math.max(1, Math.floor(h / 3)));
     }
+    // v3.31: pixel-art circles (the owner: "the circle should be pixelated"). Drawn from square "pixels" of PXS screen
+    // pixels, about the size of the icons' pixels, as row spans: a disc, a ring (t pixels thick), a pie (a cooldown
+    // sweeping clockwise from the top) and an arc. r is the radius in screen pixels, as for fillCircle.
+    pxRows(rr) {
+      var C = LC.pxRowsCache || (LC.pxRowsCache = {});
+      if (!C[rr]) { var rows = []; for (var j = 0; j < 2 * rr; j++) { var y = j - rr + 0.5; rows.push(Math.round(Math.sqrt(Math.max(0, rr * rr - y * y)))); } C[rr] = rows; }
+      return C[rr];
+    }
+    pxDisc(g, x, y, r, color, alpha) {
+      var P = LC.PXS, rr = Math.max(2, Math.round(r / P)), rows = this.pxRows(rr), x0 = Math.round(x), y0 = Math.round(y) - rr * P;
+      g.fillStyle(color, alpha);
+      for (var j = 0; j < rows.length; j++) if (rows[j]) g.fillRect(x0 - rows[j] * P, y0 + j * P, rows[j] * 2 * P, P);
+    }
+    pxRing(g, x, y, r, color, alpha, t) {
+      t = t || 1;
+      var P = LC.PXS, rr = Math.max(t + 1, Math.round(r / P)), out = this.pxRows(rr), inn = this.pxRows(rr - t), x0 = Math.round(x), y0 = Math.round(y) - rr * P;
+      g.fillStyle(color, alpha);
+      for (var j = 0; j < out.length; j++) {
+        var ho = out[j], ji = j - t, hi = ji >= 0 && ji < inn.length ? inn[ji] : 0, yy = y0 + j * P;
+        if (!ho) continue;
+        if (hi <= 0) g.fillRect(x0 - ho * P, yy, ho * 2 * P, P);
+        else if (ho > hi) { g.fillRect(x0 - ho * P, yy, (ho - hi) * P, P); g.fillRect(x0 + hi * P, yy, (ho - hi) * P, P); }
+      }
+    }
+    // the pixels of a disc (ring: only its outer t pixels) whose angle (0 at the top, clockwise) is from a0 to a1, as
+    // [row, x, width] runs, kept for next time
+    pxSpans(rr, a0, a1, ring) {
+      var C = LC.pxSpanCache || (LC.pxSpanCache = {}), key = rr + ':' + a0.toFixed(3) + ':' + a1.toFixed(3) + ':' + (ring || 0);
+      if (C[key]) return C[key];
+      var rows = this.pxRows(rr), inn = ring ? this.pxRows(rr - ring) : null, sp = [], T = Math.PI * 2;
+      for (var j = 0; j < rows.length; j++) {
+        var h = rows[j], yy = j - rr + 0.5, ji = j - (ring || 0), hi = inn && ji >= 0 && ji < inn.length ? inn[ji] : 0, run = null;
+        for (var i = -h; i < h; i++) {
+          var xx = i + 0.5, a = Math.atan2(xx, -yy); if (a < 0) a += T;
+          var inside = (!ring || i < -hi || i >= hi) && (a0 <= a1 ? a >= a0 && a <= a1 : a >= a0 || a <= a1);
+          if (inside && run && run[1] + run[2] === i) run[2]++;
+          else if (inside) { if (run) sp.push(run); run = [j, i, 1]; }
+        }
+        if (run) sp.push(run);
+      }
+      return (C[key] = sp);
+    }
+    pxDraw(g, x, y, rr, sp, color, alpha) {
+      var P = LC.PXS, x0 = Math.round(x), y0 = Math.round(y) - rr * P;
+      g.fillStyle(color, alpha);
+      sp.forEach(function (s) { g.fillRect(x0 + s[1] * P, y0 + s[0] * P, s[2] * P, P); });
+    }
+    pxPie(g, x, y, r, f, color, alpha) {
+      if (f <= 0) return;
+      if (f >= 0.999) { this.pxDisc(g, x, y, r, color, alpha); return; }
+      var rr = Math.max(2, Math.round(r / LC.PXS));
+      this.pxDraw(g, x, y, rr, this.pxSpans(rr, 0, Math.round(f * 48) / 48 * Math.PI * 2), color, alpha);
+    }
+    pxArc(g, x, y, r, a0, a1, color, alpha) {   // a 1-pixel ring from angle a0 to a1 (radians, 0 at the top, clockwise)
+      var rr = Math.max(2, Math.round(r / LC.PXS));
+      this.pxDraw(g, x, y, rr, this.pxSpans(rr, a0, a1, 1), color, alpha);
+    }
 
     // ================================================================ HUD
     buildHUD() {
@@ -176,8 +234,7 @@ window.LC = window.LC || {};
       var px = this.PX = 960 - 286, py = this.PY = 12;
       var pg = this.add.graphics();
       this.panel(pg, px, py, 274, 212);
-      pg.fillStyle(0x3b2f5c, 1); pg.fillCircle(px + 50, py + 68, 38);
-      pg.lineStyle(2, 0xb8a8ff, 0.8); pg.strokeCircle(px + 50, py + 68, 38);
+      this.pxDisc(pg, px + 50, py + 68, 39, 0x3b2f5c, 1); this.pxRing(pg, px + 50, py + 68, 39, 0xb8a8ff, 0.8);
       this.portrait = this.add.image(px + 50, py + 66, 'ghost_0_normal').setScale(3);
       var tName = this.txt(px + 100, py + 14, 'Pelita', 22, '#e8dcff');
       this.tStage = this.txt(px + 100, py + 42, '', 14, '#b8a8ff');
@@ -191,8 +248,7 @@ window.LC = window.LC || {};
       // you are fighting, go underneath. (The bubble is made before the bars, so they draw on top of it.)
       var sx = this.PSX = 960 - 12 - 96, sg = this.add.graphics();
       this.panel(sg, sx, 12, 96, 128);
-      sg.fillStyle(0x3b2f5c, 1); sg.fillCircle(sx + 48, 56, 30);
-      sg.lineStyle(2, 0xb8a8ff, 0.8); sg.strokeCircle(sx + 48, 56, 30);
+      this.pxDisc(sg, sx + 48, 56, 30, 0x3b2f5c, 1); this.pxRing(sg, sx + 48, 56, 30, 0xb8a8ff, 0.8);
       this.gfx = this.add.graphics();
       this.pin('tr', [pg, this.portrait, tName, this.tStage].concat(needIcons, [this.tBond, this.tCrave, this.icCrave, this.gfx]));
       this.portraitS = this.add.image(sx + 48, 55, 'ghost_0_normal').setScale(2.2);
@@ -221,13 +277,46 @@ window.LC = window.LC || {};
           var cnt = self.txt(x + 46, y + 47, '', 14, '#ffffff', { stroke: 3, ox: 1, oy: 1 });
           var num = self.txt(x + 4, y + 2, String(i + 1), 11, '#a08a6a');
           var z = self.add.zone(x, y, 48, 48).setOrigin(0).setInteractive({ useHandCursor: true });
-          z.on('pointerdown', function () { if (!self.modal) self.selectSlot(i); });
-          self.slotUI.push({ x: x, y: y, icon: icon, cnt: cnt });
+          z.on('pointerdown', function (p) {
+            if (self.modal) return;
+            self.selectSlot(i);
+            if (self.S.inv[i]) self.hotDrag = { from: i, id: p.id, x0: p.x, y0: p.y, on: false, over: -1 };
+          });
+          self.slotUI.push({ x: x, y: y, icon: icon, cnt: cnt, z: z });
           self.pin('bc', [icon, cnt, num, z]);
         })(i);
       }
       this.tPrompt = this.txt(480, 566, '', 18, '#fffdf2', { stroke: 5, ox: 0.5, oy: 1 });
       this.pin('bc', [this.hotG, this.tPrompt]);
+      // v3.31: press an item and drag it along the hotbar to swap two slots (you keep holding the one you dragged)
+      this.hotDrag = null;
+      this.dragIcon = this.add.image(0, 0, 'i_hoe').setScale(2.4).setAlpha(0.92).setDepth(80).setVisible(false);
+      function slotAt(p) {
+        for (var q = 0; q < 9; q++) { var z = self.slotUI[q].z; if (p.x >= z.x - 3 && p.x < z.x + 51 && p.y >= z.y - 3 && p.y < z.y + 51) return q; }
+        return -1;
+      }
+      this.input.on('pointermove', function (p) {
+        var d = self.hotDrag, S = self.S;
+        if (!d || p.id !== d.id) return;
+        if (self.modal || !S.inv[d.from]) { self.hotDrag = null; self.dragIcon.setVisible(false); return; }
+        if (!d.on) {
+          if (Math.hypot(p.x - d.x0, p.y - d.y0) < 10) return;
+          d.on = true; self.dragIcon.setTexture(LC.ITEMS[S.inv[d.from].id].icon).setVisible(true);
+        }
+        self.dragIcon.setPosition(p.x, p.y - 16);
+        d.over = slotAt(p);
+      });
+      function drop(p) {
+        var d = self.hotDrag, S = self.S;
+        if (!d || p.id !== d.id) return;
+        self.hotDrag = null; self.dragIcon.setVisible(false);
+        if (!d.on || self.modal) return;
+        var to = slotAt(p);
+        if (to < 0 || to === d.from) return;
+        var t = S.inv[d.from]; S.inv[d.from] = S.inv[to]; S.inv[to] = t;
+        S.sel = to; LC.Audio.sfx('plant'); LC.emit('inv');
+      }
+      this.input.on('pointerup', drop); this.input.on('pointerupoutside', drop);
     }
 
     // v3.30: Pelita's card, full or folded (folded by default on touch screens, where it covers more of the map)
@@ -316,21 +405,22 @@ window.LC = window.LC || {};
       g.clear();
       if (show) {
         var bx = s.id === -1 ? this.stickHome.x : s.bx, by = s.id === -1 ? this.stickHome.y : s.by;
-        g.fillStyle(0x1e1510, s.id === -1 ? 0.25 : 0.45); g.fillCircle(bx, by, 58);
-        g.lineStyle(2, 0xd9a94e, s.id === -1 ? 0.35 : 0.8); g.strokeCircle(bx, by, 58);
+        this.pxDisc(g, bx, by, 57, 0x1e1510, s.id === -1 ? 0.25 : 0.45);
+        this.pxRing(g, bx, by, 57, 0xd9a94e, s.id === -1 ? 0.35 : 0.8);
         var kx = s.id === -1 ? bx : s.x, ky = s.id === -1 ? by : s.y;
         var dx = kx - bx, dy = ky - by, d = Math.hypot(dx, dy);
         if (d > 56) { kx = bx + dx / d * 56; ky = by + dy / d * 56; }
-        g.fillStyle(0xf2d06b, s.id === -1 ? 0.3 : 0.85); g.fillCircle(kx, ky, 24);
+        this.pxDisc(g, kx, ky, 24, 0xf2d06b, s.id === -1 ? 0.3 : 0.85);
+        this.pxRing(g, kx, ky, 24, 0xb8863a, s.id === -1 ? 0.3 : 0.9);
       }
-      var bright = this.lastBright, modal = !!this.modal, touch = this.touchOn;
+      var bright = this.lastBright, modal = !!this.modal, touch = this.touchOn, self = this;
       this.tBtns.forEach(function (b) {
         var vis = (b.always && !(b.touchOnly && (!touch || modal))) || show;
         b.g.clear(); b.t.setVisible(vis); b.hit.setVisible(vis);
         if (!vis) return;
         var hot = b.code === 'KeyE' && bright;
-        b.g.fillStyle(hot ? 0x5a4024 : 0x1e1510, b.down ? 0.95 : 0.7); b.g.fillCircle(b.x, b.y, b.r);
-        b.g.lineStyle(hot ? 3 : 2, hot ? 0xffd166 : 0xd9a94e, 0.95); b.g.strokeCircle(b.x, b.y, b.r);
+        self.pxDisc(b.g, b.x, b.y, b.r, hot ? 0x5a4024 : 0x1e1510, b.down ? 0.95 : 0.7);
+        self.pxRing(b.g, b.x, b.y, b.r, hot ? 0xffd166 : 0xd9a94e, 0.95, hot ? 2 : 1);
         if (b.always && !b.touchOnly) b.t.setText(modal ? 'X' : 'II');
       });
     }
@@ -340,12 +430,13 @@ window.LC = window.LC || {};
       g.clear();
       g.fillStyle(0x1e1510, 0.85); g.fillRoundedRect(232, 572, 496, 64, 10);
       g.lineStyle(2, 0x8a6a3a, 1); g.strokeRoundedRect(232, 572, 496, 64, 10);
+      var d = this.hotDrag && this.hotDrag.on ? this.hotDrag : null;   // v3.31: while dragging, the slot under it is lit
       this.slotUI.forEach(function (s, i) {
-        var sl = S.inv[i], on = i === S.sel;
-        g.fillStyle(on ? 0x5a4024 : 0x2e2219, 1); g.fillRoundedRect(s.x, s.y, 48, 48, 6);
-        g.lineStyle(on ? 3 : 1, on ? 0xffd166 : 0x6a5034, 1); g.strokeRoundedRect(s.x, s.y, 48, 48, 6);
+        var sl = S.inv[i], on = i === S.sel, tgt = d && i === d.over && i !== d.from;
+        g.fillStyle(tgt ? 0x2a4a6a : on ? 0x5a4024 : 0x2e2219, 1); g.fillRoundedRect(s.x, s.y, 48, 48, 6);
+        g.lineStyle(on || tgt ? 3 : 1, tgt ? 0x8fd3ff : on ? 0xffd166 : 0x6a5034, 1); g.strokeRoundedRect(s.x, s.y, 48, 48, 6);
         if (sl) {
-          s.icon.setVisible(true).setTexture(LC.ITEMS[sl.id].icon);
+          s.icon.setVisible(true).setTexture(LC.ITEMS[sl.id].icon).setAlpha(d && i === d.from ? 0.3 : 1);
           s.cnt.setText(sl.n > 1 ? String(sl.n) : '');
           if (sl.id === 'can') {
             g.fillStyle(0x000000, 0.7); g.fillRect(s.x + 6, s.y + 40, 36, 5);
@@ -1207,7 +1298,7 @@ window.LC = window.LC || {};
             LC.pauseExtraRow3 ? LC.pauseExtraRow3.call(self) : null,   // v2.7.1: the guide arrow on or off
             LC.pauseExtraRow4 ? LC.pauseExtraRow4.call(self) : null,   // v2.7.4: the prayer-time reminders on or off
             LC.pauseExtraRow5 ? LC.pauseExtraRow5.call(self) : null,   // v3.9: tap to use on or off
-            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact (and swing a weapon) · your abilities ring USE, and the arrow above it swaps weapons · tap Pelita\'s card to fold it · MAP · II pauses' : 'WASD/Arrows move · E use/swing · V stone curse · 1-9/wheel select · Q tool · X eat · R ride · G glasses · Tab bag · J journal · M map · N music · F fullscreen' },
+            { icon: 'i_hoe', label: 'Controls', sub: self.touchOn ? 'Drag the left side to walk · USE to interact (and swing a weapon) · your abilities ring USE, and the arrow above it swaps weapons · drag hotbar or bag items to swap them · tap Pelita\'s card to fold it · MAP · II pauses' : 'WASD/Arrows move · E use/swing · V stone curse · 1-9/wheel select · Q tool · X eat · R ride · G glasses · Tab bag · J journal · M map · N music · F fullscreen' },
             { icon: 'ic_moon', label: 'Quit to title', sub: LC.Net.role ? 'Also ends the co-op session.' : 'Anything since your last sleep (or save) is lost.', action: function () { self.quitToTitle(); } }
           ]).filter(Boolean).map(gridIcon);
         } }]

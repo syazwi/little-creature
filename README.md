@@ -81,6 +81,7 @@ PC browsers and Android phones can all play together.
 | Move | WASD / Arrow keys | Drag anywhere on the left side (floating joystick) |
 | Interact / use item | E / Space / Enter | **USE** button (glows gold when something can be done), or **tap the thing itself** (v3.9) |
 | Select hotbar slot | 1 – 9, mouse wheel | Tap a slot |
+| Move things around: swap two hotbar slots, or (in the bag) any two slots, hotbar and backpack alike (v3.31) | Drag an item onto another slot (in the bag, hold it over a **more** button to scroll) | Press an item and drag it onto another slot |
 | Eat the selected food | X | **EAT** button |
 | Bag (and **Throw away**) | Tab / I (T or Delete throws the selected item away) | **BAG** button |
 | Sort the bag by kind (from Pelita Lv 4) | In the bag: F (next kind), R (back), or click a picture above the backpack | Tap a picture above the backpack |

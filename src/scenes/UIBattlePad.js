@@ -24,6 +24,15 @@ window.LC = window.LC || {};
     ].concat(seen === LC.NEWS.id || seen === 'v3.30-battle-pad' ? [] : LC.NEWS.lines)
   };
 
+  // v3.31: drag to swap
+  LC.NEWS = {
+    id: 'v3.31-drag',
+    lines: [
+      { text: '✦ Drag to sort ✦  Press an item in your hotbar and drag it onto another slot to swap them. In the bag, drag between the hotbar and the backpack too (hold it over a "more" button to scroll). A short tap still works as before.' },
+      { text: 'The round buttons and the joystick are pixel art now, to match the rest of the game.' }
+    ].concat(seen === LC.NEWS.id || seen === 'v3.31-drag' ? [] : LC.NEWS.lines)
+  };
+
   // ------------------------------------------------------------------ where the buttons go (960 x 640 design, bottom-right)
   var UX = 866, UY = 542;   // the USE button (UI.js buildTouch)
   var SLOTS = [];
@@ -151,16 +160,14 @@ window.LC = window.LC || {};
         sl.ab = st && !st.hidden ? a : null;
         if (!sl.ab) { sl.icon.setVisible(false); sl.num.setVisible(false); sl.hit.setVisible(false); return; }
         var x = s.x + o.x, y = s.y + o.y, r = s.r, col = st.color || a.color, pressed = now - sl.downT < 140, cd = st.left > 0 && st.full;
-        g.fillStyle(st.glow ? 0x2a3442 : 0x1e1510, pressed ? 0.95 : 0.78); g.fillCircle(x, y, pressed ? r - 1 : r);
-        if (cd) {   // the cooldown sweeps round like a clock
-          var f = Math.min(1, st.left / st.full), a0 = -Math.PI / 2;
-          g.fillStyle(0x000000, 0.58); g.beginPath(); g.slice(x, y, r - 2, a0, a0 + f * Math.PI * 2, false); g.fillPath();
-        }
-        if (st.spent) { g.fillStyle(0x000000, 0.55); g.fillCircle(x, y, r - 2); }
+        var rd = pressed ? r - 3 : r;   // (pixel circles: see UI.js pxDisc)
+        self.pxDisc(g, x, y, rd, st.glow ? 0x2a3442 : 0x1e1510, pressed ? 0.95 : 0.78);
+        if (cd) self.pxPie(g, x, y, rd, Math.min(1, st.left / st.full), 0x000000, 0.58);   // the cooldown sweeps round like a clock
+        if (st.spent) self.pxDisc(g, x, y, rd, 0x000000, 0.55);
         if (st.ready) {
-          g.lineStyle(3, col, 0.95); g.strokeCircle(x, y, r);
-          g.lineStyle(2, col, 0.25 + 0.2 * Math.sin(now / 200 + i)); g.strokeCircle(x, y, r + 4);
-        } else { g.lineStyle(2, 0xd9a94e, 0.8); g.strokeCircle(x, y, r); }
+          self.pxRing(g, x, y, rd, col, 0.95);
+          self.pxRing(g, x, y, rd + 3, col, 0.25 + 0.2 * Math.sin(now / 200 + i));
+        } else self.pxRing(g, x, y, rd, 0xd9a94e, 0.8);
         var key = st.icon || a.icon;
         if (!self.textures.exists(key)) key = a.icon;
         if (sl.icon.texture.key !== key) sl.icon.setTexture(key);
@@ -175,12 +182,13 @@ window.LC = window.LC || {};
       var j = show && W.enemies && W.enemies.length ? nextWeapon(S) : -1;
       if (j >= 0) {
         var it = LC.ITEMS[S.inv[j].id], x = SWAP.x + o.x, y = SWAP.y + o.y, r = SWAP.r, pr = now - (P.swapT || -1e9) < 140;
-        g.fillStyle(0x1e1510, pr ? 0.95 : 0.78); g.fillCircle(x, y, r);
-        g.lineStyle(2, 0xd9a94e, 0.85); g.strokeCircle(x, y, r);
-        // a round arrow over the top: "change"
-        g.lineStyle(2, 0xffd166, 0.95); g.beginPath(); g.arc(x, y, r + 5, Math.PI * 1.08, Math.PI * 1.92, false); g.strokePath();
-        var ea = Math.PI * 1.92, hx = x + Math.cos(ea) * (r + 5), hy = y + Math.sin(ea) * (r + 5);
-        g.fillStyle(0xffd166, 0.95); g.fillTriangle(hx + 5, hy - 1, hx - 3, hy - 5, hx - 1, hy + 5);
+        this.pxDisc(g, x, y, r, 0x1e1510, pr ? 0.95 : 0.78);
+        this.pxRing(g, x, y, r, 0xd9a94e, 0.85);
+        // a round arrow over the top, pointing clockwise: "change"
+        var PX = LC.PXS, ar = r + 2 * PX, ea = Math.PI * 0.42;
+        this.pxArc(g, x, y, ar, Math.PI * 1.58, ea, 0xffd166, 0.95);
+        var hx = Math.round(x + Math.sin(ea) * (ar - PX)), hy = Math.round(y - Math.cos(ea) * (ar - PX));
+        g.fillStyle(0xffd166, 0.95); g.fillRect(hx - 2 * PX, hy, 5 * PX, PX); g.fillRect(hx - PX, hy + PX, 3 * PX, PX); g.fillRect(hx, hy + 2 * PX, PX, PX);
         if (P.swapIcon.texture.key !== it.icon) P.swapIcon.setTexture(it.icon);
         P.swapIcon.setVisible(true).setPosition(x, y).setScale(this.padFit(it.icon, r) * (pr ? 0.9 : 1));
         P.swapHit.setVisible(true).setPosition(x, y);
@@ -188,8 +196,8 @@ window.LC = window.LC || {};
       // Restu Ibu: a small badge on USE's rim (dim once it has saved you today)
       if (show && has('hasRestu')) {
         var used = S.restuDay === S.day, bx = RESTU.x + o.x, by = RESTU.y + o.y;
-        g.fillStyle(0x1e1510, 0.92); g.fillCircle(bx, by, RESTU.r);
-        g.lineStyle(2, used ? 0x6a5034 : 0xffd166, 1); g.strokeCircle(bx, by, RESTU.r);
+        this.pxDisc(g, bx, by, RESTU.r, 0x1e1510, 0.92);
+        this.pxRing(g, bx, by, RESTU.r, used ? 0x6a5034 : 0xffd166, 1);
         P.restuIcon.setVisible(true).setPosition(bx, by).setScale(this.padFit('ic_restu', RESTU.r) * 0.95).setAlpha(used ? 0.35 : 1);
       } else P.restuIcon.setVisible(false);
     }

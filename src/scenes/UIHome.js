@@ -111,6 +111,7 @@ window.LC = window.LC || {};
     openInventory: function (start) {
       this.closeModal();
       var self = this, S = this.S, n = S.inv.length, cur = start >= 0 && start < n ? start : S.sel, picked = -1, top = 0, m;
+      var drag = null;   // v3.31: press an item and drag it onto another slot to swap them (a short tap still picks up, then swaps)
       var VR = 4;   // visible backpack rows
       // v2.7.9: Pelita sorts the bag (src/bagsort.js). view: the slots shown, the 9 hotbar slots first, then the backpack
       // slots (all of them, or only the things of the chosen kind, packed together). cur and picked are real slot numbers.
@@ -145,8 +146,8 @@ window.LC = window.LC || {};
         var ic = self.add.image(p.x + 27, p.y + 27, 'i_hoe').setScale(2);
         var ct = self.txt(p.x + 50, p.y + 51, '', 14, '#ffffff', { stroke: 3, ox: 1, oy: 1 });
         var z = self.add.zone(p.x, p.y, CS, CS).setOrigin(0).setInteractive({ useHandCursor: true });
-        z.on('pointerdown', function () { var i = slotOf(k); if (i >= 0) { cur = i; act(); } });
-        z.on('pointerover', function () { var i = slotOf(k); if (i >= 0 && cur !== i) { cur = i; render(); } });
+        z.on('pointerdown', function (p) { var i = slotOf(k); if (i >= 0) { cur = i; drag = { from: i, id: p.id, x0: p.x, y0: p.y, on: false, over: -1 }; render(); } });
+        z.on('pointerover', function () { var i = slotOf(k); if (drag) return; if (i >= 0 && cur !== i) { cur = i; render(); } });
         c.add([ic, ct, z]); cells.push({ x: p.x, y: p.y, ic: ic, ct: ct, k: k });
       })(k);
       function slotOf(k) { var p = k < 9 ? k : 9 + top * 9 + (k - 9); return p < view.length ? view[p] : -1; }
@@ -204,8 +205,8 @@ window.LC = window.LC || {};
         gbz.on('pointerdown', function () { give(); });
         c.add([gg2, gbt, gbz]);
       }
-      c.add(this.txt(480, Y + Hd - 18, this.touchOn ? 'Tap an item, then another slot to swap' + (canSort ? '  ·  tap a category to filter' : '') + '  ·  X to close'
-        : 'Arrows/mouse move  ·  E or click: pick up, then swap  ·  T: throw away' + (canSort ? '  ·  F: sort' : '') + (coop ? '  ·  G: give' : '') + '  ·  Esc close', 12, '#8a7a6a', { ox: 0.5 }));
+      c.add(this.txt(480, Y + Hd - 18, this.touchOn ? 'Drag an item onto another slot to swap' + (canSort ? '  ·  tap a category to filter' : '') + '  ·  X to close'
+        : 'Drag to swap (or E/click twice)  ·  arrows move  ·  T: throw away' + (canSort ? '  ·  F: sort' : '') + (coop ? '  ·  G: give' : '') + '  ·  Esc close', 12, '#8a7a6a', { ox: 0.5 }));
       function keepVisible() {
         var p = view.indexOf(cur);
         if (p < 9) return;
@@ -221,14 +222,15 @@ window.LC = window.LC || {};
         cur = view[p];
       }
       function render() {
-        keepVisible();
+        var dg = drag && drag.on ? drag : null;   // while dragging: the slot it came from is faded, the one under it lit
+        if (!dg) keepVisible();
         gg.clear(); chipG.clear();
         cells.forEach(function (o) {
-          var i = slotOf(o.k), exists = i >= 0, sl = exists ? S.inv[i] : null, on = i === cur, pk = i === picked;
+          var i = slotOf(o.k), exists = i >= 0, sl = exists ? S.inv[i] : null, on = i === cur, pk = i === picked || (dg && i === dg.over && i !== dg.from);
           if (!exists) { o.ic.setVisible(false); o.ct.setText(''); return; }
           gg.fillStyle(pk ? 0x2a4a6a : on ? 0x5a4024 : 0x2e2219, 1); gg.fillRoundedRect(o.x, o.y, CS, CS, 6);
           gg.lineStyle(on || pk ? 3 : 1, pk ? 0x8fd3ff : on ? 0xffd166 : 0x6a5034, 1); gg.strokeRoundedRect(o.x, o.y, CS, CS, 6);
-          var dim = filt && sl && o.k < 9 && LC.bagSortOf(sl.id) !== filt ? 0.3 : 1;   // the hotbar: other kinds dimmed
+          var dim = dg && i === dg.from ? 0.3 : filt && sl && o.k < 9 && LC.bagSortOf(sl.id) !== filt ? 0.3 : 1;   // the hotbar: other kinds dimmed
           if (sl) { o.ic.setVisible(true).setTexture(LC.ITEMS[sl.id].icon).setAlpha(dim); o.ct.setText(sl.n > 1 ? String(sl.n) : '').setAlpha(dim); }
           else { o.ic.setVisible(false); o.ct.setText(''); }
         });
@@ -313,6 +315,44 @@ window.LC = window.LC || {};
           return { label: f.name, fn: function () { self.time.delayedCall(80, function () { howMany(f); }); } };
         }).concat([{ label: 'Never mind', fn: reopen }]) });
       }
+      // v3.31: dragging. A press that moves more than 10 px picks the item up (it follows your finger or the mouse); let
+      // go over another slot to swap the two. Hold it over the "more" buttons to scroll the backpack.
+      var ghost = this.add.image(0, 0, 'i_hoe').setScale(2.6).setAlpha(0.92).setVisible(false); c.add(ghost);
+      function cellAt(p) {
+        var lx = p.x - c.x, ly = p.y - c.y;
+        for (var q = 0; q < cells.length; q++) { var o = cells[q]; if (lx >= o.x - 3 && lx < o.x + CS + 3 && ly >= o.y - 3 && ly < o.y + CS + 3) return slotOf(o.k); }
+        return -1;
+      }
+      function onMove(p) {
+        if (!drag || p.id !== drag.id || self.modal !== m) return;
+        if (!drag.on) {
+          if (Math.hypot(p.x - drag.x0, p.y - drag.y0) < 10 || !S.inv[drag.from]) return;
+          drag.on = true; picked = -1;
+          ghost.setTexture(LC.ITEMS[S.inv[drag.from].id].icon).setVisible(true);
+        }
+        var lx = p.x - c.x, ly = p.y - c.y, now = self.time.now;
+        ghost.setPosition(lx, ly - 16);
+        if (rowsBack > VR && lx >= bx - 6 && lx < bx + 64 && now - (drag.sc || 0) > 350) {
+          if (ly >= gyB - 6 && ly < gyB + 2 * GAP + 4 && top > 0) { top--; drag.sc = now; }
+          else if (ly >= gyB + (VR - 2) * GAP - 6 && ly < gyB + VR * GAP + 4 && top + VR < rowsBack) { top++; drag.sc = now; }
+        }
+        drag.over = cellAt(p);
+        render();
+      }
+      function onUp(p) {
+        if (!drag || p.id !== drag.id) return;
+        var d = drag; drag = null; ghost.setVisible(false);
+        if (self.modal !== m) return;
+        if (!d.on) { cur = d.from; act(); return; }   // a tap: pick up, then swap (as before)
+        var to = cellAt(p);
+        if (to >= 0 && to !== d.from) {
+          var t = S.inv[d.from]; S.inv[d.from] = S.inv[to]; S.inv[to] = t;
+          cur = to; LC.Audio.sfx('plant'); LC.emit('inv'); rebuild();
+        }
+        render();
+      }
+      this.input.on('pointermove', onMove); this.input.on('pointerup', onUp); this.input.on('pointerupoutside', onUp);
+      c.once('destroy', function () { self.input.off('pointermove', onMove); self.input.off('pointerup', onUp); self.input.off('pointerupoutside', onUp); });
       function close() { c.destroy(); if (self.modal === m) self.modal = null; }
       m = {
         type: 'inv', close: close,
