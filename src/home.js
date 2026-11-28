@@ -93,13 +93,14 @@ window.LC = window.LC || {};
       chat: ['I check what Pelita is craving before I light the dapur.', 'Pak Hamid and Kak Nur bring things from the farm. You can leave fish and other ingredients in the pantry for me.'] },
     stor: { name: 'Pak Idris', role: 'Penjaga Stor (storekeeper)', wage: 60, spot: { x: 5, y: 10 },
       look: { skin: '#ad7754', shirt: '#3c7070', shirt2: '#295052', bottom: '#7c5135', bottom2: '#583920', hair: '#242124', hat: 'songkok' },
-      does: 'He sells goods from the pantry overnight according to the stock limits you set under Pantry Sales. Other helpers use the pantry first.',
-      chat: ['Tell me how much of each item to keep in the pantry. I will take the surplus to Mak Ani.', 'Leave the pantry sales list empty and everything stays on the farm.'] },
+      does: 'He buys supplies on Kak Salmah’s list within your shopping budget and sells pantry surplus according to your stock limits.',
+      chat: ['Set my budget under Pantry Shopping and Kak Salmah will tell me what Pelita needs.', 'Tell me how much of each item to keep in the pantry. I will take the surplus to Mak Ani.'] },
     manager: { name: 'Kak Salmah', role: 'Pengurus Rumah (household manager)', wage: 95, stage: 3, spot: { x: 11, y: 8 },
       look: { skin: '#bd825a', shirt: '#467666', shirt2: '#2e574c', bottom: '#634965', bottom2: '#413247', hair: '#291c24', hat: 'tudung', hatColor: '#e0bd65' },
       does: 'She plans Pelita’s next meal, asks Pak Hamid to gather the ingredients and Mak Som to prepare it, and sets it aside in the pantry.' }
   };
   LC.HELPER_ORDER = ['masak', 'ladang', 'kutip', 'pelita', 'stor', 'manager'];
+  LC.PANTRY_BUDGETS = [0, 25, 50, 100, 200, 300, 500];
 
   // shared-world helpers (run by the host or a single player)
   LC.Home = {
@@ -130,6 +131,34 @@ window.LC = window.LC || {};
     missingForMeal: function (plan) {
       var self = this;
       return Object.keys(plan.needs).filter(function (id) { return self.pCount(id) < plan.needs[id]; });
+    },
+    shoppingBudget: function (s) {
+      return LC.PANTRY_BUDGETS.indexOf(s.pantryBudget) >= 0 ? s.pantryBudget : 0;
+    },
+    startShopping: function (s) {
+      var budget = Math.min(this.shoppingBudget(s), s.kepeng);
+      if (!(budget > 0)) return null;
+      var season = LC.seasonOf(s.day + 1).id, level = LC.State.level();
+      var prices = LC.warungStock(season, level).reduce(function (out, id) {
+        if (((LC.SHOP_LEVEL || {})[id] || 0) <= level) out[id] = LC.warungPrice(id, season);
+        return out;
+      }, {});
+      return { budget: budget, prices: prices, spent: 0, bought: [] };
+    },
+    buyIntoPantry: function (s, shopping, order) {
+      var self = this;
+      if (!shopping || !order.length || order.some(function (r) { return !(shopping.prices[r.id] > 0); })) return false;
+      var price = order.reduce(function (sum, r) { return sum + shopping.prices[r.id] * r.n; }, 0);
+      if (price > shopping.budget - shopping.spent || price > s.kepeng) return false;
+      var pantry = s.chests.pantry, before = pantry.items.map(function (slot) { return { id: slot.id, n: slot.n }; });
+      if (!order.every(function (r) { return self.pAdd(r.id, r.n) === r.n; })) {
+        pantry.items = before;
+        return false;
+      }
+      s.kepeng -= price;
+      shopping.spent += price;
+      order.forEach(function (r) { shopping.bought.push(r.n + ' ' + LC.ITEMS[r.id].name); });
+      return true;
     },
     managerReport: function () {
       var s = this.S(), g = s.ghost, it = LC.ITEMS[g.craving];
@@ -197,16 +226,17 @@ window.LC = window.LC || {};
       Object.keys(inp).forEach(function (id) { self.pAdd(id, inp[id]); });
       return false;
     },
-    plantMealCrops: function (s, needs) {
+    plantMealCrops: function (s, needs, shopping) {
       var self = this, planted = [];
       var crops = Object.keys(LC.CROPS), seeds = Object.keys(LC.ITEMS);
       needs.forEach(function (id) {
         var key = crops.find(function (k) { return LC.CROPS[k].item === id; });
         if (!key) return;
         var crop = LC.CROPS[key], seed = seeds.find(function (k) { return LC.ITEMS[k].crop === key; });
-        if (!crop || !seed || !self.pCount(seed) || !LC.State.inSeason(crop.seasons)) return;
+        if (!seed || !LC.State.inSeason(crop.seasons)) return;
         var tiles = Object.keys(s.tiles);
         if (tiles.some(function (k) { return s.tiles[k].crop && s.tiles[k].crop.id === key; })) return;
+        if (!self.pCount(seed) && !self.buyIntoPantry(s, shopping, [{ id: seed, n: 1 }])) return;
         var beds = crop.paddy ? LC.areaGrid('farm').flatMap(function (row, y) {
           return row.reduce(function (out, ch, x) { if (ch === 'r') out.push([x, y]); return out; }, []);
         }) : tiles.filter(function (k) { return s.tiles[k].tilled && !s.tiles[k].crop; }).map(function (k) { return k.split(',').map(Number); });
@@ -290,6 +320,11 @@ window.LC = window.LC || {};
       }
       if (plan) {
         var missing = this.missingForMeal(plan);
+        var shopping = work.stor && !this.pCount(plan.id) ? this.startShopping(s) : null;
+        if (shopping && missing.length && (!plan.recipe || work.masak)) {
+          var order = missing.map(function (id) { return { id: id, n: plan.needs[id] - self.pCount(id) }; });
+          if (this.buyIntoPantry(s, shopping, order)) missing = [];
+        }
         if (!this.pCount(plan.id) && !missing.length && plan.recipe && work.masak) {
           if (this.cookPantry(plan.recipe)) prepared = plan.id;
           else full = true;
@@ -301,11 +336,14 @@ window.LC = window.LC || {};
             'Kak Salmah set aside ' + label + ' for Pelita.');
         } else {
           reserve = plan.needs;
-          var planted = work.ladang ? this.plantMealCrops(s, missing) : [];
+          var planted = work.ladang ? this.plantMealCrops(s, missing, shopping) : [];
           if (planted.length) lines.push('Kak Salmah asked Pak Hamid to plant ' + planted.join(', ') + ' for Pelita’s meals.');
           lines.push('Kak Salmah’s plan for Pelita is ' + label + '. ' +
             (missing.length ? 'Pantry needs ' + missing.map(function (id) { return LC.ITEMS[id].name; }).join(', ') + '.' :
               !work.masak ? 'Mak Som is needed for the cooking.' : 'The pantry needs room for the dish.'));
+        }
+        if (shopping && shopping.spent) {
+          lines.push('Pak Idris bought ' + shopping.bought.join(', ') + ' for ' + shopping.spent + ' kepeng.');
         }
       }
       if (work.pelita) this.feedPelita(s, lines, available);

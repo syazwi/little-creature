@@ -1122,14 +1122,14 @@ window.LC = window.LC || {};
       if (!S.flags.metAni) { S.flags.metAni = true; this.say(LC.TEXT.makAniFirst, { onDone: function () { self.openShop(); } }); return; }
       var tip = LC.TEXT.makAniTips[Math.floor(Math.random() * LC.TEXT.makAniTips.length)];
       var sea = LC.State.season(), big = LC.State.level() >= 10, seedOff = sea.id === 'menanam' ? 0.8 : 1;
-      var stock = LC.SHOP.concat(LC.SHOP_SEASON[sea.id] || [], big ? LC.SHOP_LV10 : [], Object.keys(LC.SHOP_LEVEL || {}));   // (v2.7.5: SHOP_LEVEL, things that come with Pelita's level)
+      var stock = LC.warungStock(sea.id, LC.State.level());
       if (big && !S.flags.warungBig) { S.flags.warungBig = true; tip = 'Welcome to my new stall! Chests, compost, ais kacang... and I pay you 10% more now. Business is good, thanks to you!'; }
       this.openMenu({
         title: big ? 'Mak Ani\'s Kedai Runcit' : 'Mak Ani\'s Warung', coins: true, footer: 'Mak Ani: "' + tip + '"  (' + sea.name + (seedOff < 1 ? ': seeds 20% off!' : '') + ')',
         tabs: [
           { label: 'Buy', rows: function () {
             return stock.map(function (id) {
-              var it = LC.ITEMS[id], price = Math.round(it.price * (it.kind === 'seed' ? seedOff : 1)), afford = S.kepeng >= price, room = LC.State.canAdd(id);
+              var it = LC.ITEMS[id], price = LC.warungPrice(id, sea.id), afford = S.kepeng >= price, room = LC.State.canAdd(id);
               var tag = (LC.SHOP_SEASON[sea.id] || []).indexOf(id) >= 0 ? '  (in season)' : big && LC.SHOP_LV10.indexOf(id) >= 0 ? '  (new stall)' : '';
               var lvNeed = (LC.SHOP_LEVEL || {})[id], lvOk = !lvNeed || LC.State.level() >= lvNeed, owned = it.one && LC.State.owns(id);
               if (lvNeed) tag = lvOk ? '  (new)' : '  (at Pelita Lv ' + lvNeed + ')';

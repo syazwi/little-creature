@@ -19,7 +19,13 @@ window.LC = window.LC || {};
           rows.push({ icon: 'ic_door', label: 'Enter house', action: function () { W.enterFarmhouse(); } });
           rows.push({ icon: 'ic_moon', label: 'Sleep', sub: 'Climb the tangga and end the day. (The game saves every night.)', action: function () { self.confirmSleep(); } });
           if (pantry) rows.push({ icon: 'i_' + pantry.kind, label: LC.ITEMS[pantry.kind].name + ' (the pantry)', sub: pantry.items.length + ' / ' + LC.CHESTS[pantry.kind].slots + ' stacks. Your helpers share these supplies.', action: function () { self.openChest('pantry'); } });
-          if (pantry && S.helpers && S.helpers.stor && !N.isGuest()) rows.push({ icon: 'i_kepeng', label: 'Pantry Sales', sub: 'Choose which items Pak Idris sells and how many he keeps.', action: function () { self.openPantrySales(); } });
+          if (pantry && S.helpers && S.helpers.stor && !N.isGuest()) {
+            var budget = H.shoppingBudget(S);
+            rows.push({ icon: 'i_kepeng', label: 'Pantry Shopping', right: budget ? budget + ' k/day' : 'Off',
+              sub: S.helpers.manager ? 'Set how much Pak Idris can spend on Kak Salmah’s list.' : 'Hire Kak Salmah to give Pak Idris a shopping list.',
+              action: function () { self.openPantryShopping(); } });
+            rows.push({ icon: 'i_kepeng', label: 'Pantry Sales', sub: 'Choose which items Pak Idris sells and how many he keeps.', action: function () { self.openPantrySales(); } });
+          }
           // the helpers
           LC.HELPER_ORDER.forEach(function (k) {
             var Hp = LC.HELPERS[k], hired = !!(S.helpers && S.helpers[k]), por = 'npc_h_' + k + '_0';
@@ -66,6 +72,25 @@ window.LC = window.LC || {};
               } });
           } else rows.push({ icon: 'ic_glow', label: 'Nenek\'s house is complete', sub: 'Verandah, middle room and the grand kitchen wing. The finest rumah panggung on the river.' });
           return rows;
+        } }]
+      });
+    },
+
+    openPantryShopping: function () {
+      var self = this, S = this.S, H = LC.Home;
+      if (LC.Net.isGuest() || !S.helpers.stor || !S.chests.pantry) return;
+      this.openMenu({
+        title: 'Pantry Shopping', footer: 'Pak Idris shops for Pelita after wages and the farm harvest. The limit resets each day.',
+        tabs: [{ label: 'Daily budget', rows: function () {
+          return LC.PANTRY_BUDGETS.map(function (budget) {
+            return { icon: 'i_kepeng', label: budget ? budget + ' kepeng per day' : 'Turn shopping off', right: H.shoppingBudget(S) === budget ? 'Selected' : '',
+              action: function () {
+                S.pantryBudget = budget;
+                LC.State.save();
+                LC.Audio.sfx('click');
+                self.openHouse();
+              } };
+          }).concat({ icon: 'ic_door', label: 'Back to Nenek’s house', action: function () { self.openHouse(); } });
         } }]
       });
     },

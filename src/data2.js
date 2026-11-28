@@ -123,7 +123,14 @@ window.LC = window.LC || {};
   // warung stock: seasonal seeds in their season, and Mak Ani's new stall from Pelita Lv 10
   LC.SHOP = LC.SHOP.concat(['dedak', 'daging_ayam', 'peti_kayu', 'telur', 'telur_itik']);   // (v2.3.2: eggs too)
   LC.SHOP_SEASON = { menanam: ['seed_jagung', 'seed_kangkung'], buah: ['seed_nanas'], kemarau: ['seed_jagung', 'seed_tembikai'], tengkujuh: ['seed_kangkung'] };
-  LC.SHOP_LV10 = ['peti_ukir', 'baja', 'ais_kacang', 'malai', 'canang', 'krathong'];
+  LC.SHOP_LV10 = ['peti_ukir', 'baja', 'ais_kacang', 'malai', 'canang', 'krathong', 'padi', 'ubi', 'pandan', 'cili', 'pisang', 'kelapa', 'mangga'];
+  LC.warungStock = function (season, level) {
+    return LC.SHOP.concat(LC.SHOP_SEASON[season] || [], level >= 10 ? LC.SHOP_LV10 : [], Object.keys(LC.SHOP_LEVEL || {}));
+  };
+  LC.warungPrice = function (id, season) {
+    var it = LC.ITEMS[id];
+    return Math.round(it.price * (it.kind === 'seed' && season === 'menanam' ? 0.8 : 1));
+  };
   LC.LEVEL_REWARDS[9].unlock = 'lombong';
   LC.LEVEL_REWARDS[10] = { water: 10, warung: true, text: 'Your gembor now holds 30 waterings. And Mak Ani opens her new stall: chests, fertiliser, ais kacang and more, and she pays 10% more for everything you sell!' };
 

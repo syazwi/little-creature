@@ -57,7 +57,7 @@ window.LC = window.LC || {};
       // v1.7: your bubu in the water (personal), Badang at your side (personal, for one day), the land he clears (shared: 0 / 1 tonight / 2 done)
       bubus: [], buddy: null, buddyDay: 0, ladang: 0,
       // v1.8 shared: how far Nenek's house has grown (0-3), a stage being built tonight, and the hired helpers
-      house: 0, houseBuild: 0, helpers: {}, pantrySales: {}
+      house: 0, houseBuild: 0, helpers: {}, pantrySales: {}, pantryBudget: 0
     };
   }
   var BAG_EXTRA = ['str', 'wear', 'trophies', 'contest', 'quests', 'bubus'];   // a co-op guest's own progress travels in their bag
@@ -170,6 +170,7 @@ window.LC = window.LC || {};
         var returned = LC.BunianTrials.restore(data);
         if (!data.coop || typeof data.coop !== 'object') data.coop = base.coop;
         if (!data.pantrySales || typeof data.pantrySales !== 'object' || Array.isArray(data.pantrySales)) data.pantrySales = {};
+        data.pantryBudget = LC.Home.shoppingBudget(data);
         if (!data.wear || typeof data.wear !== 'object') data.wear = {};
         if (data.flags.metAni) data.visited.kampung = data.visited.kampung || false;
         while (data.inv.length < LC.INV_SIZE) data.inv.push(null);
