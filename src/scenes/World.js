@@ -748,16 +748,17 @@ window.LC = window.LC || {};
       else if (op === 'befriend') this.refreshFolkSpirits();
       else if (op === 'house_up') { this.refreshHouse(); this.refreshChests(); }
       else if (op === 'hire' || op === 'fire') this.refreshHelpers();
-      if (ok && (op === 'feed' || op === 'pet')) this.followPid = pid;
+      var fed = op === 'feed' || op === 'feed_craving';
+      if (ok && (fed || op === 'pet')) this.followPid = pid;
       if (ok && pid !== 'me') {
         this.remoteFx(op, a);
-        if (op === 'feed' || op === 'pet' || op === 'offer') this.setEmote(res.joy < 0 ? 'sad' : 'happy', 2200);
+        if (fed || op === 'pet' || op === 'offer') this.setEmote(res.joy < 0 ? 'sad' : 'happy', 2200);
       }
       if (ok && LC.Net.isHost()) {
         var by = pid === 'me' ? 'host' : pid;
         LC.Net.broadcast({ t: 'sync', op: op, a: a, by: by, parts: LC.Sim.part(op, a) });
         var who = pid === 'me' ? LC.Net.myName : (LC.Net.guests[pid] || {}).name || 'A friend', msg = null, icon = null;
-        if (op === 'feed') { msg = who + ' fed Pelita ' + LC.ITEMS[a.item].name + (res.craving ? ' (its craving!)' : '') + '.'; icon = LC.ITEMS[a.item].icon; }
+        if (fed) { msg = who + ' fed Pelita ' + LC.ITEMS[a.item].name + (res.craving ? ' (its craving!)' : '') + '.'; icon = LC.ITEMS[a.item].icon; }
         if (op === 'offer') { msg = who + ' placed ' + LC.ITEMS[a.item].name + ' at the spirit house.'; icon = LC.ITEMS[a.item].icon; }
         if (op === 'build') { msg = who + ' started a ' + LC.HOUSES[a.style].name + ' in the kampung. It will be ready tomorrow!'; icon = 'i_kayu'; }
         if (op === 'befriend') { msg = who + ' befriended the ' + LC.SPIRITS[a.sid].name + '!'; icon = 'ic_glow'; }
@@ -776,7 +777,7 @@ window.LC = window.LC || {};
         case 'plant': if (this.area === 'farm') this.fx.leaf.explode(3, a.x * T + 8, a.y * T + 10); break;
         case 'harvest': if (this.area === 'farm') this.fx.leaf.explode(8, a.x * T + 8, a.y * T + 8); break;
         case 'shake': t = this.trees[a.id]; if (t) { this.fx.leaf.explode(10, t.spr.x, t.spr.y - t.spr.height * 0.6); this.tweens.add({ targets: t.spr, x: t.spr.x + 1, duration: 50, yoyo: true, repeat: 3 }); } break;
-        case 'feed': case 'pet': if (this.ghostHere) this.fx.heart.explode(4, gp.x, gp.y - 8); break;
+        case 'feed': case 'feed_craving': case 'pet': if (this.ghostHere) this.fx.heart.explode(4, gp.x, gp.y - 8); break;
         case 'offer': if (this.spiritPos) this.fx.sparkle.explode(10, this.spiritPos.x, this.spiritPos.y - 26); break;
         case 'build': t = this.plots[a.plot]; if (t) this.fx.smoke.explode(10, t.spr.x, t.spr.y - 20); break;
         case 'fertilize': if (this.area === 'farm') this.fx.sparkle.explode(6, a.x * T + 8, a.y * T + 8); break;
@@ -1338,13 +1339,43 @@ window.LC = window.LC || {};
     }
 
     // ---------------------------------------------------------------- Pelita care
-    feedGhost(id) {
+    feedCraving() {
+      var S = this.S, g = S.ghost;
+      if (this.sleeping || this.leaving || this.cutscene || this.reuniting || this.ui.isBlocking() ||
+          g.stage < 1 || g.cravingDone || this.cravingRequest === S) return;
+      if (!this.ghostHere || !this.ghost.visible || LC.pelitaAway()) {
+        this.toast('Pelita is away right now.', 'ic_moon');
+        return;
+      }
+      this.feedGhost(g.craving, true);
+    }
+    feedGhost(id, craving) {
       var S = this.S, g = S.ghost, it = LC.ITEMS[id], self = this;
+      if (!it || !it.food) return;
       function tooFull() { self.toast('Pelita is too full to eat another bite.'); self.setEmote('sleepy', 1500); LC.Audio.sfx('error'); }
       if (g.full >= 97) { tooFull(); return; }
-      LC.State.remove(id, 1);
-      this.doShared('feed', { item: id }, function (res) {
-        if (!res || !res.ok) { LC.State.add(id, 1); if (res && res.full) tooFull(); return; }
+      var pantry = craving && !LC.State.count(id) && LC.Home.canServeCraving(id);
+      if (!pantry && !LC.State.remove(id, 1)) {
+        this.toast('Bring ' + it.name + ' for Pelita.', it.icon);
+        return;
+      }
+      if (craving) this.cravingRequest = S;
+      var op = craving ? 'feed_craving' : 'feed', args = { item: id, day: S.day, pantry: !!pantry };
+      function finish(res) {
+        if (craving && self.cravingRequest === S) self.cravingRequest = null;
+        if (LC.State.s !== S) return;
+        var active = self.sys.isActive();
+        if (!res || !res.ok) {
+          if (!pantry) LC.State.add(id, 1);
+          if (active && res && res.full) tooFull();
+          else if (active && craving) self.toast(res && res.empty ? 'The pantry has run out of ' + it.name + '.' : 'Pelita’s craving is no longer available.', it.icon);
+          return;
+        }
+        S.flags.fedOnce = true;
+        if (!active) return;
+        if (craving && self.A.voyage20 === 'night' && self.c20 && self.c20.sea) {
+          self.c20.sea.calm = Math.min(100, self.c20.sea.calm + LC.C20.calm.feed);
+        }
         var gp = self.ghostPos();
         if (res.joy < 0) { self.setEmote('sad', 2200); LC.Audio.sfx('sad'); }
         else { self.setEmote('happy', 2200); LC.Audio.sfx('eat'); self.fx.heart.explode(4, gp.x, gp.y - 8); }
@@ -1357,8 +1388,10 @@ window.LC = window.LC || {};
             self.craveGift();
           });
         }
-        S.flags.fedOnce = true;
-      });
+      }
+      // Keep the bag refund available even if a guest changes area before the host replies.
+      if (craving && LC.Net.isGuest()) LC.Net.request(op, args, finish);
+      else this.doShared(op, args, finish);
     }
     craveGift() {
       var S = this.S, r = Math.random();

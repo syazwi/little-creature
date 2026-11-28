@@ -556,7 +556,7 @@ window.LC = window.LC || {};
 
       // trees and forage regrow
       Object.keys(s.trees).forEach(function (id) { if (s.trees[id] > 0) s.trees[id]--; });
-      LC.Home.dawn(s, lines, work);
+      var plannedCraving = LC.Home.dawn(s, lines, work);
       if (!g.cravingDone && g.stage >= 1) {
         g.joy = Math.max(0, g.joy - 10);
         lines.push('Pelita never got the ' + LC.ITEMS[g.craving].name + ' it was craving...');
@@ -587,7 +587,7 @@ window.LC = window.LC || {};
       s.stats.earned = 0;
       g.petAt = -999;
       g.cravingDone = false;
-      g.craving = self.pickCraving();
+      g.craving = plannedCraving || self.pickCraving();
       if (!fainted) s.flags.slept = true;
       this.personalMorning().forEach(function (l) { lines.push(l); });
       this.save();

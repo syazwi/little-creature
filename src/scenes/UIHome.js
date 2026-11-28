@@ -23,19 +23,19 @@ window.LC = window.LC || {};
           // the helpers
           LC.HELPER_ORDER.forEach(function (k) {
             var Hp = LC.HELPERS[k], hired = !!(S.helpers && S.helpers[k]), por = 'npc_h_' + k + '_0';
-            if (hired) rows.push({ icon: por, iconScale: 1.6, label: Hp.name + ', ' + Hp.role, right: Hp.wage + '/day', sub: 'Working for you. ' + Hp.does,
+            if (hired) rows.push({ icon: por, iconScale: 1.6, label: Hp.name + ', ' + Hp.role, right: Hp.wage + '/day', sub: k === 'manager' ? H.managerReport() : 'Working for you. ' + Hp.does,
               action: function () {
                 if (N.isGuest()) { self.toast('Only ' + N.hostName + ' (the host) can let helpers go.'); return; }
-                self.say([{ name: Hp.name, portrait: por, text: 'Is something wrong? I have been working hard...' }], { choices: [
+                self.say([{ name: Hp.name, portrait: por, text: k === 'manager' ? H.managerReport() : 'Is something wrong? I have been working hard...' }], { choices: [
                   { label: 'Keep working, thank you!' },
                   { label: 'Let ' + Hp.name + ' go', fn: function () { W.doShared('fire', { k: k }, function (res) { if (res && res.ok) { LC.Audio.sfx('sad'); W.refreshHelpers(); self.toast(Hp.name + ' packs up and goes home to the kampung.', 'ic_moon'); } }); } }
                 ] });
                 return 'close';
               } });
             else {
-              var room = H.hiredCount() < H.rooms(), guest = N.isGuest();
-              rows.push({ icon: por, iconScale: 1.6, label: 'Hire ' + Hp.name + ', ' + Hp.role, right: Hp.wage + '/day', sub: Hp.does, enabled: room && !guest,
-                why: guest ? 'Only ' + N.hostName + ' (the host) can hire helpers.' : st < 1 ? 'There is no room yet: expand the house first (a Serambi makes room for 1 helper).' : 'No room for another helper: expand the house.',
+              var room = H.hiredCount() < H.rooms(), guest = N.isGuest(), stageReady = st >= (Hp.stage || 0);
+              rows.push({ icon: por, iconScale: 1.6, label: 'Hire ' + Hp.name + ', ' + Hp.role, right: Hp.wage + '/day', sub: Hp.does, enabled: room && !guest && stageReady,
+                why: guest ? 'Only ' + N.hostName + ' (the host) can hire helpers.' : !stageReady ? 'Expand Nenek’s house to Rumah Dapur to hire Kak Salmah.' : st < 1 ? 'There is no room yet: expand the house first (a Serambi makes room for 1 helper).' : 'No room for another helper: expand the house.',
                 action: function () {
                   W.doShared('hire', { k: k }, function (res) {
                     if (!res || !res.ok) { self.toast('There is no room for another helper.'); return; }

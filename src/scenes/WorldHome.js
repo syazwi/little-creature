@@ -55,6 +55,7 @@ window.LC = window.LC || {};
       case 'masak': return [start, spot(7, 9, 'i_nasi'), spot(14, 9, 'i_can'), spot(8, 10, 'i_nasi')];
       case 'pelita': return [start, spot(10, 8, 'ic_glow'), spot(8, 9, 'i_pulut_mangga'), spot(12, 7, 'ic_joy')];
       case 'stor': return [start, spot(6, 10, 'i_almari'), spot(40, 9, 'i_kepeng'), spot(7, 11, 'i_almari')];
+      case 'manager': return [start, spot(7, 9, 'ic_chap'), spot(14, 9, 'ic_chap'), spot(11, 10, 'i_almari')];
     }
   }
 
@@ -188,6 +189,10 @@ window.LC = window.LC || {};
       var self = this, H = LC.HELPERS[k];
       return { label: 'Talk to ' + H.name, fn: function () {
         LC.Audio.sfx('pet');
+        if (k === 'manager') {
+          self.ui.say([{ name: H.name, portrait: 'npc_h_manager_0', text: LC.Home.managerReport() }]);
+          return;
+        }
         self.ui.say([{ name: H.name, portrait: 'npc_h_' + k + '_0', text: H.chat[Math.floor(Math.random() * H.chat.length)] },
           { text: H.name + ', your ' + H.role.toLowerCase() + ' (' + H.wage + ' kepeng a day). ' + H.does }]);
       } };

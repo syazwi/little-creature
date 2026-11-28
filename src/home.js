@@ -51,7 +51,7 @@ window.LC = window.LC || {};
     null,
     { name: 'Serambi', desc: 'A breezy verandah beside the house, and a pantry (Almari Dapur) for your helpers. Room for 1 helper.', kepeng: 2000, cost: { kayu: 20, atap: 10 }, rooms: 1 },
     { name: 'Rumah Tengah', desc: 'A new middle room: the dapur cooks up to 5 dishes at once, and +20 max energy. Room for 2 helpers.', kepeng: 6000, cost: { kayu: 30, batu: 15, atap: 15 }, rooms: 2, energy: 20 },
-    { name: 'Rumah Dapur', desc: 'A grand kitchen wing with carved gables: a bigger pantry (48 stacks), and +20 more max energy. Room for all 5 helpers.', kepeng: 15000, cost: { kayu: 40, batu: 20, tanah_liat: 10, tempayan: 2 }, rooms: 5, energy: 20 }
+    { name: 'Rumah Dapur', desc: 'A grand kitchen wing with carved gables: a bigger pantry (48 stacks), and +20 more max energy. Room for all 6 helpers.', kepeng: 15000, cost: { kayu: 40, batu: 20, tanah_liat: 10, tempayan: 2 }, rooms: 6, energy: 20 }
   ];
   LC.OBJECTS.push({ id: 'h_wing', type: 'house_wing', x: 7, y: 3, w: 2, h: 5, tex: 'wing_1', when: function (S) { return (S.house || 0) >= 1; } });
   LC.HOUSE_ZONE = { x0: 7, y0: 2, x1: 9, y1: 7 };   // kept free of grass tufts and bushes, for the new wing
@@ -94,9 +94,12 @@ window.LC = window.LC || {};
     stor: { name: 'Pak Idris', role: 'Penjaga Stor (storekeeper)', wage: 60, spot: { x: 5, y: 10 },
       look: { skin: '#ad7754', shirt: '#3c7070', shirt2: '#295052', bottom: '#7c5135', bottom2: '#583920', hair: '#242124', hat: 'songkok' },
       does: 'He sells goods from the pantry overnight according to the stock limits you set under Pantry Sales. Other helpers use the pantry first.',
-      chat: ['Tell me how much of each item to keep in the pantry. I will take the surplus to Mak Ani.', 'Leave the pantry sales list empty and everything stays on the farm.'] }
+      chat: ['Tell me how much of each item to keep in the pantry. I will take the surplus to Mak Ani.', 'Leave the pantry sales list empty and everything stays on the farm.'] },
+    manager: { name: 'Kak Salmah', role: 'Pengurus Rumah (household manager)', wage: 95, stage: 3, spot: { x: 11, y: 8 },
+      look: { skin: '#bd825a', shirt: '#467666', shirt2: '#2e574c', bottom: '#634965', bottom2: '#413247', hair: '#291c24', hat: 'tudung', hatColor: '#e0bd65' },
+      does: 'She plans Pelita’s next meal, asks Pak Hamid to gather the ingredients and Mak Som to prepare it, and sets it aside in the pantry.' }
   };
-  LC.HELPER_ORDER = ['masak', 'ladang', 'kutip', 'pelita', 'stor'];
+  LC.HELPER_ORDER = ['masak', 'ladang', 'kutip', 'pelita', 'stor', 'manager'];
 
   // shared-world helpers (run by the host or a single player)
   LC.Home = {
@@ -113,18 +116,44 @@ window.LC = window.LC || {};
       if (st >= 3 && S.chests.pantry) S.chests.pantry.kind = 'almari_besar';
     },
     pCount: function (id) { var c = LC.State.s.chests.pantry; return c ? c.items.reduce(function (a, sl) { return a + (sl.id === id ? sl.n : 0); }, 0) : 0; },
+    pRoom: function (id) {
+      var c = LC.State.s.chests.pantry;
+      return Math.max(0, LC.CHESTS[c.kind].slots - c.items.length) * 99 + c.items.reduce(function (n, sl) { return n + (sl.id === id ? 99 - sl.n : 0); }, 0);
+    },
     pAdd: function (id, n) { return LC.State.s.chests.pantry ? LC.Sim.chest_put({ id: 'pantry', item: id, n: n }).n : 0; },
     pTake: function (id, n) { return LC.State.s.chests.pantry ? LC.Sim.chest_take({ id: 'pantry', item: id, n: n }).n : 0; },
+    canServeCraving: function (id) { return !!(this.S().helpers && this.S().helpers.manager && this.pCount(id)); },
+    mealPlan: function (id) {
+      var recipe = LC.RECIPES.find(function (r) { return r.out === id; });
+      return { id: id, recipe: recipe, needs: recipe ? recipe.inp : { [id]: 1 } };
+    },
+    missingForMeal: function (plan) {
+      var self = this;
+      return Object.keys(plan.needs).filter(function (id) { return self.pCount(id) < plan.needs[id]; });
+    },
+    managerReport: function () {
+      var s = this.S(), g = s.ghost, it = LC.ITEMS[g.craving];
+      if (g.stage < 1 || !it) return 'I’ll make a meal plan when Pelita starts showing its cravings.';
+      if (g.cravingDone) return 'Pelita has already had its craving today. I’ll check the pantry for tomorrow.';
+      if (this.pCount(g.craving)) return it.name + ' is ready in the pantry. Tap the craving on Pelita’s card to serve it.';
+      var plan = this.mealPlan(g.craving), missing = this.missingForMeal(plan);
+      var report = 'Pelita wants ' + it.name + '. ';
+      if (missing.length) report += 'Pantry needs ' + missing.map(function (id) { return LC.ITEMS[id].name; }).join(', ') + '. ';
+      if (!s.helpers.ladang) report += 'Hire Pak Hamid to gather farm ingredients. ';
+      if (!s.helpers.masak && plan.recipe) report += 'Hire Mak Som to cook. ';
+      if (!missing.length && s.helpers.masak) report += 'Mak Som has the ingredients for this dish.';
+      return report.trim();
+    },
     pantrySalePrice: function (id) {
       var it = LC.ITEMS[id];
       return it && !LC.FIXED_ITEMS[id] && it.sell > 0 ? it.sell : 0;
     },
-    sellSurplus: function (s, lines) {
+    sellSurplus: function (s, lines, reserve) {
       var self = this, sales = s.pantrySales, earned = 0, sold = [];
       Object.keys(sales).forEach(function (id) {
         var price = self.pantrySalePrice(id), keep = sales[id];
         if (!price || !Number.isInteger(keep) || keep < 0) return;
-        var surplus = self.pCount(id) - keep;
+        var surplus = self.pCount(id) - Math.max(keep, reserve[id] || 0);
         if (surplus <= 0) return;
         var count = self.pTake(id, surplus);
         if (count) { earned += count * price; sold.push(count + ' ' + LC.ITEMS[id].name); }
@@ -134,7 +163,7 @@ window.LC = window.LC || {};
         lines.push('Pak Idris sold ' + sold.join(', ') + ' for ' + earned + ' kepeng.');
       }
     },
-    feedPelita: function (s, lines) {
+    feedPelita: function (s, lines, available) {
       var g = s.ghost, self = this;
       if (g.full >= 60 || LC.pelitaAway()) return;
       function rank(id) {
@@ -146,11 +175,11 @@ window.LC = window.LC || {};
       var meals = new Map();
       s.chests.pantry.items.forEach(function (slot) {
         var it = LC.ITEMS[slot.id];
-        if (it && it.food && LC.DISLIKES.indexOf(slot.id) < 0) meals.set(slot.id, null);
+        if (it && it.food && LC.DISLIKES.indexOf(slot.id) < 0 && available(slot.id) > 0) meals.set(slot.id, null);
       });
       LC.RECIPES.forEach(function (r) {
         if (LC.ITEMS[r.out].food && LC.DISLIKES.indexOf(r.out) < 0 && !meals.has(r.out) &&
-            Object.keys(r.inp).every(function (id) { return self.pCount(id) >= r.inp[id]; })) meals.set(r.out, r.inp);
+            Object.keys(r.inp).every(function (id) { return available(id) >= r.inp[id]; })) meals.set(r.out, r.inp);
       });
       var id = Array.from(meals.keys()).sort(function (a, b) { return rank(a) - rank(b) || LC.ITEMS[b].food.full - LC.ITEMS[a].food.full; })[0];
       if (!id) { lines.push('Kak Aini needs food or cooking ingredients in the pantry for Pelita.'); return; }
@@ -160,6 +189,31 @@ window.LC = window.LC || {};
       Object.keys(used).forEach(function (item) { self.pTake(item, used[item]); });
       s.flags.fedOnce = true;
       lines.push('Kak Aini ' + (recipe ? 'made' : 'served') + ' ' + LC.ITEMS[id].name + ' for Pelita.' + (result.craving ? ' Its craving was satisfied!' : ''));
+    },
+    cookPantry: function (recipe) {
+      var self = this, inp = recipe.inp;
+      Object.keys(inp).forEach(function (id) { self.pTake(id, inp[id]); });
+      if (this.pAdd(recipe.out, 1)) return true;
+      Object.keys(inp).forEach(function (id) { self.pAdd(id, inp[id]); });
+      return false;
+    },
+    plantMealCrops: function (s, needs) {
+      var self = this, planted = [];
+      var crops = Object.keys(LC.CROPS), seeds = Object.keys(LC.ITEMS);
+      needs.forEach(function (id) {
+        var key = crops.find(function (k) { return LC.CROPS[k].item === id; });
+        if (!key) return;
+        var crop = LC.CROPS[key], seed = seeds.find(function (k) { return LC.ITEMS[k].crop === key; });
+        if (!crop || !seed || !self.pCount(seed) || !LC.State.inSeason(crop.seasons)) return;
+        var tiles = Object.keys(s.tiles);
+        if (tiles.some(function (k) { return s.tiles[k].crop && s.tiles[k].crop.id === key; })) return;
+        var beds = crop.paddy ? LC.areaGrid('farm').flatMap(function (row, y) {
+          return row.reduce(function (out, ch, x) { if (ch === 'r') out.push([x, y]); return out; }, []);
+        }) : tiles.filter(function (k) { return s.tiles[k].tilled && !s.tiles[k].crop; }).map(function (k) { return k.split(',').map(Number); });
+        var done = beds.some(function (p) { return LC.Sim.plant({ x: p[0], y: p[1], crop: key }); });
+        if (done) { self.pTake(seed, 1); planted.push(crop.name); }
+      });
+      return planted;
     },
     // dusk (before the crops grow): pay the wages; the farmhand waters the field
     dusk: function (s, lines) {
@@ -186,13 +240,37 @@ window.LC = window.LC || {};
         lines.push('Tukang Leong and the kampung finished Nenek\'s ' + LC.HOUSE_STAGES[s.house].name + ' overnight! The house has room for ' + LC.HOUSE_STAGES[s.house].rooms + ' helper' + (s.house > 1 ? 's' : '') + ' now.');
       }
       if (!work || !s.chests || !s.chests.pantry) return;
+      var plan = work.manager && s.ghost.stage >= 1 && !LC.pelitaAway() ? this.mealPlan(LC.State.pickCraving()) : null;
+      var needed = plan && !this.pCount(plan.id) ? plan.needs : {};
+      var reserve = {}, prepared = null;
+      function available(id) { return self.pCount(id) - (reserve[id] || 0); }
       function store(id, n) { var put = self.pAdd(id, n); if (put < n) full = true; return put; }
+      if (plan && (work.ladang || work.kutip)) {
+        var gathered = [];
+        LC.OBJECTS.forEach(function (o) {
+          if (o.type !== 'tree' || s.trees[o.id] !== 0) return;
+          var tr = LC.TREES[o.kind], id = tr.fruit;
+          if (!needed[id] || self.pCount(id) >= needed[id]) return;
+          var n = tr.count + (LC.State.season().id === 'buah' ? 1 : 0);
+          if (self.pRoom(id) < n) { full = true; return; }
+          var r = LC.Sim.shake({ id: o.id });
+          if (r && r.item && store(r.item, r.count)) gathered.push(LC.ITEMS[id].name);
+        });
+        if (gathered.length) lines.push((work.kutip ? 'Kak Nur' : 'Pak Hamid') + ' gathered ' + gathered.join(', ') + ' for Pelita’s meal.');
+      }
       if (work.ladang) {
         var got = 0, again = 0;
-        Object.keys(s.tiles).forEach(function (key) {
+        var keys = Object.keys(s.tiles);
+        function priority(key) {
+          var c = s.tiles[key].crop;
+          return c && needed[LC.CROPS[c.id].item] ? 1 : 0;
+        }
+        if (plan) keys.sort(function (a, b) { return priority(b) - priority(a); });
+        keys.forEach(function (key) {
           var t = s.tiles[key], c = t.crop && LC.CROPS[t.crop.id];
           if (!c || t.crop.g < c.days) return;
           var n = c.count + (c.paddy && LC.State.friend('semangat') ? 2 : 0), id = t.crop.id;
+          if (plan && self.pRoom(c.item) < n) { full = true; return; }
           got += store(c.item, n); t.crop = null;
           var seed = Object.keys(LC.ITEMS).filter(function (k) { return LC.ITEMS[k].crop === id; })[0];
           if (seed && self.pCount(seed) > 0 && self.pTake(seed, 1)) { t.crop = { id: id, g: 0 }; again++; }
@@ -210,25 +288,45 @@ window.LC = window.LC || {};
         ['telur', 'telur_itik', 'susu'].forEach(function (id) { if (coop[id]) { var put = store(id, coop[id]); coop[id] -= put; eggs += put; } });
         if (picked || eggs) lines.push('Kak Nur picked ' + picked + ' fruit' + (eggs ? ' and collected ' + eggs + ' eggs and milk' : '') + ' into the pantry.');
       }
-      if (work.pelita) this.feedPelita(s, lines);
+      if (plan) {
+        var missing = this.missingForMeal(plan);
+        if (!this.pCount(plan.id) && !missing.length && plan.recipe && work.masak) {
+          if (this.cookPantry(plan.recipe)) prepared = plan.id;
+          else full = true;
+        }
+        var label = LC.ITEMS[plan.id].name;
+        if (this.pCount(plan.id)) {
+          reserve[plan.id] = 1;
+          lines.push(prepared ? 'Kak Salmah asked Mak Som to make ' + label + ' for Pelita. It’s ready in the pantry.' :
+            'Kak Salmah set aside ' + label + ' for Pelita.');
+        } else {
+          reserve = plan.needs;
+          var planted = work.ladang ? this.plantMealCrops(s, missing) : [];
+          if (planted.length) lines.push('Kak Salmah asked Pak Hamid to plant ' + planted.join(', ') + ' for Pelita’s meals.');
+          lines.push('Kak Salmah’s plan for Pelita is ' + label + '. ' +
+            (missing.length ? 'Pantry needs ' + missing.map(function (id) { return LC.ITEMS[id].name; }).join(', ') + '.' :
+              !work.masak ? 'Mak Som is needed for the cooking.' : 'The pantry needs room for the dish.'));
+        }
+      }
+      if (work.pelita) this.feedPelita(s, lines, available);
       if (work.masak) {
-        var made = {}, total = 0, progress = true;
+        var made = {}, total = prepared ? 1 : 0, progress = true;
         var recipes = LC.RECIPES.slice().sort(function (a, b) { return (LC.ITEMS[b.out].sell || 0) - (LC.ITEMS[a.out].sell || 0); });
         while (total < 5 && progress && !full) {
           progress = false;
           for (var i = 0; i < recipes.length && total < 5; i++) {
             var r = recipes[i], inp = r.inp;
-            if ((made[r.out] || 0) >= 2 || !Object.keys(inp).every(function (id) { return self.pCount(id) >= inp[id]; })) continue;
-            Object.keys(inp).forEach(function (id) { self.pTake(id, inp[id]); });
-            if (self.pAdd(r.out, 1) < 1) { Object.keys(inp).forEach(function (id) { self.pAdd(id, inp[id]); }); full = true; break; }
+            if ((made[r.out] || 0) + (r.out === prepared ? 1 : 0) >= 2 || !Object.keys(inp).every(function (id) { return available(id) >= inp[id]; })) continue;
+            if (!self.cookPantry(r)) { full = true; break; }
             made[r.out] = (made[r.out] || 0) + 1; total++; progress = true;
           }
         }
-        lines.push(total ? 'Mak Som cooked ' + Object.keys(made).map(function (id) { return made[id] + ' ' + LC.ITEMS[id].name; }).join(', ') + '. They are in the pantry.'
-          : 'Mak Som found nothing to cook in the pantry. Leave her some ingredients!');
+        if (Object.keys(made).length) lines.push('Mak Som cooked ' + Object.keys(made).map(function (id) { return made[id] + ' ' + LC.ITEMS[id].name; }).join(', ') + '. They are in the pantry.');
+        else if (!prepared && !plan) lines.push('Mak Som found nothing to cook in the pantry. Leave her some ingredients!');
       }
-      if (work.stor) this.sellSurplus(s, lines);
+      if (work.stor) this.sellSurplus(s, lines, reserve);
       if (full) lines.push('The pantry was full, so some things could not be stored. Empty it a little!');
+      return plan && plan.id;
     }
   };
 

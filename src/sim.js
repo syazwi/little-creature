@@ -77,6 +77,7 @@ window.LC = window.LC || {};
       var S = LC.State.s;
       S.helpers = S.helpers || {};
       if (!LC.HELPERS[a.k] || S.helpers[a.k] || LC.Home.hiredCount() >= LC.Home.rooms()) return { ok: false };
+      if (LC.Home.stage() < (LC.HELPERS[a.k].stage || 0)) return { ok: false };
       S.helpers[a.k] = { since: S.day };
       return { ok: true };
     },
@@ -217,6 +218,15 @@ window.LC = window.LC || {};
       if (craving) { g.cravingDone = true; b2 = LC.State.addBond(20); g.joy = clamp(g.joy + 15); }
       return { ok: true, msg: msg, b: b, joy: joy, craving: craving, b2: b2 };
     },
+    feed_craving: function (a) {
+      var S = LC.State.s, g = S.ghost;
+      if (a.day !== S.day || g.stage < 1 || g.cravingDone || a.item !== g.craving || LC.pelitaAway()) return { ok: false };
+      if (g.full >= 97) return { ok: false, full: true };
+      if (a.pantry && !LC.Home.canServeCraving(a.item)) return { ok: false, empty: true };
+      var result = LC.Sim.feed(a);
+      if (result.ok && a.pantry) LC.Home.pTake(a.item, 1);
+      return result;
+    },
     pet: function () {
       var S = LC.State.s, g = S.ghost;
       if (S.minutes - g.petAt < 60) return { ok: false };
@@ -249,6 +259,7 @@ window.LC = window.LC || {};
     if (op === 'ladang') return { ladang: S.ladang };
     if (op === 'house_up') return { house: S.house || 0, houseBuild: S.houseBuild || 0, chests: S.chests, chestSeq: S.chestSeq };
     if (op === 'hire' || op === 'fire') return { helpers: S.helpers || {} };
+    if (op === 'feed_craving' && a.pantry) return { ghost: S.ghost, chests: S.chests, chestSeq: S.chestSeq };
     if (op === 'befriend' || op === 'play') return { ghost: S.ghost, spirits: S.spirits };
     return { ghost: S.ghost, offerings: S.offerings };
   };

@@ -243,13 +243,15 @@ Locked paths are blocked by vines, rockfall or sand until Pelita is strong enoug
 - **Expand it in three stages.** Tukang Leong and the kampung build each one overnight (or at once, if Badang is strong):
   - **Serambi** (2,000 kepeng, 20 kayu, 10 atap): a verandah and the **Almari Dapur** pantry. Room for 1 helper.
   - **Rumah Tengah** (6,000 kepeng, 30 kayu, 15 batu, 15 atap): a middle room. The dapur cooks **up to 5 dishes at once**, +20 max energy. Room for 2 helpers.
-  - **Rumah Dapur** (15,000 kepeng, 40 kayu, 20 batu, 10 tanah liat, 2 tempayan from Mak Thuy): a grand kitchen wing and carved golden gables, a bigger pantry (48 stacks), +20 more max energy. Room for all 5 helpers.
+  - **Rumah Dapur** (15,000 kepeng, 40 kayu, 20 batu, 10 tanah liat, 2 tempayan from Mak Thuy): a grand kitchen wing and carved golden gables, a bigger pantry (48 stacks), +20 more max energy. Room for all 6 helpers.
 - **Hire helpers.** Hired helpers move around the farm during the day. Overnight work uses the pantry and appears in the morning report. A helper you can't pay takes the night off.
   - **Mak Som**, the cook (80 a day): cooks up to 5 dishes a night from the ingredients you leave in the pantry, the best ones she can.
   - **Pak Hamid**, the farmhand (70 a day): waters the whole field every night, harvests what is ripe, and replants it with seeds you leave in the pantry.
   - **Kak Nur**, the gatherer (50 a day): picks the ripe fruit on the farm and collects the eggs and milk from the reban.
   - **Kak Aini**, Pelita's caretaker (65 a day): makes or serves one meal from pantry supplies when Pelita is hungry, with its current craving first.
   - **Pak Idris**, the storekeeper (60 a day): sells surplus goods after the others finish. Use **Nenek's House → Pantry Sales** to choose each item and how much stock to keep.
+  - **Kak Salmah**, the household manager (95 a day, Rumah Dapur): plans Pelita's next craving overnight. Pak Hamid prioritizes the required crops and uses pantry seeds to plant missing ingredients. He gathers any fruit needed for the dish if Kak Nur is away. Mak Som makes the dish first, and Kak Salmah sets it aside for Pelita. Talk to Kak Salmah for the meal plan and any shortages.
+- **Feed a craving from Pelita's card.** Open the spirit card and tap the craving food to feed Pelita one portion from your bag. Kak Salmah can serve it from the pantry when you have none in your bag.
 - **A bigger bag.** It grows by a row of 9 slots at Pelita Lv 5, 10, 15, 20, 25 and 30 (from 18 up to 72). It scrolls with the big **more** buttons, the mouse wheel or the arrow keys.
 - **Throw things away.** In the bag, select an item and press **Throw away** (or T / Delete). It asks first, and lets you throw away 1 or the whole stack. Your cangkul, gembor, fishing rod and special items can't be thrown away.
 - **Pelita can reach Lv 30.** Levels 21-30 bring kepeng, max energy, gold, Bunian lamps, golden fruit, crystals and two more bag rows. At Lv 30 Pelita becomes the Spirit of the Land.

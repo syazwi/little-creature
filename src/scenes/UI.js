@@ -247,8 +247,11 @@ window.LC = window.LC || {};
         z.isTouchBtn = true;
         z.on('pointerdown', function () { if (!self.modal) { self.setPelitaSmall(!self.pelitaSmall); LC.Audio.sfx('click'); } });
       });
+      this.craveHit = this.add.zone(px + 12, py + 173, 250, 35).setOrigin(0).setInteractive({ useHandCursor: true }).setVisible(false);
+      this.craveHit.isTouchBtn = true;
+      this.craveHit.on('pointerdown', function () { if (!self.modal) self.world.feedCraving(); });
       this.pelitaCard = { full: [pg, pDisc, pRing, this.portrait, tName, this.tStage].concat(needIcons, [this.tBond, this.tCrave, this.icCrave]), small: [sg, sDisc, sRing, this.portraitS], zFull: zFull, zSmall: zSmall, alpha: 1 };
-      this.pin('tr', [sg, sDisc, sRing, this.portraitS, zFull, zSmall]);
+      this.pin('tr', [sg, sDisc, sRing, this.portraitS, zFull, zSmall, this.craveHit]);
       this.tCoop = this.txt(480, 50, '', 14, '#b8f0c8', { ox: 0.5, stroke: 4 });
       this.pin('tc', [this.tCoop]);
       this.nameTags = {};
@@ -315,6 +318,7 @@ window.LC = window.LC || {};
       c.full.forEach(function (o) { o.setVisible(!on); });
       c.small.forEach(function (o) { o.setVisible(!!on); });
       c.zFull.setVisible(!on); c.zSmall.setVisible(!!on);
+      this.craveHit.setVisible(!on && this.S.ghost.stage > 0 && !this.S.ghost.cravingDone);
       try { localStorage.setItem('littleCreature.pelitaCard', on ? 'small' : 'full'); } catch (e) { /* storage blocked */ }
     }
     pelitaSmallPref() {
@@ -511,9 +515,16 @@ window.LC = window.LC || {};
       this.portrait.setTexture(LC.ghostTex(g.stage, this.world.curExpr || 'normal'));
       this.tStage.setText('Lv ' + lv + ' · ' + LC.STAGES[g.stage].short);
       this.tBond.setText(nb === null ? 'Bond ' + Math.floor(g.bond) + '  (max level)' : 'Bond ' + Math.floor(g.bond) + ' / ' + nb + '  (Lv ' + (lv + 1) + ')');
-      if (g.stage === 0) { this.tCrave.setText('Craving: ???'); this.icCrave.setVisible(false); }
-      else if (g.cravingDone) { this.tCrave.setText('Craving: satisfied!'); this.icCrave.setVisible(false); }
-      else { this.tCrave.setText('Craving: ' + LC.ITEMS[g.craving].name); this.icCrave.setVisible(!this.pelitaSmall).setTexture('i_' + g.craving); }
+      var food = LC.ITEMS[g.craving], craving = g.stage > 0 && !g.cravingDone && food;
+      this.craveHit.setVisible(!!craving && !this.pelitaSmall);
+      this.icCrave.setVisible(this.craveHit.visible);
+      this.tCrave.setText(g.stage === 0 ? 'Craving: ???' : g.cravingDone ? 'Craving: satisfied!' : food ? 'Craving: ' + food.name : 'Craving: ???');
+      if (this.craveHit.visible) {
+        var stocked = LC.State.count(g.craving) || LC.Home.canServeCraving(g.craving);
+        gf.lineStyle(1, stocked ? 0xd7ac59 : 0x746550, card.alpha);
+        gf.strokeRoundedRect(px + 12, py + 173, 250, 35, 6);
+        this.icCrave.setTexture(food.icon);
+      }
 
       this.drawHotbar();
       this.drawTouch();
