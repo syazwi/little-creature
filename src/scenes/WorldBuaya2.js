@@ -6,7 +6,8 @@
  *  - The Kinabatangan: upriver behind her, past proboscis monkeys, hornbills and a herd of pygmy elephants crossing the
  *    shallows; the crocodile clan, Kancil's count (in the UI), truth or trick (a chase), Tok Sisik.
  *  - The nest bank: the vision, the shadow that takes Pelita; the bell and the lights; the shadows on the bank (with
- *    Awang Semaun and Badang); riding Seri Putih across the lake through the stolen lights; Kancil's firefly trick.
+ *    Awang Semaun and Badang); riding Seri Putih across the lake through the stolen lights; then (v3.36) the two shadows
+ *    at Kancil's lantern: Black Pelita and Bayang Diri (WorldTwoShadows.js), ending at the crack in its heart.
  *  - Inside the shadow: find Pelita in the dark, feed it, tell it. Then the dawn, and letting go.
  *  - Kenduri Terakhir at Kampong Ayer, the photo, the credits (UI), the epilogue on the farm.
  *  - After: Pelita Putih heals you and becomes Harimau Cahaya (T); Anak Putih grows and carries you across water;
@@ -100,9 +101,6 @@ window.LC = window.LC || {};
     var self = this, b = this.c20b, c = this.c20;
     if (b && b.ride) return null;
     if (c && c.sea && c.sea.countPending && this.A.voyage20 === 'river') return { label: 'Hop across the crocodiles', fn: function () { self.buayaCountOpen(); } };
-    if (b && b.heart && step(this) === 15) {
-      return b.heart.open ? { label: 'Jump into its heart!', fn: function () { self.buayaHeartJump(); } } : { label: 'Wait for its heart to open...', fn: function () { self.buayaHeartMiss(); } };
-    }
     var r = getAction.apply(this, arguments);
     return r;
   };
@@ -571,7 +569,7 @@ window.LC = window.LC || {};
       if (s >= 13 && s <= 16) this.buayaFleet();
       if (s === 13) { b.fightOn = true; this.time.delayedCall(600, function () { if (!self.leaving) self.toast(X.fightHow, 'kelam_0'); }); }
       if (s === 14) this.time.delayedCall(500, function () { if (!self.leaving) self.buayaRideStart(); });
-      if (s === 15) this.time.delayedCall(500, function () { if (!self.leaving) self.buayaTrickStart(); });
+      if (s === 15) this.buayaLanternStart(false);   // (v3.36: the two shadows, WorldTwoShadows.js)
       if (s === 12) this.time.delayedCall(700, function () { if (!self.leaving) self.toast(X.alone + ' ' + X.bellHint, 'ic_moon'); });
       if (s === 11 && !S.quests.c20nestArr) { S.quests.c20nestArr = true; LC.State.save(); this.time.delayedCall(700, function () { if (!self.leaving) self.buayaLines(X.nestArrive); }); }
       if (s >= 18) { var ns = this.objImgs.s_sarang20; if (ns) ns.setTexture('sarang20_pecah'); }
@@ -784,50 +782,18 @@ window.LC = window.LC || {};
       this.cameras.main.startFollow(this.player, true, 0.2, 0.2);
       LC.Audio.sfx('cheer');
       this.buayaLines(X.rideDone);
-      b.trickPending = true;
+      b.lanternPending = true;
       void self;
     },
 
-    // ---- step 15: Kancil's trick, and the heart that opens
-    buayaTrickStart: function () {
-      var self = this, b = this.c20b, L = lake();
-      if (b.heart) return;
-      var kx = 11 * T, ky = 12 * T;
-      b.heart = { open: false, t: 1.5, phase: 'wait', jar: this.add.image(kx + 8, ky - 6, 'jar20').setDepth(ky + 1), kancil: this.add.sprite(kx, ky, 'kancil20_0').setOrigin(0.5, 1).setDepth(ky), home: { x: L.x, y: L.y } };
-      b.heart.jarL = this.addLight(kx + 8, ky - 8, 0xfdff90, 1, true); b.heart.jarL.base = 0.9;
-      b.heart.glow = this.add.image(L.x, L.y, 'glow').setBlendMode(ADD()).setDepth(9006).setTint(0xfff6d8).setScale(0.2).setAlpha(0);
-      this.buayaLines(X.trickSet);
-      void self;
-    },
-    updateHeart: function (time, dt) {
-      var self = this, b = this.c20b, H = b.heart, sh = b.shadow;
-      if (!H || !sh) return;
-      H.t -= dt;
-      if (H.phase === 'wait' && H.t <= 0) {   // it lunges at the fake light...
-        H.phase = 'lunge'; H.t = 1.1;
-        LC.Audio.sfx('loceng20'); this.ui.floatText(H.kancil.x, H.kancil.y - 20, 'Ding-a-ling!', '#fff0b0');
-        this.tweens.add({ targets: sh, x: H.home.x - (H.home.x - H.jar.x) * 0.55, y: H.home.y - (H.home.y - H.jar.y) * 0.4, duration: 650, ease: 'Quad.easeIn' });
-      } else if (H.phase === 'lunge' && H.t <= 0) {   // ...and its heart opens for a moment
-        H.phase = 'open'; H.t = 0.9; H.open = true;
-        H.glow.setAlpha(1).setScale(0.5);
-        LC.Audio.sfx('chime');
-      } else if (H.phase === 'open' && H.t <= 0) {
-        H.phase = 'back'; H.t = 1.2; H.open = false;
-        H.glow.setAlpha(0);
-        this.tweens.add({ targets: sh, x: H.home.x, y: H.home.y, duration: 900, ease: 'Sine.easeOut' });
-      } else if (H.phase === 'back' && H.t <= 0) { H.phase = 'wait'; H.t = 2.4; }
-      H.glow.setPosition(sh.x, sh.y + 10 * sh.scaleY);
-      if (H.open) H.glow.setScale(0.5 + 0.1 * Math.sin(time / 60));
-      H.jarL.img.setAlpha(0.6 + 0.3 * Math.sin(time / 120));
-      void self;
-    },
-    buayaHeartMiss: function () { this.toast(X.trickMiss, 'kancil20_0'); LC.Audio.sfx('error'); },
+    // ---- step 15: the two shadows (WorldTwoShadows.js); when the rematch is won, the crack in Black Pelita's heart
+    // opens, and in you go: step 16, inside the shadow
     buayaHeartJump: function () {
-      var self = this, b = this.c20b, H = b.heart;
-      if (!H || !H.open) return;
-      H.open = false;
+      var self = this, b = this.c20b;
+      if (!b || b.inHeart || step(this) !== 15) return;
+      b.inHeart = true;
       story(this, 16);   // (saved first)
-      this.toast(X.trickDone, 'bayang20_besar_0');
+      this.toast(X.heartIn, 'bayang20_besar_0');
       this.cameras.main.flash(500, 255, 250, 230);
       this.time.delayedCall(400, function () { self.buayaGo('dalam20', C.inside.spawn); });
     },
@@ -873,6 +839,7 @@ window.LC = window.LC || {};
       if (!b.found) { b.found = true; LC.Audio.sfx('sad'); this.buayaLines(X.pelitaFound); return; }
       if (b.fed) return;
       var sl = LC.State.selItem(), it = sl && LC.ITEMS[sl.id], dish = it && it.food ? sl.id : null;
+      if (!dish && S.quests.c20bowl && LC.State.count('nasi')) dish = 'nasi';   // (v3.36: the bowl you carried in)
       if (!dish) {   // anything to eat in the bag? Nenek's kuih, at least
         var any = S.inv.filter(function (x) { return x && LC.ITEMS[x.id] && LC.ITEMS[x.id].food; })[0];
         if (any) dish = any.id;
@@ -1235,7 +1202,6 @@ window.LC = window.LC || {};
       if (!C.ready(S)) return;
       var ui = this.ui.isBlocking(), blocked = ui || this.leaving || this.sleeping || this.cutscene;
       if (b.anak && this.area !== 'farm') this.updateAnakFollow(dt);
-      if (this.area === 'sarang20' && s === 15 && b.heart && !ui) this.updateHeart(time, dt);
       if (this.area === 'sarang20' && b.fleet) b.fleet.forEach(function (f, i) { f.im.y = f.y0 + Math.sin(time / 600 + i); });
       if (this.area === 'sarang20' && s === 13 && b.fightOn && !blocked) this.updateFight20(time, dt);
       if (this.area === 'dalam20' && !blocked) this.updateInside(time, dt);
@@ -1254,7 +1220,7 @@ window.LC = window.LC || {};
       if (b.sailPending) { b.sailPending = false; if (step(this) === 9) this.sailTo('laut20b'); return; }
       if (b.bellPending) { b.bellPending = false; this.buayaFleet(); b.fightOn = true; this.refreshWhen(); this.toast(X.fightHow, 'kelam_0'); return; }
       if (b.ridePending) { b.ridePending = false; this.buayaRideStart(); return; }
-      if (b.trickPending) { b.trickPending = false; this.buayaTrickStart(); return; }
+      if (b.lanternPending) { b.lanternPending = false; this.buayaLanternStart(true); return; }
       if (b.shrinkPending) { this.buayaShrink(); return; }
       if (b.letGoPending) { this.buayaLetGo(); return; }
       if (b.feastPending) { b.feastPending = false; this.buayaGo('barunai', { x: 24, y: 17 }, 19 * 60 + 30); return; }

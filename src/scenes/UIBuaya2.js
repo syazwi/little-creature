@@ -31,7 +31,7 @@ window.LC = window.LC || {};
       12: a === 'sarang20' ? 'Pelita is gone. Ring Dang Kemala\'s brass bell at the post by the water.' : 'Go back to the nest bank.' + back,
       13: 'Fight the shadows on the bank with Awang Semaun and Badang (' + Math.min(C.kills, Q.c20kills || 0) + ' / ' + C.kills + ').',
       14: 'Ride Seri Putih across the lake: swim through the ' + C.ride.lights + ' stolen lights circling the shadow, and keep clear of its dark rings.',
-      15: 'When the shadow lunges at Kancil\'s jar, its heart opens for a moment: press USE then, and jump in!',
+      15: a === 'sarang20' ? X.lanternHint : 'Go back to the nest bank.' + back,
       16: a === 'dalam20' ? 'Find Pelita in the dark: follow the crying.' : 'Jump back into the shadow.' + back,
       17: 'Talk to Seri Putih by the nest.',
       18: a === 'barunai' ? 'The last feast: say goodbye to everyone on the walkways, then talk to Nenek (by the market landing) for the photo.' : 'Go to Kampong Ayer for the last feast.' + back
@@ -41,7 +41,7 @@ window.LC = window.LC || {};
   LC.CHAPTER_LIST.forEach(function (ch) {
     if (ch.n !== 20) return;
     ch.end = C.end;
-    ch.steps = ch.steps.slice(0, C.part1).concat(['The wind turns', 'The voyage to Sabah', 'The Kinabatangan', 'The spark', 'Without Pelita', 'The black river', 'Ride the White One', 'Kancil\'s trick', 'Inside the shadow', 'Letting go', 'Kenduri Terakhir']);
+    ch.steps = ch.steps.slice(0, C.part1).concat(['The wind turns', 'The voyage to Sabah', 'The Kinabatangan', 'The spark', 'Without Pelita', 'The black river', 'Ride the White One', 'The two shadows', 'Inside the shadow', 'Letting go', 'Kenduri Terakhir']);
     ch.next = 'Finish both parts of Janji Buaya Putih to complete Season 1.';
   });
   var checklist = LC.checklist;

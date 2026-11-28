@@ -324,7 +324,7 @@ window.LC = window.LC || {};
   // Chapter 20, Part 2 (v3.23)
   function R20b(p, step) {
     var w = p.world, S = w.S, q = S.quests, C = LC.C20, c = w.c20, b = w.c20b, sea = c && c.sea;
-    p.state.choice = /^(Tujuh \(seven\)|Tell the truth|Go home, little light|Take the photo|Never\. You are my family\.)$/;
+    p.state.choice = /^(Tujuh \(seven\)|Tell the truth|Go home, little light|Take the photo|Never\. You are my family\.|Begin Fight|Retry Rematch)$/;
     function steer(tx, ty, mag) { var sh = sea.sh, d = Math.hypot(tx - sh.x, ty - sh.y) || 1; p.state.vector = { x: (tx - sh.x) / d * (mag || 1), y: (ty - sh.y) / d * (mag || 1) }; }
     if (step === 8) {
       if (w.area !== 'farm') { p.travel('farm'); return; }
@@ -381,7 +381,13 @@ window.LC = window.LC || {};
       p.state.action = 'Riding the White One (' + Rd.got + ' / ' + C.ride.lights + ')';
       return;
     }
-    if (step === 15) { if (b.heart && b.heart.open) w.doAction(); p.state.action = 'Waiting for its heart to open'; return; }
+    if (step === 15) {   // v3.36: the two shadows
+      var F = w.c20s;
+      if (!F) { if (!w.ui.modal && w.buayaLanternAsk) w.buayaLanternAsk(); p.state.action = 'At Kancil\'s lantern'; return; }
+      if (F.phase === 'fight') { if (!p.foes(/^(diri20|hitam20)$/)) p.state.action = 'The two shadows'; else p.state.action = F.round === 1 ? 'Holding them off' : 'The rematch'; return; }
+      p.state.action = F.phase === 'lost' ? 'Trying the rematch again' : 'The two shadows';
+      return;
+    }
     if (step === 16) { if (w.area === 'sarang20') { p.state.action = 'Jumping into its heart'; return; } if (w.area !== 'dalam20') { p.jong(/^Back into the shadow$/, 'Back into the shadow'); return; } p.prop('d_pelita20', b.found ? 'Feed Pelita' : 'Follow the crying'); return; }
     if (step === 17) { if (w.area !== 'sarang20') { p.jong(/^Sail back to the nest bank$/, 'Back to the nest bank'); return; } if (!b.cine) p.prop('s_putih20', 'Let go'); else p.state.action = 'Letting go'; return; }
     if (step === 18) {

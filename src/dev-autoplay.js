@@ -578,7 +578,8 @@ window.LC = window.LC || {};
     var step = q[chapter.key] || 0;
     var c20 = world.c20, key = [chapter.n, step, world.area, world.war && world.war.wave, q.c4wave, q.c13Reflected, q.c12Rescued, q.c18round, q.c19round,
       q.c20calm, c20 && c20.sea && c20.sea.cp, c20 && c20.sea && c20.sea.wp, c20 && c20.fire && c20.fire.n,
-      c20 && c20.sea && c20.sea.sh && Math.floor(c20.sea.sh.x / 160), c20 && c20.sea && c20.sea.li, q.c20kills, world.c20b && world.c20b.ride && world.c20b.ride.got].join(':');
+      c20 && c20.sea && c20.sea.sh && Math.floor(c20.sea.sh.x / 160), c20 && c20.sea && c20.sea.li, q.c20kills, world.c20b && world.c20b.ride && world.c20b.ride.got,
+      world.c20s && world.c20s.round, world.c20s && world.c20s.phase].join(':');   // (v3.36: the two shadows' rounds)
     if (s.last !== key) { s.last = key; s.stepAt = performance.now(); s.routeKey = null; s.action = ''; }
     if (performance.now() - s.stepAt > 120000) { methods.stop('Autoplay paused. Take over at the current objective.'); return; }
     var play = routes[chapter.n];

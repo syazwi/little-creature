@@ -3,8 +3,10 @@
  * the tip of Borneo, towing her raft; the Bajau Laut through the coral; the net, a free-dive) · 10 the Kinabatangan
  * (upriver: monkeys, hornbills, elephants; the crocodile clan: Kancil's count; truth or trick; Tok Sisik) · 11 the nest
  * bank: the vision (Pelita is her spark), the shadow takes Pelita · 12 without Pelita: ring the brass bell, and the lights
- * come · 13 the black river (the shadows on the bank) · 14 ride the White One (the giant shadow on the lake) · 15 Kancil's
- * trick (the heart opens) · 16 inside the shadow: find Pelita, feed it, tell it · 17 letting go (Pelita Putih returns, a
+ * come · 13 the black river (the shadows on the bank) · 14 ride the White One (the giant shadow on the lake) · 15 the two
+ * shadows (v3.36, WorldTwoShadows.js: Kancil's lantern, where you can save; Black Pelita and Bayang Diri; you fall, Pelita
+ * Putih lifts you up as Harimau Cahaya; the rematch; the heart opens) · 16 inside the shadow: find Pelita, feed it, tell
+ * it · 17 letting go (Pelita Putih returns, a
  * hatchling follows you) · 18 Kenduri Terakhir at Kampong Ayer, the group photo, the credits · 19 TAMAT (the epilogue
  * at Nenek's jetty).
  * Rewards: Pelita Putih (it heals you when you are badly hurt; Harimau Cahaya, a tiger of light, once a day on T),
@@ -58,9 +60,17 @@ window.LC = window.LC || {};
   LC.SPEAKERS.badang20 = { name: 'Badang', portrait: 'npc_badangK_0' };
   LC.SPEAKERS.bakunawa20 = { name: 'Bakunawa', portrait: 'bakunawa11_1' };
   LC.SPEAKERS.alak20 = { name: 'Awang Alak Betatar', portrait: 'npc_alak_0' };
+  // v3.36: the two shadows at the nest bank (Bayang Diri's portrait follows your outfit: set when the fight begins)
+  LC.SPEAKERS.hitam20 = { name: 'Black Pelita', portrait: 'bayang20_besar_0' };
+  LC.SPEAKERS.diri20 = { name: 'Bayang Diri', portrait: 'mirror0_down_0' };
+  LC.SPEAKERS.putihP20 = { name: 'Pelita Putih', portrait: 'ghost_6_happy' };
   C.folk.lepa = { look: { skin: '#8a5a36', shirt: '#e84a6a', shirt2: '#c02a4a', bottom: '#2a6a8a', bottom2: '#1e4e6a', hair: '#1a1210', hat: 'headband' } };
   LC.ENEMIES.kelam20b = { name: 'Bayang', texture: 'kelam', hp: 10, speed: 36, dmg: 6, sight: 200, w: 6, drop: [] };
   if (LC.ENEMY_LV) LC.ENEMY_LV.kelam20b = 32;
+  // v3.36: the two shadows (their health and hits are set from yours when the fight begins: WorldTwoShadows.js)
+  LC.ENEMIES.diri20 = { name: 'Bayang Diri', texture: 'mirror0_down', hp: 120, speed: 52, dmg: 10, sight: 420, w: 7, boss: true, drop: [] };
+  LC.ENEMIES.hitam20 = { name: 'Black Pelita', texture: 'bayang20_besar', hp: 160, speed: 0, dmg: 12, sight: 420, w: 22, boss: true, hitHeight: 30, drop: [] };
+  if (LC.ENEMY_LV) { LC.ENEMY_LV.diri20 = 34; LC.ENEMY_LV.hitam20 = 34; }
 
   // ---------------------------------------------------------------- the farm, Teluk Barunai and Kampong Ayer, after Part 1
   function thing(id, type, at, tex, when, extra) { return Object.assign({ id: id, type: type, x: at.x, y: at.y, tex: tex, keep: true, when: when }, extra || {}); }
@@ -294,13 +304,33 @@ window.LC = window.LC || {};
     rideFail: 'Seri Putih is tired. She carries you back to the bank to catch her breath. Try again!',
     rideLight: 'You burst through a stolen light! The shadow howls. ({n} / {of})',
     rideDone: [['', 'The last light breaks free. The shadow staggers back across the lake, smaller, but still huge.'], ['bayang20', 'NO. NO. IT STAYS. IT STAYS WITH ME.']],
-    trickSet: [
-      ['kancil20', '(Sang Kancil trots out onto the sand with a jar of fireflies, glowing gold, and Dang Kemala\'s bell tied to it.) My turn. A trick wins once. Let us make it count.'],
-      ['kancil20', 'OVER HERE, SHADOW! I have your little light! Ding-a-ling! Count yourself LUCKY!'],
-      ['', '(The shadow turns towards the fake light. When it lunges, its heart will open for a moment. Press USE then, and jump in!)']
-    ],
-    trickMiss: 'Too soon or too late: its heart snaps shut. Kancil rings the bell again: "Over here, you big puddle!"',
-    trickDone: 'The shadow lunges for Kancil\'s jar, and its heart opens like a door. You jump.',
+    // the two shadows (step 15, v3.36): Kancil's lantern, the fight, the fall, Pelita Putih, the rematch, the heart
+    lanternSet: [['', 'With the sixth light recovered, Seri Putih carries you to the bank. Sang Kancil sets a lantern on a dry ledge and listens to the lake.'], ['kancil20', 'Sit a moment. I\'ll watch the water.']],
+    lanternAgain: [['kancil20', 'Sit a moment. I\'ll watch the water.']],
+    lanternLabels: ['Save Game', 'Begin Fight', 'Not yet'],
+    lanternHint: 'Kancil\'s lantern: save your game here if you like, then begin the fight.',
+    rise: 'Black Pelita rises out of the lake. Your reflection stands up in the shallows with your weapon in its hand. It\'s Bayang Diri, the reflection from Pintu Cermin.',
+    riseNew: 'Black Pelita rises out of the lake. Your reflection stands up in the shallows with your weapon in its hand. It\'s Bayang Diri: you, made of shadow.',
+    hitamSay: 'You brought Seri Putih all this way to say goodbye. When will it be my turn?',
+    diriSay: 'In Pintu Cermin, I watched you get up every time you fell. I know exactly how you fight.',
+    diriSayNew: 'Every time you leaned over the water, I was there. I know the way you hold that weapon.',
+    holdHow: 'Hold them off! Watch for Black Pelita\'s dark rings, and for the mirror that shimmers around Bayang Diri: Mantera Pantul sends your spells back at you.',
+    ringWarn: 'Black Pelita sends a dark ring across the bank!',
+    pantulWarn: 'Mantera Pantul...',
+    closing: 'Black Pelita closes a dark ring around you.',
+    reviveDark: [['', 'Bayang Diri lands the killing blow, and the lantern goes out.'], ['', 'In the dark, you hear the scrape of a bowl against wood. It\'s the sound of the first bowl of nasi you set down for Pelita.'],
+      ['', 'A white flame slips through a crack in Black Pelita\'s heart. Pelita Putih settles on your chest. The flame dims as your heart starts beating again.']],
+    revivePutih: [['putihP20', 'You stayed with me until I could stand. Take your time. I\'m here.']],
+    reviveTiger: [['', 'You get to your feet. Pelita\'s light stretches across the wet sand into four paws. A white tiger with gold stripes steps between you and the shadows.'], ['', '✦ Harimau Cahaya ✦']],
+    rematchHow: 'Defeat Bayang Diri and Black Pelita! Harimau Cahaya fights beside you: run through the gap it tears in each dark ring, and strike Bayang Diri while its mirror shimmers.',
+    gap: 'Through the gap!',
+    opening: 'Opening!',
+    lose: [['', 'You fall to your knees. Harimau Cahaya stands over you and growls at the shadows. The white flame is still with you.']],
+    loseLabel: 'Retry Rematch',
+    endFall: [['', 'Bayang Diri falls. It watches you put down your weapon and reach toward Black Pelita.'], ['diri20', 'You came back for it too?']],
+    endHeart: [['', 'Bayang Diri steps into the lake and sinks back into your reflection. The tiger lowers its head beside Black Pelita.'],
+      ['', 'The crack in its heart opens wide enough for you to climb through. Inside, you hear Pelita crying.'], ['', 'You pick up the bowl of nasi and go in.']],
+    heartIn: 'You climb in through the crack in Black Pelita\'s heart.',
     insideArrive: 'Total darkness. No sound at all, except, somewhere, a tiny voice, crying.',
     memories: [
       'A memory floats past: the first night, Nenek\'s letter, and a little light in an empty house.',
