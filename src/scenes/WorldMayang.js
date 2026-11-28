@@ -586,14 +586,17 @@ window.LC = window.LC || {};
       var n = this.add.image(x, y, 'note9').setDepth(9600).setTint(tint || 0xffffff).setAlpha(0.95);
       this.tweens.add({ targets: n, y: y - 18 - Math.random() * 10, x: x + (Math.random() - 0.5) * 14, alpha: 0, duration: 1100, ease: 'Sine.easeOut', onComplete: function () { n.destroy(); } });
     },
+    playLaguMayang: function () {
+      SING.me.phrase([[2, 0.75, 'a'], [3, 0.5, 'a'], [4, 1, 'o'], [3, 0.5, 'a'], [2, 1.5, 'a']], 0.75);
+      LC.Audio.sfx('lagu9');
+    },
     laguKey: function () {
       if (!LC.hasLagu() || this.sleeping || this.leaving || this.cutscene || this.reuniting || (this.ui && this.ui.isBlocking())) return;
       var left = this.laguLeft();
       if (left > 0) { this.toast('Your voice needs a rest... (' + Math.ceil(left) + 's)', 'ic_mayang'); LC.Audio.sfx('error'); return; }
       var self = this, L = C9.lagu, p = this.player, x = p.x, y = p.y - 8, hit = 0;
       LC.laguAt = Date.now() + L.cd * 1000;
-      SING.me.phrase([[2, 0.75, 'a'], [3, 0.5, 'a'], [4, 1, 'o'], [3, 0.5, 'a'], [2, 1.5, 'a']], 0.75);
-      LC.Audio.sfx('lagu9');
+      this.playLaguMayang();
       this.shockwave(x, y, L.r, 0x9ae8e0);
       this.time.delayedCall(220, function () { if (!self.leaving) self.shockwave(x, y, L.r * 0.65, 0xffe8a0); });
       for (var i = 0; i < 8; i++) (function (i) { self.time.delayedCall(i * 90, function () { if (!self.leaving) self.note9(p.x + (Math.random() - 0.5) * 30, p.y - 14, i % 2 ? 0x9ae8e0 : 0xffe8a0); }); })(i);

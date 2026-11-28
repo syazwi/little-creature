@@ -335,6 +335,11 @@ window.LC = window.LC || {};
     },
     updateSabah: function (time, dt, blocked) {
       var self = this, c = this.c20, sea = c.sea, sh = sea.sh, cr = sea.cr, A = C.sabah, x = sh.x / T;
+      if (sea.sirens) { this.updateSabahSirens(time, dt, blocked); return; }
+      if (sea.netDone && !this.S.quests.c20sirens && x >= A.sirensAt) {
+        if (!blocked) this.startSabahSirens();
+        return;
+      }
       var stern = { x: sh.x - Math.cos(sh.ang) * 30, y: sh.y - Math.sin(sh.ang) * 30 };
       // the raft: from the strait, she rests on it, and you tow her
       if (!sea.towed && x > A.tow.x0) {
@@ -379,7 +384,10 @@ window.LC = window.LC || {};
           this.buayaLines(X.rested);
           return;
         }
-      } else this.buayaSwim(dt, sh.x - Math.cos(sh.ang) * 46 + Math.sin(sh.ang) * 18, sh.y - Math.sin(sh.ang) * 46 - Math.cos(sh.ang) * 18, 80);
+      } else {
+        var behind = this.S.quests.c20sirens && sea.netDone ? 10 : 46;
+        this.buayaSwim(dt, sh.x - Math.cos(sh.ang) * behind + Math.sin(sh.ang) * 18, sh.y - Math.sin(sh.ang) * behind - Math.cos(sh.ang) * 18, 80);
+      }
       // the strait: the two seas crash together (the waves push the jong too)
       if (x > A.strait.x0 && x < A.strait.x1) {
         if (!sea.said.strait) { sea.said.strait = true; this.toast(X.strait, 'ic_moon'); }
@@ -417,7 +425,7 @@ window.LC = window.LC || {};
       }
       if (!sea.netDone && x > A.net - 1) { sh.x = Math.min(sh.x, (A.net + 0.5) * T); }
       // Kinabalu at dawn, then the river mouth
-      if (!sea.kina && x > A.goalX - 12) { sea.kina = true; LC.Audio.sfx('chime'); this.buayaLines(X.kinabalu); return; }
+      if (!blocked && !sea.kina && x > A.goalX - 12) { sea.kina = true; LC.Audio.sfx('chime'); this.buayaLines(X.kinabalu); return; }
       if (x > A.goalX && !blocked && !sea.arriving) {
         sea.arriving = true;
         story(this, 10);   // (saved first)

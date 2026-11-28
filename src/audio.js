@@ -422,6 +422,7 @@ window.LC = window.LC || {};
       case 'duneWake': A.tone(t, 'triangle', 74, 52, 0.73, 0.19); A.noise(t + 0.07, 0.56, 0.18, 'bandpass', 310, 160); break;
       case 'duneSwing': A.noise(t, 0.35, 0.25, 'bandpass', 450, 1130); A.tone(t, 'sine', 155, 47, 0.34, 0.13); break;
       case 'duneThud': A.tone(t, 'sine', 92, 26, 0.44, 0.34); A.noise(t + 0.02, 0.43, 0.24, 'lowpass', 640, 182); break;
+      case 'sirenDive': A.noise(t, 0.68, 0.19, 'bandpass', 420, 1020); A.tone(t, 'sine', 480, 108, 0.82, 0.14); break;
       case 'familyBells': A.bell(1047, t, 1.1, 0.11); A.bell(698, t + 0.48, 1.55, 0.12); break;
       case 'familyTune': [0, 2, 3].forEach(function (d, k) {
         var f = A.freq(d + 1);

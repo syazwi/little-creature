@@ -20,7 +20,7 @@ window.LC = window.LC || {};
   function q(S) { return S.quests; }
   Object.assign(C, {
     windDays: 2,
-    sabah: { W: 196, H: 44, start: { x: 5, y: 18 }, tow: { x0: 54, x1: 98 }, strait: { x0: 62, x1: 90 }, reef: { x0: 102, x1: 152 }, net: 156, goalX: 186,
+    sabah: { W: 196, H: 44, start: { x: 5, y: 18 }, tow: { x0: 54, x1: 98 }, strait: { x0: 62, x1: 90 }, reef: { x0: 102, x1: 152 }, net: 156, sirensAt: 166, goalX: 186,
       reefPath: [[98, 18], [110, 18], [110, 8], [122, 8], [122, 26], [134, 26], [134, 12], [146, 12], [154, 18]],
       lepa: [[104, 18], [110, 16], [110, 11], [113, 8], [118, 8], [122, 11], [122, 17], [122, 23], [125, 26], [131, 26], [134, 23], [134, 17], [135, 12], [140, 12], [146, 12], [150, 15], [155, 18]] },   // (along the channel, corner by corner)
     river: { W: 150, H: 30, start: { x: 144, y: 15 }, ford: 84, block: 30 },
@@ -52,6 +52,7 @@ window.LC = window.LC || {};
   // ---------------------------------------------------------------- speakers, the clan, the shadow
   LC.SPEAKERS.sisik20 = { name: 'Tok Sisik', portrait: 'buayaK20_face' };
   LC.SPEAKERS.lepa20 = { name: 'Nakhoda Lepa', portrait: 'npc20_lepa_0' };
+  LC.SPEAKERS.siren20 = { name: 'Sea ghost', portrait: 'siren20_face' };
   LC.SPEAKERS.bayang20 = { name: 'The Shadow', portrait: 'bayang20_besar_0' };
   LC.SPEAKERS.pelitaS20 = { name: 'Pelita', portrait: 'ghost', expr: 'sad' };
   LC.SPEAKERS.badang20 = { name: 'Badang', portrait: 'npc_badangK_0' };
@@ -194,6 +195,20 @@ window.LC = window.LC || {};
     ],
     netFail: 'You burst to the surface, gasping. Breathe... and dive again. The knots you cut stay cut.',
     netDone: [['', 'The last knot parts. The net drifts down into the dark, and Seri Putih rolls free.'], ['lepa20', 'Good dive! Now go: your crocodile wants to go home. Selamat jalan!']],
+    sirenIntro: [
+      ['', 'The lamps of the Bajau Laut fade behind you. Three women rise beside the jong, their silver tails brushing the surface. A baby cries in the basket the middle woman holds. Pelita leans over the rail.'],
+      ['siren20', 'You saved Nenek\'s mother from the flood, Seri Putih. Can you hear the child you left behind?'],
+      ['', 'Seri Putih turns toward the basket. The singer on the far side of the jong opens her mouth, and the very same cry comes out. Seri Putih backs up until her scales scrape the hull.'],
+      ['putih20', 'Pull Pelita back. I can feel them moving under the boat.']
+    ],
+    sirenPearl: 'The Mutiara from Puteri Bongsu warms in your hand. You remember the first notes of Lagu Mayang, and the woman with the basket falters.',
+    sirenSong: 'You remember the first notes of Lagu Mayang. You hum them, and the woman with the basket falters.',
+    sirenEnd: [
+      ['', 'One by one the voices fall away. The basket bumps the hull. It is empty. Seri Putih watches it drift.'],
+      ['putih20', 'Every time I hear a child cry on the water, I still turn around.'],
+      ['', '“Swim beside me. I\'ll keep singing.”'],
+      ['', 'Seri Putih comes alongside the jong. Before dawn, she is humming with you.']
+    ],
     kinabalu: [
       ['', 'The sky turns grey, then gold. And there, far inland, a mountain rises out of the morning clouds, taller than anything you have ever seen: Kinabalu.'],
       ['putih20', '(Seri Putih lifts her head out of the water and breathes in, slow and deep.) I can smell home.']

@@ -13,6 +13,62 @@ window.LC = window.LC || {};
     var a = scene.anims;
     function anim(key, frames, rate) { if (!a.exists(key)) a.create({ key: key, frames: frames.map(function (k) { return { key: k }; }), frameRate: rate, repeat: -1 }); }
 
+    // Sea ghosts off Sabah. Their tails and braids move with the water.
+    var sirenPalettes = [
+      { hair: '#28324d', ribbon: '#a6d7cf', silk: '#7aacc1', deep: '#39697f', scale: '#84b5bd', lit: '#d9f5e7' },
+      { hair: '#413456', ribbon: '#ecd3b3', silk: '#b494c2', deep: '#5e577e', scale: '#a7a0cd', lit: '#f1dce9' },
+      { hair: '#263955', ribbon: '#9bbde4', silk: '#6da7a6', deep: '#3a6583', scale: '#7eabc6', lit: '#d6f0f6' }
+    ];
+    function sirenHead(p, x, y, P) {
+      p.ell(x, y + 1, 7.5, 8, P.hair);
+      p.ell(x + 1, y + 2, 5.4, 5.9, '#dcceda');
+      p.ell(x + 3, y + 3, 3.1, 4.2, '#f8e6e1');
+      p.poly([[x - 7, y], [x - 5, y - 5], [x + 3, y - 6], [x + 6, y - 2], [x + 1, y - 2], [x - 2, y + 1], [x - 5, y + 4]], P.hair);
+      p.line(x - 5, y - 3, x + 1, y - 5, P.ribbon);
+      p.px(x - 2, y + 1, '#343044'); p.line(x + 2, y + 1, x + 4, y + 1, '#343044');
+      p.px(x + 3, y + 4, '#a46882'); p.px(x - 5, y + 4, '#fff1cb');
+      p.px(x - 3, y - 4, '#fff1cb'); p.px(x + 1, y - 5, '#e7fbf2');
+    }
+    function basket(p, x, y) {
+      p.poly([[x, y], [x + 13, y], [x + 10, y + 6], [x + 3, y + 6]], '#9b684b');
+      p.ell(x + 6.5, y, 6.5, 2.4, '#d3a47a'); p.ell(x + 6.5, y, 4.3, 1, '#634452');
+      p.line(x + 2, y + 3, x + 11, y + 3, '#e4bb83');
+      p.line(x + 4, y + 5, x + 9, y + 5, '#b98662');
+    }
+    sirenPalettes.forEach(function (P, i) {
+      var frames = [0, 1, 2].map(function (f) {
+        var key = 'siren20_' + i + '_' + f, sw = [0, 2, -2][f];
+        make(key, 46, 56, function (p) {
+          p.poly([[12, 28], [26, 28], [25, 35], [21 + sw, 41], [24 + sw, 45], [30 + sw, 45], [35 + sw, 38], [36 + sw, 44], [43 + sw, 45],
+            [36 + sw, 51], [28 + sw, 51], [18 + sw, 47], [12, 39], [10, 33]], P.deep);
+          p.poly([[14, 28], [23, 30], [21, 36], [18 + sw, 41], [21 + sw, 45], [29 + sw, 48], [35 + sw, 46], [37 + sw, 47], [30 + sw, 50],
+            [21 + sw, 48], [15 + sw, 42], [13, 36]], P.scale);
+          p.poly([[28 + sw, 46], [35 + sw, 38], [34 + sw, 45], [42 + sw, 45], [36 + sw, 49], [30 + sw, 50]], P.lit);
+          p.line(14, 32, 20, 33, P.lit); p.line(13, 36, 19, 37, P.lit);
+          p.line(16 + sw, 41, 20 + sw, 42, P.lit); p.px(22 + sw, 46, '#fff7e0');
+          p.poly([[13, 12], [19, 13], [15, 23], [10 + sw, 29], [5 + sw, 26], [8, 23], [8, 16]], P.hair);
+          p.line(11, 16, 10 + sw, 25, P.ribbon, 2);
+          p.px(9 + sw, 22, '#fff1cb'); p.px(11 + sw, 25, '#e7fbf2');
+          p.poly([[16, 16], [22, 15], [25, 18], [24, 25], [27, 30], [19, 33], [12, 29], [15, 23], [13, 19]], P.deep);
+          p.poly([[16, 17], [19, 19], [24, 16], [24, 23], [21, 27], [24, 29], [16, 30], [15, 25]], P.silk);
+          p.line(15, 24, 21, 23, P.ribbon);
+          p.line(16, 18, 15, 24, '#dcceda', 3); p.line(15, 24, 24, 24, '#f8e6e1', 2);
+          p.line(24, 18, 28, 22, '#f8e6e1', 3);
+          if (i === 1) basket(p, 23, 24); else p.line(28, 22, 31, 19 + sw, '#dcceda', 2);
+          sirenHead(p, 18, 10, P);
+        }, '#223048');
+        return key;
+      });
+      anim('siren20_' + i + '_swim', frames, 4);
+    });
+    make('siren20_face', 29, 29, function (p) {
+      var P = sirenPalettes[1];
+      p.ell(14, 23, 11, 6, P.silk); p.poly([[9, 11], [18, 10], [22, 24], [18, 26], [7, 23], [5, 19]], P.hair);
+      p.line(9, 14, 7, 23, P.ribbon, 2); p.px(7, 21, '#fff1cb'); p.px(7, 24, '#fff1cb');
+      sirenHead(p, 14, 12, P);
+    }, '#223048');
+    make('siren20_basket', 16, 12, function (p) { basket(p, 1, 4); }, '#302030');
+
     // ---- the crocodiles of the Kinabatangan: olive and brown (64 x 22), from above (44 x 16), Tok Sisik, a head
     function croc(key, f, P) {
       make(key, 64, 22, function (p) {

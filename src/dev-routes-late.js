@@ -335,9 +335,24 @@ window.LC = window.LC || {};
     if (step === 9 && w.area === 'laut20b' && sea && sea.sh) {
       var sh = sea.sh, x = sh.x / T, R = sea.raft;
       p.state.action = 'Sailing to Sabah (' + Math.round(x / C.sabah.goalX * 100) + '%)';
+      var f = sea.sirens;
+      if (f) {
+        p.state.action = 'The Pearl That Answered';
+        if (f.phase === 'sing' && f.songCd <= 0) w.laguKey();
+        if (f.phase === 'open') w.doAction();
+        if (f.phase === 'warning' || f.phase === 'lunge') {
+          var lane = f.lane, nx = lane.endY - lane.y, ny = lane.x - lane.endX, d = Math.hypot(nx, ny) || 1;
+          var side = (f.x - sh.x) * nx + (f.y - sh.y) * ny < 0 ? -1 : 1;
+          p.state.vector = { x: side * nx / d, y: side * ny / d };
+        }
+        return;
+      }
       if (R && !R.on) { steer(R.x, R.y, 0.6); p.state.action = 'Back for the raft'; return; }
       if (R && R.on && sea.strain > 45) return;   // (let the rope rest)
-      if (sea.bajau && !sea.netDone && sea.lepa) { steer(sea.lepa.x, sea.lepa.y, 0.75); p.state.action = 'Following the lepa'; return; }
+      if (sea.bajau && !sea.netDone && sea.lepa && !sea.followedLepa) {
+        if (sea.li >= C.sabah.lepa.length - 1 && dist(sh, sea.lepa) < 22) sea.followedLepa = true;
+        else { steer(sea.lepa.x, sea.lepa.y, 0.75); p.state.action = 'Following the lepa'; return; }
+      }
       var WP = [[30, 18], [54, 17], [66, 15.5], [82, 15.5], [97, 18], [160, 18], [174, 20], [184, 24], [194, 28]];
       sea.wp2 = sea.wp2 || 0;
       while (sea.wp2 < WP.length - 1 && (Math.hypot(sh.x - WP[sea.wp2][0] * T, sh.y - WP[sea.wp2][1] * T) < 2.5 * T || x > WP[sea.wp2][0] + 1)) sea.wp2++;

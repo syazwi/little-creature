@@ -493,6 +493,11 @@ window.LC = window.LC || {};
         if (sh.spd > 40 && sh.bumpT <= 0) { sh.bumpT = 1.2; LC.Audio.sfx('bump11'); this.cameras.main.shake(160, 0.004); this.fx.drop.explode(8, pts[0][0], pts[0][1]); }
         sh.spd *= slideX || slideY ? 0.7 : -0.25;
       }
+      if (sea.sirens) {
+        var water = sea.sirens.bounds, bx = clamp(sh.x, water.left, water.right), by = clamp(sh.y, water.top, water.bottom);
+        if (sh.x !== bx || sh.y !== by) sh.spd *= 0.7;
+        sh.x = bx; sh.y = by;
+      }
       sh.bumpT -= dt;
       sh.frameT -= dt;
       if (sh.frameT <= 0) { sh.frameT = sea.storm > 0.2 ? 0.14 : sh.spd > 30 ? 0.3 : 0.6; sh.img.setTexture(sh.img.texture.key === 'jong20_t0' ? 'jong20_t1' : 'jong20_t0'); }

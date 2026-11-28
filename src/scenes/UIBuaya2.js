@@ -18,6 +18,11 @@ window.LC = window.LC || {};
     var s = C.step(S);
     if (s < C.part1 || s >= C.end) return goal.apply(this, arguments);
     var Q = S.quests, a = W && W.area, back = ' (Back at the farm? The jong at the jetty will take you.)', sea = W && W.c20 && W.c20.sea;
+    if (s === 9 && a === 'laut20b' && sea && sea.sirens) {
+      return W.ui.touchOn
+        ? 'Chapter 20: Steer clear of the silver trails. Tap Lagu Mayang when they sing, then tap USE to fire.'
+        : 'Chapter 20: Steer clear of the silver trails. Sing Lagu Mayang (L), then fire the cannon (E).';
+    }
     var t = {
       8: X.windWait,
       9: a === 'laut20b' ? (sea && sea.raft ? 'Tow Seri Putih through the strait: go slowly where the currents clash, or the rope will snap.' : sea && sea.bajau && !sea.netDone ? 'Follow the lamps of the Bajau Laut through the coral.' : 'Sail north-east along the coast of Borneo, round its tip, and on to Sabah.') : 'Set sail for Sabah: board the jong in Teluk Barunai (row from the west jetty of Kampong Ayer), or at the farm jetty.',
@@ -45,7 +50,7 @@ window.LC = window.LC || {};
     if (L.n !== 20) return L;
     var S = LC.State.s, Q = S.quests, s = C.step(S), W = LC.game && LC.game.scene.getScene('World'), sea = W && W.c20 && W.c20.sea;
     function c(ok, x) { return { ok: !!ok, t: x }; }
-    if (s === 9) L.items = [c(sea && sea.kind === 'sabah' && sea.towed && !sea.raft, 'Tow her through the strait'), c(sea && sea.netAsked, 'Through the coral'), c(sea && sea.netDone, 'Cut the ghost net'), c(false, 'Kinabalu, and the river mouth')];
+    if (s === 9) L.items = [c(sea && sea.kind === 'sabah' && sea.towed && !sea.raft, 'Tow her through the strait'), c(sea && sea.netAsked, 'Through the coral'), c(sea && sea.netDone, 'Cut the ghost net'), c(Q.c20sirens, 'The Pearl That Answered'), c(false, 'Kinabalu, and the river mouth')];
     if (s === 10) L.items = [c(sea && sea.fordDone, 'Upriver'), c(sea && sea.counted, 'Count the crocodiles'), c(false, 'Tok Sisik')];
     if (s === 13) L.items = [c((Q.c20kills || 0) >= C.kills, 'Shadows (' + Math.min(C.kills, Q.c20kills || 0) + ' / ' + C.kills + ')')];
     if (s === 18) L.items = [c(Q.c20feastArr, 'Kenduri Terakhir'), c(false, 'The photo')];
@@ -82,7 +87,8 @@ window.LC = window.LC || {};
     if (!this.ready || !this.S) return;
     var W = this.world, c = W && W.c20, b = W && W.c20b, s = C.step(this.S), mode = null;
     if (W && !this.modal && !W.leaving) {
-      if (W.area === 'laut20b' && c && c.sea && c.sea.raft) mode = 'rope';
+      if (W.area === 'laut20b' && c && c.sea && c.sea.sirens) mode = 'sirens';
+      else if (W.area === 'laut20b' && c && c.sea && c.sea.raft) mode = 'rope';
       else if (W.area === 'sarang20' && b && b.ride) mode = 'ride';
       else if (W.area === 'sarang20' && s === 13 && b && b.fightOn) mode = 'fight';
     }
@@ -103,7 +109,13 @@ window.LC = window.LC || {};
     g.fillStyle(0x1e1510, 0.82); g.fillRoundedRect(370, 56, 220, 66, 10);
     g.lineStyle(2, 0x8a6a4a, 1); g.strokeRoundedRect(370, 56, 220, 66, 10);
     g.fillStyle(0x3a2a20, 1); g.fillRoundedRect(408, 110, 168, 6, 3);
-    if (mode === 'rope') {
+    if (mode === 'sirens') {
+      var f = c.sea.sirens, left = f.ghosts.filter(function (e) { return e.hp > 0; }).length;
+      v = f.hull / 100; col = v < 0.5 ? 0xff887f : 0xb4e1e9;
+      this.b2T1.setText('Sea ghosts: ' + left + '  ·  Hull: ' + f.hull + '%');
+      this.b2T2.setText(f.phase === 'open' ? 'Fire the cannon' : f.phase === 'sing' ? (f.songCd > 0 ? 'Catch your breath' : 'Sing Lagu Mayang') : 'Steer clear of the silver trails');
+      this.b2I.setTexture('siren20_face').setScale(0.94);
+    } else if (mode === 'rope') {
       var R = c.sea.raft; v = R.on ? c.sea.strain / 100 : 1; col = v > 0.7 ? 0xff7a5a : 0xd8c8a0;
       this.b2T1.setText(R.on ? 'Towing Seri Putih' : 'The rope snapped! Sail back to her');
       this.b2T2.setText('Rope strain');
@@ -137,7 +149,7 @@ window.LC = window.LC || {};
       F.msg.setText('Press when the blade is over the glowing knot!');
       function finish(won) { if (done) return; done = true; close(); cb(cut, won); }
       function press() {
-        if (done) return;
+        if (done || cut >= KN.length) return;
         var k = KN[cut];
         if (Math.abs(bx - k.x) < 18) {
           cut++; LC.Audio.sfx('harvest'); fx.push({ x: k.x, y: k.y, t: self.time.now });
