@@ -501,7 +501,9 @@ window.LC = window.LC || {};
       sea.herd.forEach(function (e, i) {
         if (e.spr.y < e.ty) { moving = true; e.spr.y += (16 - i * 2) * dt; e.spr.setDepth(e.spr.y + 6); if ((e.f -= dt) <= 0) { e.f = 0.3; e.spr.setTexture(e.spr.texture.key === 'gajah20_0' ? 'gajah20_1' : 'gajah20_0'); } }
       });
-      if (moving) { if (sh.x < (R.ford + 5) * T) { sh.x = (R.ford + 5) * T; sh.spd = 0; } }
+      var holdX = (R.ford + 5) * T;
+      sea.fordWaiting = moving && sh.x <= holdX + T;
+      if (moving) { if (sh.x < holdX) { sh.x = holdX; sh.spd = 0; } }
       else { sea.fordDone = true; this.toast(X.elephantsGone, 'gajah20_0'); }
     },
     buayaCountOpen: function () {
@@ -512,12 +514,13 @@ window.LC = window.LC || {};
         sea.countOpen = false;
         if (!won) return;
         sea.countPending = false;
-        self.buayaLines(X.countAsk, { choices: [
+        function tellTruth() { self.buayaLines(X.truth); sea.sisikPending = true; }
+        self.buayaLines(X.countAsk, { onDone: function () { sea.countPending = true; }, choices: [
           { label: 'Lima (five)', fn: function () { self.buayaLines([['', X.countWrongPick]]); sea.countPending = true; } },
-          { label: 'Tujuh (seven)', fn: function () { sea.counted = true; self.buayaLines(X.choose, { choices: [
+          { label: 'Tujuh (seven)', fn: function () { sea.counted = true; self.buayaLines(X.choose, { onDone: tellTruth, choices: [
             { label: 'Laugh at the trick', fn: function () { self.buayaLines(X.trick); sea.chaseStart = true; } },
-            { label: 'Tell the truth', fn: function () { self.buayaLines(X.truth); sea.sisikPending = true; } },
-            { label: 'Say nothing', fn: function () { self.buayaLines(X.truth); sea.sisikPending = true; } }
+            { label: 'Tell the truth', fn: tellTruth },
+            { label: 'Say nothing', fn: tellTruth }
           ] }); } },
           { label: 'Sembilan (nine)', fn: function () { self.buayaLines([['', X.countWrongPick]]); sea.countPending = true; } }
         ] });

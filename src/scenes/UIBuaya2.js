@@ -21,7 +21,7 @@ window.LC = window.LC || {};
     var t = {
       8: X.windWait,
       9: a === 'laut20b' ? (sea && sea.raft ? 'Tow Seri Putih through the strait: go slowly where the currents clash, or the rope will snap.' : sea && sea.bajau && !sea.netDone ? 'Follow the lamps of the Bajau Laut through the coral.' : 'Sail north-east along the coast of Borneo, round its tip, and on to Sabah.') : 'Set sail for Sabah: board the jong in Teluk Barunai (row from the west jetty of Kampong Ayer), or at the farm jetty.',
-      10: a === 'kina20' ? (sea && sea.countPending ? 'The crocodiles block the river: hop across them (USE) and count them!' : 'Steer upriver (west) behind Seri Putih.') : 'Go up the Kinabatangan.' + back,
+      10: a === 'kina20' ? (sea && sea.countPending ? 'The crocodiles block the river: hop across them (USE) and count them!' : sea && sea.fordWaiting ? 'Wait for the pygmy elephants to cross. Then keep steering west.' : 'Steer upriver (west) behind Seri Putih.') : 'Go up the Kinabatangan.' + back,
       11: a === 'sarang20' ? 'Talk to Seri Putih at the edge of the lake.' : 'Go back to the nest bank.' + back,
       12: a === 'sarang20' ? 'Pelita is gone. Ring Dang Kemala\'s brass bell at the post by the water.' : 'Go back to the nest bank.' + back,
       13: 'Fight the shadows on the bank with Awang Semaun and Badang (' + Math.min(C.kills, Q.c20kills || 0) + ' / ' + C.kills + ').',

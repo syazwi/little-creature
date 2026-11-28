@@ -469,6 +469,12 @@ window.LC = window.LC || {};
         if (k.S.isDown || k.DOWN.isDown) vy += 1;
         if (!vx && !vy) { var tv = this.ui.touchVec(); if (tv && Math.hypot(tv.x, tv.y) > 0.15) { vx = tv.x; vy = tv.y; analog = clamp(Math.hypot(vx, vy) * 1.2, 0.4, 1); } }
       }
+      // Steer along the river bend on near-horizontal input. Diagonal input still steers directly.
+      if (sea.kind === 'river' && vx && Math.abs(vy) < Math.abs(vx) * 0.3) {
+        var ahead = Math.floor(sh.x / T) + Math.sign(vx) * 4;
+        var dy = this.buayaRiverMid(ahead) * T - sh.y;
+        vy = Math.abs(vx) * clamp(dy / (3 * T), -0.85, 0.85);
+      }
       var steer = !!(vx || vy);
       if (steer) { var want = Math.atan2(vy, vx), d = wrapA(want - sh.ang); sh.ang = wrapA(sh.ang + clamp(d, -S.turn * dt, S.turn * dt)); }
       var ty = Math.floor(sh.y / T), tx = Math.floor(sh.x / T), shallow = this.grid[ty] && this.grid[ty][tx] === 'h' ? 0.6 : 1;
